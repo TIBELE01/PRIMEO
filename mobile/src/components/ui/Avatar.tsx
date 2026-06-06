@@ -9,7 +9,14 @@ interface AvatarProps {
 }
 
 export function Avatar({ uri, name, size = 44 }: AvatarProps) {
-  const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  // Garde défensif : name peut être vide / undefined
+  const initials = (name ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '?';
   if (uri) {
     return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
   }

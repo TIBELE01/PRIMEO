@@ -9,6 +9,7 @@ import type { ClientStackParamList } from '@navigation/types';
 import { propertiesApi } from '@services/api/endpoints/properties';
 import type { Property, PropertyType } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
+import { safeJsonParse } from '@/utils/safeJson';
 import { useDebounce } from '@hooks/useDebounce';
 import { useOffline } from '@hooks/useOffline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -181,9 +182,10 @@ export function SearchScreen() {
   const loadCachedResults = useCallback(async () => {
     const raw = await AsyncStorage.getItem(SEARCH_CACHE_KEY).catch(() => null);
     if (!raw) return false;
-    const { items, total: t } = JSON.parse(raw);
-    setResults(normalizeProperties(items ?? []));
-    setTotal(t ?? 0);
+    const cached = safeJsonParse<{ items?: unknown; total?: number } | null>(raw, null);
+    if (!cached) return false;
+    setResults(normalizeProperties(cached.items ?? []));
+    setTotal(cached.total ?? 0);
     setIsFromCache(true);
     return true;
   }, []);

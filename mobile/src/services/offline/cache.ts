@@ -1,5 +1,6 @@
 // cache: AsyncStorage-backed offline data cache for properties and bookings
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeJsonParse } from '../../utils/safeJson';
 
 export const cache = {
   set: async <T>(key: string, data: T, ttlMs = 300_000): Promise<void> => {
@@ -10,7 +11,12 @@ export const cache = {
   get: async <T>(key: string): Promise<T | null> => {
     const raw = await AsyncStorage.getItem(key);
     if (!raw) return null;
-    const entry = JSON.parse(raw);
+    // Analyse défensive : un cache corrompu ne doit jamais faire planter l'app
+    const entry = safeJsonParse<{ data: T; expiresAt: number } | null>(raw, null);
+    if (!entry || typeof entry.expiresAt !== 'number') {
+      await AsyncStorage.removeItem(key);
+      return null;
+    }
     if (Date.now() > entry.expiresAt) { await AsyncStorage.removeItem(key); return null; }
     return entry.data as T;
   },

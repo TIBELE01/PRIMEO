@@ -13,6 +13,7 @@ import { websiteApi } from '@services/api/endpoints/websiteApi';
 import type { PlatformStats } from '@services/api/endpoints/websiteApi';
 import type { Property } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
+import { safeJsonParse } from '@/utils/safeJson';
 import { useAuthStore } from '@store/authStore';
 import { useOffline } from '@hooks/useOffline';
 import { PropertyCard } from './PropertyCard';
@@ -150,8 +151,10 @@ export function HomeScreen() {
       else setStats(DEFAULT_STATS);
     } else {
       const [cp, cn, cf, cs] = await Promise.all([AsyncStorage.getItem(CACHE_POPULAR), AsyncStorage.getItem(CACHE_NEWEST), AsyncStorage.getItem(CACHE_FOR_YOU), AsyncStorage.getItem(CACHE_STATS)]);
-      if (cp) setPopular(JSON.parse(cp)); if (cn) setNewest(JSON.parse(cn)); if (cf) setForYou(JSON.parse(cf));
-      setStats(cs ? JSON.parse(cs) : DEFAULT_STATS);
+      setPopular(normalizeProperties(safeJsonParse<Property[]>(cp, [])));
+      setNewest(normalizeProperties(safeJsonParse<Property[]>(cn, [])));
+      setForYou(normalizeProperties(safeJsonParse<Property[]>(cf, [])));
+      setStats(safeJsonParse(cs, DEFAULT_STATS));
     }
     setLoading(false); setRefreshing(false);
   }, [isOffline]);

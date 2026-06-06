@@ -15,15 +15,17 @@ interface Props {
 export const VirtualTourButton: React.FC<Props> = ({ virtualTour, propertyName }) => {
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
 
-  if (!virtualTour?.available || !virtualTour.panoramas.length) return null;
+  // Garde défensif : panoramas peut être absent même si available=true
+  const panoramas = virtualTour?.panoramas ?? [];
+  if (!virtualTour?.available || panoramas.length === 0) return null;
 
   return (
     <BaseButton
       available
-      roomCount={virtualTour.panoramas.length}
+      roomCount={panoramas.length}
       onPress={() =>
         navigation.navigate('VirtualTour', {
-          panoramas: virtualTour.panoramas,
+          panoramas,
           propertyName,
         })
       }

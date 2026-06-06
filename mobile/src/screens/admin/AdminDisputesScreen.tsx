@@ -219,7 +219,7 @@ function DisputeModal({
                   <View key={msg.id} style={dm.msgBubble}>
                     <View style={dm.msgHeader}>
                       <View style={dm.msgAvatar}>
-                        <Text style={dm.msgAvatarText}>{msg.sender.firstName[0]?.toUpperCase()}</Text>
+                        <Text style={dm.msgAvatarText}>{(msg.sender?.firstName?.[0] ?? '?').toUpperCase()}</Text>
                       </View>
                       <Text style={dm.msgSender}>{msg.sender.firstName} {msg.sender.lastName}</Text>
                       <Text style={dm.msgTime}>{formatDate(msg.sentAt)} {formatTime(msg.sentAt)}</Text>

@@ -14,7 +14,9 @@ const AVATAR_COLORS = ['#1056E0', '#D67309', '#469A0E', '#7C3AED', '#D41313', '#
 export const ConversationItem: React.FC<ConversationItemProps> = ({ name, lastMessage, sentAt, unreadCount, onPress }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const nd = Platform.OS !== 'web';
-  const avatarBg = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+  // Garde défensif : name peut être vide → charCodeAt(0) renverrait NaN
+  const safeName = name ?? '';
+  const avatarBg = AVATAR_COLORS[(safeName.charCodeAt(0) || 0) % AVATAR_COLORS.length];
   const hasUnread = !!unreadCount && unreadCount > 0;
 
   return (
@@ -27,7 +29,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({ name, lastMe
         activeOpacity={1}
       >
         <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
-          <Text style={styles.initials}>{name[0].toUpperCase()}</Text>
+          <Text style={styles.initials}>{(safeName[0] ?? '?').toUpperCase()}</Text>
         </View>
         <View style={styles.content}>
           <View style={styles.row}>

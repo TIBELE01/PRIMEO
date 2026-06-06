@@ -2,6 +2,7 @@
 // Operations are executed in FIFO order. flush() returns a result so callers can
 // show the user a success / partial-failure toast.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeJsonParse } from '../../utils/safeJson';
 
 const QUEUE_KEY = 'sync_queue';
 
@@ -30,7 +31,9 @@ export const syncQueue = {
 
   getAll: async (): Promise<QueuedOperation[]> => {
     const raw = await AsyncStorage.getItem(QUEUE_KEY);
-    return raw ? (JSON.parse(raw) as QueuedOperation[]) : [];
+    // Analyse défensive : une file corrompue ne doit pas casser la synchro
+    const parsed = safeJsonParse<QueuedOperation[]>(raw, []);
+    return Array.isArray(parsed) ? parsed : [];
   },
 
   remove: async (id: string): Promise<void> => {

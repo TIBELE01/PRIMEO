@@ -202,9 +202,16 @@ function TapRaycaster({ pendingTapRef, meshRegistryRef, onHotspotTap }: TapRayca
 type Props = ClientScreenProps<'VirtualTour'>;
 
 export function VirtualTourScreen({ navigation, route }: Props) {
-  const { panoramas, initialPanoramaIndex = 0, propertyName } = route.params;
+  const params = route.params ?? ({} as Props['route']['params']);
+  // Garde défensif : panoramas peut être absent/vide si la navigation a reçu
+  // des données incomplètes. On borne aussi l'index dans les limites du tableau.
+  const panoramas = Array.isArray(params.panoramas) ? params.panoramas : [];
+  const propertyName = params.propertyName ?? 'Visite virtuelle';
+  const initialPanoramaIndex = params.initialPanoramaIndex ?? 0;
 
-  const [currentIndex, setCurrentIndex] = useState(initialPanoramaIndex);
+  const [currentIndex, setCurrentIndex] = useState(
+    Math.min(Math.max(0, initialPanoramaIndex), Math.max(0, panoramas.length - 1)),
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   const currentPanorama = panoramas[currentIndex];
@@ -229,11 +236,11 @@ export function VirtualTourScreen({ navigation, route }: Props) {
   }, []);
 
   const handleHotspotTap = useCallback((hotspotId: string) => {
-    const hotspot = currentPanorama.hotspots.find(h => h.id === hotspotId);
+    const hotspot = (currentPanorama?.hotspots ?? []).find(h => h.id === hotspotId);
     if (!hotspot) return;
     const idx = panoramas.findIndex(p => p.id === hotspot.targetPanoramaId);
     if (idx >= 0) navigateTo(idx);
-  }, [currentPanorama.hotspots, panoramas, navigateTo]);
+  }, [currentPanorama, panoramas, navigateTo]);
 
   // ── Pan gesture ─────────────────────────────────────────────────────────────
   // Doubles as tap detector: if movement stays within TAP_SLOP, write to
@@ -264,6 +271,27 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     })
     .runOnJS(true);
 
+  // Garde défensif : aucune donnée de panorama exploitable → écran de repli
+  // au lieu d'un crash sur currentPanorama.roomName / .hotspots / .imageUrl.
+  if (!currentPanorama) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.emptyWrap]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
+          <Text style={styles.backArrow}>{'←'}</Text>
+        </TouchableOpacity>
+        <View style={styles.emptyContent}>
+          <Text style={styles.emptyIcon}>🔭</Text>
+          <Text style={styles.emptyTitle}>Visite indisponible</Text>
+          <Text style={styles.emptyText}>
+            Les panoramas de cette propriété ne sont pas disponibles pour le moment.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const hotspots = currentPanorama.hotspots ?? [];
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaView style={styles.safe}>
@@ -280,7 +308,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
           <View style={styles.headerText}>
             <Text style={styles.headerTitle} numberOfLines={1}>{propertyName}</Text>
             <Text style={styles.headerRoom} numberOfLines={1}>
-              {currentPanorama.roomName}
+              {currentPanorama.roomName ?? ''}
             </Text>
           </View>
           <View style={styles.roomCounter}>
@@ -310,7 +338,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
               />
             </Suspense>
 
-            {currentPanorama.hotspots.map(h => (
+            {hotspots.map(h => (
               <HotspotMesh
                 key={h.id}
                 hotspot={h}
@@ -346,7 +374,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
           )}
 
           {/* Hotspot legend */}
-          {!isLoading && currentPanorama.hotspots.length > 0 && (
+          {!isLoading && hotspots.length > 0 && (
             <View style={styles.hotspotHint} pointerEvents="none">
               <View style={styles.hotspotDot} />
               <Text style={styles.hotspotHintText}>
@@ -391,6 +419,13 @@ export function VirtualTourScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   safe: { flex: 1, backgroundColor: '#000' },
+
+  // Écran de repli (aucun panorama)
+  emptyWrap:    { paddingTop: 48 },
+  emptyContent: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
+  emptyIcon:    { fontSize: 56 },
+  emptyTitle:   { fontSize: 20, fontWeight: '800', color: '#fff', textAlign: 'center' },
+  emptyText:    { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 21 },
 
   // Header
   header: {

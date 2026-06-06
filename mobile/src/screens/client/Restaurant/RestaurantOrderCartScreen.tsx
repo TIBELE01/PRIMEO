@@ -73,7 +73,11 @@ export default function RestaurantOrderCartScreen({ navigation, route }: Props) 
         deliveryAddress: deliveryAddress.trim() || undefined,
         specialInstructions: instructions.trim() || undefined,
       });
-      const orderId = res.data.data.id;
+      const orderId = res.data?.data?.id;
+      if (!orderId) {
+        Alert.alert('Erreur', "La commande n'a pas pu être confirmée. Réessayez.");
+        return;
+      }
       Alert.alert('Commande passée !', 'Votre commande a été envoyée au restaurant.', [
         { text: 'Suivre ma commande', onPress: () => navigation.replace('RestaurantOrderTracking', { orderId }) },
       ]);

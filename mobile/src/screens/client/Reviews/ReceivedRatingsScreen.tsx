@@ -83,7 +83,7 @@ export function ReceivedRatingsScreen({ navigation }: Props) {
 
       <View style={styles.cardHeader}>
         <View style={styles.avatarCircle}>
-          <Text style={styles.avatarInitial}>{item.raterName[0]?.toUpperCase()}</Text>
+          <Text style={styles.avatarInitial}>{(item.raterName?.[0] ?? '?').toUpperCase()}</Text>
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.raterName}>{item.raterName}</Text>

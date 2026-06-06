@@ -52,9 +52,9 @@ export default function NotificationsScreen() {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const res = await notificationsApi.list(1);
-      const d = res.data?.data ?? res.data;
-      setNotifications(d.data ?? []);
+      const res = await notificationsApi.list({ page: 1 });
+      const d = res.data?.data ?? res.data ?? {};
+      setNotifications(Array.isArray(d.data) ? d.data : []);
       setUnread(d.unread ?? 0);
     } catch {
       // silencieux

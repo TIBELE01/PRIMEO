@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { propertiesApi } from '../../../../services/api/endpoints/properties';
 import type { Property } from '../../../../types/property';
 import { normalizeProperty } from '../../../../utils/normalizeProperty';
+import { safeJsonParse } from '../../../../utils/safeJson';
 import { CATEGORY_LIST } from '../../Category/categoryConfig';
 
 const CACHE_PREFIX = '@primeo_property_';
@@ -90,8 +91,9 @@ export const usePropertyDetail = (propertyId: string) => {
       .catch(async e => {
         if (cancelled) return;
         const cached = await AsyncStorage.getItem(`${CACHE_PREFIX}${propertyId}`).catch(() => null);
-        if (cached) {
-          setProperty(normalizeProperty(JSON.parse(cached)));
+        const parsedCache = safeJsonParse<any>(cached, null);
+        if (parsedCache) {
+          setProperty(normalizeProperty(parsedCache));
           setIsFromCache(true);
         } else {
           setError(e.response?.data?.message ?? 'Erreur de chargement');

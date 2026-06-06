@@ -9,16 +9,18 @@ interface ReviewCardProps {
 const AVATAR_COLORS = ['#1056E0', '#D67309', '#469A0E', '#7C3AED', '#D41313', '#0891B2'];
 
 export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
-  const avatarBg = AVATAR_COLORS[review.author.charCodeAt(0) % AVATAR_COLORS.length];
+  // Garde défensif : author peut être vide / undefined
+  const author = review.author ?? '';
+  const avatarBg = AVATAR_COLORS[(author.charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
-          <Text style={styles.initials}>{review.author[0].toUpperCase()}</Text>
+          <Text style={styles.initials}>{(author[0] ?? '?').toUpperCase()}</Text>
         </View>
         <View style={styles.meta}>
-          <Text style={styles.author}>{review.author}</Text>
+          <Text style={styles.author}>{author || 'Client'}</Text>
           <Text style={styles.date}>{new Date(review.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</Text>
         </View>
         <RatingStars rating={review.rating} size={14} />

@@ -404,7 +404,7 @@ export function BookingDetailScreen() {
                 : (
                   <View style={[styles.hostAvatar, styles.hostAvatarFallback]}>
                     <Text style={styles.hostInitial}>
-                      {booking.property.owner.firstName[0]}
+                      {(booking.property.owner.firstName?.[0] ?? '?').toUpperCase()}
                     </Text>
                   </View>
                 )}

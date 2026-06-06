@@ -10,6 +10,8 @@ interface ImageUploaderProps {
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onAdd, onRemove, maxImages = 10 }) => {
+  // Garde défensif : images peut arriver undefined/null
+  const safeImages = Array.isArray(images) ? images : [];
   const handlePick = async () => {
     // TODO: use expo-image-picker to launch image library
   };
@@ -17,7 +19,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onAdd, onR
   return (
     <View style={styles.container}>
       <FlatList
-        data={images}
+        data={safeImages}
         horizontal
         keyExtractor={item => item}
         renderItem={({ item }) => (
@@ -26,7 +28,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ images, onAdd, onR
             <TouchableOpacity style={styles.removeBtn} onPress={() => onRemove(item)}><Text style={styles.removeText}>✕</Text></TouchableOpacity>
           </View>
         )}
-        ListFooterComponent={images.length < maxImages ? (
+        ListFooterComponent={safeImages.length < maxImages ? (
           <TouchableOpacity style={styles.addBtn} onPress={handlePick}>
             <Text style={styles.addIcon}>+</Text>
           </TouchableOpacity>

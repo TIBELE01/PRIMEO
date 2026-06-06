@@ -19,7 +19,7 @@ export const HorizontalPropertyList: React.FC<HorizontalPropertyListProps> = ({ 
       {onSeeAll && <Text style={styles.seeAll} onPress={onSeeAll}>Voir tout</Text>}
     </View>
     <FlatList
-      data={properties}
+      data={Array.isArray(properties) ? properties : []}
       horizontal
       showsHorizontalScrollIndicator={false}
       keyExtractor={p => p.id}

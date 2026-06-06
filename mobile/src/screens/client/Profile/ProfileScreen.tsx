@@ -60,8 +60,10 @@ export function ProfileScreen({ navigation }: Props) {
     { mode: 'auto', label: 'Auto', emoji: '📱' },
   ];
 
-  const fullName = user ? `${user.firstName} ${user.lastName}` : '—';
-  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?';
+  const fullName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || '—' : '—';
+  const initials = user
+    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '?'
+    : '?';
 
   const Row = ({ label, value, onPress, danger }: { label: string; value?: string; onPress: () => void; danger?: boolean }) => (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>

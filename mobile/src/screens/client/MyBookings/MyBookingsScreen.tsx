@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeJsonParse } from '../../../utils/safeJson';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { useOffline } from '../../../hooks/useOffline';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
@@ -160,8 +161,9 @@ export function MyBookingsScreen() {
   const fetchAll = useCallback(async (silent = false) => {
     if (isOffline) {
       const raw = await AsyncStorage.getItem(BOOKINGS_CACHE_KEY).catch(() => null);
-      if (raw) {
-        setBookings(JSON.parse(raw));
+      const cached = safeJsonParse<BookingItem[]>(raw, []);
+      if (cached.length > 0) {
+        setBookings(cached);
         setIsFromCache(true);
       }
       setIsLoading(false);
@@ -178,9 +180,10 @@ export function MyBookingsScreen() {
       setBookings(list);
       AsyncStorage.setItem(BOOKINGS_CACHE_KEY, JSON.stringify(list)).catch(() => null);
     } catch {
-      const cached = await AsyncStorage.getItem(BOOKINGS_CACHE_KEY).catch(() => null);
-      if (cached) {
-        setBookings(JSON.parse(cached));
+      const raw = await AsyncStorage.getItem(BOOKINGS_CACHE_KEY).catch(() => null);
+      const cached = safeJsonParse<BookingItem[]>(raw, []);
+      if (cached.length > 0) {
+        setBookings(cached);
         setIsFromCache(true);
       }
     } finally {

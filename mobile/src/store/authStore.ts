@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 import { API_URL } from '../constants/config';
+import { safeJsonParse } from '../utils/safeJson';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let user: User | null = data.user ?? null;
       if (!user) {
         const cached = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-        if (cached) user = JSON.parse(cached) as User;
+        user = safeJsonParse<User | null>(cached, null);
       }
       // Back-compat: older API responses used accountType instead of role
       const rawUser = user as unknown as Record<string, unknown>;

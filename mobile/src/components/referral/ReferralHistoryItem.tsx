@@ -11,13 +11,13 @@ interface ReferralHistoryItemProps {
 
 export const ReferralHistoryItem: React.FC<ReferralHistoryItemProps> = ({ refereeName, joinedAt, earnedAmount, status }) => (
   <View style={styles.item}>
-    <View style={styles.avatar}><Text style={styles.initials}>{refereeName[0].toUpperCase()}</Text></View>
+    <View style={styles.avatar}><Text style={styles.initials}>{((refereeName ?? '')[0] ?? '?').toUpperCase()}</Text></View>
     <View style={styles.info}>
-      <Text style={styles.name}>{refereeName}</Text>
+      <Text style={styles.name}>{refereeName ?? '—'}</Text>
       <Text style={styles.date}>{joinedAt}</Text>
     </View>
     <View>
-      <Text style={styles.amount}>+{earnedAmount.toLocaleString()} XOF</Text>
+      <Text style={styles.amount}>+{(earnedAmount ?? 0).toLocaleString()} XOF</Text>
       <Text style={[styles.status, status === 'credited' && styles.credited]}>{status === 'credited' ? 'Crédité' : 'En attente'}</Text>
     </View>
   </View>

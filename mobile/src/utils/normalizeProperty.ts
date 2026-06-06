@@ -70,6 +70,28 @@ function normalizeAmenities(raw: unknown): PropertyAmenity[] {
   });
 }
 
+// Normalise une visite virtuelle : garantit que `panoramas` est toujours un
+// tableau et que chaque panorama possède un tableau `hotspots`. Sans ce garde-fou,
+// un backend renvoyant `{ available: true }` sans panoramas faisait planter le
+// bouton de visite et l'écran 3D (« Cannot read properties of undefined »).
+function normalizeVirtualTour(raw: any): Property['virtualTour'] {
+  if (raw && typeof raw === 'object') {
+    const panoramas = Array.isArray(raw.panoramas)
+      ? raw.panoramas
+          .filter((p: any) => p && typeof p === 'object')
+          .map((p: any, i: number) => ({
+            id:       p.id ?? `pano-${i}`,
+            roomName: p.roomName ?? p.name ?? `Pièce ${i + 1}`,
+            imageUrl: p.imageUrl ?? p.url ?? '',
+            hotspots: Array.isArray(p.hotspots) ? p.hotspots.filter(Boolean) : [],
+          }))
+          .filter((p: any) => p.imageUrl)
+      : [];
+    return { available: !!raw.available && panoramas.length > 0, panoramas };
+  }
+  return undefined;
+}
+
 export function normalizeProperty(raw: any): Property {
   if (!raw || typeof raw !== 'object') return raw;
 
@@ -124,9 +146,11 @@ export function normalizeProperty(raw: any): Property {
           overallRating: raw.owner.overallRating != null ? num(raw.owner.overallRating) : undefined,
         }
       : undefined,
-    // hasVirtualTour en BDD → virtualTour.available côté front
-    virtualTour: raw.virtualTour
-      ?? (raw.hasVirtualTour ? { available: true, panoramas: [] } : undefined),
+    // hasVirtualTour en BDD → virtualTour.available côté front.
+    // normalizeVirtualTour garantit panoramas[] + hotspots[] et ne marque
+    // « available » que s'il existe réellement au moins un panorama.
+    virtualTour: normalizeVirtualTour(raw.virtualTour)
+      ?? (raw.hasVirtualTour ? { available: false, panoramas: [] } : undefined),
   };
 }
 
