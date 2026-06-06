@@ -22,7 +22,7 @@ foodOrdersRouter.post('/', ...authClient, async (req: Request, res: Response, ne
     const validDeliveryTypes: FoodOrderDeliveryType[] = ['dine_in', 'takeaway', 'delivery'];
     const dt: FoodOrderDeliveryType = validDeliveryTypes.includes(deliveryType) ? deliveryType : 'dine_in';
 
-    const order = await foodOrdersService.createOrder((req as any).user.id, {
+    const order = await foodOrdersService.createOrder((req as any).user.sub, {
       propertyId, items, deliveryType: dt, deliveryAddress, specialInstructions,
     });
     res.status(201).json({ data: order });
@@ -34,7 +34,7 @@ foodOrdersRouter.post('/', ...authClient, async (req: Request, res: Response, ne
 foodOrdersRouter.get('/mine', ...authAny, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, propertyId } = req.query as Record<string, string>;
-    const orders = await foodOrdersService.getClientOrders((req as any).user.id, { status, propertyId });
+    const orders = await foodOrdersService.getClientOrders((req as any).user.sub, { status, propertyId });
     res.json({ data: orders });
   } catch (err) { next(err); }
 });
@@ -44,7 +44,7 @@ foodOrdersRouter.get('/mine', ...authAny, async (req: Request, res: Response, ne
 foodOrdersRouter.post('/:orderId/cancel', ...authClient, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { reason } = req.body;
-    const order = await foodOrdersService.cancelOrder(req.params.orderId, (req as any).user.id, reason);
+    const order = await foodOrdersService.cancelOrder(req.params.orderId, (req as any).user.sub, reason);
     res.json({ data: order });
   } catch (err) { next(err); }
 });
@@ -55,7 +55,7 @@ foodOrdersRouter.get('/restaurant/:propertyId', ...authRestaurateur, async (req:
   try {
     const { status } = req.query as Record<string, string>;
     const orders = await foodOrdersService.getRestaurantOrders(
-      (req as any).user.id, req.params.propertyId, { status },
+      (req as any).user.sub, req.params.propertyId, { status },
     );
     res.json({ data: orders });
   } catch (err) { next(err); }
@@ -72,7 +72,7 @@ foodOrdersRouter.patch('/:orderId/status', ...authRestaurateur, async (req: Requ
     }
     const order = await foodOrdersService.updateOrderStatus(
       req.params.orderId,
-      (req as any).user.id,
+      (req as any).user.sub,
       status as FoodOrderStatus,
       estimatedMinutes !== undefined ? Number(estimatedMinutes) : undefined,
     );
@@ -84,7 +84,7 @@ foodOrdersRouter.patch('/:orderId/status', ...authRestaurateur, async (req: Requ
 
 foodOrdersRouter.get('/:orderId', ...authAny, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const order = await foodOrdersService.getOrderById(req.params.orderId, (req as any).user.id);
+    const order = await foodOrdersService.getOrderById(req.params.orderId, (req as any).user.sub);
     res.json({ data: order });
   } catch (err) { next(err); }
 });
