@@ -125,12 +125,39 @@ export function menuFor(p: Property): MenuItem[] {
 }
 
 // ── Real estate: protected documents ─────────────────────────────────────
+
+const DIAG_META: Record<string, { label: string; icon: string }> = {
+  dpe:          { label: 'DPE (Performance Énergétique)',  icon: '🔋' },
+  carrez:       { label: 'Loi Carrez (superficie)',        icon: '📐' },
+  amiante:      { label: 'Diagnostic amiante',            icon: '⚠️' },
+  plomb:        { label: 'Diagnostic plomb',              icon: '🚨' },
+  electricite:  { label: 'Diagnostic électricité',        icon: '⚡' },
+  gaz:          { label: 'Diagnostic gaz',                icon: '🔥' },
+  termites:     { label: 'Diagnostic termites',           icon: '🐛' },
+  titreFoncier: { label: 'Titre foncier',                 icon: '📄' },
+  permisConstruct: { label: 'Permis de construire',       icon: '🏗' },
+};
+
 export function documentsFor(p: Property): RealEstateDocument[] {
   if (p.documents?.length) return p.documents;
-  const isLand = (p.name ?? '').toLowerCase().includes('terrain');
+
+  // Utiliser les diagnostics réels du bien s'ils existent
+  if (p.diagnostics && Object.keys(p.diagnostics).length > 0) {
+    return Object.entries(p.diagnostics)
+      .filter(([, available]) => available)
+      .map(([key], i) => ({
+        id: `d${i}`,
+        label: DIAG_META[key]?.label ?? key,
+        icon:  DIAG_META[key]?.icon  ?? '📋',
+        verified: true,
+      }));
+  }
+
+  // Valeurs par défaut
+  const isLand = (p.propertyType ?? p.type ?? '').includes('terrain');
   const docs: RealEstateDocument[] = [
-    { id: 'd1', label: 'Titre foncier', icon: '📜', verified: true },
-    { id: 'd2', label: 'ACD (Arrêté de concession)', icon: '🗂️', verified: true },
+    { id: 'd1', label: 'Titre foncier',              icon: '📜', verified: true  },
+    { id: 'd2', label: 'ACD (Arrêté de concession)', icon: '🗂️', verified: true  },
   ];
   if (!isLand) docs.push({ id: 'd3', label: 'Permis de construire', icon: '🏗️', verified: true });
   docs.push({ id: 'd4', label: 'Certificat de propriété', icon: '✅', verified: false });
@@ -216,22 +243,37 @@ export function cancellationFor(p: Property): { title: string; lines: string[] }
 
 /** Main characteristics — adapted per type, returned as icon/value/label cards. */
 export function characteristicsFor(p: Property): { icon: string; value: string; label: string }[] {
-  const k = kindOf(p.type);
+  const k = kindOf(p.propertyType ?? p.type);
   const out: { icon: string; value: string; label: string }[] = [];
+
   if (k === 'restaurant') {
     if (p.cuisineType) out.push({ icon: '🍲', value: p.cuisineType, label: 'Cuisine' });
     out.push({ icon: '👥', value: String(p.capacity ?? p.maxGuests ?? 40), label: 'Couverts' });
     out.push({ icon: '🕐', value: p.openingHours ?? '12h–23h', label: 'Horaires' });
     return out;
   }
+
   if (k === 'real_estate') {
-    if (p.area) out.push({ icon: '📐', value: `${p.area}`, label: 'm²' });
-    if (p.bedrooms > 0) out.push({ icon: '🛏', value: String(p.bedrooms), label: p.bedrooms > 1 ? 'Chambres' : 'Chambre' });
+    const surface = (p as any).surface ?? p.area;
+    if (surface) out.push({ icon: '📐', value: `${surface}`, label: 'm²' });
+    const piecesCount = p.rooms ?? p.bedrooms;
+    if (piecesCount && piecesCount > 0) out.push({ icon: '🏠', value: String(piecesCount), label: piecesCount > 1 ? 'Pièces' : 'Pièce' });
     if (p.bathrooms > 0) out.push({ icon: '🚿', value: String(p.bathrooms), label: 'SDB' });
+    if (p.floor != null) out.push({ icon: '🏢', value: p.floor === 0 ? 'RDC' : `${p.floor}e`, label: 'Étage' });
+    if (p.yearBuilt) out.push({ icon: '🏗', value: String(p.yearBuilt), label: 'Construit' });
     out.push({ icon: p.priceForSale != null ? '🏷️' : '🔑', value: p.priceForSale != null ? 'Vente' : 'Location', label: 'Type' });
     return out;
   }
-  // hébergement / hôtel
+
+  if (k === 'hotel') {
+    const roomTypesCount = p.roomTypes?.length ?? 0;
+    if (roomTypesCount > 0) out.push({ icon: '🛎', value: String(roomTypesCount), label: roomTypesCount > 1 ? 'Types de chambre' : 'Type de chambre' });
+    if (p.bathrooms > 0) out.push({ icon: '🚿', value: String(p.bathrooms), label: 'SDB / chambre' });
+    if (p.maxGuests > 0 || p.capacity) out.push({ icon: '👥', value: String(p.capacity ?? p.maxGuests), label: 'Capacité' });
+    return out;
+  }
+
+  // Résidence / hébergement
   if (p.bedrooms > 0) out.push({ icon: '🛏', value: String(p.bedrooms), label: p.bedrooms > 1 ? 'Chambres' : 'Chambre' });
   if (p.bathrooms > 0) out.push({ icon: '🚿', value: String(p.bathrooms), label: p.bathrooms > 1 ? 'Salles de bain' : 'Salle de bain' });
   if (p.maxGuests > 0) out.push({ icon: '👥', value: String(p.maxGuests), label: 'Voyageurs' });

@@ -62,11 +62,30 @@ export interface Property {
   openingHours?: string;         // restaurant
   capacity?: number;             // restaurant — seats
   menu?: MenuItem[];             // restaurant
-  documents?: RealEstateDocument[]; // real_estate
+  documents?: RealEstateDocument[]; // real_estate (legacy)
   subType?: 'rent' | 'buy_house' | 'buy_land'; // real_estate
   nearby?: NearbyPlace[];
   faq?: FaqItem[];
   cancellationPolicy?: string;
+
+  // Immobilier — champs spécifiques
+  floor?: number | null;            // étage (0 = rez-de-chaussée)
+  yearBuilt?: number | null;        // année de construction
+  availabilityDate?: string | null; // date de disponibilité ISO
+  diagnostics?: Record<string, boolean> | null;
+  rooms?: number | null;            // nombre de pièces
+
+  // Hôtel — types de chambres
+  roomTypes?: Array<{
+    id?: string;
+    label: string;
+    pricePerNight: number;
+    capacity: number;
+    beds?: number;
+    amenities?: string[];
+  }> | null;
+
+  propertyType?: string; // type brut backend (residence, hotel, immobilier_*, restaurant)
 }
 
 export interface SearchParams {

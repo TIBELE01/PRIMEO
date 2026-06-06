@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
   Switch, Image, ActivityIndicator, Modal,
@@ -11,9 +11,37 @@ import { availabilitiesApi } from '../../../services/api/endpoints/availabilitie
 import { uploadPropertyMedia } from '../../../services/mediaUpload';
 import { useProTheme } from '../../../hooks/useProTheme';
 
-const STEPS = ['Informations', 'Caractéristiques', 'Équipements', 'Médias', 'Tarification', 'Disponibilités', 'Règles'];
+// ── Parcours d'étapes par type de bien ───────────────────────────────────────
 
-// ── Form primitives ────────────────────────────────────────────────────────────
+const STEPS_RESIDENCE  = ['Informations', 'Caractéristiques', 'Équipements', 'Médias', 'Tarification', 'Disponibilités', 'Règles'] as const;
+const STEPS_HOTEL      = ['Informations', 'Caractéristiques', 'Types de chambre', 'Équipements', 'Médias', 'Disponibilités', 'Règles'] as const;
+const STEPS_IMMOBILIER = ['Informations', 'Caractéristiques', 'Équipements', 'Médias', 'Tarification', 'Documents'] as const;
+const STEPS_RESTAURANT = ['Informations', 'Configuration', 'Photos'] as const;
+
+function getSteps(type?: string): readonly string[] {
+  if (type === 'hotel')          return STEPS_HOTEL;
+  if (isRealEstate(type))        return STEPS_IMMOBILIER;
+  if (type === 'restaurant')     return STEPS_RESTAURANT;
+  return STEPS_RESIDENCE;
+}
+
+// ── Helpers de type ───────────────────────────────────────────────────────────
+
+function isLodging(type?: string)    { return type === 'residence' || type === 'hotel'; }
+function isRealEstate(type?: string) { return (type ?? '').startsWith('immobilier'); }
+function isRestaurant(type?: string) { return type === 'restaurant'; }
+
+// ── Types internes ────────────────────────────────────────────────────────────
+
+interface RoomType {
+  id: string;
+  label: string;
+  pricePerNight: number;
+  capacity: number;
+  beds: number;
+}
+
+// ── Composants UI réutilisables ───────────────────────────────────────────────
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
   return (
@@ -74,7 +102,7 @@ function ToggleRow({ label, value, onChange }: any) {
   );
 }
 
-// ── Property types — aligned with backend PropertyType enum ───────────────────
+// ── Types de biens — alignés avec le enum Prisma PropertyType ─────────────────
 
 const PROPERTY_TYPES = [
   'residence',
@@ -94,13 +122,9 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   restaurant:          'Restaurant',
 };
 
-function isLodging(type?: string)    { return type === 'residence' || type === 'hotel'; }
-function isRealEstate(type?: string) { return (type ?? '').startsWith('immobilier'); }
-function isRestaurant(type?: string) { return type === 'restaurant'; }
+// ── Étape 1 — Informations (universel) ───────────────────────────────────────
 
-// ── Step 1 — Informations ─────────────────────────────────────────────────────
-
-function Step1({ data, onChange, errors }: any) {
+function StepInformations({ data, onChange, errors }: any) {
   return (
     <View>
       <TextField
@@ -131,9 +155,17 @@ function Step1({ data, onChange, errors }: any) {
         label="Description" required multiline
         value={data.description}
         onChange={(v: string) => onChange('description', v)}
-        placeholder="Décrivez votre bien en détail (min. 10 caractères)..."
+        placeholder="Décrivez votre bien en détail (min. 10 caractères)…"
         error={errors.description}
       />
+      {isRestaurant(data.type) && (
+        <TextField
+          label="Type de cuisine"
+          value={data.cuisineType}
+          onChange={(v: string) => onChange('cuisineType', v)}
+          placeholder="Ex: Africaine, Ivoirienne, Française, Seafood…"
+        />
+      )}
       <TextField
         label="Ville" required
         value={data.city}
@@ -145,7 +177,7 @@ function Step1({ data, onChange, errors }: any) {
         label="Adresse complète" required
         value={data.street}
         onChange={(v: string) => onChange('street', v)}
-        placeholder="Rue, quartier, commune..."
+        placeholder="Rue, quartier, commune…"
         error={errors.street}
       />
       <TextField
@@ -158,15 +190,66 @@ function Step1({ data, onChange, errors }: any) {
   );
 }
 
-// ── Step 2 — Caractéristiques ─────────────────────────────────────────────────
+// ── Étape — Caractéristiques (adapté par type) ───────────────────────────────
 
-function Step2({ data, onChange }: any) {
+function StepCaracteristiques({ data, onChange }: any) {
+  const type: string = data.type ?? '';
+  const isTerrain = type === 'immobilier_terrain';
+
+  if (isRealEstate(type)) {
+    return (
+      <View>
+        {!isTerrain && <Counter label="Nombre de pièces" value={data.rooms ?? 3} onChange={(v: number) => onChange('rooms', v)} min={1} max={50} />}
+        {!isTerrain && <Counter label="Salles de bain"   value={data.bathrooms} onChange={(v: number) => onChange('bathrooms', v)} min={0} max={20} />}
+        <TextField
+          label="Surface (m²)" required keyboardType="numeric"
+          value={data.surface ? String(data.surface) : ''}
+          onChange={(v: string) => onChange('surface', Number(v) || undefined)}
+          placeholder="Ex: 120"
+        />
+        {!isTerrain && (
+          <TextField
+            label="Étage" keyboardType="numeric"
+            value={data.floor != null ? String(data.floor) : ''}
+            onChange={(v: string) => onChange('floor', v === '' ? undefined : Number(v))}
+            hint="0 = rez-de-chaussée"
+            placeholder="Ex: 3"
+          />
+        )}
+        {!isTerrain && (
+          <TextField
+            label="Année de construction" keyboardType="numeric"
+            value={data.yearBuilt ? String(data.yearBuilt) : ''}
+            onChange={(v: string) => onChange('yearBuilt', Number(v) || undefined)}
+            placeholder="Ex: 2005"
+          />
+        )}
+      </View>
+    );
+  }
+
+  if (type === 'hotel') {
+    return (
+      <View>
+        <Counter label="Capacité totale (personnes)" value={data.capacity ?? 50} onChange={(v: number) => onChange('capacity', v)} min={1} max={2000} />
+        <TextField
+          label="Surface totale (m²)" keyboardType="numeric"
+          value={data.surface ? String(data.surface) : ''}
+          onChange={(v: string) => onChange('surface', Number(v) || undefined)}
+          placeholder="Ex: 2500"
+          hint="Les types de chambres et leurs tarifs sont définis à l'étape suivante."
+        />
+      </View>
+    );
+  }
+
+  // Résidence (default)
   return (
     <View>
-      <Counter label="Chambres"          value={data.bedrooms}  onChange={(v: number) => onChange('bedrooms', v)}  min={0} max={20}  />
-      <Counter label="Lits"              value={data.beds}      onChange={(v: number) => onChange('beds', v)}      min={0} max={50}  />
-      <Counter label="Salles de bain"    value={data.bathrooms} onChange={(v: number) => onChange('bathrooms', v)} min={0} max={20}  />
-      <Counter label="Capacité max."     value={data.capacity}  onChange={(v: number) => onChange('capacity', v)}  min={1} max={500} />
+      <Counter label="Chambres"       value={data.bedrooms}  onChange={(v: number) => onChange('bedrooms', v)}  min={0} max={20}  />
+      <Counter label="Lits"           value={data.beds}      onChange={(v: number) => onChange('beds', v)}      min={0} max={50}  />
+      <Counter label="Salles de bain" value={data.bathrooms} onChange={(v: number) => onChange('bathrooms', v)} min={0} max={20}  />
+      <Counter label="Capacité max."  value={data.capacity}  onChange={(v: number) => onChange('capacity', v)}  min={1} max={500} />
       <TextField
         label="Surface (m²)" keyboardType="numeric"
         value={data.surface ? String(data.surface) : ''}
@@ -176,16 +259,154 @@ function Step2({ data, onChange }: any) {
       <TextField
         label="Étage" keyboardType="numeric"
         value={data.floor != null ? String(data.floor) : ''}
-        onChange={(v: string) => onChange('floor', Number(v) || 0)}
+        onChange={(v: string) => onChange('floor', v === '' ? undefined : Number(v))}
         placeholder="0 = rez-de-chaussée"
       />
     </View>
   );
 }
 
-// ── Step 3 — Équipements ──────────────────────────────────────────────────────
+// ── Étape — Types de chambres (hôtel uniquement) ─────────────────────────────
 
-const AMENITIES = [
+const ROOM_TYPE_PRESETS = ['Standard', 'Supérieure', 'Deluxe', 'Suite', 'Junior Suite', 'Chambre double', 'Chambre simple'];
+
+function StepTypesChambres({ data, onChange, errors }: any) {
+  const roomTypes: RoomType[] = data.roomTypes ?? [];
+  const [modalVisible, setModalVisible]   = useState(false);
+  const [editingIndex, setEditingIndex]   = useState<number | null>(null);
+  const [formLabel, setFormLabel]         = useState('Standard');
+  const [formPrice, setFormPrice]         = useState('');
+  const [formCapacity, setFormCapacity]   = useState(2);
+  const [formBeds, setFormBeds]           = useState(1);
+  const [formError, setFormError]         = useState('');
+
+  const openCreate = () => {
+    setEditingIndex(null);
+    setFormLabel('Standard');
+    setFormPrice('');
+    setFormCapacity(2);
+    setFormBeds(1);
+    setFormError('');
+    setModalVisible(true);
+  };
+
+  const openEdit = (index: number) => {
+    const rt = roomTypes[index];
+    setEditingIndex(index);
+    setFormLabel(rt.label);
+    setFormPrice(String(rt.pricePerNight));
+    setFormCapacity(rt.capacity);
+    setFormBeds(rt.beds);
+    setFormError('');
+    setModalVisible(true);
+  };
+
+  const handleSave = () => {
+    const price = parseInt(formPrice, 10);
+    if (!formLabel.trim())        { setFormError('Le nom du type est requis.'); return; }
+    if (isNaN(price) || price <= 0) { setFormError('Prix invalide.'); return; }
+    const entry: RoomType = {
+      id: editingIndex !== null ? roomTypes[editingIndex].id : `rt_${Date.now()}`,
+      label: formLabel.trim(),
+      pricePerNight: price,
+      capacity: formCapacity,
+      beds: formBeds,
+    };
+    if (editingIndex !== null) {
+      const updated = [...roomTypes];
+      updated[editingIndex] = entry;
+      onChange('roomTypes', updated);
+    } else {
+      onChange('roomTypes', [...roomTypes, entry]);
+    }
+    setModalVisible(false);
+  };
+
+  const handleDelete = (index: number) => {
+    onChange('roomTypes', roomTypes.filter((_: any, i: number) => i !== index));
+  };
+
+  return (
+    <View>
+      <Text style={styles.fieldHint}>
+        Définissez chaque type de chambre disponible dans votre établissement. Le tarif affiché
+        dans les recherches sera celui de la chambre la moins chère.
+      </Text>
+
+      {errors.roomTypes && <Text style={[styles.fieldError, { marginBottom: 12 }]}>{errors.roomTypes}</Text>}
+
+      {roomTypes.map((rt: RoomType, i: number) => (
+        <View key={rt.id} style={styles.roomTypeCard}>
+          <View style={styles.roomTypeInfo}>
+            <Text style={styles.roomTypeLabel}>{rt.label}</Text>
+            <Text style={styles.roomTypePrice}>{rt.pricePerNight.toLocaleString('fr-CI')} FCFA / nuit</Text>
+            <Text style={styles.roomTypeDetails}>{rt.capacity} pers. · {rt.beds} lit(s)</Text>
+          </View>
+          <View style={styles.roomTypeActions}>
+            <TouchableOpacity onPress={() => openEdit(i)} style={styles.iconBtn}>
+              <Text style={styles.editIcon}>✏️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(i)} style={styles.iconBtn}>
+              <Text style={styles.deleteIcon}>🗑</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+
+      <TouchableOpacity style={styles.addRoomTypeBtn} onPress={openCreate}>
+        <Text style={styles.addRoomTypeBtnText}>+ Ajouter un type de chambre</Text>
+      </TouchableOpacity>
+
+      {/* Modal d'édition */}
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.roomTypeModal}>
+            <Text style={styles.modalTitle}>
+              {editingIndex !== null ? 'Modifier le type' : 'Nouveau type de chambre'}
+            </Text>
+
+            <Text style={styles.fieldLabel}>Catégorie</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
+              {ROOM_TYPE_PRESETS.map(preset => (
+                <TouchableOpacity
+                  key={preset}
+                  style={[styles.chip, formLabel === preset && styles.chipActive, { marginRight: 8 }]}
+                  onPress={() => setFormLabel(preset)}
+                >
+                  <Text style={[styles.chipText, formLabel === preset && styles.chipTextActive]}>{preset}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {formError ? <Text style={[styles.fieldError, { marginBottom: 10 }]}>{formError}</Text> : null}
+
+            <TextField
+              label="Prix / nuit (FCFA)" required keyboardType="numeric"
+              value={formPrice}
+              onChange={setFormPrice}
+              placeholder="Ex: 50 000"
+            />
+            <Counter label="Capacité (personnes)" value={formCapacity} onChange={setFormCapacity} min={1} max={20} />
+            <Counter label="Nombre de lits"       value={formBeds}     onChange={setFormBeds}     min={1} max={10} />
+
+            <View style={[styles.navRow, { marginTop: 16 }]}>
+              <TouchableOpacity style={styles.prevBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.prevBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.nextBtn, { backgroundColor: '#1056E0' }]} onPress={handleSave}>
+                <Text style={styles.nextBtnText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+// ── Équipements adaptés par type ──────────────────────────────────────────────
+
+const AMENITIES_RESIDENCE = [
   { key: 'wifi',           label: '📶 WiFi' },
   { key: 'parking',        label: '🚗 Parking' },
   { key: 'pool',           label: '🏊 Piscine' },
@@ -204,18 +425,74 @@ const AMENITIES = [
   { key: 'spa',            label: '🧖 Spa / Hammam' },
 ];
 
-function Step3({ data, onChange }: any) {
-  const amenities: string[] = data.amenities ?? [];
+const AMENITIES_HOTEL = [
+  { key: 'wifi',           label: '📶 WiFi gratuit' },
+  { key: 'parking',        label: '🚗 Parking sécurisé' },
+  { key: 'pool',           label: '🏊 Piscine' },
+  { key: 'ac',             label: '❄️ Climatisation' },
+  { key: 'restaurant',     label: '🍽 Restaurant' },
+  { key: 'bar',            label: '🍸 Bar / Lounge' },
+  { key: 'spa',            label: '🧖 Spa / Hammam' },
+  { key: 'gym',            label: '🏋 Salle de sport' },
+  { key: 'roomService',    label: '🛎 Room service' },
+  { key: 'laundry',        label: '👔 Pressing / Blanchisserie' },
+  { key: 'elevator',       label: '🛗 Ascenseur' },
+  { key: 'security',       label: '🔒 Sécurité 24h/24' },
+  { key: 'generator',      label: '⚡ Groupe électrogène' },
+  { key: 'waterTank',      label: '💧 Réserve d\'eau' },
+  { key: 'conferenceRoom', label: '📊 Salle de conférence' },
+  { key: 'vipLounge',      label: '✨ Lounge VIP' },
+  { key: 'airport',        label: '✈️ Navette aéroport' },
+];
+
+const AMENITIES_IMMOBILIER = [
+  { key: 'parking',   label: '🚗 Parking / Garage' },
+  { key: 'garden',    label: '🌳 Jardin' },
+  { key: 'pool',      label: '🏊 Piscine' },
+  { key: 'ac',        label: '❄️ Climatisation' },
+  { key: 'kitchen',   label: '🍳 Cuisine équipée' },
+  { key: 'elevator',  label: '🛗 Ascenseur' },
+  { key: 'security',  label: '🔒 Résidence sécurisée' },
+  { key: 'generator', label: '⚡ Groupe électrogène' },
+  { key: 'waterTank', label: '💧 Château d\'eau' },
+  { key: 'fence',     label: '🏡 Clôture / Portail' },
+  { key: 'terrace',   label: '🌿 Terrasse' },
+  { key: 'storage',   label: '📦 Local de stockage' },
+];
+
+const AMENITIES_RESTAURANT = [
+  { key: 'wifi',        label: '📶 WiFi' },
+  { key: 'parking',     label: '🚗 Parking' },
+  { key: 'terrace',     label: '🌿 Terrasse extérieure' },
+  { key: 'ac',          label: '❄️ Climatisation' },
+  { key: 'liveMusic',   label: '🎵 Musique live' },
+  { key: 'privateRoom', label: '🚪 Salle privée' },
+  { key: 'delivery',    label: '🛵 Livraison à domicile' },
+  { key: 'takeout',     label: '📦 Commande à emporter' },
+  { key: 'halal',       label: '✅ Halal' },
+  { key: 'vegan',       label: '🌱 Options végétariennes' },
+];
+
+function getAmenities(type?: string) {
+  if (type === 'hotel')      return AMENITIES_HOTEL;
+  if (isRealEstate(type))    return AMENITIES_IMMOBILIER;
+  if (isRestaurant(type))    return AMENITIES_RESTAURANT;
+  return AMENITIES_RESIDENCE;
+}
+
+function StepEquipements({ data, onChange }: any) {
+  const amenities = getAmenities(data.type);
+  const selected: string[] = data.amenities ?? [];
   const toggle = (key: string) => {
-    const updated = amenities.includes(key)
-      ? amenities.filter((a: string) => a !== key)
-      : [...amenities, key];
+    const updated = selected.includes(key)
+      ? selected.filter((a: string) => a !== key)
+      : [...selected, key];
     onChange('amenities', updated);
   };
   return (
     <View style={styles.amenitiesGrid}>
-      {AMENITIES.map(a => {
-        const active = amenities.includes(a.key);
+      {amenities.map(a => {
+        const active = selected.includes(a.key);
         return (
           <TouchableOpacity
             key={a.key}
@@ -230,14 +507,15 @@ function Step3({ data, onChange }: any) {
   );
 }
 
-// ── Step 4 — Médias ───────────────────────────────────────────────────────────
+// ── Étape — Médias ────────────────────────────────────────────────────────────
 
-function Step4({ data, onChange, subscriptionPlan }: any) {
+function StepMedias({ data, onChange, subscriptionPlan }: any) {
   const images: { uri: string; name: string }[]     = data.images     ?? [];
   const tourImages: { uri: string; name: string }[] = data.tourImages ?? [];
   const videoFiles: { uri: string; name: string }[] = data.videoFiles ?? [];
+  const type: string = data.type ?? '';
 
-  const planNorm = (subscriptionPlan ?? '').toLowerCase();
+  const planNorm       = (subscriptionPlan ?? '').toLowerCase();
   const isBusinessPlus  = planNorm === 'business'   || planNorm === 'entreprise';
   const isEntreprisePlan = planNorm === 'entreprise';
 
@@ -245,7 +523,6 @@ function Step4({ data, onChange, subscriptionPlan }: any) {
     const result = await DocumentPicker.getDocumentAsync({ type: 'image/*', multiple: true, copyToCacheDirectory: true });
     if (result.canceled) return;
     const assets = result.assets ?? [];
-    // Sur web, expo-document-picker expose a.file (objet File natif du navigateur)
     const newImages = assets.slice(0, 20 - images.length).map((a: any) => ({ uri: a.uri, name: a.name ?? 'photo.jpg', file: a.file ?? undefined }));
     onChange('images', [...images, ...newImages]);
   };
@@ -290,68 +567,73 @@ function Step4({ data, onChange, subscriptionPlan }: any) {
         ))}
       </View>
 
-      {/* Vidéo de présentation — Business et Entreprise */}
-      <View style={[styles.infoBox, !isBusinessPlus && styles.infoBoxLocked]}>
-        <Text style={styles.infoBoxTitle}>
-          {isBusinessPlus ? '🎬 Vidéo de présentation' : '🔒 Vidéo — Business et Entreprise'}
-        </Text>
-        <Text style={styles.infoBoxText}>
-          {isBusinessPlus
-            ? `Ajoutez jusqu'à 3 vidéos de présentation (MP4, max 100 Mo). ${videoFiles.length}/3`
-            : 'Passez à la formule Business ou Entreprise pour ajouter des vidéos.'}
-        </Text>
-        {isBusinessPlus && (
-          <>
-            <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 3}>
-              <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/3)</Text>
-            </TouchableOpacity>
-            {videoFiles.map((v, i) => (
-              <View key={i} style={styles.videoRow}>
-                <Text style={styles.videoName} numberOfLines={1}>🎬 {v.name}</Text>
-                <TouchableOpacity onPress={() => removeVideo(i)}>
-                  <Text style={styles.removeImgText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </>
-        )}
-      </View>
+      {/* Vidéo — non proposée pour les restaurants */}
+      {!isRestaurant(type) && (
+        <View style={[styles.infoBox, !isBusinessPlus && styles.infoBoxLocked]}>
+          <Text style={styles.infoBoxTitle}>
+            {isBusinessPlus ? '🎬 Vidéo de présentation' : '🔒 Vidéo — Business et Entreprise'}
+          </Text>
+          <Text style={styles.infoBoxText}>
+            {isBusinessPlus
+              ? `Ajoutez jusqu'à 3 vidéos de présentation (MP4, max 100 Mo). ${videoFiles.length}/3`
+              : 'Passez à la formule Business ou Entreprise pour ajouter des vidéos.'}
+          </Text>
+          {isBusinessPlus && (
+            <>
+              <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 3}>
+                <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/3)</Text>
+              </TouchableOpacity>
+              {videoFiles.map((v, i) => (
+                <View key={i} style={styles.videoRow}>
+                  <Text style={styles.videoName} numberOfLines={1}>🎬 {v.name}</Text>
+                  <TouchableOpacity onPress={() => removeVideo(i)}>
+                    <Text style={styles.removeImgText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
+      )}
 
-      <View style={[styles.infoBox, !isEntreprisePlan && styles.infoBoxLocked]}>
-        <Text style={styles.infoBoxTitle}>
-          {isEntreprisePlan ? '🔭 Visite 3D disponible' : '🔒 Visite 3D — Entreprise uniquement'}
-        </Text>
-        <Text style={styles.infoBoxText}>
-          {isEntreprisePlan
-            ? 'Ajoutez des photos équirectangulaires (2:1, min 4000×2000 px) pour activer la visite 3D.'
-            : 'Passez à la formule Entreprise pour proposer une visite virtuelle 3D à vos clients.'}
-        </Text>
-        {isEntreprisePlan && (
-          <>
-            <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages}>
-              <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length})</Text>
-            </TouchableOpacity>
-            {tourImages.length > 0 && (
-              <View style={styles.imageGrid}>
-                {tourImages.map((img, i) => (
-                  <View key={i} style={styles.imageThumb}>
-                    <Image source={{ uri: img.uri }} style={styles.imagePrev} />
-                    <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeTourImage(i)}>
-                      <Text style={styles.removeImgText}>✕</Text>
-                    </TouchableOpacity>
-                    <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>360°</Text></View>
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-      </View>
+      {/* Visite 3D — uniquement hébergements */}
+      {(isLodging(type) || isRealEstate(type)) && (
+        <View style={[styles.infoBox, !isEntreprisePlan && styles.infoBoxLocked]}>
+          <Text style={styles.infoBoxTitle}>
+            {isEntreprisePlan ? '🔭 Visite 3D disponible' : '🔒 Visite 3D — Entreprise uniquement'}
+          </Text>
+          <Text style={styles.infoBoxText}>
+            {isEntreprisePlan
+              ? 'Ajoutez des photos équirectangulaires (2:1, min 4000×2000 px) pour activer la visite 3D.'
+              : 'Passez à la formule Entreprise pour proposer une visite virtuelle 3D à vos clients.'}
+          </Text>
+          {isEntreprisePlan && (
+            <>
+              <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages}>
+                <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length})</Text>
+              </TouchableOpacity>
+              {tourImages.length > 0 && (
+                <View style={styles.imageGrid}>
+                  {tourImages.map((img, i) => (
+                    <View key={i} style={styles.imageThumb}>
+                      <Image source={{ uri: img.uri }} style={styles.imagePrev} />
+                      <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeTourImage(i)}>
+                        <Text style={styles.removeImgText}>✕</Text>
+                      </TouchableOpacity>
+                      <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>360°</Text></View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }
 
-// ── Step 5 — Tarification ─────────────────────────────────────────────────────
+// ── Étape — Tarification (résidence + immobilier) ────────────────────────────
 
 const PAYMENT_OPTION_LABELS: Record<string, string> = {
   full_online:        '💳 Paiement en ligne 100%',
@@ -360,7 +642,7 @@ const PAYMENT_OPTION_LABELS: Record<string, string> = {
 };
 const ALL_PAYMENT_OPTIONS = ['full_online', 'ten_percent_online', 'zero_online'];
 
-function Step5({ data, onChange, errors }: any) {
+function StepTarification({ data, onChange, errors }: any) {
   const type: string = data.type ?? '';
   const paymentOptions: string[] = data.paymentOptions ?? [];
 
@@ -371,104 +653,101 @@ function Step5({ data, onChange, errors }: any) {
     onChange('paymentOptions', updated);
   };
 
-  if (isRestaurant(type)) {
+  if (isRealEstate(type)) {
     return (
-      <View style={styles.infoBox}>
-        <Text style={styles.infoBoxTitle}>🍽 Réservation de table — gratuite</Text>
-        <Text style={styles.infoBoxText}>
-          Les réservations de table sont gratuites. Aucun paiement requis de la part des clients.
-        </Text>
+      <View>
+        {type === 'immobilier_location' && (
+          <TextField
+            label="Loyer mensuel (FCFA)" required keyboardType="numeric"
+            value={data.pricePerMonth ? String(data.pricePerMonth) : ''}
+            onChange={(v: string) => onChange('pricePerMonth', Number(v) || undefined)}
+            placeholder="Ex: 250 000"
+            error={errors.pricePerMonth}
+          />
+        )}
+        {(type === 'immobilier_terrain' || type === 'immobilier_achat') && (
+          <TextField
+            label="Prix de vente (FCFA)" required keyboardType="numeric"
+            value={data.priceSale ? String(data.priceSale) : ''}
+            onChange={(v: string) => onChange('priceSale', Number(v) || undefined)}
+            placeholder="Ex: 15 000 000"
+            error={errors.priceSale}
+          />
+        )}
+        <View style={styles.infoBox}>
+          <Text style={styles.infoBoxTitle}>ℹ️ Paiement via expression d'intérêt</Text>
+          <Text style={styles.infoBoxText}>
+            Pour les biens immobiliers, les clients expriment leur intérêt directement via la messagerie.
+            Aucun paiement en ligne n'est requis.
+          </Text>
+        </View>
       </View>
     );
   }
 
+  // Résidence
   return (
     <View>
-      {isLodging(type) && (
-        <TextField
-          label="Prix par nuit (FCFA)" required keyboardType="numeric"
-          value={data.pricePerNight ? String(data.pricePerNight) : ''}
-          onChange={(v: string) => onChange('pricePerNight', Number(v) || undefined)}
-          placeholder="Ex: 25 000"
-          error={errors.pricePerNight}
-        />
-      )}
-      {type === 'immobilier_location' && (
-        <TextField
-          label="Prix par mois (FCFA)" required keyboardType="numeric"
-          value={data.pricePerMonth ? String(data.pricePerMonth) : ''}
-          onChange={(v: string) => onChange('pricePerMonth', Number(v) || undefined)}
-          placeholder="Ex: 250 000"
-          error={errors.pricePerMonth}
-        />
-      )}
-      {(type === 'immobilier_terrain' || type === 'immobilier_achat') && (
-        <TextField
-          label="Prix de vente (FCFA)" required keyboardType="numeric"
-          value={data.priceSale ? String(data.priceSale) : ''}
-          onChange={(v: string) => onChange('priceSale', Number(v) || undefined)}
-          placeholder="Ex: 15 000 000"
-          error={errors.priceSale}
-        />
-      )}
+      <TextField
+        label="Prix par nuit (FCFA)" required keyboardType="numeric"
+        value={data.pricePerNight ? String(data.pricePerNight) : ''}
+        onChange={(v: string) => onChange('pricePerNight', Number(v) || undefined)}
+        placeholder="Ex: 25 000"
+        error={errors.pricePerNight}
+      />
+      <TextField label="Réduction hebdomadaire (%)" keyboardType="numeric"
+        value={data.weeklyDiscount ? String(data.weeklyDiscount) : ''}
+        onChange={(v: string) => onChange('weeklyDiscount', Number(v) || undefined)}
+        placeholder="Ex: 10"
+      />
+      <TextField label="Réduction mensuelle (%)" keyboardType="numeric"
+        value={data.monthlyDiscount ? String(data.monthlyDiscount) : ''}
+        onChange={(v: string) => onChange('monthlyDiscount', Number(v) || undefined)}
+        placeholder="Ex: 20"
+      />
+      <TextField label="Frais de ménage (FCFA)" keyboardType="numeric"
+        value={data.cleaningFee ? String(data.cleaningFee) : ''}
+        onChange={(v: string) => onChange('cleaningFee', Number(v) || undefined)}
+        placeholder="Ex: 5 000"
+      />
+      <TextField label="Caution / Dépôt (FCFA)" keyboardType="numeric"
+        value={data.securityDeposit ? String(data.securityDeposit) : ''}
+        onChange={(v: string) => onChange('securityDeposit', Number(v) || undefined)}
+        placeholder="Ex: 50 000"
+      />
 
-      {isLodging(type) && (
-        <>
-          <TextField label="Réduction hebdomadaire (%)" keyboardType="numeric"
-            value={data.weeklyDiscount ? String(data.weeklyDiscount) : ''}
-            onChange={(v: string) => onChange('weeklyDiscount', Number(v) || undefined)}
-            placeholder="Ex: 10"
-          />
-          <TextField label="Réduction mensuelle (%)" keyboardType="numeric"
-            value={data.monthlyDiscount ? String(data.monthlyDiscount) : ''}
-            onChange={(v: string) => onChange('monthlyDiscount', Number(v) || undefined)}
-            placeholder="Ex: 20"
-          />
-          <TextField label="Frais de ménage (FCFA)" keyboardType="numeric"
-            value={data.cleaningFee ? String(data.cleaningFee) : ''}
-            onChange={(v: string) => onChange('cleaningFee', Number(v) || undefined)}
-            placeholder="Ex: 5 000"
-          />
-          <TextField label="Caution / Dépôt (FCFA)" keyboardType="numeric"
-            value={data.securityDeposit ? String(data.securityDeposit) : ''}
-            onChange={(v: string) => onChange('securityDeposit', Number(v) || undefined)}
-            placeholder="Ex: 50 000"
-          />
-
-          <View style={styles.field}>
-            <FieldLabel label="Options de paiement acceptées" required />
-            <Text style={styles.fieldHint}>Sélectionnez au moins une option.</Text>
-            {ALL_PAYMENT_OPTIONS.map(key => {
-              const active = paymentOptions.includes(key);
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
-                  onPress={() => togglePayment(key)}
-                >
-                  <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
-                    {active && <Text style={styles.paymentCheckmark}>✓</Text>}
-                  </View>
-                  <Text style={[styles.paymentOptionText, active && styles.paymentOptionTextActive]}>
-                    {PAYMENT_OPTION_LABELS[key]}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-            {errors.paymentOptions && <Text style={styles.fieldError}>{errors.paymentOptions}</Text>}
-          </View>
-        </>
-      )}
+      <View style={styles.field}>
+        <FieldLabel label="Options de paiement acceptées" required />
+        <Text style={styles.fieldHint}>Sélectionnez au moins une option.</Text>
+        {ALL_PAYMENT_OPTIONS.map(key => {
+          const active = paymentOptions.includes(key);
+          return (
+            <TouchableOpacity
+              key={key}
+              style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
+              onPress={() => togglePayment(key)}
+            >
+              <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
+                {active && <Text style={styles.paymentCheckmark}>✓</Text>}
+              </View>
+              <Text style={[styles.paymentOptionText, active && styles.paymentOptionTextActive]}>
+                {PAYMENT_OPTION_LABELS[key]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+        {errors.paymentOptions && <Text style={styles.fieldError}>{errors.paymentOptions}</Text>}
+      </View>
     </View>
   );
 }
 
-// ── Step 6 — Disponibilités ───────────────────────────────────────────────────
+// ── Étape — Disponibilités (hébergements uniquement) ─────────────────────────
 
 function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; endDate: string; onSelect: (s: string, e: string) => void }) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [picking, setPicking] = useState<'start' | 'end'>('start');
+  const [picking, setPicking]   = useState<'start' | 'end'>('start');
 
   const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const DAY_LABELS  = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -485,7 +764,7 @@ function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; e
   const isInRange = (day: number) => { const ds = toStr(viewDate.getFullYear(), viewDate.getMonth(), day); return ds >= startDate && ds <= endDate; };
   const isStart   = (day: number) => toStr(viewDate.getFullYear(), viewDate.getMonth(), day) === startDate;
   const isEnd     = (day: number) => toStr(viewDate.getFullYear(), viewDate.getMonth(), day) === endDate;
-  const cells     = [...Array(firstDow).fill(null), ...Array(daysInMonth).fill(0).map((_, i) => i + 1)];
+  const cells     = [...Array(firstDow).fill(null), ...Array(daysInMonth).fill(0).map((_: any, i: number) => i + 1)];
 
   return (
     <View style={styles.calContainer}>
@@ -502,11 +781,11 @@ function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; e
         {DAY_LABELS.map(d => <Text key={d} style={styles.calDayLabel}>{d}</Text>)}
       </View>
       <View style={styles.calGrid}>
-        {cells.map((day, i) => {
+        {cells.map((day: number | null, i: number) => {
           if (!day) return <View key={`e${i}`} style={styles.calCell} />;
           const inRange = isInRange(day);
           const start = isStart(day);
-          const end = isEnd(day);
+          const end   = isEnd(day);
           return (
             <TouchableOpacity
               key={i}
@@ -527,7 +806,7 @@ function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; e
   );
 }
 
-function Step6({ data, onChange }: any) {
+function StepDisponibilites({ data, onChange }: any) {
   const today       = new Date().toISOString().split('T')[0];
   const threeMonths = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
   return (
@@ -546,7 +825,7 @@ function Step6({ data, onChange }: any) {
   );
 }
 
-// ── Step 7 — Règles ───────────────────────────────────────────────────────────
+// ── Étape — Règles (hébergements uniquement) ──────────────────────────────────
 
 const CHECK_TIMES = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
 
@@ -578,7 +857,7 @@ function TimeSelector({ label, value, onChange }: any) {
   );
 }
 
-function Step7({ data, onChange }: any) {
+function StepRegles({ data, onChange }: any) {
   return (
     <View>
       <TimeSelector label="Heure d'arrivée (check-in)"  value={data.checkInTime}  onChange={(v: string) => onChange('checkInTime', v)}  />
@@ -595,13 +874,108 @@ function Step7({ data, onChange }: any) {
         label="Règles supplémentaires" multiline
         value={data.houseRules}
         onChange={(v: string) => onChange('houseRules', v)}
-        placeholder="Ex: Pas de musique après 22h..."
+        placeholder="Ex: Pas de musique après 22h…"
       />
     </View>
   );
 }
 
-// ── Feedback modal — works on web and native ──────────────────────────────────
+// ── Étape — Documents & Diagnostics (immobilier uniquement) ──────────────────
+
+const DIAGNOSTICS_LIST = [
+  { key: 'dpe',         label: '🔋 DPE (Diagnostic de Performance Énergétique)' },
+  { key: 'carrez',      label: '📐 Loi Carrez (superficie certifiée)' },
+  { key: 'amiante',     label: '⚠️ Diagnostic amiante' },
+  { key: 'plomb',       label: '🚨 Diagnostic plomb (avant 1949)' },
+  { key: 'electricite', label: '⚡ Diagnostic électricité (+15 ans)' },
+  { key: 'gaz',         label: '🔥 Diagnostic gaz (+15 ans)' },
+  { key: 'termites',    label: '🐛 Diagnostic termites' },
+  { key: 'titreFoncier',label: '📄 Titre foncier disponible' },
+  { key: 'permisConstruct', label: '🏗 Permis de construire' },
+];
+
+function StepDocuments({ data, onChange }: any) {
+  const diagnostics: Record<string, boolean> = data.diagnostics ?? {};
+
+  const toggleDiag = (key: string) => {
+    onChange('diagnostics', { ...diagnostics, [key]: !diagnostics[key] });
+  };
+
+  return (
+    <View>
+      <View style={styles.field}>
+        <FieldLabel label="Date de disponibilité" />
+        <Text style={styles.fieldHint}>
+          Date à partir de laquelle le bien est disponible pour visite ou occupation (format : AAAA-MM-JJ).
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={data.availabilityDate ?? ''}
+          onChangeText={(v: string) => onChange('availabilityDate', v)}
+          placeholder="Ex: 2026-09-01"
+          keyboardType="numeric"
+          placeholderTextColor="#9CA3AF"
+        />
+      </View>
+
+      <View style={styles.field}>
+        <FieldLabel label="Documents & Diagnostics disponibles" />
+        <Text style={styles.fieldHint}>Cochez les documents que vous êtes en mesure de fournir.</Text>
+        {DIAGNOSTICS_LIST.map(d => {
+          const active = !!diagnostics[d.key];
+          return (
+            <TouchableOpacity
+              key={d.key}
+              style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
+              onPress={() => toggleDiag(d.key)}
+            >
+              <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
+                {active && <Text style={styles.paymentCheckmark}>✓</Text>}
+              </View>
+              <Text style={[styles.paymentOptionText, active && styles.paymentOptionTextActive]}>
+                {d.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ── Étape — Configuration restaurant ─────────────────────────────────────────
+
+function StepConfigRestaurant({ data, onChange }: any) {
+  return (
+    <View>
+      <Counter
+        label="Nombre de couverts (capacité)"
+        value={data.capacity ?? 20}
+        onChange={(v: number) => onChange('capacity', v)}
+        min={1} max={1000}
+      />
+
+      <View style={styles.infoBox}>
+        <Text style={styles.infoBoxTitle}>⏰ Gestion des créneaux horaires</Text>
+        <Text style={styles.infoBoxText}>
+          Définissez vos créneaux d'ouverture et la capacité par créneau depuis l&apos;onglet
+          &ldquo;Créneaux&rdquo; de votre tableau de bord, une fois votre établissement validé.
+        </Text>
+      </View>
+
+      <View style={styles.infoBox}>
+        <Text style={styles.infoBoxTitle}>🍽 Gestion du menu</Text>
+        <Text style={styles.infoBoxText}>
+          Ajoutez vos entrées, plats, desserts et boissons depuis l&apos;onglet
+          &ldquo;Menu&rdquo; de votre tableau de bord. Chaque article peut avoir
+          une description, un prix et des informations sur les allergènes.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Modal de feedback ─────────────────────────────────────────────────────────
 
 interface FeedbackState {
   visible: boolean;
@@ -634,82 +1008,96 @@ function FeedbackModal({ state, onClose }: { state: FeedbackState; onClose: () =
   );
 }
 
-// ── Validation ────────────────────────────────────────────────────────────────
+// ── Validation par étape ──────────────────────────────────────────────────────
 
-function validateStep(step: number, data: Record<string, any>): Record<string, string> {
+function validateStep(stepName: string, data: Record<string, any>): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (step === 0) {
-    if (!data.name?.trim() || data.name.trim().length < 3) errors.name = 'Nom requis (min 3 caractères)';
-    if (!data.type)                                        errors.type = 'Type de bien requis';
-    if (!data.description?.trim() || data.description.trim().length < 10) errors.description = 'Description requise (min 10 caractères)';
-    if (!data.city?.trim())                                errors.city   = 'Ville requise';
-    if (!data.street?.trim())                              errors.street = 'Adresse requise';
+  const type: string = data.type ?? '';
+
+  if (stepName === 'Informations') {
+    if (!data.name?.trim() || data.name.trim().length < 3)
+      errors.name = 'Nom requis (min 3 caractères)';
+    if (!data.type)
+      errors.type = 'Type de bien requis';
+    if (!data.description?.trim() || data.description.trim().length < 10)
+      errors.description = 'Description requise (min 10 caractères)';
+    if (!data.city?.trim())
+      errors.city = 'Ville requise';
+    if (!data.street?.trim())
+      errors.street = 'Adresse requise';
   }
-  if (step === 4) {
-    const type: string = data.type ?? '';
-    if (isLodging(type) && (!data.pricePerNight || data.pricePerNight <= 0)) {
+
+  if (stepName === 'Types de chambre') {
+    if (!data.roomTypes || (data.roomTypes as RoomType[]).length === 0)
+      errors.roomTypes = 'Ajoutez au moins un type de chambre pour continuer.';
+  }
+
+  if (stepName === 'Tarification') {
+    if (type === 'residence' && (!data.pricePerNight || data.pricePerNight <= 0))
       errors.pricePerNight = 'Prix par nuit requis';
-    }
-    if (type === 'immobilier_location' && (!data.pricePerMonth || data.pricePerMonth <= 0)) {
-      errors.pricePerMonth = 'Prix par mois requis';
-    }
-    if ((type === 'immobilier_terrain' || type === 'immobilier_achat') && (!data.priceSale || data.priceSale <= 0)) {
+    if (type === 'immobilier_location' && (!data.pricePerMonth || data.pricePerMonth <= 0))
+      errors.pricePerMonth = 'Loyer mensuel requis';
+    if ((type === 'immobilier_terrain' || type === 'immobilier_achat') && (!data.priceSale || data.priceSale <= 0))
       errors.priceSale = 'Prix de vente requis';
-    }
-    if (isLodging(type) && (!data.paymentOptions || (data.paymentOptions as string[]).length === 0)) {
+    if (type === 'residence' && (!data.paymentOptions || (data.paymentOptions as string[]).length === 0))
       errors.paymentOptions = 'Sélectionnez au moins une option de paiement';
-    }
   }
+
   return errors;
 }
 
-// ── Main wizard ───────────────────────────────────────────────────────────────
+// ── Wizard principal ──────────────────────────────────────────────────────────
 
 export default function AddPropertyScreen({ navigation, route }: any) {
-  const theme = useProTheme();
+  const theme  = useProTheme();
   const editId: string | undefined = route?.params?.propertyId;
   const isEdit = !!editId;
+
   const [isLoadingProperty, setIsLoadingProperty] = useState(isEdit);
-  const [step, setStep] = useState(0);
+  const [step, setStep]     = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({
-    capacity: 2,
-    bedrooms: 1,
-    beds: 1,
-    bathrooms: 1,
-    minStay: 1,
-    maxStay: 30,
-    checkInTime: '14:00',
-    checkOutTime: '11:00',
-    country: "Côte d'Ivoire",
-    amenities: [],
-    images: [],
-    tourImages: [],
+    capacity:       2,
+    bedrooms:       1,
+    beds:           1,
+    bathrooms:      1,
+    minStay:        1,
+    maxStay:        30,
+    checkInTime:    '14:00',
+    checkOutTime:   '11:00',
+    country:        "Côte d'Ivoire",
+    amenities:      [],
+    images:         [],
+    tourImages:     [],
+    roomTypes:      [],
     paymentOptions: ['full_online'],
     instantBooking: true,
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors]         = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackState>({
+  const [feedback, setFeedback]     = useState<FeedbackState>({
     visible: false, success: true, title: '', message: '',
   });
+
+  // Étapes calculées depuis le type de bien sélectionné
+  const currentSteps = useMemo(() => getSteps(formData.type), [formData.type]);
 
   const onChange = useCallback((key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // Load subscription plan to gate 3D tour
+  // Chargement du plan d'abonnement pour les médias
   useEffect(() => {
     subscriptionsApi.getMySubscription()
       .then(res => {
-        const sub = res.data?.data ?? res.data;
+        const sub  = res.data?.data ?? res.data;
         const plan = sub?.planType ?? sub?.plan;
         if (plan) setFormData(prev => ({ ...prev, subscriptionPlan: plan }));
       })
       .catch(() => {});
   }, []);
 
-  // Auto-set paymentOptions for property types that don't allow online payment
+  // Ajustement des options de paiement selon le type
   useEffect(() => {
     const type = formData.type;
     if (isRestaurant(type) || isRealEstate(type)) {
@@ -717,7 +1105,12 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     }
   }, [formData.type]);
 
-  // Edit mode — load the existing property and prefill the wizard.
+  // Recalage de l'index si le type change et rend l'étape actuelle inexistante
+  useEffect(() => {
+    setStep(prev => Math.min(prev, currentSteps.length - 1));
+  }, [currentSteps]);
+
+  // Chargement de la propriété existante en mode édition
   useEffect(() => {
     if (!editId) return;
     setIsLoadingProperty(true);
@@ -729,47 +1122,50 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         const media = p.media ?? p.images ?? [];
         setFormData(prev => ({
           ...prev,
-          name: p.title,
-          type: p.propertyType,
-          description: p.description,
-          city: p.city,
-          street: p.street,
-          bedrooms: p.bedrooms ?? prev.bedrooms,
-          beds: p.beds ?? prev.beds,
-          bathrooms: p.bathrooms ?? prev.bathrooms,
-          capacity: p.capacity ?? prev.capacity,
-          surface: p.surface ?? prev.surface,
-          amenities: p.amenities ?? [],
+          name:           p.title,
+          type:           p.propertyType,
+          description:    p.description,
+          city:           p.city,
+          street:         p.street,
+          cuisineType:    p.cuisineType,
+          bedrooms:       p.bedrooms      ?? prev.bedrooms,
+          beds:           p.beds          ?? prev.beds,
+          bathrooms:      p.bathrooms     ?? prev.bathrooms,
+          capacity:       p.capacity      ?? prev.capacity,
+          surface:        p.surface       ?? prev.surface,
+          rooms:          p.rooms         ?? prev.rooms,
+          floor:          p.floor         ?? rules.floor,
+          yearBuilt:      p.yearBuilt,
+          availabilityDate: p.availabilityDate ? String(p.availabilityDate).split('T')[0] : undefined,
+          diagnostics:    p.diagnostics   ?? {},
+          roomTypes:      p.roomTypes     ?? [],
+          amenities:      p.amenities     ?? [],
           paymentOptions: p.paymentOptions?.length ? p.paymentOptions : prev.paymentOptions,
-          pricePerNight: p.pricePerNight ?? undefined,
-          pricePerMonth: p.pricePerMonth ?? undefined,
-          priceSale: p.priceSale ?? undefined,
-          // Existing media are flagged so the submit step skips re-uploading them.
+          pricePerNight:  p.pricePerNight ?? undefined,
+          pricePerMonth:  p.pricePerMonth ?? undefined,
+          priceSale:      p.priceSale     ?? undefined,
           images: media
             .filter((m: any) => (m.mediaType ?? 'photo') !== 'virtual_tour_360')
             .map((m: any) => ({ uri: m.url, url: m.url, id: m.id, name: 'photo.jpg', existing: true })),
           tourImages: media
             .filter((m: any) => m.mediaType === 'virtual_tour_360')
             .map((m: any) => ({ uri: m.url, url: m.url, id: m.id, name: 'tour.jpg', existing: true })),
-          checkInTime: rules.checkInTime ?? prev.checkInTime,
-          checkOutTime: rules.checkOutTime ?? prev.checkOutTime,
-          minStay: rules.minStay ?? prev.minStay,
-          maxStay: rules.maxStay ?? prev.maxStay,
-          petsAllowed: rules.petsAllowed ?? false,
+          checkInTime:    rules.checkInTime    ?? prev.checkInTime,
+          checkOutTime:   rules.checkOutTime   ?? prev.checkOutTime,
+          minStay:        rules.minStay        ?? prev.minStay,
+          maxStay:        rules.maxStay        ?? prev.maxStay,
+          petsAllowed:    rules.petsAllowed    ?? false,
           smokingAllowed: rules.smokingAllowed ?? false,
           partiesAllowed: rules.partiesAllowed ?? false,
           instantBooking: rules.instantBooking ?? prev.instantBooking,
-          houseRules: rules.houseRules,
+          houseRules:     rules.houseRules,
           weeklyDiscount: rules.weeklyDiscount,
-          monthlyDiscount: rules.monthlyDiscount,
-          cleaningFee: rules.cleaningFee,
-          securityDeposit: rules.securityDeposit,
-          floor: rules.floor,
+          monthlyDiscount:rules.monthlyDiscount,
+          cleaningFee:    rules.cleaningFee,
+          securityDeposit:rules.securityDeposit,
         }));
       })
-      .catch(() => {
-        showFeedback(false, 'Erreur', "Impossible de charger l'annonce à modifier.");
-      })
+      .catch(() => showFeedback(false, 'Erreur', "Impossible de charger l'annonce à modifier."))
       .finally(() => setIsLoadingProperty(false));
   }, [editId]);
 
@@ -778,54 +1174,86 @@ export default function AddPropertyScreen({ navigation, route }: any) {
   };
 
   const handleNext = async () => {
-    const errs = validateStep(step, formData);
+    const stepName = currentSteps[step] ?? '';
+    const errs = validateStep(stepName, formData);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
 
-    if (step < STEPS.length - 1) {
+    if (step < currentSteps.length - 1) {
       setStep(s => s + 1);
       return;
     }
 
-    // ── Final submission ──────────────────────────────────────────────────────
+    // ── Soumission finale ─────────────────────────────────────────────────────
     setIsSubmitting(true);
     try {
       const type: string = formData.type ?? 'residence';
 
       const payload: Record<string, any> = {
-        title: formData.name,
-        propertyType: type,
-        description: formData.description,
-        city: formData.city,
-        street: formData.street,
-        bedrooms: formData.bedrooms,
-        beds: formData.beds,
-        bathrooms: formData.bathrooms,
-        capacity: formData.capacity,
-        surface: formData.surface,
-        amenities: formData.amenities ?? [],
-        paymentOptions: (formData.paymentOptions as string[]) ?? ['full_online'],
-        rules: {
-          checkInTime: formData.checkInTime,
-          checkOutTime: formData.checkOutTime,
-          minStay: formData.minStay,
-          maxStay: formData.maxStay,
-          petsAllowed: formData.petsAllowed ?? false,
-          smokingAllowed: formData.smokingAllowed ?? false,
-          partiesAllowed: formData.partiesAllowed ?? false,
-          instantBooking: formData.instantBooking ?? false,
-          houseRules: formData.houseRules,
-          weeklyDiscount: formData.weeklyDiscount,
-          monthlyDiscount: formData.monthlyDiscount,
-          cleaningFee: formData.cleaningFee,
-          securityDeposit: formData.securityDeposit,
-          floor: formData.floor,
-        },
+        title:         formData.name,
+        propertyType:  type,
+        description:   formData.description,
+        city:          formData.city,
+        street:        formData.street,
+        amenities:     formData.amenities ?? [],
+        paymentOptions:(formData.paymentOptions as string[]) ?? ['zero_online'],
+        capacity:      formData.capacity,
+        surface:       formData.surface,
+        cuisineType:   formData.cuisineType,
       };
 
-      if (isLodging(type))                                     payload.pricePerNight = formData.pricePerNight;
-      else if (type === 'immobilier_location')                 payload.pricePerMonth = formData.pricePerMonth;
-      else if (type === 'immobilier_terrain' || type === 'immobilier_achat') payload.priceSale = formData.priceSale;
+      // Caractéristiques selon le type
+      if (type === 'residence') {
+        Object.assign(payload, {
+          bedrooms: formData.bedrooms,
+          beds:     formData.beds,
+          bathrooms:formData.bathrooms,
+          floor:    formData.floor,
+          pricePerNight: formData.pricePerNight,
+          rules: {
+            checkInTime:    formData.checkInTime,
+            checkOutTime:   formData.checkOutTime,
+            minStay:        formData.minStay,
+            maxStay:        formData.maxStay,
+            petsAllowed:    formData.petsAllowed    ?? false,
+            smokingAllowed: formData.smokingAllowed ?? false,
+            partiesAllowed: formData.partiesAllowed ?? false,
+            instantBooking: formData.instantBooking ?? false,
+            houseRules:     formData.houseRules,
+            weeklyDiscount: formData.weeklyDiscount,
+            monthlyDiscount:formData.monthlyDiscount,
+            cleaningFee:    formData.cleaningFee,
+            securityDeposit:formData.securityDeposit,
+          },
+        });
+      } else if (type === 'hotel') {
+        const roomTypes: RoomType[] = formData.roomTypes ?? [];
+        // Dériver le pricePerNight depuis le type de chambre le moins cher
+        const minPrice = roomTypes.length ? Math.min(...roomTypes.map((rt: RoomType) => rt.pricePerNight)) : undefined;
+        Object.assign(payload, {
+          bathrooms: formData.bathrooms,
+          roomTypes,
+          pricePerNight: minPrice,
+          rules: {
+            checkInTime:    formData.checkInTime,
+            checkOutTime:   formData.checkOutTime,
+            petsAllowed:    formData.petsAllowed    ?? false,
+            smokingAllowed: formData.smokingAllowed ?? false,
+          },
+        });
+      } else if (isRealEstate(type)) {
+        Object.assign(payload, {
+          rooms:           formData.rooms,
+          bathrooms:       formData.bathrooms,
+          floor:           formData.floor,
+          yearBuilt:       formData.yearBuilt,
+          availabilityDate:formData.availabilityDate,
+          diagnostics:     formData.diagnostics ?? {},
+          pricePerMonth:   type === 'immobilier_location' ? formData.pricePerMonth : undefined,
+          priceSale:       (type === 'immobilier_achat' || type === 'immobilier_terrain') ? formData.priceSale : undefined,
+        });
+      }
+      // Restaurant : on envoie juste les champs de base (menu géré séparément)
 
       let propId: string;
       if (isEdit && editId) {
@@ -839,29 +1267,26 @@ export default function AddPropertyScreen({ navigation, route }: any) {
 
       if (!propId) throw new Error('Identifiant de propriété non reçu du serveur');
 
-      // Set initial availability window (non-blocking)
-      if (!isRealEstate(type) && !isRestaurant(type) && formData.availableFrom && formData.availableTo) {
+      // Plage de disponibilité initiale (résidence et hôtel uniquement)
+      if (isLodging(type) && formData.availableFrom && formData.availableTo) {
         availabilitiesApi.setAvailability(propId, {
           startDate: formData.availableFrom,
-          endDate: formData.availableTo,
+          endDate:   formData.availableTo,
           isAvailable: true,
         }).catch(() => {});
       }
 
-      // Upload uniquement les nouveaux médias (les existants sont déjà persistés)
-      const allImages: any[]     = formData.images     ?? [];
-      const allTourImages: any[] = formData.tourImages ?? [];
-      const allVideoFiles: any[] = formData.videoFiles ?? [];
-      const images     = allImages.filter(img => !img.existing);
-      const tourImages = allTourImages.filter(img => !img.existing);
-      const videoFiles = allVideoFiles.filter(v => !v.existing);
+      // Upload des nouveaux médias
+      const allImages     = (formData.images     ?? []).filter((img: any) => !img.existing);
+      const allTourImages = (formData.tourImages ?? []).filter((img: any) => !img.existing);
+      const allVideoFiles = (formData.videoFiles ?? []).filter((v: any) => !v.existing);
       let mediaResult = { uploaded: 0, failed: 0 };
 
-      if (images.length > 0 || tourImages.length > 0 || videoFiles.length > 0) {
-        mediaResult = await uploadPropertyMedia(propId, images, {
-          tourImages,
-          videoFiles,
-          onProgress: (done, total) => setUploadStatus(`Envoi des médias… ${done}/${total}`),
+      if (allImages.length > 0 || allTourImages.length > 0 || allVideoFiles.length > 0) {
+        mediaResult = await uploadPropertyMedia(propId, allImages, {
+          tourImages: allTourImages,
+          videoFiles: allVideoFiles,
+          onProgress: (done: number, total: number) => setUploadStatus(`Envoi des médias… ${done}/${total}`),
         });
       }
       setUploadStatus(null);
@@ -881,7 +1306,6 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     } catch (e: any) {
       setUploadStatus(null);
       const status: number = e?.response?.status ?? 0;
-      // Limite d'annonces atteinte → proposer une mise à niveau
       if (status === 403) {
         showFeedback(
           false,
@@ -900,19 +1324,24 @@ export default function AddPropertyScreen({ navigation, route }: any) {
   };
 
   const renderStep = () => {
-    switch (step) {
-      case 0: return <Step1 data={formData} onChange={onChange} errors={errors} />;
-      case 1: return <Step2 data={formData} onChange={onChange} />;
-      case 2: return <Step3 data={formData} onChange={onChange} />;
-      case 3: return <Step4 data={formData} onChange={onChange} subscriptionPlan={formData.subscriptionPlan} />;
-      case 4: return <Step5 data={formData} onChange={onChange} errors={errors} />;
-      case 5: return <Step6 data={formData} onChange={onChange} />;
-      case 6: return <Step7 data={formData} onChange={onChange} />;
-      default: return null;
+    const stepName = currentSteps[step] ?? '';
+    switch (stepName) {
+      case 'Informations':      return <StepInformations      data={formData} onChange={onChange} errors={errors} />;
+      case 'Caractéristiques':  return <StepCaracteristiques  data={formData} onChange={onChange} />;
+      case 'Types de chambre':  return <StepTypesChambres     data={formData} onChange={onChange} errors={errors} />;
+      case 'Équipements':       return <StepEquipements       data={formData} onChange={onChange} />;
+      case 'Photos':
+      case 'Médias':            return <StepMedias            data={formData} onChange={onChange} subscriptionPlan={formData.subscriptionPlan} />;
+      case 'Tarification':      return <StepTarification      data={formData} onChange={onChange} errors={errors} />;
+      case 'Disponibilités':    return <StepDisponibilites    data={formData} onChange={onChange} />;
+      case 'Règles':            return <StepRegles            data={formData} onChange={onChange} />;
+      case 'Documents':         return <StepDocuments         data={formData} onChange={onChange} />;
+      case 'Configuration':     return <StepConfigRestaurant  data={formData} onChange={onChange} />;
+      default:                  return null;
     }
   };
 
-  const progress = (step + 1) / STEPS.length;
+  const progress = (step + 1) / currentSteps.length;
 
   if (isLoadingProperty) {
     return (
@@ -925,7 +1354,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Progress header */}
+      {/* En-tête de progression */}
       <View style={[styles.progressHeader, { backgroundColor: theme.primaryLight }]}>
         <TouchableOpacity
           onPress={() => step > 0 ? setStep(s => s - 1) : navigation.goBack()}
@@ -935,7 +1364,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.progressLabel, { color: theme.primary }]}>
-            {step + 1}/{STEPS.length} — {STEPS[step]}
+            {step + 1}/{currentSteps.length} — {currentSteps[step]}
           </Text>
           <View style={[styles.progressBar, { backgroundColor: theme.primary + '25' }]}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: theme.primary }]} />
@@ -952,7 +1381,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Bottom navigation */}
+      {/* Navigation bas de page */}
       <View style={styles.navRow}>
         {step > 0 && (
           <TouchableOpacity style={styles.prevBtn} onPress={() => setStep(s => s - 1)}>
@@ -969,7 +1398,9 @@ export default function AddPropertyScreen({ navigation, route }: any) {
                 ? <Text style={styles.nextBtnText}>{uploadStatus}</Text>
                 : <ActivityIndicator color="#fff" />)
             : <Text style={styles.nextBtnText}>
-                {step === STEPS.length - 1 ? (isEdit ? 'Enregistrer les modifications' : "Publier l'annonce") : 'Suivant →'}
+                {step === currentSteps.length - 1
+                  ? (isEdit ? 'Enregistrer les modifications' : "Publier l'annonce")
+                  : 'Suivant →'}
               </Text>
           }
         </TouchableOpacity>
@@ -1028,12 +1459,12 @@ const styles = StyleSheet.create({
   chipText:       { fontSize: 13, color: '#374151', fontWeight: '500' },
   chipTextActive: { color: '#1056E0', fontWeight: '700' },
 
-  counterRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  counterLabel:  { fontSize: 15, color: '#111827', fontWeight: '500' },
-  counterCtrl:   { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  counterBtn:    { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: '#1056E0', justifyContent: 'center', alignItems: 'center' },
-  counterBtnText:{ fontSize: 20, color: '#1056E0', fontWeight: '600', lineHeight: 22 },
-  counterVal:    { fontSize: 18, fontWeight: '700', color: '#111827', minWidth: 28, textAlign: 'center' },
+  counterRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  counterLabel:   { fontSize: 15, color: '#111827', fontWeight: '500' },
+  counterCtrl:    { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  counterBtn:     { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: '#1056E0', justifyContent: 'center', alignItems: 'center' },
+  counterBtnText: { fontSize: 20, color: '#1056E0', fontWeight: '600', lineHeight: 22 },
+  counterVal:     { fontSize: 18, fontWeight: '700', color: '#111827', minWidth: 28, textAlign: 'center' },
 
   toggleRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   toggleLabel:  { fontSize: 15, color: '#111827', fontWeight: '500' },
@@ -1063,13 +1494,32 @@ const styles = StyleSheet.create({
   infoBoxTitle:     { fontSize: 14, fontWeight: '700', color: '#1E40AF', marginBottom: 4 },
   infoBoxText:      { fontSize: 13, color: '#374151', lineHeight: 18 },
 
-  paymentOptionRow:       { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, padding: 12, marginBottom: 8, backgroundColor: '#fff' },
-  paymentOptionRowActive: { borderColor: '#1056E0', backgroundColor: '#EFF4FF' },
-  paymentCheckbox:        { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
-  paymentCheckboxActive:  { backgroundColor: '#1056E0', borderColor: '#1056E0' },
-  paymentCheckmark:       { color: '#fff', fontSize: 13, fontWeight: '800' },
-  paymentOptionText:      { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
-  paymentOptionTextActive:{ color: '#1056E0', fontWeight: '700' },
+  paymentOptionRow:        { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, padding: 12, marginBottom: 8, backgroundColor: '#fff' },
+  paymentOptionRowActive:  { borderColor: '#1056E0', backgroundColor: '#EFF4FF' },
+  paymentCheckbox:         { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
+  paymentCheckboxActive:   { backgroundColor: '#1056E0', borderColor: '#1056E0' },
+  paymentCheckmark:        { color: '#fff', fontSize: 13, fontWeight: '800' },
+  paymentOptionText:       { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
+  paymentOptionTextActive: { color: '#1056E0', fontWeight: '700' },
+
+  // Types de chambre (hôtel)
+  roomTypeCard:    { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1.5, borderColor: '#E5E7EB', padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
+  roomTypeInfo:    { flex: 1 },
+  roomTypeLabel:   { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 2 },
+  roomTypePrice:   { fontSize: 14, color: '#1056E0', fontWeight: '600', marginBottom: 2 },
+  roomTypeDetails: { fontSize: 12, color: '#6B7280' },
+  roomTypeActions: { flexDirection: 'row', gap: 8 },
+  iconBtn:         { padding: 8 },
+  editIcon:        { fontSize: 18 },
+  deleteIcon:      { fontSize: 18 },
+  addRoomTypeBtn:  { borderWidth: 1.5, borderColor: '#1056E0', borderStyle: 'dashed', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 4 },
+  addRoomTypeBtnText: { color: '#1056E0', fontWeight: '700', fontSize: 15 },
+
+  roomTypeModal: {
+    backgroundColor: '#fff', borderRadius: 20, padding: 24, margin: 24,
+    maxHeight: '85%', shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15, shadowRadius: 24, elevation: 12,
+  },
 
   calContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8 },
   calHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
@@ -1078,7 +1528,7 @@ const styles = StyleSheet.create({
   calDayRow:    { flexDirection: 'row', marginBottom: 4 },
   calDayLabel:  { flex: 1, textAlign: 'center', fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
   calGrid:      { flexDirection: 'row', flexWrap: 'wrap' },
-  calCell:      { width: `${100 / 7}%` as any, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  calCell:             { width: `${100 / 7}%` as any, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
   calCellRange:        { backgroundColor: '#EFF4FF' },
   calCellSelected:     { backgroundColor: '#1056E0', borderRadius: 20 },
   calCellText:         { fontSize: 13, color: '#111827' },

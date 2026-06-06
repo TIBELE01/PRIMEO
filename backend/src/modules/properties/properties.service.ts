@@ -117,6 +117,12 @@ export const propertiesService = {
       }
     }
 
+    // Pour les hôtels : dériver pricePerNight depuis le type de chambre le moins cher
+    let pricePerNight = input.pricePerNight;
+    if (input.propertyType === 'hotel' && input.roomTypes?.length) {
+      pricePerNight = Math.min(...input.roomTypes.map((rt) => rt.pricePerNight));
+    }
+
     return prisma.property.create({
       data: {
         ownerId,
@@ -129,7 +135,7 @@ export const propertiesService = {
         bathrooms: input.bathrooms,
         surface: input.surface,
         capacity: input.capacity,
-        pricePerNight: input.pricePerNight,
+        pricePerNight,
         pricePerMonth: input.pricePerMonth,
         priceSale: input.priceSale,
         street: input.street,
@@ -138,11 +144,17 @@ export const propertiesService = {
         longitude,
         amenities: input.amenities,
         paymentOptions: input.paymentOptions,
-        rules: input.rules as Prisma.InputJsonValue | undefined,
-        cuisineType: input.cuisineType,
+        rules:        input.rules        as Prisma.InputJsonValue | undefined,
+        cuisineType:  input.cuisineType,
         openingHours: input.openingHours as Prisma.InputJsonValue | undefined,
-        availableFrom: input.availableFrom,
-        status: 'pending', // awaiting admin validation
+        // Immobilier — champs spécifiques
+        floor:            input.floor,
+        yearBuilt:        input.yearBuilt,
+        availabilityDate: input.availabilityDate ? new Date(input.availabilityDate) : undefined,
+        diagnostics:      input.diagnostics as Prisma.InputJsonValue | undefined,
+        // Hôtel — types de chambres
+        roomTypes: input.roomTypes as Prisma.InputJsonValue | undefined,
+        status: 'pending', // en attente de validation admin
       },
     });
   },
@@ -172,14 +184,24 @@ export const propertiesService = {
       }
     }
 
+    // Pour les hôtels : re-dériver pricePerNight depuis les types de chambres si fournis
+    let updatedPricePerNight = input.pricePerNight;
+    if (input.roomTypes?.length) {
+      updatedPricePerNight = Math.min(...input.roomTypes.map((rt) => rt.pricePerNight));
+    }
+
     return prisma.property.update({
       where: { id },
       data: {
         ...input,
         latitude,
         longitude,
-        rules: input.rules as Prisma.InputJsonValue | undefined,
+        rules:        input.rules        as Prisma.InputJsonValue | undefined,
         openingHours: input.openingHours as Prisma.InputJsonValue | undefined,
+        diagnostics:  input.diagnostics  as Prisma.InputJsonValue | undefined,
+        roomTypes:    input.roomTypes    as Prisma.InputJsonValue | undefined,
+        availabilityDate: input.availabilityDate ? new Date(input.availabilityDate) : undefined,
+        ...(updatedPricePerNight !== undefined ? { pricePerNight: updatedPricePerNight } : {}),
         // Owner edits on an active OR rejected listing re-submit for admin review
         ...(property.ownerId === userId && (property.status === 'active' || property.status === 'rejected')
           ? { status: 'pending' }

@@ -479,6 +479,15 @@ model Property {
   paymentOptions PaymentOption[] @default([])
   rules          Json? // règlement intérieur
 
+  // Immobilier — champs spécifiques (§3.4)
+  floor            Int?      // étage (0 = rez-de-chaussée)
+  yearBuilt        Int?      // année de construction
+  availabilityDate DateTime? // date de disponibilité (location / vente)
+  diagnostics      Json?     // { dpe: true, carrez: true, amiante: false, ... }
+
+  // Hôtel — types de chambres avec tarifs distincts (§3.4)
+  roomTypes Json? // [{ label, pricePerNight, capacity, beds, amenities }]
+
   // Visite virtuelle 3D (§7.3)
   hasVirtualTour Boolean @default(false)
 

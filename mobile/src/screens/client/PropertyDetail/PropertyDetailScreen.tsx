@@ -33,8 +33,46 @@ import { RealEstateDocsSection } from './sections/RealEstateDocsSection';
 import { CancellationPolicySection } from './sections/CancellationPolicySection';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
 import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } from './detailContent';
+import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
+
+// Bloc interne — types de chambres hôtel (affiché seulement si roomTypes présent)
+function HotelRoomTypesBlock({
+  roomTypes, color, formatPrice,
+}: {
+  roomTypes: NonNullable<import('@/types/property').Property['roomTypes']>;
+  color: string;
+  formatPrice: (n: number) => string;
+}) {
+  return (
+    <RNView style={rtStyles.wrap}>
+      {roomTypes.map((rt, i) => (
+        <RNView key={rt.id ?? i} style={rtStyles.row}>
+          <RNView style={rtStyles.info}>
+            <RNText style={rtStyles.label}>{rt.label}</RNText>
+            <RNText style={rtStyles.detail}>
+              {rt.capacity} pers.{rt.beds ? ` · ${rt.beds} lit(s)` : ''}
+            </RNText>
+          </RNView>
+          <RNText style={[rtStyles.price, { color }]}>
+            {formatPrice(rt.pricePerNight)}<RNText style={rtStyles.unit}> /nuit</RNText>
+          </RNText>
+        </RNView>
+      ))}
+    </RNView>
+  );
+}
+
+const rtStyles = RNStyleSheet.create({
+  wrap:   { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
+  row:    { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  info:   { flex: 1 },
+  label:  { fontSize: 14, fontWeight: '700', color: '#111827' },
+  detail: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  price:  { fontSize: 15, fontWeight: '800' },
+  unit:   { fontSize: 11, fontWeight: '400', color: '#6B7280' },
+});
 
 const DAYS_NEW = 30;
 const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 < DAYS_NEW;
@@ -258,7 +296,14 @@ export function PropertyDetailScreen() {
           <CharacteristicsSection property={property} />
         </Accordion>
 
-        {/* ── 3. Équipements & services ── */}
+        {/* ── 3a. Hôtel : types de chambres et tarifs ── */}
+        {kind === 'hotel' && (property.roomTypes?.length ?? 0) > 0 && (
+          <Accordion title="Types de chambres" icon="🛎" color={theme.color} subtitle="Tarifs par catégorie">
+            <HotelRoomTypesBlock roomTypes={property.roomTypes!} color={theme.color} formatPrice={formatPrice} />
+          </Accordion>
+        )}
+
+        {/* ── 3b. Équipements & services ── */}
         <Accordion
           title={kind === 'restaurant' ? 'Services proposés' : 'Équipements & services'}
           icon="🛎️"
