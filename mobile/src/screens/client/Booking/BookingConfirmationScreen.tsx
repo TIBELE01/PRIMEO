@@ -72,6 +72,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
   const pollCountRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settledRef = useRef(false);
+  const chatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -172,6 +173,20 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     // Sinon, sonder le paiement
     poll();
   }, [fetchBooking, markSuccess, markFailed, poll]);
+
+  // Naviguer automatiquement vers la discussion 2,5 s après la confirmation de paiement
+  useEffect(() => {
+    if (phase !== 'success' || !booking) return;
+    chatTimerRef.current = setTimeout(() => {
+      navigation.navigate('Chat', {
+        bookingId: booking.id,
+        recipientName: booking.property.title ?? booking.property.name ?? 'Le responsable',
+      });
+    }, 2500);
+    return () => {
+      if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
+    };
+  }, [phase, booking]);
 
   useEffect(() => {
     startPolling();
@@ -416,25 +431,34 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
 
         {/* CTAs */}
         <View style={styles.ctas}>
-          <TouchableOpacity
-            style={styles.primaryCTA}
-            onPress={() => navigation.navigate('BookingDetail', { bookingId })}
-          >
-            <Text style={styles.primaryCTAText}>Voir ma réservation</Text>
-          </TouchableOpacity>
-          {/* Accès rapide à la discussion ouverte automatiquement */}
+          {/* Discussion ouverte automatiquement — priorité principale */}
           <TouchableOpacity
             style={styles.chatCTA}
-            onPress={() => navigation.navigate('Chat', {
-              bookingId,
-              recipientName: booking.property.title ?? booking.property.name ?? 'Le responsable',
-            })}
+            onPress={() => {
+              if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
+              navigation.navigate('Chat', {
+                bookingId,
+                recipientName: booking.property.title ?? booking.property.name ?? 'Le responsable',
+              });
+            }}
           >
             <Text style={styles.chatCTAText}>💬 Ouvrir la messagerie</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={styles.primaryCTA}
+            onPress={() => {
+              if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
+              navigation.navigate('BookingDetail', { bookingId });
+            }}
+          >
+            <Text style={styles.primaryCTAText}>Voir ma réservation</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.secondaryCTA}
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
+            onPress={() => {
+              if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+            }}
           >
             <Text style={styles.secondaryCTAText}>Retour à l'accueil</Text>
           </TouchableOpacity>

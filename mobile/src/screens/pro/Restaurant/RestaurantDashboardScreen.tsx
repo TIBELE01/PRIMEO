@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,8 +16,7 @@ import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
 import { useProTheme } from '../../../hooks/useProTheme';
-
-const { width } = Dimensions.get('window');
+import { KPICard } from '../../../components/dashboard/KPICard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,26 +88,6 @@ function getGreeting(): string {
 }
 
 // ─── Composants ──────────────────────────────────────────────────────────────
-
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  accent: string;
-  bg: string;
-}
-
-function StatCard({ label, value, icon, accent, bg }: StatCardProps) {
-  return (
-    <View style={[styles.statCard, { backgroundColor: bg }]}>
-      <View style={[styles.statIconWrap, { backgroundColor: accent + '22' }]}>
-        <Ionicons name={icon} size={20} color={accent} />
-      </View>
-      <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
 
 interface QuickActionProps {
   label: string;
@@ -326,50 +304,33 @@ export default function RestaurantDashboardScreen() {
           />
         }
       >
-        {/* ── Hero Header ──────────────────────────────────────────────────── */}
-        <View style={[styles.hero, { backgroundColor: PRIMARY }]}>
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.heroGreeting}>{getGreeting()}</Text>
-              <Text style={styles.heroName} numberOfLines={1}>{propertyName}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.heroNotif}
-              onPress={() => navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={22} color="#fff" />
-              {pendingCount > 0 && (
-                <View style={styles.heroBadge}>
-                  <Text style={styles.heroBadgeText}>{pendingCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+        {/* ── En-tête ──────────────────────────────────────────────────────── */}
+        <View style={styles.topHeader}>
+          <View>
+            <Text style={styles.topGreeting}>{getGreeting()}</Text>
+            <Text style={styles.topName} numberOfLines={1}>{propertyName}</Text>
           </View>
-
-          {/* Stats rapides dans le hero */}
-          <View style={styles.heroStats}>
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{couverts}</Text>
-              <Text style={styles.heroStatLabel}>Couverts aujourd'hui</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{reservSemaine}</Text>
-              <Text style={styles.heroStatLabel}>Réservations / 7j</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{avgRating}</Text>
-              <Text style={styles.heroStatLabel}>Note moyenne</Text>
-            </View>
-          </View>
+          <TouchableOpacity
+            style={styles.notifBtn}
+            onPress={() => navigation.navigate('Notifications')}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#374151" />
+            {pendingCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{pendingCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* ── KPI cards ────────────────────────────────────────────────────── */}
-        <View style={styles.statRow}>
-          <StatCard label="Ce mois"    value={reservMois}    icon="calendar-number-outline" accent={PRIMARY}      bg="#fff" />
-          <StatCard label="En attente" value={pendingCount}  icon="hourglass-outline"       accent="#D97706"       bg="#fff" />
-          <StatCard label="Annulations" value={recentCancellations.length} icon="close-circle-outline" accent="#6B7280" bg="#fff" />
+        {/* ── KPIs ──────────────────────────────────────────────────────────── */}
+        <View style={styles.kpiRow}>
+          <KPICard title="Couverts" value={couverts} subtitle="Aujourd'hui" icon="🍽️" />
+          <KPICard title="Réservations" value={reservSemaine} subtitle="7 prochains jours" icon="📅" />
+        </View>
+        <View style={[styles.kpiRow, { marginTop: 10 }]}>
+          <KPICard title="Ce mois" value={reservMois} subtitle="Confirmées" icon="📆" />
+          <KPICard title="Note moyenne" value={avgRating} subtitle={`${reviews.length} avis`} icon="⭐" />
         </View>
 
         {/* ── Réservations du jour ─────────────────────────────────────────── */}
@@ -494,10 +455,10 @@ export default function RestaurantDashboardScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: '#F4F5F7' },
+  safe:        { flex: 1, backgroundColor: '#F5F5F5' },
   centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: '#6B7280' },
-  scroll:      { paddingBottom: 40 },
+  scroll:      { padding: 16, paddingBottom: 40 },
 
   // Onboarding
   onboardingContainer: {
@@ -513,44 +474,24 @@ const styles = StyleSheet.create({
   },
   onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
-  // Hero
-  hero: {
-    paddingTop: 20, paddingBottom: 28, paddingHorizontal: 20,
-    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
-  },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  heroGreeting: { fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '500', marginBottom: 2 },
-  heroName:     { fontSize: 22, fontWeight: '800', color: '#fff' },
-  heroNotif:    { padding: 8, position: 'relative' },
-  heroBadge: {
+  // En-tête simple
+  topHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  topGreeting:{ fontSize: 13, color: '#6B7280', fontWeight: '500', marginBottom: 2 },
+  topName:    { fontSize: 22, fontWeight: '800', color: '#111827' },
+  notifBtn:   { padding: 8, position: 'relative' },
+  notifBadge: {
     position: 'absolute', top: 4, right: 4,
-    backgroundColor: '#FCD34D', borderRadius: 8,
+    backgroundColor: '#DC2626', borderRadius: 8,
     minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  heroBadgeText: { fontSize: 10, fontWeight: '800', color: '#111' },
-  heroStats:   { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 16, padding: 16, gap: 0 },
-  heroStat:    { flex: 1, alignItems: 'center' },
-  heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginVertical: 4 },
-  heroStatValue: { fontSize: 22, fontWeight: '800', color: '#fff' },
-  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, textAlign: 'center' },
+  notifBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 
-  // Stat row
-  statRow: {
-    flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginTop: 16, marginBottom: 4,
-  },
-  statCard: {
-    flex: 1, borderRadius: 14, padding: 14,
-    alignItems: 'center', gap: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
-  },
-  statIconWrap: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  statValue:    { fontSize: 22, fontWeight: '800' },
-  statLabel:    { fontSize: 10, color: '#6B7280', fontWeight: '600', textAlign: 'center' },
+  // Rangées KPI
+  kpiRow: { flexDirection: 'row', gap: 10 },
 
   // Sections
-  section:     { paddingHorizontal: 16, marginTop: 20 },
+  section:     { marginTop: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.6 },
   seeAll:       { fontSize: 13, fontWeight: '600' },
@@ -624,7 +565,7 @@ const styles = StyleSheet.create({
   reviewComment:    { fontSize: 13, color: '#6B7280', lineHeight: 18 },
 
   // Footer
-  footer: { paddingHorizontal: 16, marginTop: 20 },
+  footer: { marginTop: 20 },
   footerBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     borderRadius: 12, borderWidth: 1.5, paddingVertical: 14,

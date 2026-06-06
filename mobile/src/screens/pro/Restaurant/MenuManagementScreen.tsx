@@ -120,9 +120,10 @@ export default function MenuManagementScreen() {
   const [loading,     setLoading]     = useState(true);
   const [activeSection, setActiveSection] = useState<string>('Tout');
 
-  // Formulaire modal
+  // Formulaire modal multi-étapes
   const [modalVisible,  setModalVisible]  = useState(false);
   const [editingItem,   setEditingItem]   = useState<MenuItem | null>(null);
+  const [formStep,      setFormStep]      = useState(1); // 1=Infos, 2=Prix & Photo, 3=Allergènes & Dispo
   const [formSection,   setFormSection]   = useState(SECTIONS[0]);
   const [formName,      setFormName]      = useState('');
   const [formDesc,      setFormDesc]      = useState('');
@@ -130,6 +131,7 @@ export default function MenuManagementScreen() {
   const [formAllergens, setFormAllergens] = useState<string[]>([]);
   const [formAvailable, setFormAvailable] = useState(true);
   const [formPhoto,     setFormPhoto]     = useState('');
+  const [formError,     setFormError]     = useState<string | null>(null);
   const [saving,        setSaving]        = useState(false);
 
   // ── Chargement ────────────────────────────────────────────────────────────────
@@ -196,6 +198,7 @@ export default function MenuManagementScreen() {
 
   const openCreate = () => {
     setEditingItem(null);
+    setFormStep(1);
     setFormSection(SECTIONS[0]);
     setFormName('');
     setFormDesc('');
@@ -203,11 +206,13 @@ export default function MenuManagementScreen() {
     setFormAllergens([]);
     setFormAvailable(true);
     setFormPhoto('');
+    setFormError(null);
     setModalVisible(true);
   };
 
   const openEdit = (item: MenuItem) => {
     setEditingItem(item);
+    setFormStep(1);
     setFormSection(item.section);
     setFormName(item.name);
     setFormDesc(item.description ?? '');
@@ -215,11 +220,33 @@ export default function MenuManagementScreen() {
     setFormAllergens(item.allergens ?? []);
     setFormAvailable(item.isAvailable);
     setFormPhoto(item.photoUrl ?? '');
+    setFormError(null);
     setModalVisible(true);
   };
 
   const toggleAllergen = (a: string) =>
     setFormAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+
+  const validateStep = (step: number): string | null => {
+    if (step === 1 && !formName.trim()) return 'Le nom du plat est requis.';
+    if (step === 2) {
+      const p = parseFloat(formPrice.replace(/\s/g, '').replace(',', '.'));
+      if (isNaN(p) || p < 0) return 'Veuillez saisir un prix valide (≥ 0 FCFA).';
+    }
+    return null;
+  };
+
+  const handleNextStep = () => {
+    const err = validateStep(formStep);
+    if (err) { setFormError(err); return; }
+    setFormError(null);
+    setFormStep(s => Math.min(s + 1, 3));
+  };
+
+  const handlePrevStep = () => {
+    setFormError(null);
+    setFormStep(s => Math.max(s - 1, 1));
+  };
 
   const handleSave = async () => {
     if (!propertyId) {
@@ -367,132 +394,221 @@ export default function MenuManagementScreen() {
         )}
       </ScrollView>
 
-      {/* Modal création/édition */}
+      {/* Modal création/édition — formulaire 3 étapes */}
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              {/* Poignée */}
-              <View style={styles.handle} />
+            {/* Poignée + en-tête (fixe) */}
+            <View style={styles.handle} />
+            <Text style={styles.sheetTitle}>
+              {editingItem ? 'Modifier l\'article' : 'Nouvel article'}
+            </Text>
 
-              <Text style={styles.sheetTitle}>
-                {editingItem ? 'Modifier l\'article' : 'Nouvel article'}
-              </Text>
-
-              {/* Section — uniquement à la création */}
-              {!editingItem && (
-                <View style={styles.field}>
-                  <Text style={styles.fieldLabel}>Section *</Text>
-                  <View style={styles.chipRow}>
-                    {SECTIONS.map(sec => (
-                      <TouchableOpacity
-                        key={sec}
-                        style={[styles.chip, formSection === sec && { backgroundColor: PRIMARY, borderColor: PRIMARY }]}
-                        onPress={() => setFormSection(sec)}
-                      >
-                        <Text style={styles.chipIcon}>{SECTION_ICONS[sec]}</Text>
-                        <Text style={[styles.chipText, formSection === sec && styles.chipTextActive]}>{sec}</Text>
-                      </TouchableOpacity>
-                    ))}
+            {/* Indicateur d'étapes */}
+            <View style={styles.stepIndicatorRow}>
+              {[1, 2, 3].map((s, idx) => (
+                <React.Fragment key={s}>
+                  <View style={[styles.stepDot, formStep === s && styles.stepDotActive, formStep > s && styles.stepDotDone]}>
+                    <Text style={[styles.stepDotText, (formStep >= s) && styles.stepDotTextActive]}>
+                      {formStep > s ? '✓' : String(s)}
+                    </Text>
                   </View>
-                </View>
+                  {idx < 2 && <View style={[styles.stepLine, formStep > s && styles.stepLineDone]} />}
+                </React.Fragment>
+              ))}
+            </View>
+            <Text style={styles.stepLabel}>
+              {formStep === 1 ? 'Informations du plat' : formStep === 2 ? 'Prix & Photo' : 'Allergènes & Disponibilité'}
+            </Text>
+
+            {/* Bannière d'erreur inline */}
+            {formError ? (
+              <View style={styles.inlineErrorWrap}>
+                <Ionicons name="alert-circle" size={15} color="#B91C1C" />
+                <Text style={styles.inlineErrorText}>{formError}</Text>
+              </View>
+            ) : null}
+
+            {/* Contenu de l'étape (défilable) */}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
+
+              {/* ─ Étape 1 : Infos ─ */}
+              {formStep === 1 && (
+                <>
+                  {!editingItem && (
+                    <View style={styles.field}>
+                      <Text style={styles.fieldLabel}>Catégorie *</Text>
+                      <View style={styles.chipRow}>
+                        {SECTIONS.map(sec => (
+                          <TouchableOpacity
+                            key={sec}
+                            style={[styles.chip, formSection === sec && { backgroundColor: PRIMARY, borderColor: PRIMARY }]}
+                            onPress={() => setFormSection(sec)}
+                          >
+                            <Text style={styles.chipIcon}>{SECTION_ICONS[sec]}</Text>
+                            <Text style={[styles.chipText, formSection === sec && styles.chipTextActive]}>{sec}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  <View style={styles.field}>
+                    <Text style={styles.fieldLabel}>Nom du plat *</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={formName}
+                      onChangeText={setFormName}
+                      placeholder="ex : Thiéboudiène royal"
+                      placeholderTextColor="#9CA3AF"
+                      autoCapitalize="words"
+                    />
+                  </View>
+
+                  <View style={styles.field}>
+                    <View style={styles.fieldLabelRow}>
+                      <Text style={styles.fieldLabel}>Description <Text style={styles.optional}>(optionnel)</Text></Text>
+                      <Text style={styles.charCount}>{formDesc.length}/500</Text>
+                    </View>
+                    <TextInput
+                      style={[styles.input, styles.inputMulti]}
+                      value={formDesc}
+                      onChangeText={t => setFormDesc(t.slice(0, 500))}
+                      placeholder="Ingrédients, préparation, accompagnement…"
+                      placeholderTextColor="#9CA3AF"
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
+                    />
+                  </View>
+                </>
               )}
 
-              {/* Nom */}
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Nom de l'article *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formName}
-                  onChangeText={setFormName}
-                  placeholder="ex : Thiéboudiène royal"
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="words"
-                />
-              </View>
-
-              {/* Description */}
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Description <Text style={styles.optional}>(optionnel)</Text></Text>
-                <TextInput
-                  style={[styles.input, styles.inputMulti]}
-                  value={formDesc}
-                  onChangeText={setFormDesc}
-                  placeholder="Ingrédients, préparation, accompagnement…"
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-              </View>
-
-              {/* Prix */}
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Prix (FCFA) *</Text>
-                <View style={styles.priceWrap}>
-                  <TextInput
-                    style={[styles.input, styles.priceInput]}
-                    value={formPrice}
-                    onChangeText={setFormPrice}
-                    placeholder="ex : 3 500"
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="number-pad"
-                  />
-                  <View style={styles.currencyBadge}>
-                    <Text style={styles.currencyText}>FCFA</Text>
+              {/* ─ Étape 2 : Prix & Photo ─ */}
+              {formStep === 2 && (
+                <>
+                  <View style={styles.field}>
+                    <Text style={styles.fieldLabel}>Prix (FCFA) *</Text>
+                    <View style={styles.priceWrap}>
+                      <TextInput
+                        style={[styles.input, styles.priceInput]}
+                        value={formPrice}
+                        onChangeText={setFormPrice}
+                        placeholder="ex : 3 500"
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="number-pad"
+                      />
+                      <View style={styles.currencyBadge}>
+                        <Text style={styles.currencyText}>FCFA</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
 
-              {/* Photo URL */}
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Photo <Text style={styles.optional}>(URL optionnelle)</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={formPhoto}
-                  onChangeText={setFormPhoto}
-                  placeholder="https://…"
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="none"
-                  keyboardType="url"
-                />
-              </View>
+                  <View style={styles.field}>
+                    <Text style={styles.fieldLabel}>Photo <Text style={styles.optional}>(URL optionnelle)</Text></Text>
+                    <TextInput
+                      style={styles.input}
+                      value={formPhoto}
+                      onChangeText={setFormPhoto}
+                      placeholder="https://…"
+                      placeholderTextColor="#9CA3AF"
+                      autoCapitalize="none"
+                      keyboardType="url"
+                    />
+                    <Text style={styles.fieldHint}>Collez un lien direct vers une image (jpg, png…)</Text>
+                  </View>
 
-              {/* Allergènes */}
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Allergènes <Text style={styles.optional}>(sélectionner ceux présents)</Text></Text>
-                <View style={styles.chipRow}>
-                  {ALLERGEN_LIST.map(a => (
-                    <TouchableOpacity
-                      key={a}
-                      style={[styles.allergenChip, formAllergens.includes(a) && styles.allergenChipActive]}
-                      onPress={() => toggleAllergen(a)}
-                    >
-                      <Text style={[styles.allergenChipText, formAllergens.includes(a) && styles.allergenChipTextActive]}>{a}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+                  {formPhoto.trim().length > 0 && (
+                    <View style={styles.photoPreviewWrap}>
+                      <Image source={{ uri: formPhoto.trim() }} style={styles.photoPreview} resizeMode="cover" />
+                    </View>
+                  )}
+                </>
+              )}
 
-              {/* Disponible */}
-              <View style={styles.availRow}>
-                <View>
-                  <Text style={styles.fieldLabel}>Disponible à la commande</Text>
-                  <Text style={styles.availSub}>{formAvailable ? 'Visible dans le menu' : 'Masqué du menu'}</Text>
-                </View>
-                <Switch
-                  value={formAvailable}
-                  onValueChange={setFormAvailable}
-                  trackColor={{ false: '#E5E7EB', true: PRIMARY + '66' }}
-                  thumbColor={formAvailable ? PRIMARY : '#9CA3AF'}
-                />
-              </View>
+              {/* ─ Étape 3 : Allergènes & Disponibilité ─ */}
+              {formStep === 3 && (
+                <>
+                  <View style={styles.field}>
+                    <Text style={styles.fieldLabel}>Allergènes <Text style={styles.optional}>(sélectionner ceux présents)</Text></Text>
+                    <View style={styles.chipRow}>
+                      {ALLERGEN_LIST.map(a => (
+                        <TouchableOpacity
+                          key={a}
+                          style={[styles.allergenChip, formAllergens.includes(a) && styles.allergenChipActive]}
+                          onPress={() => toggleAllergen(a)}
+                        >
+                          <Text style={[styles.allergenChipText, formAllergens.includes(a) && styles.allergenChipTextActive]}>{a}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    {formAllergens.length > 0 && (
+                      <View style={styles.allergenSummary}>
+                        <Text style={styles.allergenSummaryText}>{formAllergens.join(' · ')}</Text>
+                      </View>
+                    )}
+                  </View>
 
-              {/* Boutons */}
-              <View style={styles.btnRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)} disabled={saving}>
-                  <Text style={styles.cancelBtnText}>Annuler</Text>
+                  <View style={styles.availRow}>
+                    <View>
+                      <Text style={styles.fieldLabel}>Disponible à la commande</Text>
+                      <Text style={styles.availSub}>{formAvailable ? 'Visible dans le menu' : 'Masqué du menu'}</Text>
+                    </View>
+                    <Switch
+                      value={formAvailable}
+                      onValueChange={setFormAvailable}
+                      trackColor={{ false: '#E5E7EB', true: PRIMARY + '66' }}
+                      thumbColor={formAvailable ? PRIMARY : '#9CA3AF'}
+                    />
+                  </View>
+
+                  {/* Récapitulatif */}
+                  <View style={styles.summaryCard}>
+                    <Text style={styles.summaryTitle}>Récapitulatif</Text>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryKey}>Plat</Text>
+                      <Text style={styles.summaryVal}>{formName || '—'}</Text>
+                    </View>
+                    {!editingItem && (
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryKey}>Section</Text>
+                        <Text style={styles.summaryVal}>{SECTION_ICONS[formSection]} {formSection}</Text>
+                      </View>
+                    )}
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryKey}>Prix</Text>
+                      <Text style={styles.summaryVal}>{formPrice ? `${formPrice} FCFA` : '—'}</Text>
+                    </View>
+                    {formPhoto.trim().length > 0 && (
+                      <View style={[styles.summaryRow, { alignItems: 'flex-start' }]}>
+                        <Text style={styles.summaryKey}>Photo</Text>
+                        <Image source={{ uri: formPhoto.trim() }} style={styles.summaryPhoto} resizeMode="cover" />
+                      </View>
+                    )}
+                  </View>
+                </>
+              )}
+
+            </ScrollView>
+
+            {/* Boutons de navigation (fixes en bas) */}
+            <View style={[styles.btnRow, { marginTop: 16 }]}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={formStep === 1 ? () => setModalVisible(false) : handlePrevStep}
+                disabled={saving}
+              >
+                <Text style={styles.cancelBtnText}>{formStep === 1 ? 'Annuler' : '← Retour'}</Text>
+              </TouchableOpacity>
+
+              {formStep < 3 ? (
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: PRIMARY }]}
+                  onPress={handleNextStep}
+                >
+                  <Text style={styles.saveBtnText}>Suivant →</Text>
                 </TouchableOpacity>
+              ) : (
                 <TouchableOpacity
                   style={[styles.saveBtn, { backgroundColor: PRIMARY }, saving && { opacity: 0.7 }]}
                   onPress={handleSave}
@@ -502,8 +618,8 @@ export default function MenuManagementScreen() {
                     ? <ActivityIndicator color="#fff" size="small" />
                     : <Text style={styles.saveBtnText}>Enregistrer</Text>}
                 </TouchableOpacity>
-              </View>
-            </ScrollView>
+              )}
+            </View>
           </View>
         </View>
       </Modal>
@@ -608,4 +724,40 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: 15, color: '#6B7280', fontWeight: '600' },
   saveBtn:     { flex: 2, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
   saveBtnText: { fontSize: 15, color: '#fff', fontWeight: '700' },
+
+  // Indicateur d'étapes
+  stepIndicatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: '#D1D5DB', backgroundColor: '#F9FAFB', alignItems: 'center', justifyContent: 'center' },
+  stepDotActive: { borderColor: PRIMARY, backgroundColor: PRIMARY },
+  stepDotDone:   { borderColor: PRIMARY2, backgroundColor: PRIMARY2 },
+  stepDotText:   { fontSize: 12, fontWeight: '700', color: '#9CA3AF' },
+  stepDotTextActive: { color: '#fff' },
+  stepLine:  { flex: 1, height: 2, backgroundColor: '#E5E7EB', marginHorizontal: 4 },
+  stepLineDone: { backgroundColor: PRIMARY2 },
+  stepLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 14, textAlign: 'center' },
+
+  // Erreur inline
+  inlineErrorWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, marginBottom: 12 },
+  inlineErrorText: { flex: 1, fontSize: 13, color: '#B91C1C', fontWeight: '500' },
+
+  // Champs supplémentaires
+  fieldLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  charCount: { fontSize: 11, color: '#9CA3AF' },
+  fieldHint: { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
+
+  // Aperçu photo
+  photoPreviewWrap: { alignItems: 'center', marginBottom: 16 },
+  photoPreview: { width: '100%', height: 160, borderRadius: 12 },
+
+  // Sélection allergènes
+  allergenSummary: { marginTop: 8, backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  allergenSummaryText: { fontSize: 12, color: '#92400E', fontWeight: '500' },
+
+  // Récapitulatif
+  summaryCard: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 14, padding: 16, marginTop: 8, gap: 10 },
+  summaryTitle: { fontSize: 13, fontWeight: '800', color: '#374151', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  summaryKey: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', width: 60 },
+  summaryVal: { flex: 1, fontSize: 14, color: '#111827', fontWeight: '600' },
+  summaryPhoto: { width: 60, height: 44, borderRadius: 8 },
 });

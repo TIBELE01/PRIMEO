@@ -266,8 +266,11 @@ export function BookingScreen({ navigation, route }: Props) {
           recipientName: resolvedPropertyName || 'Le responsable',
         });
       } else {
-        // Restaurant & hébergement cash : aller à la confirmation puis proposer le chat
-        navigation.navigate('BookingConfirmation', { bookingId: booking.id });
+        // Confirmation immédiate : ouvrir directement la discussion avec le professionnel
+        navigation.navigate('Chat', {
+          bookingId: booking.id,
+          recipientName: resolvedPropertyName || 'Le responsable',
+        });
       }
     } catch (e: any) {
       const status = e?.response?.status;
