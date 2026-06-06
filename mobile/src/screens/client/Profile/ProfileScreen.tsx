@@ -1,4 +1,7 @@
 // ProfileScreen — écran principal du profil utilisateur client
+// Regroupe : infos perso/pro, préférences (thème, devise, notifications),
+// raccourcis (favoris, avis, litiges, parrainage, support) et gestion du
+// compte (modifier, mot de passe, 2FA, désactivation, suppression).
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -13,16 +16,23 @@ import {
   TextInput,
   Modal,
   Image,
+  Switch,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { ClientStackParamList } from '../../../navigation/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { ClientScreenProps } from '../../../navigation/types';
 import { usersApi } from '../../../services/api/endpoints/users';
 import { useAuthStore } from '../../../store/authStore';
+import { useTheme, type ThemeMode } from '../../../hooks/useTheme';
+import { useCurrencyStore } from '../../../store/currencyStore';
+import { socketService } from '../../../services/socket/socketService';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Constantes ──────────────────────────────────────────────────────────────
 
-type Nav = NativeStackNavigationProp<ClientStackParamList>;
+const CURRENCIES = ['FCFA', 'EUR', 'USD'];
+const CURRENCY_KEY = '@primeo_currency';
+const NOTIF_KEY = '@primeo_notif_prefs';
+
+type Props = ClientScreenProps<'Profile'>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -69,11 +79,13 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value?: 
 function ActionRow({
   icon,
   label,
+  value,
   onPress,
   danger = false,
 }: {
   icon: string;
   label: string;
+  value?: string;
   onPress: () => void;
   danger?: boolean;
 }) {
@@ -81,6 +93,7 @@ function ActionRow({
     <TouchableOpacity style={styles.actionRow} onPress={onPress} activeOpacity={0.7}>
       <Text style={styles.actionIcon}>{icon}</Text>
       <Text style={[styles.actionLabel, danger && styles.textDanger]}>{label}</Text>
+      {value ? <Text style={styles.actionValue}>{value}</Text> : null}
       <Text style={styles.actionArrow}>›</Text>
     </TouchableOpacity>
   );
@@ -88,13 +101,21 @@ function ActionRow({
 
 // ── Écran principal ───────────────────────────────────────────────────────────
 
-export function ProfileScreen() {
-  const navigation = useNavigation<Nav>();
+export function ProfileScreen({ navigation }: Props) {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+  const { themeMode, setThemeMode } = useTheme();
+  const setCurrencyInStore = useCurrencyStore((s) => s.setCurrency);
 
   const [loading, setLoading] = useState(false);
+
+  // Préférences locales
+  const [currency, setCurrencyState] = useState('FCFA');
+  const [notifBookings, setNotifBookings] = useState(true);
+  const [notifMessages, setNotifMessages] = useState(true);
+  const [notifPromos, setNotifPromos] = useState(false);
+
   // Modal de désactivation
   const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
   const [deactivateDuration, setDeactivateDuration] = useState<string | null>(null);
@@ -104,7 +125,21 @@ export function ProfileScreen() {
   const [deleteStep, setDeleteStep] = useState<1 | 2>(1);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Chargement du profil au montage
+  // Chargement des préférences persistées
+  useEffect(() => {
+    AsyncStorage.getItem(CURRENCY_KEY).then((v) => { if (v) setCurrencyState(v); }).catch(() => null);
+    AsyncStorage.getItem(NOTIF_KEY).then((raw) => {
+      if (!raw) return;
+      try {
+        const prefs = JSON.parse(raw);
+        setNotifBookings(prefs.bookings ?? true);
+        setNotifMessages(prefs.messages ?? true);
+        setNotifPromos(prefs.promos ?? false);
+      } catch { /* préférences corrompues ignorées */ }
+    }).catch(() => null);
+  }, []);
+
+  // Chargement du profil au montage (synchronisation serveur)
   const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
@@ -124,6 +159,17 @@ export function ProfileScreen() {
     loadProfile();
   }, [loadProfile]);
 
+  const saveCurrency = async (c: string) => {
+    setCurrencyState(c);
+    setCurrencyInStore(c);
+    await AsyncStorage.setItem(CURRENCY_KEY, c).catch(() => null);
+  };
+
+  const saveNotifPref = async (key: string, value: boolean) => {
+    const prefs = { bookings: notifBookings, messages: notifMessages, promos: notifPromos, [key]: value };
+    await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(prefs)).catch(() => null);
+  };
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -141,8 +187,16 @@ export function ProfileScreen() {
     taxId?: string;
     description?: string;
     dateOfBirth?: string;
+    birthDate?: string;
     gender?: string;
   };
+
+  const themes: { mode: ThemeMode; label: string; emoji: string }[] = [
+    { mode: 'light', label: 'Clair', emoji: '☀️' },
+    { mode: 'dark', label: 'Sombre', emoji: '🌙' },
+    { mode: 'blue', label: 'Bleu', emoji: '💎' },
+    { mode: 'auto', label: 'Auto', emoji: '📱' },
+  ];
 
   // ── Actions dangereuses ──────────────────────────────────────────────────
 
@@ -160,6 +214,7 @@ export function ProfileScreen() {
     try {
       await usersApi.deactivate({ duration: deactivateDuration });
       setDeactivateModalVisible(false);
+      socketService.disconnect();
       await logout();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string; message?: string } } };
@@ -189,6 +244,7 @@ export function ProfileScreen() {
     try {
       await usersApi.deleteAccount({ password: deletePassword });
       setDeleteModalVisible(false);
+      socketService.disconnect();
       await logout();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string; message?: string } } };
@@ -204,7 +260,10 @@ export function ProfileScreen() {
       {
         text: 'Se déconnecter',
         style: 'destructive',
-        onPress: () => logout().catch(() => null),
+        onPress: () => {
+          socketService.disconnect();
+          logout().catch(() => null);
+        },
       },
     ]);
   };
@@ -227,6 +286,7 @@ export function ProfileScreen() {
             </View>
           )}
           <Text style={styles.headerName}>{fullName}</Text>
+          <Text style={styles.headerEmail}>{user.email}</Text>
           <View style={[styles.roleBadge, { backgroundColor: roleBadgeColor(user.role) + '22' }]}>
             <Text style={[styles.roleBadgeText, { color: roleBadgeColor(user.role) }]}>
               {roleBadgeLabel(user.role)}
@@ -241,6 +301,11 @@ export function ProfileScreen() {
               </Text>
             </View>
           )}
+          {!isProfessional && user.isVerified && (
+            <View style={[styles.kycBadge, styles.kycApproved]}>
+              <Text style={styles.kycBadgeText}>✓ Compte vérifié</Text>
+            </View>
+          )}
         </View>
 
         {/* Section informations personnelles */}
@@ -248,7 +313,9 @@ export function ProfileScreen() {
           <Text style={styles.sectionTitle}>Informations personnelles</Text>
           <InfoRow icon="✉️" label="Email" value={user.email} />
           <InfoRow icon="📞" label="Téléphone" value={user.phone} />
-          {proUser.dateOfBirth && <InfoRow icon="🎂" label="Date de naissance" value={proUser.dateOfBirth} />}
+          {(proUser.birthDate || proUser.dateOfBirth) && (
+            <InfoRow icon="🎂" label="Date de naissance" value={proUser.birthDate ?? proUser.dateOfBirth} />
+          )}
           {proUser.gender && (
             <InfoRow
               icon="👤"
@@ -261,11 +328,6 @@ export function ProfileScreen() {
               }
             />
           )}
-          <InfoRow
-            icon={user.isVerified ? '✅' : '⚠️'}
-            label="Statut du compte"
-            value={user.isVerified ? 'Compte vérifié' : 'Non vérifié'}
-          />
         </View>
 
         {/* Section informations professionnelles (si pro) */}
@@ -279,35 +341,107 @@ export function ProfileScreen() {
           </View>
         )}
 
-        {/* Actions rapides */}
+        {/* Mon compte */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Mon compte</Text>
           <ActionRow icon="✏️" label="Modifier mon profil" onPress={() => navigation.navigate('EditProfile')} />
           <ActionRow icon="🔑" label="Changer de mot de passe" onPress={() => navigation.navigate('ChangePassword')} />
           <ActionRow
             icon="🔒"
-            label={`Authentification 2FA${user.twoFactorEnabled ? ' (activée)' : ''}`}
+            label="Authentification 2FA"
+            value={user.twoFactorEnabled ? 'Activée' : 'Désactivée'}
             onPress={() => navigation.navigate('TwoFactorSetup')}
           />
+        </View>
+
+        {/* Avis & évaluations */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Avis & évaluations</Text>
+          <ActionRow icon="⭐" label="Mes avis publiés" onPress={() => navigation.navigate('MyReviews')} />
+          <ActionRow icon="👤" label="Évaluations reçues" onPress={() => navigation.navigate('ReceivedRatings')} />
+          <ActionRow icon="⚖️" label="Mes litiges" onPress={() => navigation.navigate('DisputeList')} />
+          <ActionRow icon="❤️" label="Mes favoris" onPress={() => navigation.navigate('Favorites')} />
           <ActionRow icon="🎁" label="Parrainage" onPress={() => navigation.navigate('Referral')} />
+        </View>
+
+        {/* Support & aide */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Support & aide</Text>
+          <ActionRow icon="💬" label="Assistant Primeo" onPress={() => navigation.navigate('SupportChatbot')} />
+          <ActionRow icon="🎫" label="Mes tickets de support" onPress={() => navigation.navigate('SupportTickets')} />
           <ActionRow icon="📄" label="Informations légales" onPress={() => navigation.navigate('LegalLinks')} />
         </View>
 
-        {/* Zone danger */}
+        {/* Apparence */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Apparence</Text>
+          <View style={styles.themeRow}>
+            {themes.map((t) => (
+              <TouchableOpacity
+                key={t.mode}
+                style={[styles.themeChip, themeMode === t.mode && styles.themeChipActive]}
+                onPress={() => setThemeMode(t.mode)}
+              >
+                <Text style={styles.themeEmoji}>{t.emoji}</Text>
+                <Text style={[styles.themeLabel, themeMode === t.mode && styles.themeLabelActive]}>{t.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Devise d'affichage */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Devise d'affichage</Text>
+          <View style={styles.currencyRow}>
+            {CURRENCIES.map((c) => (
+              <TouchableOpacity
+                key={c}
+                style={[styles.currencyChip, currency === c && styles.currencyChipActive]}
+                onPress={() => saveCurrency(c)}
+              >
+                <Text style={[styles.currencyLabel, currency === c && styles.currencyLabelActive]}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Notifications */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Notifications</Text>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Réservations</Text>
+            <Switch
+              value={notifBookings}
+              onValueChange={(v) => { setNotifBookings(v); saveNotifPref('bookings', v); }}
+              trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
+              thumbColor={notifBookings ? '#1056E0' : '#9CA3AF'}
+            />
+          </View>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Messages</Text>
+            <Switch
+              value={notifMessages}
+              onValueChange={(v) => { setNotifMessages(v); saveNotifPref('messages', v); }}
+              trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
+              thumbColor={notifMessages ? '#1056E0' : '#9CA3AF'}
+            />
+          </View>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Offres & promotions</Text>
+            <Switch
+              value={notifPromos}
+              onValueChange={(v) => { setNotifPromos(v); saveNotifPref('promos', v); }}
+              trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
+              thumbColor={notifPromos ? '#1056E0' : '#9CA3AF'}
+            />
+          </View>
+        </View>
+
+        {/* Zone sensible */}
         <View style={[styles.card, styles.dangerCard]}>
           <Text style={[styles.sectionTitle, styles.textDanger]}>Zone sensible</Text>
-          <ActionRow
-            icon="⏸️"
-            label="Désactiver mon compte"
-            onPress={handleDeactivate}
-            danger
-          />
-          <ActionRow
-            icon="🗑️"
-            label="Supprimer mon compte"
-            onPress={handleDeleteAccount}
-            danger
-          />
+          <ActionRow icon="⏸️" label="Désactiver mon compte" onPress={handleDeactivate} danger />
+          <ActionRow icon="🗑️" label="Supprimer mon compte" onPress={handleDeleteAccount} danger />
         </View>
 
         {/* Déconnexion */}
@@ -441,7 +575,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   avatarInitials: { color: '#fff', fontSize: 34, fontWeight: '800' },
-  headerName: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  headerName: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 4 },
+  headerEmail: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
   roleBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 8 },
   roleBadgeText: { fontSize: 13, fontWeight: '700' },
   kycBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 4 },
@@ -501,22 +636,42 @@ const styles = StyleSheet.create({
   },
   actionIcon: { fontSize: 18, marginRight: 12 },
   actionLabel: { flex: 1, fontSize: 15, color: '#111827', fontWeight: '500' },
+  actionValue: { fontSize: 14, color: '#6B7280', marginRight: 6 },
   actionArrow: { fontSize: 20, color: '#D1D5DB' },
   textDanger: { color: '#EF4444' },
+
+  // Apparence (thème)
+  themeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12 },
+  themeChip: { flex: 1, minWidth: 70, alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E5E7EB', gap: 4 },
+  themeChipActive: { borderColor: '#1056E0', backgroundColor: '#EFF6FF' },
+  themeEmoji: { fontSize: 20 },
+  themeLabel: { fontSize: 12, color: '#6B7280', fontWeight: '600' },
+  themeLabelActive: { color: '#1056E0' },
+
+  // Devise
+  currencyRow: { flexDirection: 'row', gap: 10, padding: 12 },
+  currencyChip: { flex: 1, alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E5E7EB' },
+  currencyChipActive: { borderColor: '#1056E0', backgroundColor: '#EFF6FF' },
+  currencyLabel: { fontSize: 14, color: '#6B7280', fontWeight: '700' },
+  currencyLabelActive: { color: '#1056E0' },
+
+  // Notifications
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F4F6FB' },
+  switchLabel: { fontSize: 15, color: '#111827', fontWeight: '500' },
 
   // Déconnexion
   logoutBtn: {
     marginHorizontal: 16,
     marginTop: 4,
     marginBottom: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FEF2F2',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
   },
-  logoutText: { color: '#374151', fontWeight: '700', fontSize: 15 },
+  logoutText: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
   version: { textAlign: 'center', fontSize: 12, color: '#D1D5DB', marginTop: 12 },
 
   // Modals

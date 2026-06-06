@@ -35,6 +35,12 @@ import SupportTicketsScreen      from '../screens/common/SupportTicketsScreen';
 import SupportTicketDetailScreen from '../screens/common/SupportTicketDetailScreen';
 import ProSettingsScreen         from '../screens/common/ProSettingsScreen';
 
+// ─── Écrans de gestion de profil (partagés avec le client) ───────────────────
+import EditProfileScreen          from '../screens/client/Profile/EditProfileScreen';
+import ChangePasswordScreen       from '../screens/client/Profile/ChangePasswordScreen';
+import TwoFactorSetupScreen       from '../screens/client/Profile/TwoFactorSetupScreen';
+import LegalLinksScreen           from '../screens/client/Profile/LegalLinksScreen';
+
 // ─── Restaurant screens ──────────────────────────────────────────────────────
 import RestaurantDashboardScreen from '../screens/pro/Restaurant/RestaurantDashboardScreen';
 import RestaurantBookingsScreen  from '../screens/pro/Restaurant/RestaurantBookingsScreen';
@@ -158,6 +164,10 @@ function lodgingScreens(labels: {
     { name: 'Messages',            component: sc(ConversationsScreen),   title: 'Messages',         headerShown: false },
     { name: 'Chat',                component: sc(ChatScreen),            headerShown: false },
     { name: 'Settings',            component: ProSettingsScreen,         title: 'Paramètres',       headerShown: false },
+    { name: 'EditProfile',         component: sc(EditProfileScreen),     title: 'Modifier mon profil', headerShown: false },
+    { name: 'ChangePassword',      component: sc(ChangePasswordScreen),  title: 'Mot de passe',        headerShown: false },
+    { name: 'TwoFactorSetup',      component: sc(TwoFactorSetupScreen),  title: 'Authentification 2FA', headerShown: false },
+    { name: 'LegalLinks',          component: sc(LegalLinksScreen),      title: 'Informations légales', headerShown: false },
     { name: 'SupportChatbot',      component: SupportChatbotScreen,      headerShown: false },
     { name: 'SupportTickets',      component: SupportTicketsScreen,      headerShown: false },
     { name: 'SupportTicketDetail', component: SupportTicketDetailScreen, headerShown: false },
@@ -225,6 +235,10 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'Messages',            component: sc(ConversationsScreen),   title: 'Messages',        headerShown: false },
   { name: 'Chat',                component: sc(ChatScreen),            headerShown: false },
   { name: 'Settings',            component: ProSettingsScreen,         title: 'Paramètres',      headerShown: false },
+  { name: 'EditProfile',         component: sc(EditProfileScreen),     title: 'Modifier mon profil', headerShown: false },
+  { name: 'ChangePassword',      component: sc(ChangePasswordScreen),  title: 'Mot de passe',        headerShown: false },
+  { name: 'TwoFactorSetup',      component: sc(TwoFactorSetupScreen),  title: 'Authentification 2FA', headerShown: false },
+  { name: 'LegalLinks',          component: sc(LegalLinksScreen),      title: 'Informations légales', headerShown: false },
   { name: 'SupportChatbot',      component: SupportChatbotScreen,      headerShown: false },
   { name: 'SupportTickets',      component: SupportTicketsScreen,      headerShown: false },
   { name: 'SupportTicketDetail', component: SupportTicketDetailScreen, headerShown: false },
