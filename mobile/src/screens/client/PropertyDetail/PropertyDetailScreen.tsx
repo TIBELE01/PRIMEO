@@ -32,6 +32,7 @@ import { MenuSection } from './sections/MenuSection';
 import { RealEstateDocsSection } from './sections/RealEstateDocsSection';
 import { CancellationPolicySection } from './sections/CancellationPolicySection';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
+import { favoritesApi } from '../../../services/api/endpoints/favorites';
 import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } from './detailContent';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 
@@ -87,10 +88,23 @@ export function PropertyDetailScreen() {
   const [showBooking, setShowBooking] = useState(false);
   const [showRestaurant, setShowRestaurant] = useState(false);
   const [selectedDates, setSelectedDates] = useState<{ checkIn: string; checkOut: string } | null>(null);
+  const [isFav, setIsFav] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   const isAuthenticated = !!useAuthStore(s => s.accessToken);
   const kind = property ? kindOf(property.type) : 'hebergement';
   const theme = useMemo(() => themeColor(property?.type ?? 'apartment'), [property?.type]);
+
+  // Charge le statut favori au montage si l'utilisateur est connecté
+  React.useEffect(() => {
+    if (!isAuthenticated || !propertyId) return;
+    favoritesApi.list()
+      .then(res => {
+        const favs: any[] = res?.data?.data ?? res?.data ?? [];
+        setIsFav(favs.some(f => f.propertyId === propertyId || f.property?.id === propertyId));
+      })
+      .catch(() => { /* ignore */ });
+  }, [propertyId, isAuthenticated]);
 
   const handleShare = useCallback(async () => {
     if (!property) return;
@@ -119,6 +133,22 @@ export function PropertyDetailScreen() {
     );
     return false;
   }, [isAuthenticated, goToLogin]);
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!isAuthenticated) { requireAuth(); return; }
+    if (favLoading) return;
+    setFavLoading(true);
+    const wasF = isFav;
+    setIsFav(!wasF);
+    try {
+      if (wasF) await favoritesApi.remove(propertyId);
+      else await favoritesApi.add(propertyId);
+    } catch {
+      setIsFav(wasF); // rollback
+    } finally {
+      setFavLoading(false);
+    }
+  }, [isAuthenticated, favLoading, isFav, propertyId, requireAuth]);
 
   const handleAction = useCallback(() => {
     if (!property) return;
@@ -223,9 +253,16 @@ export function PropertyDetailScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <Text style={styles.headerBtnText}>←</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-          <Text style={styles.headerBtnText}>↑</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity onPress={handleToggleFavorite} style={styles.headerBtn} disabled={favLoading}>
+            <Text style={[styles.headerBtnText, isFav && { color: '#EF4444' }]}>
+              {isFav ? '♥' : '♡'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
+            <Text style={styles.headerBtnText}>↑</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

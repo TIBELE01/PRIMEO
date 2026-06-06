@@ -7,6 +7,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
 import { propertiesApi } from '@services/api/endpoints/properties';
+import { favoritesApi } from '@services/api/endpoints/favorites';
+import { useAuthStore } from '@store/authStore';
 import type { Property, PropertyType } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { safeJsonParse } from '@/utils/safeJson';
@@ -127,9 +129,44 @@ export function SearchScreen() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [isFromCache, setIsFromCache] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   const isOffline = useOffline();
+  const accessToken     = useAuthStore(s => s.accessToken);
+  const isAuthenticated = !!accessToken;
   const debouncedDestination = useDebounce(destination, 350);
+
+  // ── Chargement des favoris ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated || isOffline) return;
+    favoritesApi.list()
+      .then(res => {
+        const data: any[] = res?.data?.data ?? res?.data ?? [];
+        setFavoriteIds(new Set(data.map((f: any) => f.propertyId ?? f.property?.id)));
+      })
+      .catch(() => { /* ignore */ });
+  }, [isAuthenticated, isOffline]);
+
+  const toggleFavorite = useCallback(async (propertyId: string) => {
+    if (!isAuthenticated) return;
+    const alreadyFav = favoriteIds.has(propertyId);
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      alreadyFav ? next.delete(propertyId) : next.add(propertyId);
+      return next;
+    });
+    try {
+      if (alreadyFav) await favoritesApi.remove(propertyId);
+      else await favoritesApi.add(propertyId);
+    } catch {
+      // Rollback si erreur API
+      setFavoriteIds(prev => {
+        const next = new Set(prev);
+        alreadyFav ? next.add(propertyId) : next.delete(propertyId);
+        return next;
+      });
+    }
+  }, [favoriteIds, isAuthenticated]);
 
   // ── Geoapify autocomplete ─────────────────────────────────────────────────
   useEffect(() => {
@@ -383,7 +420,13 @@ export function SearchScreen() {
           keyExtractor={p => p.id}
           contentContainerStyle={s.list}
           renderItem={({ item }) => (
-            <PropertyCard property={item} onPress={() => goProperty(item.id)} style={s.listCard} />
+            <PropertyCard
+              property={item}
+              onPress={() => goProperty(item.id)}
+              style={s.listCard}
+              onFavorite={() => toggleFavorite(item.id)}
+              isFavorite={favoriteIds.has(item.id)}
+            />
           )}
           ListEmptyComponent={
             loading ? (

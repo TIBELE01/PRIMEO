@@ -65,6 +65,9 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
           payload.kycDocumentUris = data.kycDocuments.map((d) => d.uri);
         }
       }
+      if (data.referralCode?.trim()) {
+        payload.referralCode = data.referralCode.trim();
+      }
       const registerRes = await authApi.register(payload);
       const resData = registerRes.data as {
         message?: string;
@@ -123,7 +126,10 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
           <SummaryRow label="Prénom"          value={data.firstName}    theme={theme} />
           <SummaryRow label="Nom"             value={data.lastName}     theme={theme} />
           <SummaryRow label="E-mail"          value={data.email}        theme={theme} />
-          <SummaryRow label="Téléphone"       value={normalizedPhone}   theme={theme} last={!isPro} />
+          <SummaryRow label="Téléphone"       value={normalizedPhone}   theme={theme} last={!isPro && !data.referralCode?.trim()} />
+          {data.referralCode?.trim() && !isPro && (
+            <SummaryRow label="Code parrain" value={data.referralCode.trim()} theme={theme} last />
+          )}
           {isPro && (
             <>
               <SummaryRow label="Établissement" value={data.businessName}    theme={theme} />
@@ -135,8 +141,11 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
                   label="Documents"
                   value={`${data.kycDocuments.length} fichier${data.kycDocuments.length > 1 ? 's' : ''} joint${data.kycDocuments.length > 1 ? 's' : ''}`}
                   theme={theme}
-                  last
+                  last={!data.referralCode?.trim()}
                 />
+              )}
+              {data.referralCode?.trim() && (
+                <SummaryRow label="Code parrain" value={data.referralCode.trim()} theme={theme} last />
               )}
             </>
           )}

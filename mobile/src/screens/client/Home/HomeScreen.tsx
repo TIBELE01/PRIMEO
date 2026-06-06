@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
 import { propertiesApi } from '@services/api/endpoints/properties';
+import { favoritesApi } from '@services/api/endpoints/favorites';
 import { websiteApi } from '@services/api/endpoints/websiteApi';
 import type { PlatformStats } from '@services/api/endpoints/websiteApi';
 import type { Property } from '@/types/property';
@@ -123,7 +124,9 @@ function AutoCarousel({ count, interval = 3200, children }: { count: number; int
 /* ── Écran principal ── */
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const user       = useAuthStore(s => s.user);
+  const user            = useAuthStore(s => s.user);
+  const accessToken     = useAuthStore(s => s.accessToken);
+  const isAuthenticated = !!accessToken;
   const isOffline  = useOffline();
 
   const [popular,    setPopular]    = useState<Property[]>([]);
@@ -134,6 +137,7 @@ export function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [email,      setEmail]      = useState('');
   const [sent,       setSent]       = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async (fromRefresh = false) => {
     if (!fromRefresh) setLoading(true);
@@ -159,8 +163,38 @@ export function HomeScreen() {
     setLoading(false); setRefreshing(false);
   }, [isOffline]);
 
-  useEffect(() => { load(); }, [load]);
-  const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
+  const loadFavorites = useCallback(async () => {
+    if (!isAuthenticated || isOffline) return;
+    try {
+      const res = await favoritesApi.list();
+      const data: any[] = res?.data?.data ?? res?.data ?? [];
+      setFavoriteIds(new Set(data.map((f: any) => f.propertyId ?? f.property?.id)));
+    } catch { /* ignore */ }
+  }, [isAuthenticated, isOffline]);
+
+  useEffect(() => { load(); loadFavorites(); }, [load, loadFavorites]);
+  const onRefresh = useCallback(() => { setRefreshing(true); load(true); loadFavorites(); }, [load, loadFavorites]);
+
+  const toggleFavorite = useCallback(async (propertyId: string) => {
+    if (!isAuthenticated) return;
+    const alreadyFav = favoriteIds.has(propertyId);
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      alreadyFav ? next.delete(propertyId) : next.add(propertyId);
+      return next;
+    });
+    try {
+      if (alreadyFav) await favoritesApi.remove(propertyId);
+      else await favoritesApi.add(propertyId);
+    } catch {
+      // Rollback si erreur API
+      setFavoriteIds(prev => {
+        const next = new Set(prev);
+        alreadyFav ? next.add(propertyId) : next.delete(propertyId);
+        return next;
+      });
+    }
+  }, [favoriteIds, isAuthenticated]);
 
   const goSearch   = (p?: any) => navigation.navigate('Search', p ?? {});
   const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
@@ -200,7 +234,7 @@ export function HomeScreen() {
           <SectionTitle text="Pour vous" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {forYouList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {forYouList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} onFavorite={() => toggleFavorite(p.id)} isFavorite={favoriteIds.has(p.id)} />)}
             </ScrollView>
           )}
         </View>
@@ -210,7 +244,7 @@ export function HomeScreen() {
           <SectionTitle text="Populaires dans votre région" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {popularList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {popularList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} onFavorite={() => toggleFavorite(p.id)} isFavorite={favoriteIds.has(p.id)} />)}
             </ScrollView>
           )}
         </View>
@@ -248,7 +282,7 @@ export function HomeScreen() {
           <SectionTitle text="Nouveautés" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {newestList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {newestList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} onFavorite={() => toggleFavorite(p.id)} isFavorite={favoriteIds.has(p.id)} />)}
             </ScrollView>
           )}
         </View>

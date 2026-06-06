@@ -20,6 +20,8 @@ export interface User {
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  referralCode?: string;
+  walletBalance?: number;
 }
 
 export interface AuthResponse {

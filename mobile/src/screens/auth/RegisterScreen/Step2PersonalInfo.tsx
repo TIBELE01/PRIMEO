@@ -123,6 +123,23 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
           </View>
         </View>
 
+        {/* Code de parrainage — optionnel, aucune validation requise */}
+        <View style={s.referralSection}>
+          <View style={s.field}>
+            <Text style={s.label}>Code de parrainage <Text style={s.optional}>(optionnel)</Text></Text>
+            <TextInput
+              style={s.input}
+              value={data.referralCode ?? ''}
+              onChangeText={(v) => onUpdate({ referralCode: v })}
+              placeholder="Ex: ABC12345"
+              autoCapitalize="characters"
+              returnKeyType="done"
+              onSubmitEditing={handleNext}
+              accessibilityLabel="Code de parrainage"
+            />
+          </View>
+        </View>
+
         <View style={s.actions}>
           <TouchableOpacity style={s.nextBtn} onPress={handleNext} accessibilityRole="button">
             <Text style={s.nextBtnText}>Continuer</Text>
@@ -156,6 +173,8 @@ function makeStyles(t: Theme) {
     hint:         { color: t.colors.error, fontSize: 12 },
     rules:        { gap: 2, marginTop: 4 },
     rule:         { fontSize: 12, color: t.colors.textSecondary },
+    referralSection: { marginTop: 8, borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: 16 },
+    optional: { fontSize: 12, color: t.colors.textDisabled, fontWeight: '400' },
     actions:      { gap: 12 },
     nextBtn:      { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
     nextBtnText:  { color: '#FFF', fontSize: 16, fontWeight: '700' },

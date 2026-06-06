@@ -22,6 +22,7 @@ export type RegistrationData = {
   taxNumber: string;
   kycDocuments: Array<{ key: string; uri: string; name: string }>;
   acceptedTerms: boolean;
+  referralCode?: string;
 };
 
 const initialData: RegistrationData = {
@@ -38,6 +39,7 @@ const initialData: RegistrationData = {
   taxNumber: '',
   kycDocuments: [],
   acceptedTerms: false,
+  referralCode: '',
 };
 
 type Props = AuthScreenProps<'Register'>;

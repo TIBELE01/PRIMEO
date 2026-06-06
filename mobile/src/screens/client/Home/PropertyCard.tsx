@@ -12,9 +12,11 @@ interface Props {
   property: Property;
   onPress: () => void;
   style?: object;
+  onFavorite?: () => void;
+  isFavorite?: boolean;
 }
 
-export function PropertyCard({ property, onPress, style }: Props) {
+export function PropertyCard({ property, onPress, style, onFavorite, isFavorite = false }: Props) {
   const images = property.images ?? [];
   const mainImage = images.find(i => i.isPrimary)?.url ?? images[0]?.url;
   const showNew = isNewProp(property.createdAt);
@@ -100,6 +102,19 @@ export function PropertyCard({ property, onPress, style }: Props) {
         </View>
 
       </TouchableOpacity>
+      {/* Bouton favori — en dehors du TouchableOpacity pour ne pas déclencher onPress */}
+      {onFavorite && (
+        <TouchableOpacity
+          style={styles.heartBtn}
+          onPress={onFavorite}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.heartIcon, isFavorite && styles.heartIconActive]}>
+            {isFavorite ? '♥' : '♡'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
 }
@@ -263,4 +278,24 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontWeight: '500',
   },
+
+  /* ── Bouton favori (cœur) — positionné en bas-droit de l'image ── */
+  heartBtn: {
+    position: 'absolute',
+    top: 156,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  heartIcon:       { fontSize: 18, color: '#9CA3AF' },
+  heartIconActive: { color: '#EF4444' },
 });
