@@ -191,7 +191,7 @@ export default function RestaurantDashboardScreen() {
   const [propertyName, setPropertyName] = useState<string>('Mon restaurant');
   const [pending,      setPending]      = useState<RestaurantBooking[]>([]);
   const [confirmed,    setConfirmed]    = useState<RestaurantBooking[]>([]);
-  const [completed,    setCompleted]    = useState<RestaurantBooking[]>([]);
+  const [completed,    setCompleted]    = useState<RestaurantBooking[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [cancelled,    setCancelled]    = useState<RestaurantBooking[]>([]);
   const [reviews,      setReviews]      = useState<Review[]>([]);
   const [isLoading,    setIsLoading]    = useState(true);
@@ -220,12 +220,12 @@ export default function RestaurantDashboardScreen() {
       setNoProperty(!pid);
 
       // Charger réservations et avis en parallèle
-      const [pendingRes, confirmedRes, completedRes, cancelledRes, reviewsRes] =
+      const [confirmedRes, completedRes, cancelledClientRes, cancelledProRes, reviewsRes] =
         await Promise.allSettled([
-          bookingsApi.getMyBookings({ role: 'host', status: 'pending',   limit: 50 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'confirmed', limit: 50 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'completed', limit: 50 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'cancelled', limit: 50 }),
+          bookingsApi.getMyBookings({ status: 'confirmed', limit: 50 }),
+          bookingsApi.getMyBookings({ status: 'completed', limit: 50 }),
+          bookingsApi.getMyBookings({ status: 'cancelled_by_client',       limit: 50 }),
+          bookingsApi.getMyBookings({ status: 'cancelled_by_professional', limit: 50 }),
           pid
             ? reviewsApi.getForProperty(pid, { limit: 5 })
             : Promise.reject(new Error('no property')),
@@ -237,10 +237,15 @@ export default function RestaurantDashboardScreen() {
         return Array.isArray(d) ? d : [];
       };
 
-      setPending(safe(pendingRes));
-      setConfirmed(safe(confirmedRes));
+      // Les restaurants n'ont pas de paiement en attente (confirmed immédiatement)
+      // On agrège confirmed comme "pending" lorsqu'ils sont futurs non encore honorés
+      const allConfirmed = safe(confirmedRes);
+      setConfirmed(allConfirmed);
+      // Réservations futures confirmées non encore honorées = « en attente »
+      const todayDate = todayStr();
+      setPending(allConfirmed.filter(b => (b.startDate ?? '').split('T')[0] >= todayDate));
       setCompleted(safe(completedRes));
-      setCancelled(safe(cancelledRes));
+      setCancelled([...safe(cancelledClientRes), ...safe(cancelledProRes)]);
       setReviews(safe(reviewsRes));
     } catch { /* erreur silencieuse au niveau supérieur */ } finally {
       setIsLoading(false);

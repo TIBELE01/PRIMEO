@@ -31,7 +31,7 @@ restaurantRouter.post('/time-slots', ...ownerOnly, async (req: Request, res: Res
     }
     const data = await restaurantService.createTimeSlot(
       req.params.propertyId,
-      (req as any).user.id,
+      req.user!.sub,
       { dayOfWeek: Number(dayOfWeek), startTime, endTime, maxCapacity: Number(maxCapacity), isBlocked },
     );
     res.status(201).json({ data });
@@ -44,7 +44,7 @@ restaurantRouter.patch('/time-slots/:slotId', ...ownerOnly, async (req: Request,
     const data = await restaurantService.updateTimeSlot(
       req.params.propertyId,
       req.params.slotId,
-      (req as any).user.id,
+      req.user!.sub,
       {
         ...(maxCapacity !== undefined ? { maxCapacity: Number(maxCapacity) } : {}),
         ...(isBlocked !== undefined ? { isBlocked: Boolean(isBlocked) } : {}),
@@ -56,7 +56,7 @@ restaurantRouter.patch('/time-slots/:slotId', ...ownerOnly, async (req: Request,
 
 restaurantRouter.delete('/time-slots/:slotId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await restaurantService.deleteTimeSlot(req.params.propertyId, req.params.slotId, (req as any).user.id);
+    await restaurantService.deleteTimeSlot(req.params.propertyId, req.params.slotId, req.user!.sub);
     res.json({ message: 'Créneau supprimé' });
   } catch (err) { next(err); }
 });
@@ -74,7 +74,7 @@ restaurantRouter.post('/menu', ...ownerOnly, async (req: Request, res: Response,
   try {
     const data = await restaurantService.createMenuItem(
       req.params.propertyId,
-      (req as any).user.id,
+      req.user!.sub,
       req.body,
     );
     res.status(201).json({ data });
@@ -86,7 +86,7 @@ restaurantRouter.patch('/menu/:itemId', ...ownerOnly, async (req: Request, res: 
     const data = await restaurantService.updateMenuItem(
       req.params.propertyId,
       req.params.itemId,
-      (req as any).user.id,
+      req.user!.sub,
       req.body,
     );
     res.json({ data });
@@ -95,7 +95,7 @@ restaurantRouter.patch('/menu/:itemId', ...ownerOnly, async (req: Request, res: 
 
 restaurantRouter.delete('/menu/:itemId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await restaurantService.deleteMenuItem(req.params.propertyId, req.params.itemId, (req as any).user.id);
+    await restaurantService.deleteMenuItem(req.params.propertyId, req.params.itemId, req.user!.sub);
     res.json({ message: 'Article supprimé' });
   } catch (err) { next(err); }
 });
@@ -113,7 +113,7 @@ restaurantRouter.post('/special-menus', ...ownerOnly, async (req: Request, res: 
   try {
     const data = await restaurantService.createSpecialMenu(
       req.params.propertyId,
-      (req as any).user.id,
+      req.user!.sub,
       req.body,
     );
     res.status(201).json({ data });
@@ -122,7 +122,7 @@ restaurantRouter.post('/special-menus', ...ownerOnly, async (req: Request, res: 
 
 restaurantRouter.delete('/special-menus/:menuId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await restaurantService.deleteSpecialMenu(req.params.propertyId, req.params.menuId, (req as any).user.id);
+    await restaurantService.deleteSpecialMenu(req.params.propertyId, req.params.menuId, req.user!.sub);
     res.json({ message: 'Menu spécial supprimé' });
   } catch (err) { next(err); }
 });
@@ -140,7 +140,7 @@ restaurantRouter.post('/promotions', ...ownerOnly, async (req: Request, res: Res
   try {
     const data = await restaurantService.createPromotion(
       req.params.propertyId,
-      (req as any).user.id,
+      req.user!.sub,
       req.body,
     );
     res.status(201).json({ data });
@@ -152,7 +152,7 @@ restaurantRouter.patch('/promotions/:promoId', ...ownerOnly, async (req: Request
     const data = await restaurantService.updatePromotion(
       req.params.propertyId,
       req.params.promoId,
-      (req as any).user.id,
+      req.user!.sub,
       req.body,
     );
     res.json({ data });
@@ -161,7 +161,7 @@ restaurantRouter.patch('/promotions/:promoId', ...ownerOnly, async (req: Request
 
 restaurantRouter.delete('/promotions/:promoId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await restaurantService.deletePromotion(req.params.propertyId, req.params.promoId, (req as any).user.id);
+    await restaurantService.deletePromotion(req.params.propertyId, req.params.promoId, req.user!.sub);
     res.json({ message: 'Promotion supprimée' });
   } catch (err) { next(err); }
 });

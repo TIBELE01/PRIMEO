@@ -28,6 +28,7 @@ export const restaurantApi = {
     price: number;
     allergens?: string[];
     isAvailable?: boolean;
+    photoUrl?: string;
   }) => apiClient.post(`/properties/${propertyId}/menu`, data),
   updateMenuItem: (propertyId: string, itemId: string, data: Partial<{
     name: string;
@@ -36,6 +37,7 @@ export const restaurantApi = {
     allergens: string[];
     isAvailable: boolean;
     sortOrder: number;
+    photoUrl: string;
   }>) => apiClient.patch(`/properties/${propertyId}/menu/${itemId}`, data),
   deleteMenuItem: (propertyId: string, itemId: string) =>
     apiClient.delete(`/properties/${propertyId}/menu/${itemId}`),

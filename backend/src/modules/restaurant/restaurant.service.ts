@@ -74,6 +74,7 @@ export const restaurantService = {
       price: number;
       allergens?: string[];
       isAvailable?: boolean;
+      photoUrl?: string;
     },
   ) {
     await requireOwnership(propertyId, ownerId);
@@ -88,6 +89,7 @@ export const restaurantService = {
         price: Math.round(data.price),
         allergens: data.allergens ?? [],
         isAvailable: data.isAvailable ?? true,
+        ...(data.photoUrl?.trim() ? { photoUrl: data.photoUrl.trim() } : {}),
       },
     });
   },
@@ -103,6 +105,7 @@ export const restaurantService = {
       allergens?: string[];
       isAvailable?: boolean;
       sortOrder?: number;
+      photoUrl?: string;
     },
   ) {
     await requireOwnership(propertyId, ownerId);
@@ -117,6 +120,7 @@ export const restaurantService = {
         ...(data.allergens !== undefined ? { allergens: data.allergens } : {}),
         ...(data.isAvailable !== undefined ? { isAvailable: data.isAvailable } : {}),
         ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+        ...(data.photoUrl !== undefined ? { photoUrl: data.photoUrl.trim() || null } : {}),
       },
     });
   },
