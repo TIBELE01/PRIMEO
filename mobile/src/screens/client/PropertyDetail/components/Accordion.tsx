@@ -48,13 +48,13 @@ export function Accordion({ title, icon, color = '#1056E0', defaultOpen = false,
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 16, marginBottom: 8, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EEF0F3' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingRight: 12 },
+  wrap: { backgroundColor: '#fff', borderRadius: 14, marginHorizontal: 16, marginBottom: 10, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EEF0F3' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingRight: 13 },
   accent: { width: 4, alignSelf: 'stretch', borderTopRightRadius: 4, borderBottomRightRadius: 4, marginRight: 12 },
   headerText: { flex: 1 },
-  title: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  subtitle: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
-  chevronWrap: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  chevron: { fontSize: 14, color: '#6B7280', lineHeight: 16, marginTop: -2 },
+  title: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  subtitle: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  chevronWrap: { width: 25, height: 25, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  chevron: { fontSize: 15, color: '#6B7280', lineHeight: 17, marginTop: -2 },
   body: { paddingBottom: 4 },
 });
