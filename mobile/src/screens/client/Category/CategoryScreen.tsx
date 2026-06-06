@@ -20,8 +20,8 @@ import { SearchMapView } from '../Search/MapView';
 import { CategoryFilterSheet, countActive, type FilterState } from './CategoryFilterSheet';
 import { CATEGORY_CONFIGS, type CategoryConfig, type CategoryKey } from './categoryConfig';
 import { GeoSearchInput } from '@components/search/GeoSearchInput';
-import { MiniCalendar } from '@components/search/MiniCalendar';
 import { GuestPicker } from '@components/search/GuestPicker';
+import { CalendarPickerModal } from '../PropertyDetail/components/CalendarPickerModal';
 
 // Activer les animations LayoutAnimation sur Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -219,6 +219,16 @@ function buildChips(state: FilterState, config: CategoryConfig, patch: (fn: (s: 
 
 // ── Panneau de recherche (collapsible) ───────────────────────────────────────
 
+const MONTHS_SHORT = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+function fmtShort(str: string): string {
+  if (!str) return '—';
+  const [, m, d] = str.split('-');
+  return `${parseInt(d, 10)} ${MONTHS_SHORT[parseInt(m, 10) - 1]}`;
+}
+function nightsBetween(ci: string, co: string): number {
+  return Math.max(1, Math.round((new Date(co).getTime() - new Date(ci).getTime()) / 86_400_000));
+}
+
 interface SearchPanelProps {
   config: CategoryConfig;
   city: string;
@@ -239,6 +249,7 @@ function SearchPanel({
   pricePerNight, onSearch,
 }: SearchPanelProps) {
   const [expanded, setExpanded] = useState(false);
+  const [calMode, setCalMode] = useState<'checkin' | 'checkout' | null>(null);
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -292,14 +303,47 @@ function SearchPanel({
               <Text style={sp.sectionLabel}>
                 {config.key === 'restaurant' ? 'Date de réservation' : 'Dates de séjour'}
               </Text>
-              <MiniCalendar
-                checkIn={checkIn}
-                checkOut={checkOut}
-                onChangeCheckIn={onCheckInChange}
-                onChangeCheckOut={onCheckOutChange}
-                pricePerNight={pricePerNight}
-                color={config.color}
-              />
+              <View style={sp.dateRow}>
+                <TouchableOpacity
+                  style={[sp.dateField, sp.dateFieldLeft]}
+                  onPress={() => setCalMode('checkin')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={sp.dateFieldLabel}>
+                    {config.key === 'restaurant' ? 'Date' : 'Arrivée'}
+                  </Text>
+                  <Text style={checkIn ? sp.dateFieldValue : sp.dateFieldPlaceholder}>
+                    {checkIn ? fmtShort(checkIn) : 'Choisir'}
+                  </Text>
+                </TouchableOpacity>
+
+                {config.key !== 'restaurant' && (
+                  <>
+                    <View style={sp.dateDivider} />
+                    <TouchableOpacity
+                      style={[sp.dateField, sp.dateFieldRight]}
+                      onPress={() => setCalMode('checkout')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={sp.dateFieldLabel}>Départ</Text>
+                      <Text style={checkOut ? sp.dateFieldValue : sp.dateFieldPlaceholder}>
+                        {checkOut ? fmtShort(checkOut) : 'Choisir'}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {checkIn && checkOut && config.key !== 'restaurant' && (
+                <View style={[sp.dateRecap, { borderColor: config.color + '40' }]}>
+                  <Text style={[sp.dateRecapText, { color: config.color }]}>
+                    {nightsBetween(checkIn, checkOut)} nuit(s)
+                  </Text>
+                  <TouchableOpacity onPress={() => { onCheckInChange(''); onCheckOutChange(''); }}>
+                    <Text style={sp.dateClear}>Effacer</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           )}
 
@@ -346,6 +390,25 @@ function SearchPanel({
           )}
         </View>
       )}
+
+      <CalendarPickerModal
+        visible={calMode !== null}
+        color={config.color}
+        mode={calMode === 'checkout' ? 'checkout' : config.key === 'restaurant' ? 'single' : 'checkin'}
+        existingCheckIn={calMode === 'checkout' ? checkIn : undefined}
+        onConfirm={(date) => {
+          if (calMode === 'checkin') {
+            onCheckInChange(date);
+            onCheckOutChange('');
+          } else if (calMode === 'checkout') {
+            onCheckOutChange(date);
+          } else {
+            onCheckInChange(date);
+          }
+          setCalMode(null);
+        }}
+        onClose={() => setCalMode(null)}
+      />
     </View>
   );
 }
@@ -354,21 +417,35 @@ const sp = StyleSheet.create({
   wrap: { marginHorizontal: 16, marginBottom: 8 },
   bar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#fff', borderRadius: 14, borderWidth: 1.5,
-    paddingHorizontal: 14, paddingVertical: 11,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6,
+    backgroundColor: '#fff', borderRadius: 16, borderWidth: 1.5,
+    paddingHorizontal: 14, paddingVertical: 13,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20, elevation: 14,
   },
   barIcon: { fontSize: 16 },
   barSummary: { flex: 1, fontSize: 13, color: '#9CA3AF', fontWeight: '400' },
   barArrow: { fontSize: 12, fontWeight: '700' },
   panel: {
-    backgroundColor: '#fff', borderRadius: 14, borderWidth: 1,
-    borderColor: '#E5E7EB', marginTop: 4, padding: 16, gap: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12,
+    backgroundColor: '#fff', borderRadius: 16, borderWidth: 0,
+    marginTop: 6, padding: 16, gap: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 16,
   },
   section: { gap: 8 },
   sectionDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#F3F4F6', paddingTop: 16 },
   sectionLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  /* Date picker */
+  dateRow: { flexDirection: 'row', alignItems: 'stretch', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, overflow: 'hidden' },
+  dateField: { flex: 1, paddingVertical: 11, paddingHorizontal: 14 },
+  dateFieldLeft: {},
+  dateFieldRight: {},
+  dateDivider: { width: 1, backgroundColor: '#E5E7EB' },
+  dateFieldLabel: { fontSize: 10, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 3 },
+  dateFieldValue: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  dateFieldPlaceholder: { fontSize: 13, color: '#D1D5DB', fontWeight: '500' },
+  dateRecap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, marginTop: 4 },
+  dateRecapText: { fontSize: 12, fontWeight: '600' },
+  dateClear: { fontSize: 12, color: '#DC2626', fontWeight: '600' },
+
   searchBtn: { borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   searchBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   resetBtn: { alignItems: 'center' },

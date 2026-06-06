@@ -12,13 +12,14 @@ import type { ClientStackParamList } from '@navigation/types';
 import { useCurrency } from '../../../hooks/useCurrency';
 import { useAuthStore } from '../../../store/authStore';
 import { usePropertyDetail } from './hooks/usePropertyDetail';
+import { ImageGallery } from './components/ImageGallery';
 import { VirtualTourButton } from './components/VirtualTourButton';
 import { Accordion } from './components/Accordion';
 import { BookingModal } from './components/BookingModal';
-import { BookingFilterCard } from './components/BookingFilterCard';
 import { RestaurantReservationModal } from './components/RestaurantReservationModal';
 import { PresentationSection } from './sections/PresentationSection';
 import { AmenitiesSection } from './sections/AmenitiesSection';
+import { CalendarSection } from './sections/CalendarSection';
 import { HostSection } from './sections/HostSection';
 import { LocationSection } from './sections/LocationSection';
 import { CharacteristicsSection } from './sections/CharacteristicsSection';
@@ -85,10 +86,7 @@ export function PropertyDetailScreen() {
   const { property, isLoading, error, isFromCache } = usePropertyDetail(propertyId);
   const [showBooking, setShowBooking] = useState(false);
   const [showRestaurant, setShowRestaurant] = useState(false);
-  const [filterCheckIn, setFilterCheckIn] = useState('');
-  const [filterCheckOut, setFilterCheckOut] = useState('');
-  const [filterGuests, setFilterGuests] = useState(1);
-  const [filterRestoTime, setFilterRestoTime] = useState('');
+  const [selectedDates, setSelectedDates] = useState<{ checkIn: string; checkOut: string } | null>(null);
 
   const isAuthenticated = !!useAuthStore(s => s.accessToken);
   const kind = property ? kindOf(property.type) : 'hebergement';
@@ -145,12 +143,12 @@ export function PropertyDetailScreen() {
       setShowRestaurant(true);
       return;
     }
-    if (filterCheckIn && filterCheckOut) {
+    if (selectedDates) {
       navigation.navigate('Booking', {
         propertyId: property.id,
-        checkIn: filterCheckIn,
-        checkOut: filterCheckOut,
-        guests: filterGuests,
+        checkIn: selectedDates.checkIn,
+        checkOut: selectedDates.checkOut,
+        guests: 1,
         propertyName: property.name,
         pricePerNight: property.pricePerNight ?? undefined,
         mode: 'stay',
@@ -158,7 +156,7 @@ export function PropertyDetailScreen() {
     } else {
       setShowBooking(true);
     }
-  }, [property, kind, filterCheckIn, filterCheckOut, filterGuests, navigation, requireAuth]);
+  }, [property, kind, selectedDates, navigation, requireAuth]);
 
   const handleOrder = useCallback(() => {
     if (!property) return;
@@ -200,6 +198,7 @@ export function PropertyDetailScreen() {
     );
   }
 
+  const images = (property.images ?? []).map(i => i.url);
   const showNew = isNew(property.createdAt);
   const ownerName = `${property.owner?.firstName ?? ''} ${property.owner?.lastName ?? ''}`.trim() || 'Le responsable';
 
@@ -219,31 +218,20 @@ export function PropertyDetailScreen() {
         </View>
       )}
 
-      {/* Top nav bar */}
-      <View style={styles.topNav}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
-          <Text style={styles.navBtnText}>←</Text>
+      {/* Floating header */}
+      <View style={styles.floatingHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+          <Text style={styles.headerBtnText}>←</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleShare} style={styles.navBtn}>
-          <Text style={styles.navBtnText}>↑</Text>
+        <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
+          <Text style={styles.headerBtnText}>↑</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Booking filter card — replaces image gallery */}
-        <BookingFilterCard
-          kind={kind}
-          color={theme.color}
-          checkIn={filterCheckIn}
-          checkOut={filterCheckOut}
-          guests={filterGuests}
-          restoTime={filterRestoTime}
-          onCheckInChange={setFilterCheckIn}
-          onCheckOutChange={setFilterCheckOut}
-          onGuestsChange={setFilterGuests}
-          onRestoTimeChange={setFilterRestoTime}
-        />
+        {/* Image carousel */}
+        <ImageGallery images={images} />
 
         {/* Badges */}
         <View style={styles.badges}>
@@ -335,6 +323,22 @@ export function PropertyDetailScreen() {
         {kind === 'real_estate' && (
           <Accordion title="Documents légaux" icon="📄" color={theme.color} subtitle="Titre foncier, ACD…">
             <RealEstateDocsSection property={property} color={theme.color} />
+          </Accordion>
+        )}
+
+        {/* ── 6. Disponibilités & calendrier (sauf immobilier) ── */}
+        {kind !== 'real_estate' && (
+          <Accordion
+            title={kind === 'restaurant' ? 'Réserver une table' : 'Disponibilités'}
+            icon="📅"
+            color={theme.color}
+            subtitle={kind === 'restaurant' ? 'Choisissez votre créneau' : 'Sélectionnez vos dates'}
+          >
+            <CalendarSection
+              propertyId={propertyId}
+              propertyType={property.type}
+              onDatesSelected={setSelectedDates}
+            />
           </Accordion>
         )}
 
@@ -494,9 +498,9 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 15, color: '#6B7280', textAlign: 'center' },
   errorBtn: { backgroundColor: '#1056E0', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 },
   errorBtnText: { color: '#fff', fontWeight: '600' },
-  topNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  navBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
-  navBtnText: { fontSize: 18, color: '#111827', fontWeight: '500' },
+  floatingHeader: { position: 'absolute', top: 48, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, zIndex: 10 },
+  headerBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.92)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 },
+  headerBtnText: { fontSize: 18, color: '#111827', fontWeight: '500' },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20, backgroundColor: '#F4F5F7' },
 
@@ -504,8 +508,8 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   badgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
 
-  titleBlock: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12, backgroundColor: '#fff' },
-  title: { fontSize: 21, fontWeight: '800', color: '#111827', lineHeight: 27 },
+  titleBlock: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, backgroundColor: '#fff' },
+  title: { fontSize: 19, fontWeight: '800', color: '#111827', lineHeight: 25 },
   locationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
   location: { fontSize: 12, color: '#6B7280' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
@@ -523,7 +527,7 @@ const styles = StyleSheet.create({
   },
   priceWrap: { flex: 1 },
   pricePrefix: { fontSize: 11, color: '#9CA3AF', fontWeight: '500', marginBottom: 1 },
-  price: { fontSize: 21, fontWeight: '900' },
+  price: { fontSize: 20, fontWeight: '900' },
   priceUnit: { fontSize: 12, color: '#6B7280', marginTop: 1, fontWeight: '600' },
   actionBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
   actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '800' },
