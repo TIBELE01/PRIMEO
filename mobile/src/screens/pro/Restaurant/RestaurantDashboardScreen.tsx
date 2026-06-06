@@ -1,231 +1,111 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
+  View, Text, ScrollView, StyleSheet, RefreshControl,
+  ActivityIndicator, TouchableOpacity, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { bookingsApi } from '../../../services/api/endpoints/bookings';
+import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
-import { reviewsApi } from '../../../services/api/endpoints/reviews';
 import { useProTheme } from '../../../hooks/useProTheme';
-import { KPICard } from '../../../components/dashboard/KPICard';
+import { useAuthStore } from '../../../store/authStore';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const { width } = Dimensions.get('window');
+const PRIMARY = '#DC2626';
 
-interface RestaurantBooking {
-  id: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  startDate: string;
-  guests: number;
-  specialRequests?: string;
-  property: { id: string; name: string };
-  client: { firstName: string; lastName: string };
-  createdAt: string;
-  timeSlot?: string;
-  cancellationReason?: string;
-  cancelledAt?: string;
-}
+// ─── Mini-graphiques (pure RN) ────────────────────────────────────────────────
 
-interface Review {
-  id: string;
-  rating: number;
-  comment?: string;
-  createdAt: string;
-  reviewer?: { firstName?: string; lastName?: string };
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
-function inNextNDays(isoDate: string, n: number): boolean {
-  const target = new Date(isoDate);
-  const now = new Date();
-  const future = new Date();
-  future.setDate(now.getDate() + n);
-  return target >= now && target <= future;
-}
-
-function inLastNDays(isoDate: string, n: number): boolean {
-  const target = new Date(isoDate);
-  const now = new Date();
-  const past = new Date();
-  past.setDate(now.getDate() - n);
-  return target >= past && target <= now;
-}
-
-function sameMonth(isoDate: string): boolean {
-  const d = new Date(isoDate);
-  const now = new Date();
-  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-}
-
-function formatTime(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatFullDate(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Bonjour';
-  if (h < 18) return 'Bon après-midi';
-  return 'Bonsoir';
-}
-
-// ─── Composants ──────────────────────────────────────────────────────────────
-
-interface QuickActionProps {
-  label: string;
-  sub: string;
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
-  onPress: () => void;
-}
-
-function QuickAction({ label, sub, icon, color, onPress }: QuickActionProps) {
+function BarChart({ data, labels, color, height = 100 }: {
+  data: number[]; labels: string[]; color: string; height?: number;
+}) {
+  const max = Math.max(...data, 1);
   return (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.85}>
-      <View style={[styles.actionIcon, { backgroundColor: color + '18' }]}>
-        <Ionicons name={icon} size={26} color={color} />
-      </View>
-      <View style={styles.actionText}>
-        <Text style={styles.actionLabel}>{label}</Text>
-        <Text style={styles.actionSub}>{sub}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
-    </TouchableOpacity>
-  );
-}
-
-function BookingPill({ booking }: { booking: RestaurantBooking }) {
-  const statusColor = booking.status === 'confirmed' ? '#16A34A' : booking.status === 'pending' ? '#D97706' : '#6B7280';
-  const statusBg    = booking.status === 'confirmed' ? '#F0FDF4' : booking.status === 'pending' ? '#FFFBEB' : '#F9FAFB';
-  const statusLabel = booking.status === 'confirmed' ? 'Confirmé' : booking.status === 'pending' ? 'En attente' : 'Autre';
-  const time = booking.timeSlot ?? formatTime(booking.startDate);
-  return (
-    <View style={styles.bookingPill}>
-      <View style={styles.bookingPillTime}>
-        <Text style={styles.bookingPillTimeText}>{time}</Text>
-      </View>
-      <View style={styles.bookingPillInfo}>
-        <Text style={styles.bookingPillName}>{booking.client.firstName} {booking.client.lastName}</Text>
-        <Text style={styles.bookingPillGuests}>{booking.guests} couvert{booking.guests > 1 ? 's' : ''}</Text>
-      </View>
-      <View style={[styles.statusChip, { backgroundColor: statusBg }]}>
-        <Text style={[styles.statusChipText, { color: statusColor }]}>{statusLabel}</Text>
-      </View>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: height + 20 }}>
+      {data.map((val, i) => (
+        <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+          <View style={{
+            width: '75%',
+            height: Math.max(Math.round((val / max) * height), 2),
+            backgroundColor: color,
+            borderRadius: 3,
+            opacity: i === data.length - 1 ? 1 : 0.65,
+          }} />
+          <Text style={{ fontSize: 8, color: '#9CA3AF', marginTop: 3 }}>{labels[i]}</Text>
+        </View>
+      ))}
     </View>
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
-  const name = review.reviewer?.firstName
-    ? `${review.reviewer.firstName}${review.reviewer.lastName ? ' ' + review.reviewer.lastName[0] + '.' : ''}`
-    : 'Client';
-  const stars = '★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating));
+function DonutChart({ value, max, color, size = 72 }: {
+  value: number; max: number; color: string; size?: number;
+}) {
+  const pct = Math.min(value / Math.max(max, 1), 1);
+  const pctDisplay = Math.round(pct * 100);
   return (
-    <View style={styles.reviewCard}>
-      <View style={styles.reviewTop}>
-        <View style={styles.reviewAvatar}>
-          <Text style={styles.reviewAvatarText}>{name[0]}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.reviewName}>{name}</Text>
-          <Text style={styles.reviewDate}>{formatFullDate(review.createdAt)}</Text>
-        </View>
-        <Text style={styles.reviewStars}>{stars}</Text>
-      </View>
-      {review.comment ? (
-        <Text style={styles.reviewComment} numberOfLines={2}>{review.comment}</Text>
-      ) : null}
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{
+        width: size, height: size, borderRadius: size / 2,
+        borderWidth: 8, borderColor: '#E5E7EB', position: 'absolute',
+      }} />
+      <View style={{
+        width: size, height: size, borderRadius: size / 2,
+        borderWidth: 8, borderColor: color,
+        borderTopColor: pct > 0.75 ? color : 'transparent',
+        borderRightColor: pct > 0.5 ? color : 'transparent',
+        borderBottomColor: pct > 0.25 ? color : 'transparent',
+        borderLeftColor: color,
+        position: 'absolute',
+        transform: [{ rotate: `${pct * 360 - 90}deg` }],
+      }} />
+      <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>{pctDisplay}%</Text>
     </View>
   );
 }
+
+const MONTH_LABELS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const DAY_LABELS   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
-export default function RestaurantDashboardScreen() {
-  const navigation  = useNavigation<any>();
-  const theme       = useProTheme();
-  const PRIMARY     = theme.primary;    // rouge restaurant
-  const PRIMARY_DARK = theme.primaryDark;
+export default function RestaurantDashboardScreen({ navigation }: any) {
+  const theme = useProTheme();
+  const user  = useAuthStore((s) => s.user);
 
-  const [propertyId,   setPropertyId]   = useState<string | null>(null);
-  const [propertyName, setPropertyName] = useState<string>('Mon restaurant');
-  const [pending,      setPending]      = useState<RestaurantBooking[]>([]);
-  const [confirmed,    setConfirmed]    = useState<RestaurantBooking[]>([]);
-  const [completed,    setCompleted]    = useState<RestaurantBooking[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [cancelled,    setCancelled]    = useState<RestaurantBooking[]>([]);
-  const [reviews,      setReviews]      = useState<Review[]>([]);
+  const [stats,        setStats]        = useState<any>(null);
+  const [propStats,    setPropStats]    = useState<any>(null);
+  const [propertyName, setPropertyName] = useState('Mon restaurant');
+  const [noProperty,   setNoProperty]   = useState(false);
   const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [noProperty,   setNoProperty]   = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
-
     try {
-      // Récupérer le restaurant de ce professionnel
-      let pid: string | null = null;
-      let pname = 'Mon restaurant';
-      try {
-        const propRes = await propertiesApi.getMyListings();
-        const listings = propRes.data?.data ?? propRes.data ?? [];
-        if (Array.isArray(listings) && listings.length > 0) {
-          pid   = listings[0].id as string;
-          pname = (listings[0].title ?? listings[0].name ?? 'Mon restaurant') as string;
-        }
-      } catch { /* pas de restaurant encore */ }
+      // Nom du restaurant
+      const propRes = await propertiesApi.getMyListings().catch(() => null);
+      const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
+      if (listings.length > 0) {
+        setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
+        setNoProperty(false);
+      } else {
+        setNoProperty(true);
+      }
 
-      setPropertyId(pid);
-      setPropertyName(pname);
-      setNoProperty(!pid);
-
-      // Charger réservations et avis en parallèle
-      const [confirmedRes, completedRes, cancelledClientRes, cancelledProRes, reviewsRes] =
-        await Promise.allSettled([
-          bookingsApi.getMyBookings({ status: 'confirmed', limit: 50 }),
-          bookingsApi.getMyBookings({ status: 'completed', limit: 50 }),
-          bookingsApi.getMyBookings({ status: 'cancelled_by_client',       limit: 50 }),
-          bookingsApi.getMyBookings({ status: 'cancelled_by_professional', limit: 50 }),
-          pid
-            ? reviewsApi.getForProperty(pid, { limit: 5 })
-            : Promise.reject(new Error('no property')),
-        ]);
-
-      const safe = (res: PromiseSettledResult<any>): any[] => {
-        if (res.status !== 'fulfilled') return [];
-        const d = res.value.data?.data ?? res.value.data ?? [];
-        return Array.isArray(d) ? d : [];
-      };
-
-      // Les restaurants n'ont pas de paiement en attente (confirmed immédiatement)
-      // On agrège confirmed comme "pending" lorsqu'ils sont futurs non encore honorés
-      const allConfirmed = safe(confirmedRes);
-      setConfirmed(allConfirmed);
-      // Réservations futures confirmées non encore honorées = « en attente »
-      const todayDate = todayStr();
-      setPending(allConfirmed.filter(b => (b.startDate ?? '').split('T')[0] >= todayDate));
-      setCompleted(safe(completedRes));
-      setCancelled([...safe(cancelledClientRes), ...safe(cancelledProRes)]);
-      setReviews(safe(reviewsRes));
-    } catch { /* erreur silencieuse au niveau supérieur */ } finally {
+      const [bRes, pRes] = await Promise.allSettled([
+        proDashboardApi.getBookingStats(),
+        proDashboardApi.getPropertyStats(),
+      ]);
+      if (bRes.status === 'fulfilled') {
+        setStats(bRes.value.data?.data ?? bRes.value.data);
+      }
+      if (pRes.status === 'fulfilled') {
+        setPropStats(pRes.value.data?.data ?? pRes.value.data);
+      }
+    } catch {
+      // erreur silencieuse
+    } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -233,219 +113,227 @@ export default function RestaurantDashboardScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── KPIs ──────────────────────────────────────────────────────────────────
-  const today         = todayStr();
-  const couverts      = confirmed.filter(b => b.startDate?.split('T')[0] === today).reduce((s, b) => s + b.guests, 0);
-  const reservSemaine = confirmed.filter(b => inNextNDays(b.startDate, 7)).length;
-  const reservMois    = confirmed.filter(b => sameMonth(b.startDate)).length;
-  const avgRating     = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : '—';
-
-  // Réservations d'aujourd'hui et de demain (confirmées + en attente)
-  const todayBookings = [...pending, ...confirmed]
-    .filter(b => b.startDate?.split('T')[0] === today)
-    .sort((a, b) => (a.timeSlot ?? a.startDate).localeCompare(b.timeSlot ?? b.startDate));
-
-  const pendingCount = pending.length;
-
-  // Annulations récentes
-  const recentCancellations = cancelled.filter(b =>
-    b.cancelledAt ? inLastNDays(b.cancelledAt, 7) : inLastNDays(b.createdAt ?? '', 7)
-  );
-
-  // ── Onboarding : aucun restaurant ────────────────────────────────────────
-  if (!isLoading && noProperty) {
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.onboardingContainer}>
-          <View style={[styles.onboardingIcon, { backgroundColor: PRIMARY + '18' }]}>
-            <Ionicons name="restaurant" size={56} color={PRIMARY} />
+      <SafeAreaView style={[styles.safe]} edges={['top']}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={PRIMARY} />
+          <Text style={[styles.loadingText, { color: PRIMARY }]}>Chargement…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Onboarding : aucun restaurant
+  if (noProperty) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.centered}>
+          <View style={[styles.onboardIcon, { backgroundColor: PRIMARY + '18' }]}>
+            <Ionicons name="restaurant" size={48} color={PRIMARY} />
           </View>
-          <Text style={styles.onboardingTitle}>Bienvenue sur Primeo !</Text>
-          <Text style={styles.onboardingSubtitle}>
-            Commencez par créer votre fiche restaurant pour gérer vos réservations,
-            votre menu et vos créneaux.
+          <Text style={styles.onboardTitle}>Bienvenue sur Primeo !</Text>
+          <Text style={styles.onboardSub}>
+            Créez votre fiche restaurant pour gérer vos réservations, votre menu et vos créneaux.
           </Text>
           <TouchableOpacity
-            style={[styles.onboardingBtn, { backgroundColor: PRIMARY }]}
+            style={[styles.onboardBtn, { backgroundColor: PRIMARY }]}
             onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
           >
             <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.onboardingBtnText}>Créer mon restaurant</Text>
+            <Text style={styles.onboardBtnText}>Créer mon restaurant</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={PRIMARY} />
-          <Text style={styles.loadingText}>Chargement…</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const now = new Date();
+
+  // Revenus — 6 mois
+  const revenueLabels = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return MONTH_LABELS[d.getMonth()];
+  });
+  const revenueData: number[] = stats?.revenueByMonth?.slice(-6) ?? Array(6).fill(0);
+
+  // Taux d'occupation — 7 jours
+  const occupancyData: number[] = stats?.occupancyByDay?.slice(-7) ?? Array(7).fill(0);
+  const occLabels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - 6 + i);
+    return DAY_LABELS[d.getDay()];
+  });
+
+  // KPIs
+  const pendingCount    = stats?.pending    ?? 0;
+  const upcomingCount   = stats?.upcoming   ?? 0;
+  const completedCount  = stats?.completed  ?? 0;
+  const cancelledCount  = stats?.cancelled  ?? 0;
+  const occupancyRate   = stats?.occupancyRate30d ?? propStats?.occupancyRate ?? 0;
+  const netRevenue      = stats?.netRevenueMois   ?? stats?.netRevenue ?? 0;
+  const avgRating       = propStats?.averageRating ?? stats?.averageRating ?? 0;
+  const publishedProps  = propStats?.published ?? 0;
+  const totalProps      = propStats?.total    ?? 0;
+  const totalViews      = stats?.totalViews   ?? propStats?.totalViews ?? 0;
+  const convRate        = stats?.conversionRate ?? 0;
+
+  const firstName = user?.firstName ?? 'Pro';
+
+  // Barre statuts
+  const quickStats = [
+    { label: 'En attente',  value: pendingCount,   color: '#F59E0B' },
+    { label: 'À venir',     value: upcomingCount,  color: PRIMARY },
+    { label: 'Terminées',   value: completedCount,  color: '#10B981' },
+    { label: 'Annulées',    value: cancelledCount,  color: '#EF4444' },
+  ];
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => load(true)}
-            tintColor={PRIMARY}
-            colors={[PRIMARY]}
-          />
+          <RefreshControl refreshing={isRefreshing} onRefresh={() => load(true)} tintColor={PRIMARY} />
         }
       >
-        {/* ── En-tête ──────────────────────────────────────────────────────── */}
-        <View style={styles.topHeader}>
+        {/* ── En-tête coloré ──────────────────────────────────────────────── */}
+        <View style={[styles.header, { backgroundColor: PRIMARY }]}>
           <View>
-            <Text style={styles.topGreeting}>{getGreeting()}</Text>
-            <Text style={styles.topName} numberOfLines={1}>{propertyName}</Text>
+            <Text style={styles.headerGreeting}>Bonjour, {firstName} 👋</Text>
+            <Text style={styles.headerSub} numberOfLines={1}>{propertyName}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.notifBtn}
-            onPress={() => navigation.navigate('Notifications')}
-          >
-            <Ionicons name="notifications-outline" size={22} color="#374151" />
-            {pendingCount > 0 && (
-              <View style={styles.notifBadge}>
-                <Text style={styles.notifBadgeText}>{pendingCount}</Text>
-              </View>
-            )}
+          <TouchableOpacity onPress={() => load(true)} style={styles.refreshBtn}>
+            <Ionicons name="refresh" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* ── KPIs ──────────────────────────────────────────────────────────── */}
-        <View style={styles.kpiRow}>
-          <KPICard title="Couverts" value={couverts} subtitle="Aujourd'hui" icon="🍽️" />
-          <KPICard title="Réservations" value={reservSemaine} subtitle="7 prochains jours" icon="📅" />
-        </View>
-        <View style={[styles.kpiRow, { marginTop: 10 }]}>
-          <KPICard title="Ce mois" value={reservMois} subtitle="Confirmées" icon="📆" />
-          <KPICard title="Note moyenne" value={avgRating} subtitle={`${reviews.length} avis`} icon="⭐" />
-        </View>
+        <View style={styles.body}>
 
-        {/* ── Réservations du jour ─────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Aujourd'hui</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Bookings')}>
-              <Text style={[styles.seeAll, { color: PRIMARY }]}>Voir tout</Text>
-            </TouchableOpacity>
+          {/* ── Barre statuts réservations ───────────────────────────────── */}
+          <View style={styles.statusStrip}>
+            {quickStats.map((s) => (
+              <View key={s.label} style={styles.statusItem}>
+                <Text style={[styles.statusValue, { color: s.color }]}>{s.value}</Text>
+                <Text style={styles.statusLabel}>{s.label}</Text>
+              </View>
+            ))}
           </View>
 
-          {todayBookings.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="calendar-outline" size={32} color="#D1D5DB" />
-              <Text style={styles.emptyCardText}>Aucune réservation pour aujourd'hui</Text>
+          {/* ── Revenus nets (bar chart 6 mois) ─────────────────────────── */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Revenus nets — mois en cours</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+                <Text style={[styles.cardLink, { color: PRIMARY }]}>Tout voir →</Text>
+              </TouchableOpacity>
             </View>
-          ) : (
-            <View style={styles.card}>
-              {todayBookings.map((b, i) => (
-                <React.Fragment key={b.id}>
-                  <BookingPill booking={b} />
-                  {i < todayBookings.length - 1 && <View style={styles.pillDivider} />}
-                </React.Fragment>
-              ))}
+            <Text style={[styles.bigNumber, { color: PRIMARY }]}>
+              {netRevenue.toLocaleString('fr-CI')} FCFA
+            </Text>
+            <View style={styles.chartLabel}>
+              <Text style={styles.chartTitle}>Revenus 6 derniers mois</Text>
             </View>
-          )}
-        </View>
+            <BarChart data={revenueData} labels={revenueLabels} color={PRIMARY} height={100} />
+          </View>
 
-        {/* ── Actions rapides ──────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Actions rapides</Text>
-          <QuickAction
-            label="Menu"
-            sub="Gérer vos plats et boissons"
-            icon="restaurant-outline"
-            color={PRIMARY}
-            onPress={() => navigation.navigate('MenuManagement')}
-          />
-          <QuickAction
-            label="Réservations"
-            sub="Tables et créneaux confirmés"
-            icon="calendar-outline"
-            color="#2563EB"
-            onPress={() => navigation.navigate('Bookings')}
-          />
-          <QuickAction
-            label="Créneaux horaires"
-            sub="Gérer vos heures d'ouverture"
-            icon="time-outline"
-            color="#7C3AED"
-            onPress={() => navigation.navigate('TimeSlots')}
-          />
-          <QuickAction
-            label="Promotions"
-            sub="Codes promo et offres spéciales"
-            icon="pricetag-outline"
-            color="#D97706"
-            onPress={() => navigation.navigate('Promotions')}
-          />
-          <QuickAction
-            label="Commandes en ligne"
-            sub="Suivre les commandes à emporter"
-            icon="receipt-outline"
-            color="#059669"
-            onPress={() => navigation.navigate('FoodOrders')}
-          />
-        </View>
+          {/* ── Taux d'occupation + Note moyenne ────────────────────────── */}
+          <View style={styles.row}>
+            <View style={[styles.card, { flex: 1 }]}>
+              <Text style={styles.cardTitle}>Taux d'occupation</Text>
+              <Text style={styles.cardSubtitle}>30 derniers jours</Text>
+              <View style={styles.donutRow}>
+                <DonutChart value={occupancyRate} max={100} color={PRIMARY} size={72} />
+                <View style={styles.donutInfo}>
+                  <Text style={[styles.bigNumber, { color: PRIMARY, fontSize: 22 }]}>
+                    {Math.round(occupancyRate)}%
+                  </Text>
+                  <Text style={styles.trendText}>
+                    {occupancyRate >= 70 ? '🔥 Excellent' : occupancyRate >= 40 ? '👍 Bon' : '📉 À améliorer'}
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-        {/* ── Alertes annulations ──────────────────────────────────────────── */}
-        {recentCancellations.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Annulations récentes</Text>
-            <View style={styles.alertBanner}>
-              <Ionicons name="warning-outline" size={18} color="#92400E" />
-              <Text style={styles.alertBannerText}>
-                {recentCancellations.length} annulation{recentCancellations.length > 1 ? 's' : ''} ces 7 derniers jours
+            <View style={[styles.card, { flex: 1 }]}>
+              <Text style={styles.cardTitle}>Note moyenne</Text>
+              <Text style={styles.cardSubtitle}>Tous avis</Text>
+              <View style={styles.ratingBox}>
+                <Text style={[styles.bigNumber, { fontSize: 32, color: '#F59E0B' }]}>
+                  {avgRating ? avgRating.toFixed(1) : '—'}
+                </Text>
+                <Text style={{ fontSize: 20 }}>⭐</Text>
+              </View>
+              <View style={styles.ratingStars}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Ionicons
+                    key={n}
+                    name={n <= Math.round(avgRating) ? 'star' : 'star-outline'}
+                    size={14}
+                    color="#F59E0B"
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* ── Taux d'occupation — 7 derniers jours ────────────────────── */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Taux d'occupation — 7 derniers jours</Text>
+            <BarChart data={occupancyData} labels={occLabels} color="#0284C7" height={80} />
+          </View>
+
+          {/* ── Annonces actives / Vues ce mois ─────────────────────────── */}
+          <View style={styles.row}>
+            <View style={[styles.card, { flex: 1 }]}>
+              <Ionicons name="restaurant" size={22} color={PRIMARY} style={{ marginBottom: 6 }} />
+              <Text style={[styles.bigNumber, { color: PRIMARY }]}>{publishedProps}</Text>
+              <Text style={styles.cardSubtitle}>Annonces actives</Text>
+              <Text style={styles.trendText}>{totalProps} au total</Text>
+            </View>
+
+            <View style={[styles.card, { flex: 1 }]}>
+              <Ionicons name="eye" size={22} color="#6366F1" style={{ marginBottom: 6 }} />
+              <Text style={[styles.bigNumber, { color: '#6366F1' }]}>
+                {totalViews.toLocaleString('fr-CI')}
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Bookings')}>
-                <Text style={styles.alertBannerLink}>Voir</Text>
+              <Text style={styles.cardSubtitle}>Vues ce mois</Text>
+              {convRate > 0 && (
+                <Text style={styles.trendText}>Conversion : {convRate.toFixed(1)}%</Text>
+              )}
+            </View>
+          </View>
+
+          {/* ── Actions rapides ──────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Actions rapides</Text>
+            <View style={styles.quickGrid}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('MenuManagement')}>
+                <Ionicons name="restaurant-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Menu</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Bookings')}>
+                <Ionicons name="calendar-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Réservations</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('TimeSlots')}>
+                <Ionicons name="time-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Créneaux</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Promotions')}>
+                <Ionicons name="pricetag-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Promotions</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('FoodOrders')}>
+                <Ionicons name="receipt-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Commandes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Analytics')}>
+                <Ionicons name="bar-chart-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Statistiques</Text>
               </TouchableOpacity>
             </View>
           </View>
-        )}
 
-        {/* ── Avis récents ─────────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Avis récents</Text>
-            {reviews.length > 0 && (
-              <Text style={[styles.seeAll, { color: PRIMARY }]}>
-                {reviews.length} avis
-              </Text>
-            )}
-          </View>
-
-          {reviews.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="star-outline" size={32} color="#D1D5DB" />
-              <Text style={styles.emptyCardText}>Aucun avis pour le moment</Text>
-              <Text style={styles.emptyCardSub}>Les avis de vos clients apparaîtront ici</Text>
-            </View>
-          ) : (
-            reviews.slice(0, 3).map(r => <ReviewCard key={r.id} review={r} />)
-          )}
-        </View>
-
-        {/* ── Pied de page ─────────────────────────────────────────────────── */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.footerBtn, { borderColor: PRIMARY }]}
-            onPress={() => navigation.navigate('Analytics')}
-          >
-            <Ionicons name="bar-chart-outline" size={16} color={PRIMARY} />
-            <Text style={[styles.footerBtnText, { color: PRIMARY }]}>Voir mes statistiques</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -455,120 +343,70 @@ export default function RestaurantDashboardScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: '#F5F5F5' },
-  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: '#6B7280' },
-  scroll:      { padding: 16, paddingBottom: 40 },
+  safe:        { flex: 1, backgroundColor: '#F8FAFC' },
+  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
+  loadingText: { fontSize: 14, fontWeight: '600' },
 
   // Onboarding
-  onboardingContainer: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    padding: 32, gap: 16,
+  onboardIcon:    { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center' },
+  onboardTitle:   { fontSize: 22, fontWeight: '800', color: '#111827', textAlign: 'center' },
+  onboardSub:     { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  onboardBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
+  onboardBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  // Header coloré
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 20,
+    borderBottomLeftRadius: 20, borderBottomRightRadius: 20,
   },
-  onboardingIcon: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
-  onboardingTitle: { fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  onboardingSubtitle: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
-  onboardingBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8,
+  headerGreeting: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  headerSub:      { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  refreshBtn:     { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8 },
+
+  body: { padding: 16, gap: 12 },
+
+  section:      { gap: 8 },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  // Barre statuts
+  statusStrip: {
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 14,
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  statusItem:  { flex: 1, alignItems: 'center' },
+  statusValue: { fontSize: 22, fontWeight: '800' },
+  statusLabel: { fontSize: 10, color: '#9CA3AF', marginTop: 2, fontWeight: '600' },
 
-  // En-tête simple
-  topHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  topGreeting:{ fontSize: 13, color: '#6B7280', fontWeight: '500', marginBottom: 2 },
-  topName:    { fontSize: 22, fontWeight: '800', color: '#111827' },
-  notifBtn:   { padding: 8, position: 'relative' },
-  notifBadge: {
-    position: 'absolute', top: 4, right: 4,
-    backgroundColor: '#DC2626', borderRadius: 8,
-    minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  notifBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
-
-  // Rangées KPI
-  kpiRow: { flexDirection: 'row', gap: 10 },
-
-  // Sections
-  section:     { marginTop: 20 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.6 },
-  seeAll:       { fontSize: 13, fontWeight: '600' },
-
-  // Card générique
+  // Carte générique
   card: {
-    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
+    backgroundColor: '#fff', borderRadius: 14, padding: 16,
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
+  cardHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  cardTitle:   { fontSize: 13, fontWeight: '700', color: '#374151' },
+  cardSubtitle:{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 },
+  cardLink:    { fontSize: 12, fontWeight: '600' },
+  chartLabel:  { marginTop: 4, marginBottom: 8 },
+  chartTitle:  { fontSize: 11, color: '#9CA3AF', fontWeight: '500' },
 
-  // Booking pill
-  bookingPill: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  pillDivider: { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
-  bookingPillTime: {
-    backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center',
-  },
-  bookingPillTimeText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  bookingPillInfo: { flex: 1 },
-  bookingPillName:   { fontSize: 14, fontWeight: '700', color: '#111827' },
-  bookingPillGuests: { fontSize: 12, color: '#6B7280', marginTop: 1 },
-  statusChip:   { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statusChipText: { fontSize: 11, fontWeight: '700' },
+  bigNumber: { fontSize: 28, fontWeight: '900', color: '#111827', marginVertical: 4 },
 
-  // Quick actions
-  actionCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
-  },
-  actionIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  actionText: { flex: 1 },
-  actionLabel: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  actionSub:   { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  row:      { flexDirection: 'row', gap: 12 },
+  donutRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+  donutInfo:{ flex: 1 },
+  trendText:{ fontSize: 11, color: '#6B7280', marginTop: 2 },
 
-  // Empty state
-  emptyCard: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 32,
-    alignItems: 'center', gap: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  emptyCardText: { fontSize: 14, color: '#9CA3AF', fontWeight: '500', textAlign: 'center' },
-  emptyCardSub:  { fontSize: 12, color: '#D1D5DB', textAlign: 'center' },
+  ratingBox:  { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginTop: 8 },
+  ratingStars:{ flexDirection: 'row', gap: 2, marginTop: 4 },
 
-  // Alert banner
-  alertBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14,
-    borderLeftWidth: 4, borderLeftColor: '#F59E0B',
+  // Grille actions rapides
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  quickBtn:  {
+    width: (width - 32 - 20) / 3,
+    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    alignItems: 'center', gap: 6,
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  alertBannerText: { flex: 1, fontSize: 13, color: '#92400E', fontWeight: '500' },
-  alertBannerLink: { fontSize: 13, fontWeight: '700', color: '#D97706' },
-
-  // Reviews
-  reviewCard: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  reviewTop:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  reviewAvatar: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  reviewAvatarText: { fontSize: 15, fontWeight: '800', color: '#6B7280' },
-  reviewName:       { fontSize: 14, fontWeight: '700', color: '#111827' },
-  reviewDate:       { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
-  reviewStars:      { fontSize: 14, color: '#F59E0B' },
-  reviewComment:    { fontSize: 13, color: '#6B7280', lineHeight: 18 },
-
-  // Footer
-  footer: { marginTop: 20 },
-  footerBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderRadius: 12, borderWidth: 1.5, paddingVertical: 14,
-  },
-  footerBtnText: { fontSize: 14, fontWeight: '700' },
+  quickLabel: { fontSize: 11, color: '#374151', fontWeight: '600', textAlign: 'center' },
 });
