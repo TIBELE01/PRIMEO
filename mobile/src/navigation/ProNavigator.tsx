@@ -206,6 +206,9 @@ export const ImmobilierStack = buildRoleNavigator(
 
 const restaurantScreens: ScreenDef[] = [
   { name: 'Dashboard',           component: RestaurantDashboardScreen, title: 'Tableau de bord', headerShown: false },
+  { name: 'AddProperty',         component: AddPropertyScreen,         title: 'Créer mon restaurant' },
+  { name: 'EditProperty',        component: AddPropertyScreen,         title: 'Modifier mon restaurant' },
+  { name: 'PropertyManagement',  component: PropertyManagementScreen,  title: 'Mon établissement' },
   { name: 'MenuManagement',      component: MenuManagementScreen,      title: 'Menu',            headerShown: false },
   { name: 'AddMenuItem',         component: MenuManagementScreen,      title: 'Ajouter un plat' },
   { name: 'SpecialMenus',        component: SpecialMenusScreen,        title: 'Menus spéciaux',  headerShown: false },

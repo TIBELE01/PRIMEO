@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 
@@ -27,7 +28,9 @@ function formatPrice(n: number): string {
 }
 
 export default function MenuManagementScreen() {
+  const navigation = useNavigation<any>();
   const [propertyId, setPropertyId] = useState<string | null>(null);
+  const [noProperty, setNoProperty] = useState(false);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('Tout');
@@ -50,7 +53,7 @@ export default function MenuManagementScreen() {
       const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
       const pid: string = listings[0]?.id ?? listings[0]?._id ?? '';
       setPropertyId(pid);
-      if (!pid) { setLoading(false); return; }
+      if (!pid) { setNoProperty(true); setLoading(false); return; }
 
       const menuRes = await restaurantApi.getMenuItems(pid);
       const data: MenuItem[] = menuRes.data?.data ?? menuRes.data ?? [];
@@ -173,6 +176,29 @@ export default function MenuManagementScreen() {
       setSaving(false);
     }
   };
+
+  if (!loading && noProperty) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }}>
+          <Ionicons name="restaurant-outline" size={56} color="#DC2626" />
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#111827', textAlign: 'center' }}>
+            Créez votre restaurant
+          </Text>
+          <Text style={{ fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 }}>
+            Vous devez d'abord créer votre fiche restaurant pour gérer votre menu.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: '#DC2626', borderRadius: 14, paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#fff" />
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Créer mon restaurant</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return (

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +17,8 @@ import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
 import { useProTheme } from '../../../hooks/useProTheme';
+
+const { width } = Dimensions.get('window');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,14 +47,7 @@ interface Review {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function todayStr(): string {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
-}
-
-function tomorrowStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
 }
 
 function inNextNDays(isoDate: string, n: number): boolean {
@@ -76,11 +72,9 @@ function sameMonth(isoDate: string): boolean {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
-function formatShortDate(isoDate: string): string {
+function formatTime(isoDate: string): string {
   const d = new Date(isoDate);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  return `${dd}/${mm}`;
+  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatFullDate(isoDate: string): string {
@@ -88,149 +82,167 @@ function formatFullDate(isoDate: string): string {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function renderStars(rating: number): string {
-  return '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bonjour';
+  if (h < 18) return 'Bon après-midi';
+  return 'Bonsoir';
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// ─── Composants ──────────────────────────────────────────────────────────────
 
-interface KPIProps {
-  title: string;
+interface StatCardProps {
+  label: string;
   value: number | string;
-  accent?: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  accent: string;
+  bg: string;
 }
 
-function KPICard({ title, value, accent = '#1056E0', icon }: KPIProps) {
+function StatCard({ label, value, icon, accent, bg }: StatCardProps) {
   return (
-    <View style={[styles.kpiCard, { borderLeftColor: accent }]}>
-      <Ionicons name={icon} size={20} color={accent} />
-      <Text style={styles.kpiValue}>{value}</Text>
-      <Text style={styles.kpiTitle}>{title}</Text>
+    <View style={[styles.statCard, { backgroundColor: bg }]}>
+      <View style={[styles.statIconWrap, { backgroundColor: accent + '22' }]}>
+        <Ionicons name={icon} size={20} color={accent} />
+      </View>
+      <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-// ─── Alert Card ───────────────────────────────────────────────────────────────
-
-interface AlertCardProps {
-  type: 'warning' | 'danger';
-  booking: RestaurantBooking;
+interface QuickActionProps {
+  label: string;
+  sub: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  color: string;
+  onPress: () => void;
 }
 
-function AlertBookingCard({ type, booking }: AlertCardProps) {
-  const bg = type === 'warning' ? '#FEF3C7' : '#FEE2E2';
-  const border = type === 'warning' ? '#F59E0B' : '#DC2626';
-  const textColor = type === 'warning' ? '#92400E' : '#991B1B';
+function QuickAction({ label, sub, icon, color, onPress }: QuickActionProps) {
   return (
-    <View style={[styles.alertCard, { backgroundColor: bg, borderLeftColor: border }]}>
-      <View style={styles.alertHeader}>
-        <Ionicons
-          name={type === 'warning' ? 'time-outline' : 'close-circle-outline'}
-          size={16}
-          color={border}
-        />
-        <Text style={[styles.alertClientName, { color: textColor }]}>
-          {booking.client.firstName} {booking.client.lastName}
-        </Text>
-        <Text style={[styles.alertDate, { color: textColor }]}>
-          {formatShortDate(booking.startDate)}
-        </Text>
+    <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.85}>
+      <View style={[styles.actionIcon, { backgroundColor: color + '18' }]}>
+        <Ionicons name={icon} size={26} color={color} />
       </View>
-      <View style={styles.alertMeta}>
-        <Text style={[styles.alertMetaText, { color: textColor }]}>
-          {booking.guests} couvert{booking.guests > 1 ? 's' : ''}
-          {booking.timeSlot ? `  •  ${booking.timeSlot}` : ''}
-        </Text>
+      <View style={styles.actionText}>
+        <Text style={styles.actionLabel}>{label}</Text>
+        <Text style={styles.actionSub}>{sub}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+    </TouchableOpacity>
+  );
+}
+
+function BookingPill({ booking }: { booking: RestaurantBooking }) {
+  const statusColor = booking.status === 'confirmed' ? '#16A34A' : booking.status === 'pending' ? '#D97706' : '#6B7280';
+  const statusBg    = booking.status === 'confirmed' ? '#F0FDF4' : booking.status === 'pending' ? '#FFFBEB' : '#F9FAFB';
+  const statusLabel = booking.status === 'confirmed' ? 'Confirmé' : booking.status === 'pending' ? 'En attente' : 'Autre';
+  const time = booking.timeSlot ?? formatTime(booking.startDate);
+  return (
+    <View style={styles.bookingPill}>
+      <View style={styles.bookingPillTime}>
+        <Text style={styles.bookingPillTimeText}>{time}</Text>
+      </View>
+      <View style={styles.bookingPillInfo}>
+        <Text style={styles.bookingPillName}>{booking.client.firstName} {booking.client.lastName}</Text>
+        <Text style={styles.bookingPillGuests}>{booking.guests} couvert{booking.guests > 1 ? 's' : ''}</Text>
+      </View>
+      <View style={[styles.statusChip, { backgroundColor: statusBg }]}>
+        <Text style={[styles.statusChipText, { color: statusColor }]}>{statusLabel}</Text>
       </View>
     </View>
   );
 }
 
-// ─── Horizontal Bar Chart ─────────────────────────────────────────────────────
-
-interface SlotBarProps {
-  slot: string;
-  count: number;
-  maxCount: number;
-}
-
-function SlotBar({ slot, count, maxCount, color }: SlotBarProps & { color?: string }) {
-  const pct = maxCount > 0 ? count / maxCount : 0;
+function ReviewCard({ review }: { review: Review }) {
+  const name = review.reviewer?.firstName
+    ? `${review.reviewer.firstName}${review.reviewer.lastName ? ' ' + review.reviewer.lastName[0] + '.' : ''}`
+    : 'Client';
+  const stars = '★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating));
   return (
-    <View style={styles.barRow}>
-      <Text style={styles.barLabel}>{slot}</Text>
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { flex: pct, backgroundColor: color ?? '#1056E0' }]} />
-        <View style={{ flex: 1 - pct }} />
+    <View style={styles.reviewCard}>
+      <View style={styles.reviewTop}>
+        <View style={styles.reviewAvatar}>
+          <Text style={styles.reviewAvatarText}>{name[0]}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.reviewName}>{name}</Text>
+          <Text style={styles.reviewDate}>{formatFullDate(review.createdAt)}</Text>
+        </View>
+        <Text style={styles.reviewStars}>{stars}</Text>
       </View>
-      <Text style={styles.barCount}>{count}</Text>
+      {review.comment ? (
+        <Text style={styles.reviewComment} numberOfLines={2}>{review.comment}</Text>
+      ) : null}
     </View>
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function RestaurantDashboardScreen() {
-  const navigation = useNavigation<any>();
-  const theme = useProTheme();
+  const navigation  = useNavigation<any>();
+  const theme       = useProTheme();
+  const PRIMARY     = theme.primary;    // rouge restaurant
+  const PRIMARY_DARK = theme.primaryDark;
 
-  const [pending, setPending] = useState<RestaurantBooking[]>([]);
-  const [confirmed, setConfirmed] = useState<RestaurantBooking[]>([]);
-  const [completed, setCompleted] = useState<RestaurantBooking[]>([]);
-  const [cancelled, setCancelled] = useState<RestaurantBooking[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [propertyId,   setPropertyId]   = useState<string | null>(null);
+  const [propertyName, setPropertyName] = useState<string>('Mon restaurant');
+  const [pending,      setPending]      = useState<RestaurantBooking[]>([]);
+  const [confirmed,    setConfirmed]    = useState<RestaurantBooking[]>([]);
+  const [completed,    setCompleted]    = useState<RestaurantBooking[]>([]);
+  const [cancelled,    setCancelled]    = useState<RestaurantBooking[]>([]);
+  const [reviews,      setReviews]      = useState<Review[]>([]);
+  const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [noProperty,   setNoProperty]   = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
 
     try {
-      // Step 1: get propertyId
-      let propertyId: string | null = null;
+      // Récupérer le restaurant de ce professionnel
+      let pid: string | null = null;
+      let pname = 'Mon restaurant';
       try {
         const propRes = await propertiesApi.getMyListings();
         const listings = propRes.data?.data ?? propRes.data ?? [];
         if (Array.isArray(listings) && listings.length > 0) {
-          propertyId = listings[0].id as string;
+          pid   = listings[0].id as string;
+          pname = (listings[0].title ?? listings[0].name ?? 'Mon restaurant') as string;
         }
-      } catch { /* no property */ }
+      } catch { /* pas de restaurant encore */ }
 
-      // Step 2: fetch all in parallel
+      setPropertyId(pid);
+      setPropertyName(pname);
+      setNoProperty(!pid);
+
+      // Charger réservations et avis en parallèle
       const [pendingRes, confirmedRes, completedRes, cancelledRes, reviewsRes] =
         await Promise.allSettled([
-          bookingsApi.getMyBookings({ role: 'host', status: 'pending', limit: 100 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'confirmed', limit: 100 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'completed', limit: 100 }),
-          bookingsApi.getMyBookings({ role: 'host', status: 'cancelled', limit: 100 }),
-          propertyId
-            ? reviewsApi.getForProperty(propertyId, { limit: 5 })
+          bookingsApi.getMyBookings({ role: 'host', status: 'pending',   limit: 50 }),
+          bookingsApi.getMyBookings({ role: 'host', status: 'confirmed', limit: 50 }),
+          bookingsApi.getMyBookings({ role: 'host', status: 'completed', limit: 50 }),
+          bookingsApi.getMyBookings({ role: 'host', status: 'cancelled', limit: 50 }),
+          pid
+            ? reviewsApi.getForProperty(pid, { limit: 5 })
             : Promise.reject(new Error('no property')),
         ]);
 
-      if (pendingRes.status === 'fulfilled') {
-        const d = pendingRes.value.data?.data ?? pendingRes.value.data ?? [];
-        setPending(Array.isArray(d) ? d : []);
-      }
-      if (confirmedRes.status === 'fulfilled') {
-        const d = confirmedRes.value.data?.data ?? confirmedRes.value.data ?? [];
-        setConfirmed(Array.isArray(d) ? d : []);
-      }
-      if (completedRes.status === 'fulfilled') {
-        const d = completedRes.value.data?.data ?? completedRes.value.data ?? [];
-        setCompleted(Array.isArray(d) ? d : []);
-      }
-      if (cancelledRes.status === 'fulfilled') {
-        const d = cancelledRes.value.data?.data ?? cancelledRes.value.data ?? [];
-        setCancelled(Array.isArray(d) ? d : []);
-      }
-      if (reviewsRes.status === 'fulfilled') {
-        const d = reviewsRes.value.data?.data ?? reviewsRes.value.data ?? [];
-        setReviews(Array.isArray(d) ? d : []);
-      }
-    } catch { /* silently ignore top-level errors */ } finally {
+      const safe = (res: PromiseSettledResult<any>): any[] => {
+        if (res.status !== 'fulfilled') return [];
+        const d = res.value.data?.data ?? res.value.data ?? [];
+        return Array.isArray(d) ? d : [];
+      };
+
+      setPending(safe(pendingRes));
+      setConfirmed(safe(confirmedRes));
+      setCompleted(safe(completedRes));
+      setCancelled(safe(cancelledRes));
+      setReviews(safe(reviewsRes));
+    } catch { /* erreur silencieuse au niveau supérieur */ } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -238,48 +250,58 @@ export default function RestaurantDashboardScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── KPI calculations ──────────────────────────────────────────────────────
-  const today = todayStr();
-  const tomorrow = tomorrowStr();
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const today         = todayStr();
+  const couverts      = confirmed.filter(b => b.startDate?.split('T')[0] === today).reduce((s, b) => s + b.guests, 0);
+  const reservSemaine = confirmed.filter(b => inNextNDays(b.startDate, 7)).length;
+  const reservMois    = confirmed.filter(b => sameMonth(b.startDate)).length;
+  const avgRating     = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : '—';
 
-  const countToday = confirmed.filter(b => b.startDate?.split('T')[0] === today).length;
-  const countWeek = confirmed.filter(b => inNextNDays(b.startDate, 7)).length;
-  const countMonth = confirmed.filter(b => sameMonth(b.startDate)).length;
-  const countPending = pending.length;
+  // Réservations d'aujourd'hui et de demain (confirmées + en attente)
+  const todayBookings = [...pending, ...confirmed]
+    .filter(b => b.startDate?.split('T')[0] === today)
+    .sort((a, b) => (a.timeSlot ?? a.startDate).localeCompare(b.timeSlot ?? b.startDate));
 
-  // ── Alerts ────────────────────────────────────────────────────────────────
-  const lastMinute = confirmed.filter(b => {
-    const d = b.startDate?.split('T')[0];
-    return d === today || d === tomorrow;
-  });
+  const pendingCount = pending.length;
 
+  // Annulations récentes
   const recentCancellations = cancelled.filter(b =>
-    b.cancelledAt
-      ? inLastNDays(b.cancelledAt, 7)
-      : b.createdAt
-      ? inLastNDays(b.createdAt, 7)
-      : false,
+    b.cancelledAt ? inLastNDays(b.cancelledAt, 7) : inLastNDays(b.createdAt ?? '', 7)
   );
 
-  // ── Occupancy by time slot ────────────────────────────────────────────────
-  const slotMap: Record<string, number> = {};
-  [...confirmed, ...completed].forEach(b => {
-    if (b.timeSlot) {
-      slotMap[b.timeSlot] = (slotMap[b.timeSlot] ?? 0) + 1;
-    }
-  });
-  const slotEntries = Object.entries(slotMap).sort((a, b) => b[1] - a[1]);
-  const maxSlotCount = slotEntries.length > 0 ? slotEntries[0][1] : 1;
-
-  // ── Recent reviews ────────────────────────────────────────────────────────
-  const recentReviews = reviews.slice(0, 3);
+  // ── Onboarding : aucun restaurant ────────────────────────────────────────
+  if (!isLoading && noProperty) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.onboardingContainer}>
+          <View style={[styles.onboardingIcon, { backgroundColor: PRIMARY + '18' }]}>
+            <Ionicons name="restaurant" size={56} color={PRIMARY} />
+          </View>
+          <Text style={styles.onboardingTitle}>Bienvenue sur Primeo !</Text>
+          <Text style={styles.onboardingSubtitle}>
+            Commencez par créer votre fiche restaurant pour gérer vos réservations,
+            votre menu et vos créneaux.
+          </Text>
+          <TouchableOpacity
+            style={[styles.onboardingBtn, { backgroundColor: PRIMARY }]}
+            onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#fff" />
+            <Text style={styles.onboardingBtnText}>Créer mon restaurant</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={styles.loadingText}>Chargement du tableau de bord…</Text>
+          <ActivityIndicator size="large" color={PRIMARY} />
+          <Text style={styles.loadingText}>Chargement…</Text>
         </View>
       </SafeAreaView>
     );
@@ -294,155 +316,170 @@ export default function RestaurantDashboardScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => load(true)}
-            tintColor={theme.primary}
-            colors={[theme.primary]}
+            tintColor={PRIMARY}
+            colors={[PRIMARY]}
           />
         }
       >
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: theme.primary }]}>
-          <Text style={[styles.title, { color: '#fff' }]}>Tableau de bord</Text>
-          <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.8)' }]}>Votre espace restaurant professionnel</Text>
-        </View>
-
-        {/* KPI grid 2×2 */}
-        <View style={styles.kpiGrid}>
-          <KPICard title="Aujourd'hui" value={countToday} icon="today-outline" accent={theme.primary} />
-          <KPICard title="Cette semaine" value={countWeek} icon="calendar-outline" accent={theme.primaryDark} />
-          <KPICard title="Ce mois" value={countMonth} icon="calendar-number-outline" accent={theme.primary} />
-          <View style={styles.kpiCardWrapper}>
-            <KPICard title="En attente" value={countPending} icon="hourglass-outline" accent="#F59E0B" />
-            {countPending > 0 && (
-              <View style={styles.amberBadge}>
-                <Text style={styles.amberBadgeText}>{countPending}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Alerts — last-minute */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Réservations de dernière minute</Text>
-          {lastMinute.length === 0 ? (
-            <View style={styles.emptySection}>
-              <Ionicons name="checkmark-circle-outline" size={20} color="#9CA3AF" />
-              <Text style={styles.emptySectionText}>Aucune réservation imminente</Text>
+        {/* ── Hero Header ──────────────────────────────────────────────────── */}
+        <View style={[styles.hero, { backgroundColor: PRIMARY }]}>
+          <View style={styles.heroTop}>
+            <View>
+              <Text style={styles.heroGreeting}>{getGreeting()}</Text>
+              <Text style={styles.heroName} numberOfLines={1}>{propertyName}</Text>
             </View>
-          ) : (
-            lastMinute.map(b => (
-              <AlertBookingCard key={b.id} type="warning" booking={b} />
-            ))
-          )}
-        </View>
-
-        {/* Alerts — recent cancellations */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Annulations récentes (7 jours)</Text>
-          {recentCancellations.length === 0 ? (
-            <View style={styles.emptySection}>
-              <Ionicons name="checkmark-circle-outline" size={20} color="#9CA3AF" />
-              <Text style={styles.emptySectionText}>Aucune annulation récente</Text>
-            </View>
-          ) : (
-            recentCancellations.map(b => (
-              <AlertBookingCard key={b.id} type="danger" booking={b} />
-            ))
-          )}
-        </View>
-
-        {/* Occupancy by time slot */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Taux d'occupation par créneau</Text>
-          <View style={styles.card}>
-            {slotEntries.length === 0 ? (
-              <View style={styles.emptyChart}>
-                <Ionicons name="time-outline" size={28} color="#D1D5DB" />
-                <Text style={styles.emptyChartText}>
-                  Aucun créneau configuré — définissez vos créneaux dans la gestion des créneaux
-                </Text>
-              </View>
-            ) : (
-              slotEntries.map(([slot, count]) => (
-                <SlotBar key={slot} slot={slot} count={count} maxCount={maxSlotCount} color={theme.primary} />
-              ))
-            )}
-          </View>
-        </View>
-
-        {/* Recent reviews */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>Avis récents</Text>
             <TouchableOpacity
-              onPress={() =>
-                Alert.alert('Avis', 'Disponible depuis Mes Annonces')
-              }
+              style={styles.heroNotif}
+              onPress={() => navigation.navigate('Notifications')}
             >
-              <Text style={styles.seeAll}>Voir tous les avis</Text>
+              <Ionicons name="notifications-outline" size={22} color="#fff" />
+              {pendingCount > 0 && (
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>{pendingCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
-          {recentReviews.length === 0 ? (
-            <View style={styles.emptySection}>
-              <Ionicons name="star-outline" size={20} color="#9CA3AF" />
-              <Text style={styles.emptySectionText}>Aucun avis pour le moment</Text>
+
+          {/* Stats rapides dans le hero */}
+          <View style={styles.heroStats}>
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatValue}>{couverts}</Text>
+              <Text style={styles.heroStatLabel}>Couverts aujourd'hui</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatValue}>{reservSemaine}</Text>
+              <Text style={styles.heroStatLabel}>Réservations / 7j</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatValue}>{avgRating}</Text>
+              <Text style={styles.heroStatLabel}>Note moyenne</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── KPI cards ────────────────────────────────────────────────────── */}
+        <View style={styles.statRow}>
+          <StatCard label="Ce mois"    value={reservMois}    icon="calendar-number-outline" accent={PRIMARY}      bg="#fff" />
+          <StatCard label="En attente" value={pendingCount}  icon="hourglass-outline"       accent="#D97706"       bg="#fff" />
+          <StatCard label="Annulations" value={recentCancellations.length} icon="close-circle-outline" accent="#6B7280" bg="#fff" />
+        </View>
+
+        {/* ── Réservations du jour ─────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Aujourd'hui</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Bookings')}>
+              <Text style={[styles.seeAll, { color: PRIMARY }]}>Voir tout</Text>
+            </TouchableOpacity>
+          </View>
+
+          {todayBookings.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="calendar-outline" size={32} color="#D1D5DB" />
+              <Text style={styles.emptyCardText}>Aucune réservation pour aujourd'hui</Text>
             </View>
           ) : (
-            recentReviews.map(r => {
-              const name =
-                r.reviewer?.firstName
-                  ? `${r.reviewer.firstName}${r.reviewer.lastName ? ' ' + r.reviewer.lastName : ''}`
-                  : 'Client';
-              const comment = r.comment ?? '';
-              const truncated = comment.length > 120 ? comment.slice(0, 120) + '…' : comment;
-              return (
-                <View key={r.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewName}>{name}</Text>
-                    <Text style={styles.reviewDate}>{formatFullDate(r.createdAt)}</Text>
-                  </View>
-                  <Text style={styles.reviewStars}>{renderStars(r.rating)}</Text>
-                  {truncated ? (
-                    <Text style={styles.reviewComment}>{truncated}</Text>
-                  ) : null}
-                </View>
-              );
-            })
+            <View style={styles.card}>
+              {todayBookings.map((b, i) => (
+                <React.Fragment key={b.id}>
+                  <BookingPill booking={b} />
+                  {i < todayBookings.length - 1 && <View style={styles.pillDivider} />}
+                </React.Fragment>
+              ))}
+            </View>
           )}
         </View>
 
-        {/* Quick actions */}
+        {/* ── Actions rapides ──────────────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions rapides</Text>
-          <View style={styles.quickRow}>
-            <TouchableOpacity
-              style={styles.quickBtn}
-              onPress={() => navigation.navigate('Bookings')}
-            >
-              <Ionicons name="calendar-outline" size={22} color={theme.primary} />
-              <Text style={styles.quickLabel}>Réservations</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickBtn}
-              onPress={() => navigation.navigate('TimeSlots')}
-            >
-              <Ionicons name="time-outline" size={22} color={theme.primary} />
-              <Text style={styles.quickLabel}>Créneaux</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickBtn}
-              onPress={() => navigation.navigate('MenuManagement')}
-            >
-              <Ionicons name="restaurant-outline" size={22} color={theme.primary} />
-              <Text style={styles.quickLabel}>Menu</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickBtn}
-              onPress={() => navigation.navigate('Promotions')}
-            >
-              <Ionicons name="pricetag-outline" size={22} color="#F59E0B" />
-              <Text style={styles.quickLabel}>Promos</Text>
-            </TouchableOpacity>
+          <QuickAction
+            label="Menu"
+            sub="Gérer vos plats et boissons"
+            icon="restaurant-outline"
+            color={PRIMARY}
+            onPress={() => navigation.navigate('MenuManagement')}
+          />
+          <QuickAction
+            label="Réservations"
+            sub="Tables et créneaux confirmés"
+            icon="calendar-outline"
+            color="#2563EB"
+            onPress={() => navigation.navigate('Bookings')}
+          />
+          <QuickAction
+            label="Créneaux horaires"
+            sub="Gérer vos heures d'ouverture"
+            icon="time-outline"
+            color="#7C3AED"
+            onPress={() => navigation.navigate('TimeSlots')}
+          />
+          <QuickAction
+            label="Promotions"
+            sub="Codes promo et offres spéciales"
+            icon="pricetag-outline"
+            color="#D97706"
+            onPress={() => navigation.navigate('Promotions')}
+          />
+          <QuickAction
+            label="Commandes en ligne"
+            sub="Suivre les commandes à emporter"
+            icon="receipt-outline"
+            color="#059669"
+            onPress={() => navigation.navigate('FoodOrders')}
+          />
+        </View>
+
+        {/* ── Alertes annulations ──────────────────────────────────────────── */}
+        {recentCancellations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Annulations récentes</Text>
+            <View style={styles.alertBanner}>
+              <Ionicons name="warning-outline" size={18} color="#92400E" />
+              <Text style={styles.alertBannerText}>
+                {recentCancellations.length} annulation{recentCancellations.length > 1 ? 's' : ''} ces 7 derniers jours
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Bookings')}>
+                <Text style={styles.alertBannerLink}>Voir</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        )}
+
+        {/* ── Avis récents ─────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Avis récents</Text>
+            {reviews.length > 0 && (
+              <Text style={[styles.seeAll, { color: PRIMARY }]}>
+                {reviews.length} avis
+              </Text>
+            )}
+          </View>
+
+          {reviews.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="star-outline" size={32} color="#D1D5DB" />
+              <Text style={styles.emptyCardText}>Aucun avis pour le moment</Text>
+              <Text style={styles.emptyCardSub}>Les avis de vos clients apparaîtront ici</Text>
+            </View>
+          ) : (
+            reviews.slice(0, 3).map(r => <ReviewCard key={r.id} review={r} />)
+          )}
+        </View>
+
+        {/* ── Pied de page ─────────────────────────────────────────────────── */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.footerBtn, { borderColor: PRIMARY }]}
+            onPress={() => navigation.navigate('Analytics')}
+          >
+            <Ionicons name="bar-chart-outline" size={16} color={PRIMARY} />
+            <Text style={[styles.footerBtnText, { color: PRIMARY }]}>Voir mes statistiques</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -452,179 +489,140 @@ export default function RestaurantDashboardScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F5F5' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  safe:        { flex: 1, backgroundColor: '#F4F5F7' },
+  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: '#6B7280' },
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll:      { paddingBottom: 40 },
 
-  header: { marginBottom: 20, paddingHorizontal: 20, paddingVertical: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  // Onboarding
+  onboardingContainer: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    padding: 32, gap: 16,
+  },
+  onboardingIcon: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
+  onboardingTitle: { fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center' },
+  onboardingSubtitle: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  onboardingBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8,
+  },
+  onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
-  // KPI
-  kpiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
+  // Hero
+  hero: {
+    paddingTop: 20, paddingBottom: 28, paddingHorizontal: 20,
+    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  kpiCardWrapper: {
-    width: '47%',
-    position: 'relative',
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  heroGreeting: { fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '500', marginBottom: 2 },
+  heroName:     { fontSize: 22, fontWeight: '800', color: '#fff' },
+  heroNotif:    { padding: 8, position: 'relative' },
+  heroBadge: {
+    position: 'absolute', top: 4, right: 4,
+    backgroundColor: '#FCD34D', borderRadius: 8,
+    minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  kpiCard: {
-    width: '47%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    borderLeftWidth: 4,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  kpiValue: { fontSize: 26, fontWeight: '800', color: '#111827' },
-  kpiTitle: { fontSize: 11, color: '#6B7280', fontWeight: '600' },
+  heroBadgeText: { fontSize: 10, fontWeight: '800', color: '#111' },
+  heroStats:   { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 16, padding: 16, gap: 0 },
+  heroStat:    { flex: 1, alignItems: 'center' },
+  heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginVertical: 4 },
+  heroStatValue: { fontSize: 22, fontWeight: '800', color: '#fff' },
+  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, textAlign: 'center' },
 
-  amberBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#F59E0B',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 5,
+  // Stat row
+  statRow: {
+    flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginTop: 16, marginBottom: 4,
   },
-  amberBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  statCard: {
+    flex: 1, borderRadius: 14, padding: 14,
+    alignItems: 'center', gap: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+  },
+  statIconWrap: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  statValue:    { fontSize: 22, fontWeight: '800' },
+  statLabel:    { fontSize: 10, color: '#6B7280', fontWeight: '600', textAlign: 'center' },
 
-  // Section
-  section: { marginBottom: 20 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  sectionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  seeAll: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  // Sections
+  section:     { paddingHorizontal: 16, marginTop: 20 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.6 },
+  seeAll:       { fontSize: 13, fontWeight: '600' },
 
-  // Alert cards
-  alertCard: {
-    borderLeftWidth: 4,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+  // Card générique
+  card: {
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
-  alertHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+
+  // Booking pill
+  bookingPill: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  pillDivider: { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
+  bookingPillTime: {
+    backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, minWidth: 56, alignItems: 'center',
   },
-  alertClientName: { fontWeight: '700', fontSize: 14, flex: 1 },
-  alertDate: { fontSize: 12, fontWeight: '600' },
-  alertMeta: {},
-  alertMetaText: { fontSize: 12 },
+  bookingPillTimeText: { fontSize: 13, fontWeight: '700', color: '#374151' },
+  bookingPillInfo: { flex: 1 },
+  bookingPillName:   { fontSize: 14, fontWeight: '700', color: '#111827' },
+  bookingPillGuests: { fontSize: 12, color: '#6B7280', marginTop: 1 },
+  statusChip:   { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusChipText: { fontSize: 11, fontWeight: '700' },
+
+  // Quick actions
+  actionCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  },
+  actionIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  actionText: { flex: 1 },
+  actionLabel: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  actionSub:   { fontSize: 12, color: '#6B7280', marginTop: 2 },
 
   // Empty state
-  emptySection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+  emptyCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 32,
+    alignItems: 'center', gap: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
-  emptySectionText: { fontSize: 13, color: '#9CA3AF' },
+  emptyCardText: { fontSize: 14, color: '#9CA3AF', fontWeight: '500', textAlign: 'center' },
+  emptyCardSub:  { fontSize: 12, color: '#D1D5DB', textAlign: 'center' },
 
-  // Chart
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  // Alert banner
+  alertBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14,
+    borderLeftWidth: 4, borderLeftColor: '#F59E0B',
   },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  barLabel: { fontSize: 12, color: '#374151', width: 70 },
-  barTrack: {
-    flex: 1,
-    height: 14,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 7,
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
-  barFill: { backgroundColor: '#1056E0', borderRadius: 7 },
-  barCount: { fontSize: 12, fontWeight: '700', color: '#374151', width: 24, textAlign: 'right' },
-  emptyChart: { alignItems: 'center', gap: 10, paddingVertical: 20 },
-  emptyChartText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 16,
-  },
+  alertBannerText: { flex: 1, fontSize: 13, color: '#92400E', fontWeight: '500' },
+  alertBannerLink: { fontSize: 13, fontWeight: '700', color: '#D97706' },
 
   // Reviews
   reviewCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  reviewTop:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  reviewAvatar: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6',
+    alignItems: 'center', justifyContent: 'center',
   },
-  reviewName: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  reviewDate: { fontSize: 11, color: '#9CA3AF' },
-  reviewStars: { fontSize: 14, color: '#F59E0B', marginBottom: 4 },
-  reviewComment: { fontSize: 13, color: '#6B7280', lineHeight: 18 },
+  reviewAvatarText: { fontSize: 15, fontWeight: '800', color: '#6B7280' },
+  reviewName:       { fontSize: 14, fontWeight: '700', color: '#111827' },
+  reviewDate:       { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
+  reviewStars:      { fontSize: 14, color: '#F59E0B' },
+  reviewComment:    { fontSize: 13, color: '#6B7280', lineHeight: 18 },
 
-  // Quick actions
-  quickRow: {
-    flexDirection: 'row',
-    gap: 10,
+  // Footer
+  footer: { paddingHorizontal: 16, marginTop: 20 },
+  footerBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderRadius: 12, borderWidth: 1.5, paddingVertical: 14,
   },
-  quickBtn: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    gap: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  quickLabel: { fontSize: 11, color: '#374151', fontWeight: '600', textAlign: 'center' },
+  footerBtnText: { fontSize: 14, fontWeight: '700' },
 });

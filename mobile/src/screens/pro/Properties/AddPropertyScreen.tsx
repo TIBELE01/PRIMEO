@@ -1052,6 +1052,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
   const theme  = useProTheme();
   const editId: string | undefined = route?.params?.propertyId;
   const isEdit = !!editId;
+  // Type pré-sélectionné depuis les paramètres de navigation (ex. compte restaurant)
+  const initialType: string | undefined = route?.params?.initialType;
 
   const [isLoadingProperty, setIsLoadingProperty] = useState(isEdit);
   const [step, setStep]     = useState(0);
@@ -1071,6 +1073,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     roomTypes:      [],
     paymentOptions: ['full_online'],
     instantBooking: true,
+    // Pré-sélection du type si fourni (restaurant, immobilier_location, etc.)
+    ...(initialType ? { type: initialType } : {}),
   });
   const [errors, setErrors]         = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
