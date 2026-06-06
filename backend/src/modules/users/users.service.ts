@@ -13,7 +13,7 @@ import { supabaseAdmin } from '../../config/supabase.config';
 async function writeAudit(userId: string, action: string, meta?: Record<string, unknown>) {
   try {
     await prisma.auditLog.create({
-      data: { userId, action, description: meta?.description as string | undefined, metadata: meta },
+      data: { userId, action, description: meta?.description as string | undefined, metadata: meta ? JSON.parse(JSON.stringify(meta)) : undefined },
     });
   } catch (err) {
     logger.warn('Audit log non créé', err);
