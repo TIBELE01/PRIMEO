@@ -1,0 +1,100 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "seeAll": "See all",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "reset": "Reset",
+    "apply": "Apply",
+    "yes": "Yes",
+    "no": "No",
+    "noResults": "No results",
+    "offline": "No internet connection",
+    "retry": "Retry"
+  },
+  "auth": {
+    "welcome": "Welcome to PRIMEO",
+    "tagline": "Find your ideal accommodation in Africa",
+    "login": "Log in",
+    "register": "Register",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "otpVerification": "OTP Verification",
+    "twoFactor": "Two-Factor Authentication",
+    "enterOtp": "Enter the code received by SMS",
+    "enterTotp": "Enter your TOTP code",
+    "accountType": "Account type",
+    "client": "Client",
+    "professional_hebergement": "Accommodation Professional",
+    "professional_immobilier": "Real Estate Professional",
+    "restaurateur": "Restaurateur"
+  },
+  "property": {
+    "search": "Search a property",
+    "book": "Book",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "price": "Price",
+    "perNight": "per night",
+    "amenities": "Amenities",
+    "rules": "Rules",
+    "location": "Location",
+    "reviews": "Reviews",
+    "virtualTour": "3D Virtual Tour",
+    "host": "Host",
+    "contactHost": "Contact host"
+  },
+  "booking": {
+    "myBookings": "My bookings",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "disputed": "Disputed"
+    },
+    "paymentOptions": {
+      "full_online": "Full payment",
+      "ten_percent_online": "10% deposit",
+      "zero_online": "Pay on site"
+    },
+    "invoice": "Invoice",
+    "downloadInvoice": "Download invoice"
+  },
+  "profile": {
+    "myProfile": "My profile",
+    "editProfile": "Edit profile",
+    "changePassword": "Change password",
+    "twoFactorSetup": "Configure 2FA",
+    "legalLinks": "Legal notices",
+    "referral": "Referral",
+    "settings": "Settings",
+    "support": "Support",
+    "logout": "Logout"
+  },
+  "error": {
+    "generic": "An error occurred",
+    "network": "Network error",
+    "unauthorized": "Session expired, please log in again",
+    "notFound": "Resource not found",
+    "validation": "Invalid data"
+  }
+}

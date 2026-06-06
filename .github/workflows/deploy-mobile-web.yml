@@ -1,0 +1,45 @@
+name: Deploy Primeo Mobile Web → Netlify (DÉSACTIVÉ)
+
+# Déploiement Netlify désactivé — l'app mobile est maintenant sur Render (primeo-fkod.onrender.com)
+on:
+  workflow_dispatch: # déclencement manuel uniquement si besoin ponctuel
+
+jobs:
+  build-and-deploy:
+    name: Build Expo Web & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm install
+
+      - name: Install web-specific deps
+        working-directory: mobile
+        run: npm install react-dom@18.3.1 @expo/metro-runtime@4.0.1 @lottiefiles/dotlottie-react @react-native-community/netinfo
+
+      - name: Install system tools
+        run: sudo apt-get install -y jq zip
+
+      - name: Build Expo Web
+        working-directory: mobile
+        env:
+          EXPO_NO_DOCTOR: '1'
+          EXPO_OFFLINE: '1'
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://primeo-api.onrender.com' }}
+        run: |
+          npx expo export --platform web --output-dir dist
+          echo "/* /index.html 200" > dist/_redirects
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: echo "Déploiement Netlify désactivé"

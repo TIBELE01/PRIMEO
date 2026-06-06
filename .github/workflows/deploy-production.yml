@@ -1,0 +1,62 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Pre-deploy sanity gate.  Mirrors how Render actually builds the backend
+  # (render.yaml: `npm install && npx prisma generate && npm run build`), so a
+  # green build here means the artifact Render is about to build will compile.
+  # The project uses npm per-package (no committed pnpm lockfile and no test
+  # suite), hence npm + build-only rather than pnpm + lint/test.
+  build:
+    name: Build backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # No `npm ci` / cache: the per-package package-lock.json is not committed,
+      # so install fresh exactly like Render does.
+      - run: npm install
+      - run: npx prisma generate
+      - run: npm run build
+
+  deploy-api:
+    name: Deploy API (Render)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy — primeo-api
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_API is not set. Skipping the hook."
+            echo "If Render native Auto-Deploy is enabled for primeo-api, it redeploys on push automatically."
+            echo "Otherwise add the deploy-hook URL as a repo secret (Settings → Secrets and variables → Actions)."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"
+
+  deploy-admin:
+    name: Deploy Admin (Render)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy — primeo-admin
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_ADMIN }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_ADMIN is not set. Skipping the hook."
+            echo "If Render native Auto-Deploy is enabled for primeo-admin, it redeploys on push automatically."
+            echo "Otherwise add the deploy-hook URL as a repo secret (Settings → Secrets and variables → Actions)."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"

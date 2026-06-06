@@ -1,0 +1,50 @@
+[
+  {
+    "id": "eng-backend-001",
+    "title": "Ingénieur Backend Node.js",
+    "department": "Ingénierie",
+    "type": "CDI",
+    "location": "Abidjan",
+    "summary": "Rejoignez notre équipe technique pour développer et maintenir les APIs qui alimentent la plateforme Primeo. Vous travaillerez sur des systèmes temps réel traitant des millions de réservations et de mises en relation."
+  },
+  {
+    "id": "eng-mobile-001",
+    "title": "Développeur Mobile React Native",
+    "department": "Ingénierie",
+    "type": "CDI",
+    "location": "Abidjan",
+    "summary": "Développez l'application mobile Primeo utilisée par des milliers d'Ivoiriens chaque jour. Vous créerez des expériences fluides sur iOS et Android avec React Native et Expo."
+  },
+  {
+    "id": "product-001",
+    "title": "Chef de Produit Senior",
+    "department": "Produit",
+    "type": "CDI",
+    "location": "Abidjan",
+    "summary": "Définissez la vision produit et pilotez la roadmap de la plateforme Primeo. Vous travaillerez en étroite collaboration avec les équipes engineering, design et business."
+  },
+  {
+    "id": "design-001",
+    "title": "UX/UI Designer",
+    "department": "Design",
+    "type": "CDI",
+    "location": "Abidjan / Télétravail partiel",
+    "summary": "Concevez des interfaces intuitives et accessibles pour nos utilisateurs. De la recherche utilisateur aux maquettes haute fidélité, vous façonnerez l'expérience Primeo."
+  },
+  {
+    "id": "sales-001",
+    "title": "Business Developer B2B",
+    "department": "Commercial",
+    "type": "CDI",
+    "location": "Abidjan",
+    "summary": "Développez notre portefeuille de clients professionnels (PME, promoteurs immobiliers, industries). Vous gérerez le cycle de vente complet et contribuerez à la croissance de Primeo."
+  },
+  {
+    "id": "support-001",
+    "title": "Agent Support Client",
+    "department": "Support",
+    "type": "CDD",
+    "location": "Abidjan",
+    "summary": "Accompagnez nos utilisateurs dans leur prise en main de la plateforme et résolvez leurs problèmes techniques et commerciaux avec professionnalisme et empathie."
+  }
+]

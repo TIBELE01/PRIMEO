@@ -1,0 +1,46 @@
+name: CI — Backend
+
+on:
+  push:
+    branches: [main, 'feature/**', 'fix/**']
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # npm per-package, install fresh (no committed lockfile — matches Render).
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Hard gate: the deployable artifact must compile.
+      - name: Build
+        run: npm run build
+
+      # Non-blocking: surfaces lint debt without blocking the pipeline.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      # No spec files yet; don't fail the suite on an empty test set.
+      - name: Test
+        run: npm test -- --passWithNoTests

@@ -1,0 +1,23 @@
+[
+  {
+    "email": "admin@primeo.ci",
+    "firstName": "Super",
+    "lastName": "Admin",
+    "role": "admin",
+    "phone": "+2250700000001"
+  },
+  {
+    "email": "client@example.com",
+    "firstName": "Aminata",
+    "lastName": "Koné",
+    "role": "client",
+    "phone": "+2250700000002"
+  },
+  {
+    "email": "pro@example.com",
+    "firstName": "Kouamé",
+    "lastName": "Brou",
+    "role": "professional_hebergement",
+    "phone": "+2250700000003"
+  }
+]

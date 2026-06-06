@@ -1,0 +1,75 @@
+{
+  "hero": {
+    "title": "Primeo, la plateforme de confiance pour vos réservations d'hébergement, de services immobiliers et de restauration en Côte d'Ivoire",
+    "subtitle": "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens sans commission.",
+    "buttonText": "Télécharger l'application",
+    "buttonUrl": "#"
+  },
+  "mission": {
+    "text": "Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Pas de commission cachée, paiement adapté à vos habitudes."
+  },
+  "solutions_preview": [
+    {
+      "id": "1",
+      "title": "Voyageurs",
+      "summary": "Trouvez et réservez facilement votre hébergement idéal en Côte d'Ivoire. Comparez les prix, lisez les avis, payez comme vous le souhaitez.",
+      "icon": "✈️",
+      "link": "/solutions/"
+    },
+    {
+      "id": "2",
+      "title": "Professionnels de l'hébergement",
+      "summary": "Publiez vos annonces, gérez vos réservations et boostez votre visibilité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.",
+      "icon": "🏨",
+      "link": "/solutions/"
+    },
+    {
+      "id": "3",
+      "title": "Restaurateurs & Immobilier",
+      "summary": "Gérez votre restaurant en ligne, acceptez des réservations de tables et publiez vos offres immobilières sur une seule et même plateforme.",
+      "icon": "🍽️",
+      "link": "/solutions/"
+    }
+  ],
+  "products_preview": [
+    {
+      "id": "1",
+      "title": "Formules d'abonnement",
+      "description": "Choisissez la formule adaptée à votre activité — Starter, Business ou Entreprise, toutes à 0 % de commission. Commencez gratuitement et évoluez selon vos besoins.",
+      "badge": null,
+      "link": "/produits/"
+    },
+    {
+      "id": "2",
+      "title": "Boosts d'annonce",
+      "description": "Propulsez vos annonces en tête des résultats. Les boosts sont disponibles à la carte et leur effet est immédiat.",
+      "badge": "Populaire",
+      "link": "/produits/"
+    },
+    {
+      "id": "3",
+      "title": "Visite 3D",
+      "description": "Offrez à vos clients une immersion virtuelle de votre bien. Les visites 3D augmentent les taux de conversion de 40%.",
+      "badge": "Nouveau",
+      "link": "/produits/"
+    }
+  ],
+  "why": [
+    { "id": "1", "title": "Confiance",    "description": "Chaque professionnel est vérifié et chaque paiement sécurisé. Nous garantissons une expérience fiable pour tous.", "icon": "🛡️" },
+    { "id": "2", "title": "Flexibilité", "description": "Paiement intégral, acompte ou à l'arrivée — choisissez le mode qui vous convient. Primeo s'adapte à vos habitudes.", "icon": "🔄" },
+    { "id": "3", "title": "Innovation",  "description": "Visites 3D, paiement mobile, gestion temps réel : Primeo intègre les technologies les plus récentes pour votre confort.", "icon": "🚀" },
+    { "id": "4", "title": "Local",       "description": "Conçu par des Ivoiriens pour le marché ivoirien. Nous comprenons vos besoins et parlons votre langue.", "icon": "🌍" }
+  ],
+  "testimonials": [
+    { "id": "1", "name": "Ama Konan",         "rating": 5, "text": "Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple." },
+    { "id": "2", "name": "Jean-Baptiste Koffi","rating": 5, "text": "Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60% à 90% en un mois !" },
+    { "id": "3", "name": "Marie Touré",        "rating": 4, "text": "Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps." },
+    { "id": "4", "name": "David Assi",         "rating": 5, "text": "La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement. Incroyable gain de temps." }
+  ],
+  "stats": {
+    "properties": 150,
+    "cities": 10,
+    "reservations": 1200,
+    "clients": 800
+  }
+}

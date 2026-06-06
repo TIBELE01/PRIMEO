@@ -1,0 +1,50 @@
+{
+  "intro": {
+    "title": "Des produits conçus pour votre réussite",
+    "paragraph": "Primeo propose une gamme complète de produits adaptés à la taille et aux objectifs de chaque professionnel — que vous débutiez ou gériez un portefeuille de biens important. Choisissez la formule qui vous correspond et évoluez à votre rythme."
+  },
+  "subscriptions": {
+    "plans": [
+      { "id": "starter",   "slug": "starter",   "name": "Starter",   "price": "Gratuit", "badge": null,         "highlighted": false, "ctaLabel": "Démarrer gratuitement", "ctaUrl": "https://app.primeo.ci/signup" },
+      { "id": "business",  "slug": "business",  "name": "Business",  "price": "9 000",   "badge": "Populaire",  "highlighted": false, "ctaLabel": "Choisir Business",      "ctaUrl": "/contact/?formule=business" },
+      { "id": "entreprise","slug": "entreprise","name": "Entreprise","price": "24 000",  "badge": "Recommandé", "highlighted": true,  "ctaLabel": "Souscrire Entreprise",  "ctaUrl": "/contact/?formule=entreprise" }
+    ],
+    "rows": [
+      { "feature": "Commission par réservation",   "highlight": true,  "starter": "0 %",      "business": "0 %",        "entreprise": "0 %" },
+      { "feature": "Annonces incluses",            "highlight": false, "starter": "3",         "business": "10",         "entreprise": "40 (∞ resto)" },
+      { "feature": "Badge Profil Vérifié",         "highlight": false, "starter": "✗",         "business": "✓",          "entreprise": "✓" },
+      { "feature": "Badge Hôte Premium",           "highlight": false, "starter": "✗",         "business": "✗",          "entreprise": "✓" },
+      { "feature": "Visibilité dans les résultats","highlight": false, "starter": "Standard",  "business": "+30 %",      "entreprise": "Prioritaire" },
+      { "feature": "Boosts gratuits / mois",       "highlight": false, "starter": "0",         "business": "2 (3 j)",    "entreprise": "7 (3 j)" },
+      { "feature": "Vidéos dans les annonces",     "highlight": false, "starter": "✗",         "business": "✓",          "entreprise": "✓" },
+      { "feature": "Visite virtuelle 3D",          "highlight": false, "starter": "✗",         "business": "✗",          "entreprise": "✓" },
+      { "feature": "Multi-utilisateurs",           "highlight": false, "starter": "✗",         "business": "✗",          "entreprise": "✓" },
+      { "feature": "Rapport PDF mensuel",          "highlight": false, "starter": "✗",         "business": "✗",          "entreprise": "✓" },
+      { "feature": "Support",                      "highlight": false, "starter": "Email",     "business": "Prioritaire","entreprise": "VIP dédié" },
+      { "feature": "Statistiques",                 "highlight": false, "starter": "Basiques",  "business": "Avancées",   "entreprise": "Expert" }
+    ]
+  },
+  "boost": {
+    "title": "Boosts d'annonce — Augmentez votre visibilité instantanément",
+    "description": "Pour seulement 2 000 FCFA, votre annonce est mise en avant pendant 72 heures en tête des résultats de recherche. Observez immédiatement l'effet sur vos vues et vos demandes de réservation.",
+    "price": 2000,
+    "duration": 72,
+    "imageUrl": null,
+    "ctaLabel": "En savoir plus",
+    "ctaUrl": "/contact/"
+  },
+  "ads": {
+    "title": "Publicité ciblée — Faites connaître votre entreprise",
+    "description": "Touchez des milliers d'utilisateurs actifs sur la plateforme Primeo. Nos espaces publicitaires permettent aux marques, prestataires et services de gagner en visibilité auprès d'une audience qualifiée en Côte d'Ivoire.",
+    "formats": ["Bannières in-app", "Notifications sponsorisées", "Newsletter mensuelle", "Encarts sur le site vitrine"],
+    "imageUrl": null,
+    "ctaLabel": "Demander un devis",
+    "ctaUrl": "/contact/"
+  },
+  "upcoming": [
+    { "icon": "🛡️", "title": "Assurance voyage",       "description": "Protection couvrant annulations et incidents pour voyageurs et hôtes." },
+    { "icon": "🤵", "title": "Conciergerie Primeo",    "description": "Service de conciergerie premium pour une gestion déléguée de vos propriétés." },
+    { "icon": "🤝", "title": "Programme partenaires", "description": "Réseau de services locaux : ménage, maintenance, transferts aéroport." },
+    { "icon": "💱", "title": "Paiement multi-devises", "description": "Acceptez XOF, EUR et USD pour attirer les voyageurs internationaux." }
+  ]
+}

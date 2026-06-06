@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Rejoignez la communauté Primeo — partagez vos expériences, posez des questions, participez aux challenges et échangez avec d'autres membres.">
+  <meta name="robots" content="index, follow">
+  <meta name="api-url" content="https://primeo-api.onrender.com">
+  <title>Communauté — Primeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/communaute.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main>
+
+    <!-- ── HERO ─────────────────────────────────────────────────────────── -->
+    <section class="cm-hero">
+      <div class="cm-hero__bg" aria-hidden="true"></div>
+      <div class="container cm-hero__inner">
+
+        <p class="cm-hero__label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Communauté Primeo
+        </p>
+
+        <h1>L'espace d'échange<br>de la communauté <em>Primeo</em></h1>
+
+        <p class="cm-hero__sub">
+          Partagez vos expériences, posez vos questions, participez aux challenges et échangez librement avec d'autres membres de la communauté. Aucune inscription requise.
+        </p>
+
+        <div class="cm-hero__chips">
+          <span class="cm-hero__chip">💬 Discussions libres</span>
+          <span class="cm-hero__chip">🏆 Challenges</span>
+          <span class="cm-hero__chip">❤️ Réactions</span>
+          <span class="cm-hero__chip">🚩 Modération</span>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────────────────────── -->
+    <section class="cm-main-section">
+      <div class="container cm-layout">
+
+        <!-- ── FEED (left column) ───────────────────────────────────────── -->
+        <div class="cm-feed">
+
+          <!-- Post form -->
+          <div class="cm-card cm-post-form-card">
+            <h2 class="cm-form-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Nouvelle publication
+            </h2>
+            <form id="cm-post-form" novalidate>
+              <!-- Honeypot -->
+              <input type="text" name="website_confirm" style="display:none" tabindex="-1" autocomplete="off">
+
+              <div class="cm-form-row">
+                <div class="cm-form-field">
+                  <label for="cm-pseudo" class="cm-label">Pseudo <span class="cm-required">*</span></label>
+                  <input id="cm-pseudo" name="pseudo" type="text" class="cm-input" placeholder="Votre pseudo…" maxlength="30" required autocomplete="nickname">
+                  <div class="cm-field-error" id="err-pseudo" aria-live="polite"></div>
+                </div>
+                <div class="cm-form-field cm-form-field--challenge" id="challenge-field" style="display:none">
+                  <label for="cm-challenge-select" class="cm-label">Challenge</label>
+                  <select id="cm-challenge-select" name="challengeId" class="cm-select">
+                    <option value="">Pas de challenge</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="cm-form-field">
+                <label for="cm-content" class="cm-label">Message <span class="cm-required">*</span></label>
+                <textarea id="cm-content" name="content" class="cm-textarea" placeholder="Partagez quelque chose avec la communauté…" maxlength="2000" required rows="4"></textarea>
+                <div class="cm-textarea-footer">
+                  <div class="cm-field-error" id="err-content" aria-live="polite"></div>
+                  <span id="cm-post-char" class="cm-char-count">0 / 2000</span>
+                </div>
+              </div>
+
+              <div class="cm-form-actions">
+                <button type="submit" id="cm-submit-btn" class="cm-btn-primary">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+                  <span id="cm-submit-label">Publier</span>
+                </button>
+              </div>
+              <div class="cm-alert cm-form-alert" style="display:none" role="alert"></div>
+            </form>
+          </div>
+
+          <!-- Challenge filter chips -->
+          <div class="cm-challenge-bar" id="cm-challenge-bar" aria-label="Filtrer par challenge">
+            <button class="cm-challenge-chip cm-challenge-chip--active">Tout</button>
+          </div>
+
+          <!-- Posts list -->
+          <div id="cm-posts" class="cm-posts" aria-live="polite">
+            <!-- Skeleton placeholders while loading -->
+            <div class="cm-post-card cm-skeleton" aria-hidden="true"></div>
+            <div class="cm-post-card cm-skeleton" aria-hidden="true"></div>
+            <div class="cm-post-card cm-skeleton" aria-hidden="true"></div>
+          </div>
+
+          <!-- Load more -->
+          <button id="cm-load-more" class="cm-load-more-btn" style="display:none">
+            Voir plus de publications
+          </button>
+
+        </div>
+
+
+        <!-- ── SIDEBAR (right column) ────────────────────────────────────── -->
+        <aside class="cm-sidebar" aria-label="Informations communauté">
+
+          <!-- Active challenges -->
+          <div class="cm-sidebar-card">
+            <h3 class="cm-sidebar-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+              Challenges actifs
+            </h3>
+            <div id="cm-challenges-sidebar">
+              <p class="cm-sidebar-empty">Aucun challenge actif pour le moment.</p>
+            </div>
+          </div>
+
+          <!-- Rules -->
+          <div class="cm-sidebar-card cm-rules-card">
+            <h3 class="cm-sidebar-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Règles de la communauté
+            </h3>
+            <ul class="cm-rules-list">
+              <li>Soyez respectueux envers tous les membres.</li>
+              <li>Pas de spam, de publicité non sollicitée ou de contenus répétitifs.</li>
+              <li>Pas de langage offensant, d'insultes ou de harcèlement.</li>
+              <li>Les contenus hors-sujet ou inappropriés seront supprimés.</li>
+              <li>Signalez tout contenu problématique via le bouton 🚩.</li>
+            </ul>
+            <p class="cm-rules-note">La modération est effectuée a posteriori par l'équipe Primeo.</p>
+          </div>
+
+          <!-- Info -->
+          <div class="cm-sidebar-card cm-info-card">
+            <div class="cm-info-row">
+              <div class="cm-info-icon cm-info-icon--blue" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div>
+                <div class="cm-info-label">Publier</div>
+                <div class="cm-info-value">Aucune inscription requise</div>
+              </div>
+            </div>
+            <div class="cm-info-row">
+              <div class="cm-info-icon cm-info-icon--green" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+              <div>
+                <div class="cm-info-label">Liker</div>
+                <div class="cm-info-value">Un like par publication</div>
+              </div>
+            </div>
+            <div class="cm-info-row">
+              <div class="cm-info-icon cm-info-icon--amber" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              </div>
+              <div>
+                <div class="cm-info-label">Signaler</div>
+                <div class="cm-info-value">Modération sous 24 h</div>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ── REPORT MODAL ──────────────────────────────────────────────────── -->
+  <div id="cm-report-modal" class="cm-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="cm-report-title">
+    <div class="cm-modal-inner">
+      <div class="cm-modal-header">
+        <h3 id="cm-report-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Signaler un contenu
+        </h3>
+        <button class="cm-modal-close" aria-label="Fermer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="cm-report-form">
+        <p class="cm-modal-desc">Pourquoi signalez-vous ce contenu ?</p>
+        <div class="cm-report-options">
+          <label class="cm-report-option">
+            <input type="radio" name="reason" value="Spam ou publicité">
+            <span>Spam ou publicité</span>
+          </label>
+          <label class="cm-report-option">
+            <input type="radio" name="reason" value="Propos offensants ou harcèlement">
+            <span>Propos offensants ou harcèlement</span>
+          </label>
+          <label class="cm-report-option">
+            <input type="radio" name="reason" value="Contenu inapproprié">
+            <span>Contenu inapproprié</span>
+          </label>
+          <label class="cm-report-option">
+            <input type="radio" name="reason" value="Fausses informations">
+            <span>Fausses informations</span>
+          </label>
+          <label class="cm-report-option">
+            <input type="radio" name="reason" value="Autre raison">
+            <span>Autre raison</span>
+          </label>
+        </div>
+        <button type="submit" class="cm-btn-primary cm-btn-report-submit">Envoyer le signalement</button>
+        <div class="cm-alert cm-report-alert" style="display:none" role="alert"></div>
+      </form>
+    </div>
+  </div>
+
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../assets/js/main.js" data-base=".."></script>
+  <script src="../assets/js/communaute.js"></script>
+</body>
+</html>

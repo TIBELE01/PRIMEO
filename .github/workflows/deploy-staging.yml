@@ -1,0 +1,32 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # npm per-package, install fresh (no committed lockfile — matches Render).
+      - name: Build backend (sanity check)
+        working-directory: backend
+        run: |
+          npm install
+          npx prisma generate
+          npm run build
+      - name: Trigger Render deploy — staging
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_STAGING is not set. Skipping the hook."
+            echo "If Render native Auto-Deploy is enabled for the staging service, it redeploys on push automatically."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"

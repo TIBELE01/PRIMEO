@@ -1,0 +1,14 @@
+{
+  "name": "primeo-vitrine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site vitrine statique Primeo — HTML/CSS/JS",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve . -l 3000"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "terser": "^5.31.0"
+  }
+}

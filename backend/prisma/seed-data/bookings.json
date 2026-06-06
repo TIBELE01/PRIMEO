@@ -1,0 +1,12 @@
+[
+  {
+    "id": "seed-booking-001",
+    "propertyId": "seed-property-001",
+    "checkIn": "2024-01-10",
+    "checkOut": "2024-01-15",
+    "guestCount": 2,
+    "totalPrice": 375000,
+    "paymentOption": "full_online",
+    "status": "completed"
+  }
+]

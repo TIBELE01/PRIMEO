@@ -1,0 +1,5 @@
+import React from 'react'; import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+export const ImmobilierBuyBoostModal: React.FC<{ visible: boolean; onConfirm: () => void; onClose: () => void }> = ({ visible, onConfirm, onClose }) => (
+  <Modal transparent visible={visible} animationType="slide"><View style={styles.overlay}><View style={styles.sheet}><Text style={styles.t}>Booster 2 000 XOF/3j</Text><TouchableOpacity style={styles.btn} onPress={onConfirm}><Text style={styles.bt}>Payer</Text></TouchableOpacity><TouchableOpacity onPress={onClose}><Text style={styles.cancel}>Annuler</Text></TouchableOpacity></View></View></Modal>
+);
+const styles = StyleSheet.create({ overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }, sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 }, t: { fontSize: 18, fontWeight: '700', marginBottom: 16 }, btn: { backgroundColor: '#1056E0', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 10 }, bt: { color: '#fff', fontWeight: '700' }, cancel: { color: '#999', textAlign: 'center', padding: 8 } });

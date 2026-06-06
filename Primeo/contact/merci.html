@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Message envoyé — Primeo. Merci de nous avoir contactés, nous vous répondrons sous 24 heures ouvrées.">
+  <meta name="robots" content="noindex, follow">
+  <title>Message envoyé — Primeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+
+  <style>
+    /* ── Page de remerciement ──────────────────────────────────────── */
+
+    .merci-page {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      text-align: center;
+    }
+
+    .merci-inner {
+      max-width: 520px;
+      width: 100%;
+    }
+
+    /* Animated checkmark */
+    .merci-icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 2rem;
+    }
+
+    .merci-icon-circle {
+      fill: none;
+      stroke: #22c55e;
+      stroke-width: 3;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      animation: draw-circle .6s ease forwards;
+    }
+
+    .merci-icon-check {
+      fill: none;
+      stroke: #22c55e;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 60;
+      stroke-dashoffset: 60;
+      animation: draw-check .4s ease .5s forwards;
+    }
+
+    @keyframes draw-circle {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes draw-check {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Background circle fill fade-in */
+    .merci-icon-bg {
+      fill: #f0fdf4;
+      animation: fade-in .3s ease forwards;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* Title */
+    .merci-title {
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 800;
+      color: var(--color-text);
+      margin: 0 0 1rem;
+    }
+
+    /* Body text */
+    .merci-text {
+      font-size: .975rem;
+      line-height: 1.75;
+      color: var(--color-text-muted);
+      max-width: 420px;
+      margin: 0 auto 2.5rem;
+    }
+
+    /* Info card */
+    .merci-card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      text-align: left;
+    }
+
+    .merci-card__icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+
+    .merci-card__body p {
+      margin: 0;
+      font-size: .875rem;
+      line-height: 1.6;
+      color: var(--color-text-muted);
+    }
+
+    .merci-card__body p + p { margin-top: .4rem; }
+
+    .merci-card__body strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .merci-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      justify-content: center;
+    }
+
+    @media (max-width: 480px) {
+      .merci-actions { flex-direction: column; align-items: center; }
+      .merci-actions .btn { width: 100%; max-width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main>
+    <section class="merci-page">
+      <div class="merci-inner">
+
+        <!-- Animated checkmark -->
+        <div class="merci-icon" role="img" aria-label="Message envoyé avec succès">
+          <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <circle class="merci-icon-bg" cx="48" cy="48" r="44"/>
+            <circle class="merci-icon-circle" cx="48" cy="48" r="44" transform="rotate(-90 48 48)"/>
+            <polyline class="merci-icon-check" points="28,50 42,64 68,34"/>
+          </svg>
+        </div>
+
+        <!-- Title -->
+        <h1 class="merci-title">Message envoyé&nbsp;!</h1>
+
+        <!-- Subtitle -->
+        <p class="merci-text">
+          Merci de nous avoir contactés. Notre équipe vous répondra
+          dans les plus brefs délais
+          <strong style="color:var(--color-text)">(généralement sous 24&nbsp;heures ouvrées)</strong>.
+        </p>
+
+        <!-- Info card -->
+        <div class="merci-card">
+          <div class="merci-card__icon">📬</div>
+          <div class="merci-card__body">
+            <p>Un email de confirmation vous a été envoyé à votre adresse.</p>
+            <p>Pensez à vérifier vos <strong>spams</strong> si vous ne le recevez pas d'ici quelques minutes.</p>
+          </div>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="merci-actions">
+          <a href="/" class="btn btn-primary">← Retour à l'accueil</a>
+          <a href="/aide/" class="btn btn-outline">Consulter le centre d'aide</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../assets/js/main.js" data-base=".."></script>
+</body>
+</html>

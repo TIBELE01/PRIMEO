@@ -1,0 +1,39 @@
+name: CI — Mobile
+
+on:
+  push:
+    branches: [main, 'feature/**', 'fix/**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/ci-mobile.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # npm per-package, install fresh (no committed lockfile — matches Netlify build).
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      # Hard gate: types must check.
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # Non-blocking: surfaces lint debt without blocking the pipeline.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true

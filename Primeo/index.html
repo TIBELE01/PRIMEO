@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Primeo – Plateforme de réservation d'hébergement en Côte d'Ivoire. Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, gérez vos biens sans commission.">
+  <meta name="robots" content="index, follow">
+  <meta name="api-url" content="https://primeo-api.onrender.com">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Primeo">
+  <meta property="og:url" content="https://primeo.ci/">
+  <meta property="og:title" content="Primeo – Plateforme de réservation d'hébergement en Côte d'Ivoire">
+  <meta property="og:description" content="Réservez facilement votre hébergement en Côte d'Ivoire. 3 options de paiement, visites 3D, gestion sans commission pour les professionnels.">
+  <meta property="og:image" content="https://primeo.ci/assets/img/og-home.jpg">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Primeo – Plateforme de réservation d'hébergement en Côte d'Ivoire">
+  <meta name="twitter:description" content="Réservez facilement votre hébergement en Côte d'Ivoire. 3 options de paiement, visites 3D, gestion sans commission.">
+  <meta name="twitter:image" content="https://primeo.ci/assets/img/og-home.jpg">
+  <title id="page-title">Primeo – Plateforme de réservation d'hébergement en Côte d'Ivoire</title>
+  <link rel="canonical" href="https://primeo.ci/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/home.css">
+  <link rel="icon" type="image/svg+xml" href="./assets/img/favicon.svg">
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://primeo.ci/#website","url":"https://primeo.ci/","name":"Primeo","description":"Plateforme de réservation d'hébergement, d'immobilier et de restauration en Côte d'Ivoire","publisher":{"@id":"https://primeo.ci/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://primeo.ci/blog/?search={search_term_string}"},"query-input":"required name=search_term_string"}},{"@type":"Organization","@id":"https://primeo.ci/#organization","name":"Primeo","url":"https://primeo.ci/","logo":{"@type":"ImageObject","url":"https://primeo.ci/assets/img/favicon.svg"},"description":"Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente.","address":{"@type":"PostalAddress","addressLocality":"Abidjan","addressCountry":"CI"},"contactPoint":{"@type":"ContactPoint","contactType":"customer service","url":"https://primeo.ci/contact/","availableLanguage":"French","areaServed":"CI"},"sameAs":[]}]}
+  </script>
+</head>
+<body>
+  <!-- Page loading overlay -->
+  <div id="page-loader" aria-hidden="true">
+    <div class="loader-spinner"></div>
+  </div>
+  <script>setTimeout(function(){var e=document.getElementById('page-loader');if(e){e.classList.add('loader-done');setTimeout(function(){e.style.display='none';},400);}},1000);</script>
+
+  <div id="header-placeholder"></div>
+
+  <main>
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 1 — HERO CAROUSEL (3 propriétés de luxe en défilement)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="hero-home" id="hero">
+      <!-- Background slides -->
+      <div class="hero-slides-wrap" id="hero-slides-wrap">
+
+        <div class="hero-slide active" data-slide="0">
+          <div class="hero-bg-1"></div>
+          <div class="hero-slide-info">
+            <span class="slide-label">Hébergement · Cocody, Abidjan</span>
+            <span class="slide-sep"></span>
+            <span class="slide-name">Résidence de Luxe</span>
+            <span class="slide-sep"></span>
+            <span class="slide-price">Dès 180 000 FCFA / nuit</span>
+          </div>
+        </div>
+
+        <div class="hero-slide" data-slide="1">
+          <div class="hero-bg-2"></div>
+          <div class="hero-slide-info">
+            <span class="slide-label">Immobilier · Plateau, Abidjan</span>
+            <span class="slide-sep"></span>
+            <span class="slide-name">Propriété à Vendre</span>
+            <span class="slide-sep"></span>
+            <span class="slide-price">À partir de 85 000 000 FCFA</span>
+          </div>
+        </div>
+
+        <div class="hero-slide" data-slide="2">
+          <div class="hero-bg-3"></div>
+          <div class="hero-slide-info">
+            <span class="slide-label">Restauration · Zone 4, Abidjan</span>
+            <span class="slide-sep"></span>
+            <span class="slide-name">Restaurant de Luxe</span>
+            <span class="slide-sep"></span>
+            <span class="slide-price">Réservation en ligne disponible</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Fixed content overlay -->
+      <div class="hero-overlay-content">
+        <div class="container">
+          <p id="hero-title" class="hero-tagline">La plateforme de confiance pour vos réservations en <strong>Côte d'Ivoire</strong></p>
+          <div class="hero-actions">
+            <a id="hero-btn" href="/telechargement/" class="hero-btn-primary">Télécharger l'application</a>
+            <a href="./solutions/" class="hero-btn-secondary">Découvrir nos solutions →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide indicators -->
+      <div class="hero-dots" id="hero-dots">
+        <button class="hero-dot active" data-slide="0" aria-label="Propriété 1"></button>
+        <button class="hero-dot" data-slide="1" aria-label="Propriété 2"></button>
+        <button class="hero-dot" data-slide="2" aria-label="Propriété 3"></button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 2 — NOTRE MISSION
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section section-mission">
+      <div class="container">
+        <div class="mission-inner reveal">
+          <span class="mission-label">Notre mission</span>
+          <p id="mission-text" class="mission-text">
+            Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Pas de commission cachée, paiement adapté à vos habitudes.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 3 — SOLUTIONS
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section section-alt" id="solutions-preview-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Solutions</h2>
+        </div>
+        <div class="solutions-preview-grid" id="solutions-preview-grid">
+          <div class="sol-card reveal">
+            <h3>Voyageurs</h3>
+            <p>Trouvez et réservez facilement votre hébergement idéal en Côte d'Ivoire. Comparez les prix, lisez les avis, payez comme vous le souhaitez.</p>
+            <a href="/solutions/" class="btn btn-discover">Découvrir</a>
+          </div>
+          <div class="sol-card reveal">
+            <h3>Professionnels de l'hébergement</h3>
+            <p>Publiez vos annonces, gérez vos réservations et boostez votre visibilité. Des outils professionnels pensés pour les hôteliers ivoiriens.</p>
+            <a href="/solutions/" class="btn btn-discover">Découvrir</a>
+          </div>
+          <div class="sol-card reveal">
+            <h3>Restaurateurs &amp; Immobilier</h3>
+            <p>Gérez votre restaurant en ligne, acceptez des réservations de tables et publiez vos offres immobilières sur une seule plateforme.</p>
+            <a href="/solutions/" class="btn btn-discover">Découvrir</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 4 — PRODUITS
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section" id="products-preview-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Produits</h2>
+        </div>
+        <div class="products-preview-grid" id="products-preview-grid">
+          <div class="prod-card reveal">
+            <div class="prod-img-wrap"><div class="prod-img-placeholder"><span>F</span></div></div>
+            <div class="prod-body">
+              <h3>Formules d'abonnement</h3>
+              <p>Choisissez la formule adaptée à votre activité — Starter, Business ou Entreprise, toutes à 0 % de commission.</p>
+              <a href="/produits/" class="btn btn-discover">Découvrir</a>
+            </div>
+          </div>
+          <div class="prod-card reveal">
+            <div class="prod-img-wrap"><div class="prod-img-placeholder"><span>B</span></div><span class="prod-badge">Populaire</span></div>
+            <div class="prod-body">
+              <h3>Boosts d'annonce</h3>
+              <p>Propulsez vos annonces en tête des résultats. Effet immédiat, disponible à la carte.</p>
+              <a href="/produits/" class="btn btn-discover">Découvrir</a>
+            </div>
+          </div>
+          <div class="prod-card reveal">
+            <div class="prod-img-wrap"><div class="prod-img-placeholder"><span>3</span></div><span class="prod-badge">Nouveau</span></div>
+            <div class="prod-body">
+              <h3>Visite 3D</h3>
+              <p>Offrez à vos clients une immersion virtuelle. Les visites 3D augmentent les conversions de 40 %.</p>
+              <a href="/produits/" class="btn btn-discover">Découvrir</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 5 — POURQUOI PRIMEO
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section section-alt" id="why-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Pourquoi Primeo</h2>
+        </div>
+        <div class="why-grid" id="why-grid">
+          <div class="why-card reveal">
+            <h3>Confiance</h3>
+            <p>Chaque professionnel est vérifié et chaque paiement sécurisé. Une expérience fiable pour tous.</p>
+          </div>
+          <div class="why-card reveal">
+            <h3>Flexibilité</h3>
+            <p>Paiement intégral, acompte ou à l'arrivée — choisissez le mode qui vous convient.</p>
+          </div>
+          <div class="why-card reveal">
+            <h3>Innovation</h3>
+            <p>Visites 3D, paiement mobile, gestion temps réel : les technologies les plus récentes.</p>
+          </div>
+          <div class="why-card reveal">
+            <h3>Local</h3>
+            <p>Conçu par des Ivoiriens pour le marché ivoirien. Nous comprenons vos besoins.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 6 — CHIFFRES CLÉS
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section stats-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Primeo en chiffres</h2>
+        </div>
+        <div class="stats-big-row" id="stats-row">
+          <div class="stat-big-item reveal">
+            <div class="stat-big-number" data-count="150" data-suffix="+">150+</div>
+            <div class="stat-big-label">Propriétés actives</div>
+          </div>
+          <div class="stat-big-item reveal">
+            <div class="stat-big-number" data-count="10" data-suffix="+">10+</div>
+            <div class="stat-big-label">Villes couvertes</div>
+          </div>
+          <div class="stat-big-item reveal">
+            <div class="stat-big-number" data-count="1200" data-suffix="+">1 200+</div>
+            <div class="stat-big-label">Réservations confirmées</div>
+          </div>
+          <div class="stat-big-item reveal">
+            <div class="stat-big-number" data-count="800" data-suffix="+">800+</div>
+            <div class="stat-big-label">Clients satisfaits</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 7 — TÉMOIGNAGES (carrousel horizontal)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section section-alt testimonials-section" id="testimonials-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Témoignages</h2>
+        </div>
+        <div class="carousel-wrapper reveal" id="carousel-wrapper" data-managed>
+          <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Témoignage précédent" disabled>‹</button>
+          <div class="carousel-viewport" id="carousel-viewport">
+            <div class="carousel-track" id="carousel-track">
+              <div class="testimonial-card-new" role="group">
+                <div class="tc-header"><div class="tc-avatar"><div class="tc-avatar-initials">A</div></div><div class="tc-meta"><strong class="tc-name">Ama Konan</strong><div class="tc-stars"><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span></div></div></div>
+                <p class="tc-text">"Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple."</p>
+              </div>
+              <div class="testimonial-card-new" role="group">
+                <div class="tc-header"><div class="tc-avatar"><div class="tc-avatar-initials">J</div></div><div class="tc-meta"><strong class="tc-name">Jean-Baptiste Koffi</strong><div class="tc-stars"><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span></div></div></div>
+                <p class="tc-text">"Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60 % à 90 % en un mois !"</p>
+              </div>
+              <div class="testimonial-card-new" role="group">
+                <div class="tc-header"><div class="tc-avatar"><div class="tc-avatar-initials">M</div></div><div class="tc-meta"><strong class="tc-name">Marie Touré</strong><div class="tc-stars"><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star">★</span></div></div></div>
+                <p class="tc-text">"Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps."</p>
+              </div>
+              <div class="testimonial-card-new" role="group">
+                <div class="tc-header"><div class="tc-avatar"><div class="tc-avatar-initials">D</div></div><div class="tc-meta"><strong class="tc-name">David Assi</strong><div class="tc-stars"><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span><span class="star star-filled">★</span></div></div></div>
+                <p class="tc-text">"La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement."</p>
+              </div>
+            </div>
+          </div>
+          <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Témoignage suivant">›</button>
+        </div>
+        <div class="carousel-dots" id="carousel-dots" aria-label="Navigation des témoignages"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 8 — TÉLÉCHARGEMENT (simplified)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section download-section">
+      <div class="container">
+        <div class="download-inner reveal">
+          <div class="section-header">
+            <h2>Primeo dans votre poche</h2>
+          </div>
+          <a href="/telechargement/" class="btn btn-cta btn-lg download-btn-main">Télécharger l'application</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="./assets/js/main.js" data-base="."></script>
+  <script src="./assets/js/api.js"></script>
+  <script src="./assets/js/home.js"></script>
+</body>
+</html>

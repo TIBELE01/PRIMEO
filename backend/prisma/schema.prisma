@@ -1,0 +1,1833 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// PRIMEO — Schéma Prisma complet
+// Référence : CONTEXTE.md sections 3.1 à 3.12
+// Base : PostgreSQL (Supabase) via transaction pooler (DATABASE_URL)
+//        + connexion directe pour les migrations (DIRECT_URL)
+// ═══════════════════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ÉNUMÉRATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// §3.1 — Type de compte utilisateur
+enum AccountType {
+  client
+  professional_hebergement  // résidences, appartements
+  professional_hotel        // hôtels
+  professional_immobilier
+  restaurateur
+  admin
+}
+
+// §3.1 — Statut du compte utilisateur
+enum UserStatus {
+  active
+  pending
+  suspended
+  banned
+}
+
+// §3.1 — Genre (optionnel)
+enum Gender {
+  male
+  female
+  other
+}
+
+// §3.2 — Statut de vérification KYC
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+// §3.2 — Type de document KYC
+enum DocumentType {
+  id_card
+  rccm_extract
+  tax_id_certificate
+  tourist_license
+  other
+}
+
+// §3.3 — Formule d'abonnement (v2 : Starter / Business / Entreprise)
+enum PlanType {
+  starter
+  business
+  entreprise
+}
+
+// §3.3 — Statut d'abonnement
+enum SubscriptionStatus {
+  active
+  suspended
+  cancelled
+}
+
+// §3.4 — Type de propriété (valeurs exactes du spec)
+enum PropertyType {
+  residence
+  hotel
+  immobilier_location
+  immobilier_terrain
+  immobilier_achat
+  restaurant
+}
+
+// §3.4 — Statut de l'annonce
+enum PropertyStatus {
+  draft
+  pending
+  active
+  rejected
+  suspended
+  archived
+}
+
+// §3.4 — Type de média (property_media)
+enum MediaType {
+  photo
+  video
+  virtual_tour_360
+}
+
+// §3.5 — Statut de disponibilité
+enum AvailabilityStatus {
+  available
+  booked
+  manually_blocked
+}
+
+// §3.6 — Statut de réservation
+enum BookingStatus {
+  interest_expressed        // immobilier : intérêt sans paiement
+  pending_payment
+  confirmed
+  cancelled_by_client
+  cancelled_by_professional
+  completed
+}
+
+// §3.6 — Option de paiement
+enum PaymentOption {
+  full_online
+  ten_percent_online
+  zero_online
+}
+
+// §3.7 — Type de transaction
+enum TransactionType {
+  client_payment
+  subscription_payment
+  boost_purchase
+  refund
+  payout_to_professional
+  referral_reward
+  market_report_purchase
+}
+
+// §3.7 — Statut de transaction
+enum TransactionStatus {
+  initiated
+  success
+  failed
+  refunded
+}
+
+// §3.9 — Statut d'un avis
+enum ReviewStatus {
+  pending_moderation
+  published
+  hidden
+}
+
+// §3.10 — Statut d'un litige
+enum DisputeStatus {
+  open
+  under_review
+  resolved_refund_full
+  resolved_refund_partial
+  resolved_no_refund
+  closed
+}
+
+// §3.10 — Type de boost
+enum BoostType {
+  free
+  paid
+}
+
+// §3.10 — Statut d'un parrainage
+enum ReferralStatus {
+  pending
+  rewarded
+  expired
+}
+
+// §9.9 — Catégorie de ticket de support
+enum TicketCategory {
+  technical
+  dispute
+  information
+  complaint
+}
+
+// §9.9 — Statut de ticket de support
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+// §9.9 — Priorité de ticket
+enum TicketPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+// §8.8 — Type de réduction code promo
+enum PromoDiscountType {
+  percent
+  fixed_amount
+}
+
+// §7.11 — Rôle d'un co-gérant professionnel
+enum GuestRole {
+  admin
+  editor
+  reader
+}
+
+// §8.9 — Statut d'une commande de nourriture
+enum FoodOrderStatus {
+  pending
+  confirmed
+  preparing
+  ready
+  delivered
+  cancelled
+}
+
+// §8.9 — Type de livraison d'une commande
+enum FoodOrderDeliveryType {
+  dine_in
+  takeaway
+  delivery
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.1 — TABLE UTILISATEURS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  phone        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  birthDate    DateTime? @db.Date
+  gender       Gender?
+  avatarUrl    String?
+
+  // Rôle et statut
+  accountType AccountType @default(client)
+  extraRoles  Json? // rôles complémentaires (admin sub-roles)
+  status      UserStatus  @default(pending)
+
+  // Portefeuille et parrainage
+  walletBalance Int    @default(0) // FCFA — crédits clients
+  referralCode  String @unique @default(cuid())
+
+  // Notifications push et préférences (§11.2–11.4)
+  onesignalPlayerId       String?
+  notificationPreferences Json?   // { email: bool, push: bool, sms: bool }
+
+  // Réinitialisation mot de passe (§3.1)
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+
+  // OTP inscription / vérification
+  otpCode      String?
+  otpExpiresAt DateTime?
+
+  // Double authentification TOTP
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String? // base32 (speakeasy)
+
+  // Note admin interne (§9.4)
+  adminNotes String?
+
+  // Email deliverability — bloque les envois futurs si bounce permanent confirmé
+  emailBounced Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  professionalProfile   ProfessionalProfile?
+  subscription          Subscription?
+  properties            Property[]
+  clientBookings        Booking[]            @relation("ClientBookings")
+  reviewsAuthored       Review[]
+  sentMessages          Message[]            @relation("SentMessages")
+  receivedMessages      Message[]            @relation("ReceivedMessages")
+  notifications         Notification[]
+  refreshTokens         RefreshToken[]
+  favorites             Favorite[]
+  favoriteLists         FavoriteList[]
+  clientDisputes        Dispute[]            @relation("DisputeOpener")
+  referralsMade         Referral[]           @relation("ReferrerUser")
+  referralReceived      Referral?            @relation("RefereeUser")
+  supportTickets        SupportTicket[]      @relation("TicketOwner")
+  assignedTickets       SupportTicket[]      @relation("TicketAssignee")
+  ticketComments        TicketComment[]
+  auditLogs             AuditLog[]
+  guestAccesses         ProfessionalGuest[]  @relation("GuestUser")
+  promoCodesCreated     PromoCode[]
+  transactions          Transaction[]
+  clientRatingsGiven    ClientRating[]       @relation("RaterUser")
+  clientRatingsReceived ClientRating[]       @relation("RatedUser")
+  Boost                 Boost[]
+  foodOrders            FoodOrder[]          @relation("ClientFoodOrders")
+  pushTokens            PushToken[]
+
+  @@index([accountType, status])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §4.2 — JETONS DE RAFRAÎCHISSEMENT (table dédiée pour révocation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.2 — PROFILS PROFESSIONNELS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ProfessionalProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Informations légales (§3.2)
+  businessName   String
+  rccm           String?
+  taxId          String?
+  touristLicense String?
+
+  // Évaluation et description
+  ratingStars Decimal? @db.Decimal(3, 2) // 1.00 – 5.00
+  description String?
+
+  // Adresse (§3.2)
+  street     String?
+  city       String?
+  postalCode String?
+  country    String? @default("CI")
+  latitude   Float?
+  longitude  Float?
+
+  // Vérification KYC (§3.2)
+  verificationStatus VerificationStatus @default(pending)
+  verificationNotes  String?
+  verifiedAt         DateTime?
+  verifiedBy         String? // ID de l'admin
+
+  // Boosts gratuits mensuel (§3.3, §7.7)
+  boostsFreeUsedThisMonth Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  documents     ProfessionalDocument[]
+  guestAccesses ProfessionalGuest[]
+
+  @@map("professional_profiles")
+}
+
+// §3.2 — Documents justificatifs KYC
+model ProfessionalDocument {
+  id             String              @id @default(cuid())
+  profileId      String
+  profile        ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type           DocumentType
+  url            String // URL Cloudinary
+  uploadedAt     DateTime            @default(now())
+  verifiedAt     DateTime?
+  rejectedReason String?
+
+  @@map("professional_documents")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.3 — ABONNEMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Formule (§3.3)
+  planType        PlanType
+  startDate       DateTime           @default(now())
+  nextBillingDate DateTime
+  endDate         DateTime?
+  status          SubscriptionStatus @default(active)
+
+  // Tarification (§3.3 : 0 / 9000 / 24000 FCFA)
+  monthlyPrice            Int // FCFA
+  includedPropertiesLimit Int // 3 / 15 / illimité (9999)
+  commissionRate          Decimal @db.Decimal(5, 2) // 9 / 5 / 0
+
+  // Fonctionnalités JSON (§3.3)
+  features Json?
+
+  // Boosts gratuits (§3.3 : 0 / 2 / 10)
+  boostsFreeMonthly       Int @default(0)
+  boostsFreeUsedThisMonth Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  transactions Transaction[]
+
+  @@map("subscriptions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.4 — PROPRIÉTÉS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Property {
+  id      String @id @default(cuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  // Type et contenu (§3.4)
+  propertyType PropertyType
+  title        String
+  description  String
+
+  // Caractéristiques (§3.4)
+  rooms     Int?
+  bedrooms  Int?
+  beds      Int?
+  bathrooms Int?
+  surface   Decimal? @db.Decimal(10, 2) // m²
+  capacity  Int? // personnes ou couverts
+
+  // Prix selon le type (§3.4)
+  pricePerNight Int? // FCFA — résidences/hôtels
+  pricePerMonth Int? // FCFA — immobilier location
+  priceSale     Int? // FCFA — immobilier achat
+
+  // Spécifique restaurants (§8.3, §8.4)
+  cuisineType  String?
+  openingHours Json? // { lun: ["12:00-14:00","19:00-22:00"], ... }
+
+  // Spécifique immobilier — date de disponibilité estimée
+  availableFrom DateTime?
+
+  // Localisation (§3.4)
+  street    String?
+  city      String
+  latitude  Float?
+  longitude Float?
+
+  // Statut et visibilité (§3.4)
+  status         PropertyStatus @default(draft)
+  isBoosted      Boolean        @default(false)
+  boostExpiresAt DateTime?
+
+  // Compteurs (§3.4)
+  viewsCount    Int     @default(0)
+  bookingsCount Int     @default(0)
+  rating        Decimal @default(0) @db.Decimal(3, 2)
+  reviewCount   Int     @default(0)
+
+  // Options et équipements
+  amenities      String[]        @default([])
+  paymentOptions PaymentOption[] @default([])
+  rules          Json? // règlement intérieur
+
+  // Visite virtuelle 3D (§7.3)
+  hasVirtualTour Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  media             PropertyMedia[]
+  availabilities    Availability[]
+  bookings          Booking[]
+  reviews           Review[]
+  favorites         Favorite[]
+  favoriteListItems FavoriteListItem[]
+  boosts            Boost[]
+  menuItems      RestaurantMenuItem[]
+  timeSlots      RestaurantTimeSlot[]
+  specialMenus   RestaurantSpecialMenu[]
+  promotions     RestaurantPromotion[]
+  foodOrders     FoodOrder[]
+
+  @@index([ownerId])
+  @@index([status, propertyType])
+  @@index([city, latitude, longitude])
+  @@map("properties")
+}
+
+// §3.4 — Médias d'une propriété (photos, vidéos, 3D)
+model PropertyMedia {
+  id         String    @id @default(cuid())
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url        String // URL Cloudinary
+  publicId   String? // Cloudinary public_id — requis pour supprimer le média du CDN
+  mediaType  MediaType @default(photo)
+  isPrimary  Boolean   @default(false)
+  sortOrder  Int       @default(0)
+  uploadedAt DateTime  @default(now())
+
+  @@index([propertyId])
+  @@map("property_media")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.5 — DISPONIBILITÉS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Availability {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // §3.5 : date, status, time_slot (restaurants), price_override
+  date          DateTime           @db.Date
+  status        AvailabilityStatus @default(available)
+  timeSlot      String? // ex: "12:00-13:30" (restaurants §8.3)
+  priceOverride Int? // FCFA — tarif saisonnier
+
+  createdAt DateTime @default(now())
+
+  @@unique([propertyId, date])
+  @@index([propertyId, date])
+  @@map("availabilities")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.6 — RÉSERVATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Booking {
+  id         String   @id @default(cuid())
+  clientId   String
+  client     User     @relation("ClientBookings", fields: [clientId], references: [id], onDelete: Restrict)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+
+  // Dates et participants (§3.6)
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  guests    Int      @default(1)
+
+  // Montants (§3.6)
+  totalAmount         Int // FCFA
+  onlinePaidAmount    Int           @default(0) // FCFA — acompte réellement payé online
+  paymentOption       PaymentOption
+  commissionAmount    Int           @default(0) // FCFA — part Primeo
+  remainingCashAmount Int           @default(0) // FCFA — solde à payer en cash
+
+  // Statut (§3.6)
+  status             BookingStatus @default(pending_payment)
+  specialRequests    String?
+  cancellationReason String?
+  cancelledBy        String? // "client" | "professional" | "admin"
+
+  // No-show (§8.5 — restaurants)
+  isNoShow  Boolean   @default(false)
+  noShowAt  DateTime?
+
+  // Facture PDF (générée à la confirmation du paiement, stockée sur Cloudinary)
+  invoiceUrl String?
+
+  // Horodatage (§3.6)
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  transactions Transaction[]
+  messages     Message[]
+  review       Review?
+  dispute      Dispute?
+  clientRating ClientRating?
+
+  @@index([clientId])
+  @@index([propertyId, status])
+  @@map("bookings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.7 — TRANSACTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Transaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // Type et montants (§3.7)
+  type      TransactionType
+  amount    Int // FCFA
+  currency  String          @default("XOF")
+  fee       Int             @default(0) // FCFA
+  netAmount Int // FCFA — amount - fee
+
+  // Statut (§3.7)
+  status TransactionStatus @default(initiated)
+
+  // Références (§3.7)
+  bookingId      String?
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  // Genius Pay (§3.7)
+  geniusPayTransactionId String?
+  checkoutUrl            String?
+  webhookReceived        Boolean @default(false)
+  webhookPayload         Json?
+
+  // Notes libres
+  notes String?
+
+  // Horodatage (§3.7)
+  initiatedAt DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([geniusPayTransactionId])
+  @@map("transactions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.8 — MESSAGES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Message {
+  id String @id @default(cuid())
+
+  // Contexte : réservation OU litige (§3.8 — les deux optionnels)
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  disputeId String?
+  dispute   Dispute? @relation(fields: [disputeId], references: [id], onDelete: SetNull)
+
+  // Participants (§3.8)
+  senderId   String
+  sender     User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Restrict)
+  receiverId String
+  receiver   User   @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Restrict)
+
+  content String
+  sentAt  DateTime @default(now())
+  isRead  Boolean  @default(false)
+
+  @@index([bookingId, sentAt])
+  @@index([disputeId])
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.9 — AVIS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  // Notes détaillées (§3.9 — 1 à 5)
+  rating              Int // note globale
+  cleanlinessRating   Int?
+  communicationRating Int?
+  accuracyRating      Int?
+  locationRating      Int?
+  valueRating         Int?
+
+  // Critères spécifiques restaurants
+  cuisineRating   Int? // restaurant uniquement
+  serviceRating   Int? // restaurant uniquement
+  ambianceRating  Int? // restaurant uniquement
+
+  // Contenu (§3.9)
+  comment                  String?
+  publishedAt              DateTime?
+  responseFromProfessional String?
+
+  // Modération (§3.9)
+  status ReviewStatus @default(pending_moderation)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  media ReviewMedia[]
+
+  @@index([propertyId])
+  @@map("reviews")
+}
+
+// §3.9 — Médias joints aux avis
+model ReviewMedia {
+  id         String   @id @default(cuid())
+  reviewId   String
+  review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  url        String // URL Cloudinary
+  uploadedAt DateTime @default(now())
+
+  @@map("review_media")
+}
+
+// §6.13 — Évaluation réciproque (client noté par le professionnel)
+model ClientRating {
+  id          String  @id @default(cuid())
+  bookingId   String  @unique
+  booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  ratedUserId String
+  ratedUser   User    @relation("RatedUser", fields: [ratedUserId], references: [id], onDelete: Restrict)
+  raterUserId String
+  raterUser   User    @relation("RaterUser", fields: [raterUserId], references: [id], onDelete: Restrict)
+
+  // Critères (§6.13)
+  respectRating       Int // 1–5
+  communicationRating Int
+  punctualityRating   Int
+  rulesRating         Int
+  overallRating       Int
+
+  comment  String?
+  isPublic Boolean @default(true)
+  isHidden   Boolean @default(false) // masqué par admin après signalement
+  isReported Boolean @default(false) // signalé par le client comme injuste
+  reportReason String? // motif du signalement
+
+  createdAt DateTime @default(now())
+
+  @@map("client_ratings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.10 — BOOSTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Boost {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+
+  // §3.10 : start_date, end_date, amount, type
+  startDate DateTime
+  endDate   DateTime
+  amount    Int       @default(0) // FCFA — 0 pour les boosts gratuits
+  type      BoostType
+
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+  @@map("boosts")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.10 — PARRAINAGES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Referral {
+  id String @id @default(cuid())
+
+  // §3.10 : code, referrer_id, referee_id, inscription_date, reward_date
+  referralCode String  @unique // code utilisé pour l'inscription
+  referrerId   String
+  referrer     User    @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Restrict)
+  refereeId    String? @unique
+  referee      User?   @relation("RefereeUser", fields: [refereeId], references: [id], onDelete: SetNull)
+
+  status          ReferralStatus @default(pending)
+  inscriptionDate DateTime? // date d'inscription du filleul
+  rewardDate      DateTime? // date de versement de la récompense
+  rewardAmount    Int            @default(2000) // FCFA (§5.14)
+
+  createdAt DateTime @default(now())
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.10 — LITIGES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Dispute {
+  id        String  @id @default(cuid())
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  openedBy  String
+  opener    User    @relation("DisputeOpener", fields: [openedBy], references: [id], onDelete: Restrict)
+
+  // §3.10 : reason, status, resolution
+  reason       String
+  description  String?
+  status       DisputeStatus @default(open)
+  resolution   String?
+  refundAmount Int? // FCFA — montant remboursé (partiel ou total)
+  adminNotes   String?
+
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  messages Message[]
+
+  @@map("disputes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3.10 — JOURNAUX D'AUDIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // §3.10 : action, description, ip_address, timestamp
+  action      String // ex: "booking.cancel", "kyc.approve", "user.ban"
+  description String?
+  ipAddress   String?
+  targetType  String? // ex: "booking", "user", "property"
+  targetId    String? // ID de la cible
+  metadata    Json?
+
+  createdAt DateTime @default(now()) // = timestamp
+
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §5.13 / §6.9 — FAVORIS ET LISTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@map("favorites")
+}
+
+model FavoriteList {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  isPublic   Boolean  @default(false)
+  shareToken String?  @unique @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items FavoriteListItem[]
+
+  @@index([userId])
+  @@map("favorite_lists")
+}
+
+model FavoriteListItem {
+  id         String       @id @default(cuid())
+  listId     String
+  list       FavoriteList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  addedAt    DateTime     @default(now())
+
+  @@unique([listId, propertyId])
+  @@map("favorite_list_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §9.9 — TICKETS DE SUPPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("TicketOwner", fields: [userId], references: [id], onDelete: Restrict)
+
+  // §9.9 : catégorie, sujet, description, statut, priorité
+  category    TicketCategory
+  subject     String
+  description String
+  status      TicketStatus   @default(open)
+  priority    TicketPriority @default(medium)
+
+  assignedTo  String?
+  assignee    User?    @relation("TicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  attachments String[] @default([]) // Cloudinary URLs of uploaded files
+
+  resolvedAt DateTime?
+  closedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  comments TicketComment[]
+
+  @@index([userId])
+  @@index([status, priority])
+  @@map("support_tickets")
+}
+
+model TicketComment {
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  content    String
+  isInternal Boolean       @default(false) // note interne admin, invisible pour l'utilisateur
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId])
+  @@map("ticket_comments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.8 — CODES PROMOTIONNELS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PromoCode {
+  id            String            @id @default(cuid())
+  code          String            @unique
+  discountType  PromoDiscountType
+  discountValue Int // % ou FCFA fixe
+  minAmount     Int? // FCFA — montant minimum de commande
+  maxUses       Int? // null = illimité
+  usesCount     Int               @default(0)
+  validFrom     DateTime
+  validUntil    DateTime
+  isActive      Boolean           @default(true)
+
+  createdBy String?
+  creator   User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@map("promo_codes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.4 — MENU DES RESTAURANTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RestaurantMenuItem {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // §8.4 : sections, nom, description, prix, photo, allergènes
+  section     String // ex: "Entrées", "Plats", "Desserts", "Boissons"
+  name        String
+  description String?
+  price       Int // FCFA
+  photoUrl    String?
+  allergens   String[] @default([])
+  isAvailable Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems FoodOrderItem[]
+
+  @@index([propertyId])
+  @@map("restaurant_menu_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.3 — CRÉNEAUX HORAIRES RESTAURANT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RestaurantTimeSlot {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  dayOfWeek   Int     // 0=Lun … 6=Dim
+  startTime   String  // "HH:MM"
+  endTime     String  // "HH:MM"
+  maxCapacity Int
+  isBlocked   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@map("restaurant_time_slots")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.4 — MENUS SPÉCIAUX DATÉS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RestaurantSpecialMenu {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  date          DateTime @db.Date
+  pricePerPerson Int     // FCFA
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@map("restaurant_special_menus")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.8 — PROMOTIONS RESTAURANT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RestaurantPromotion {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String?
+  discountType  String  // "percent" | "fixed"
+  discountValue Int     // valeur entière — % ou FCFA
+  validUntil    DateTime?
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@map("restaurant_promotions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §7.11 — CO-GÉRANTS PROFESSIONNELS (Premium)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ProfessionalGuest {
+  id          String              @id @default(cuid())
+  profileId   String
+  profile     ProfessionalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  guestUserId String
+  guestUser   User                @relation("GuestUser", fields: [guestUserId], references: [id], onDelete: Cascade)
+
+  role       GuestRole @default(editor)
+  invitedAt  DateTime  @default(now())
+  acceptedAt DateTime?
+  isActive   Boolean   @default(false)
+
+  @@unique([profileId, guestUserId])
+  @@map("professional_guests")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §11.3 — NOTIFICATIONS PUSH
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // ex: "booking_confirmed", "new_message", "review_published"
+  title     String
+  body      String
+  data      Json? // payload complémentaire (bookingId, propertyId, etc.)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §11.3 — TOKENS PUSH MULTI-APPAREILS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   // Expo push token (ExponentPushToken[...])
+  playerId  String?  // OneSignal player ID après enregistrement via REST API
+  platform  String?  // "ios" | "android"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, token])
+  @@index([userId, isActive])
+  @@map("push_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §9.7 — CONFIGURATION DE LA PLATEFORME
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PlatformConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique // ex: "boost_price", "referral_reward", "grace_period_days"
+  value     Json // valeur flexible (Int, String, Boolean, objet)
+  updatedAt DateTime @updatedAt
+  updatedBy String? // ID de l'admin
+
+  @@map("platform_config")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §5.16 — TAUX DE CHANGE (demandé dans le prompt)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model CurrencyRate {
+  id        String   @id @default(cuid())
+  currency  String   @unique // ex: "EUR", "USD", "GBP"
+  rate      Decimal  @db.Decimal(18, 6) // taux FCFA → devise (ex: EUR = 0.001524)
+  updatedAt DateTime @updatedAt
+
+  @@map("currency_rates")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §8.9 — COMMANDES DE NOURRITURE (restaurant → livraison/sur place/à emporter)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model FoodOrder {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  clientId   String
+  client     User     @relation("ClientFoodOrders", fields: [clientId], references: [id], onDelete: Restrict)
+
+  items               FoodOrderItem[]
+  totalAmount         Int                  // FCFA
+  specialInstructions String?
+
+  status       FoodOrderStatus      @default(pending)
+  deliveryType FoodOrderDeliveryType @default(dine_in)
+  deliveryAddress String?
+  estimatedMinutes Int?
+
+  orderedAt   DateTime  @default(now())
+  confirmedAt DateTime?
+  readyAt     DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId, status])
+  @@index([clientId])
+  @@map("food_orders")
+}
+
+model FoodOrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  order      FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   RestaurantMenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  quantity   Int
+  unitPrice  Int     // snapshot du prix au moment de la commande (FCFA)
+  totalPrice Int     // quantity * unitPrice
+  notes      String? // personnalisations ex: "sans oignons"
+
+  createdAt DateTime @default(now())
+
+  @@map("food_order_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SITE VITRINE — Contenu administrable de la page d'accueil
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WebsiteHero {
+  id            String   @id @default(cuid())
+  title         String
+  subtitle      String
+  buttonText    String   @default("Télécharger l'application")
+  buttonUrl     String   @default("#")
+  imageUrl      String?
+  imagePublicId String?
+  updatedAt     DateTime @updatedAt
+  updatedBy     String?
+
+  @@map("website_hero")
+}
+
+model WebsiteMission {
+  id        String   @id @default(cuid())
+  text      String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("website_mission")
+}
+
+model WebsiteSolutionCard {
+  id        String   @id @default(cuid())
+  title     String
+  summary   String
+  icon      String   @default("🏠")
+  link      String   @default("/solutions")
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("website_solution_cards")
+}
+
+model WebsiteProductCard {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  imageUrl      String?
+  imagePublicId String?
+  badge         String?
+  link          String   @default("/produits")
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("website_product_cards")
+}
+
+model WebsiteWhyCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String   @default("⭐")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("website_why_cards")
+}
+
+model WebsiteTestimonial {
+  id            String   @id @default(cuid())
+  name          String
+  rating        Int      @default(5)
+  text          String
+  photoUrl      String?
+  photoPublicId String?
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("website_testimonials")
+}
+
+model WebsiteSolutionsIntro {
+  id        String   @id @default(cuid())
+  headline  String
+  subtext   String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("website_solutions_intro")
+}
+
+model WebsiteSolutionsBloc {
+  id          String   @id @default(cuid())
+  icon        String   @default("🏨")
+  title       String
+  subtitle    String
+  description String
+  features    String
+  ctaLabel    String   @default("En savoir plus")
+  ctaUrl      String   @default("/solutions")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("website_solutions_blocs")
+}
+
+// ── Products page ─────────────────────────────────────────────────────────────
+
+model ProductsPageIntro {
+  id        String   @id @default(cuid())
+  title     String
+  paragraph String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("products_page_intro")
+}
+
+model ProductsSubscriptionPlan {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  price       String
+  badge       String?
+  highlighted Boolean  @default(false)
+  ctaLabel    String   @default("Choisir")
+  ctaUrl      String   @default("/contact/")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products_subscription_plans")
+}
+
+model ProductsSubscriptionRow {
+  id         String   @id @default(cuid())
+  feature    String
+  highlight  Boolean  @default(false)
+  starter    String   @default("")
+  business   String   @default("")
+  entreprise String   @default("")
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("products_subscription_rows")
+}
+
+model ProductsBoostSection {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Int      @default(2000)
+  duration    Int      @default(72)
+  imageUrl    String?
+  ctaLabel    String   @default("En savoir plus")
+  ctaUrl      String   @default("/contact/")
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("products_boost_section")
+}
+
+model ProductsAdsSection {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  formats     String
+  imageUrl    String?
+  ctaLabel    String   @default("Nous contacter")
+  ctaUrl      String   @default("/contact/")
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("products_ads_section")
+}
+
+model ProductsDataPack {
+  id          String   @id @default(cuid())
+  icon        String   @default("📊")
+  title       String
+  description String
+  price       Int
+  ctaLabel    String   @default("Acheter ce rapport")
+  ctaUrl      String   @default("/contact/")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products_data_packs")
+}
+
+model ProductsUpcoming {
+  id          String   @id @default(cuid())
+  icon        String   @default("🚀")
+  title       String
+  description String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products_upcoming")
+}
+
+// ── Careers ───────────────────────────────────────────────────────────────────
+
+model CareersPresentation {
+  id        String   @id @default(cuid())
+  title     String   @default("Construisons l'avenir énergétique ensemble")
+  intro1    String   @db.Text @default("Chez Primeo, chaque ligne de code, chaque partenariat, chaque décision contribue à un objectif commun : rendre l'énergie accessible et maîtrisable pour tous.")
+  intro2    String?  @db.Text
+  intro3    String?  @db.Text
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("careers_presentation")
+}
+
+model CareersTeam {
+  id            String   @id @default(cuid())
+  photoUrl      String?
+  photoPublicId String?
+  text          String   @db.Text @default("Une équipe soudée, passionnée, qui croit profondément en sa mission.")
+  updatedBy     String?
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@map("careers_team")
+}
+
+model CareersValue {
+  id          String   @id @default(cuid())
+  icon        String   @default("🌟")
+  title       String
+  description String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("careers_values")
+}
+
+model CareersBenefit {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("careers_benefits")
+}
+
+model CareersFaq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("careers_faq")
+}
+
+model CareersJob {
+  id          String    @id @default(cuid())
+  title       String
+  department  String
+  location    String    @default("Abidjan")
+  type        String    @default("CDI")
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+  description String    @db.Text
+  profile     String    @db.Text
+  offer       String?   @db.Text
+  process     String?   @db.Text
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("careers_jobs")
+}
+
+model CareersSpontaneous {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  message     String?  @db.Text
+  cvUrl       String?
+  cvPublicId  String?
+  status      String   @default("received")
+  notes       String?  @db.Text
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("careers_spontaneous")
+}
+
+// ── About ─────────────────────────────────────────────────────────────────────
+
+model AboutHistory {
+  id        String   @id @default(cuid())
+  title     String   @default("Notre histoire")
+  content   String   @db.Text
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("about_history")
+}
+
+model AboutMission {
+  id        String   @id @default(cuid())
+  title     String   @default("Notre mission")
+  content   String   @db.Text
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("about_mission")
+}
+
+model AboutValue {
+  id          String   @id @default(cuid())
+  icon        String   @default("🌟")
+  title       String
+  description String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about_values")
+}
+
+model AboutTeam {
+  id            String   @id @default(cuid())
+  name          String
+  role          String
+  bio           String?  @db.Text
+  photoUrl      String?
+  photoPublicId String?
+  initials      String?
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("about_team")
+}
+
+model AboutPartner {
+  id            String   @id @default(cuid())
+  name          String
+  logoUrl       String?
+  logoPublicId  String?
+  url           String?
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("about_partners")
+}
+
+model ContactMessage {
+  id         String    @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  subject    String
+  message    String    @db.Text
+  isRead     Boolean   @default(false)
+  isReplied  Boolean   @default(false)
+  repliedAt  DateTime?
+  repliedBy  String?
+  createdAt  DateTime  @default(now())
+
+  @@map("contact_messages")
+}
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  excerpt       String?   @db.Text
+  contentHtml   String    @db.Text
+  coverImageUrl String?
+  coverPublicId String?
+  publishedAt   DateTime?
+  author        String    @default("Équipe Primeo")
+  readingTime   Int       @default(5)
+  status        String    @default("draft")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  categories    BlogPostCategory[]
+  comments      BlogComment[]
+
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts     BlogPostCategory[]
+
+  @@map("blog_categories")
+}
+
+model BlogPostCategory {
+  postId     String
+  categoryId String
+  post       BlogPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@map("blog_post_categories")
+}
+
+model NewsletterSubscriber {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  subscribedAt DateTime  @default(now())
+  confirmedAt  DateTime?
+
+  @@map("newsletter_subscribers")
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  postId    String
+  name      String
+  email     String
+  comment   String   @db.Text
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("blog_comments")
+}
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  category  String
+  question  String
+  answer    String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model PartnershipRequest {
+  id              String   @id @default(cuid())
+  companyName     String
+  contactName     String
+  email           String
+  phone           String?
+  partnershipType String
+  message         String   @db.Text
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("partnership_requests")
+}
+
+model CommunityChallenge {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts CommunityPost[]
+
+  @@map("community_challenges")
+}
+
+model CommunityPost {
+  id            String   @id @default(cuid())
+  pseudo        String
+  content       String   @db.Text
+  imageUrl      String?
+  likesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  ipAddress     String?
+  challengeId   String?
+  status        String   @default("published")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  challenge CommunityChallenge? @relation(fields: [challengeId], references: [id])
+  comments  CommunityComment[]
+  likes     CommunityLike[]
+
+  @@map("community_posts")
+}
+
+model CommunityComment {
+  id        String   @id @default(cuid())
+  postId    String
+  pseudo    String
+  content   String   @db.Text
+  ipAddress String?
+  status    String   @default("published")
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("community_comments")
+}
+
+model CommunityLike {
+  id          String   @id @default(cuid())
+  postId      String
+  anonymousId String
+  createdAt   DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, anonymousId])
+  @@map("community_likes")
+}
+
+model CommunityReport {
+  id         String   @id @default(cuid())
+  targetType String
+  targetId   String
+  reason     String
+  reporterIp String?
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("community_reports")
+}
+
+// ── Logs d'envoi email ─────────────────────────────────────────────────────────
+
+enum EmailLogStatus {
+  sent
+  failed
+  delivered
+  bounced
+  complained
+  opened
+
+  @@map("email_log_status")
+}
+
+model EmailLog {
+  id           String         @id @default(cuid())
+  recipient    String         // adresse email destinataire
+  subject      String         // sujet ou identifiant de template
+  templateId   Int?           // ID template Brevo (si template)
+  status       EmailLogStatus @default(sent)
+  errorMessage String?        // message d'erreur si status = failed
+  messageId    String?        // ID message Brevo (pour corréler les webhooks)
+  bounceCount  Int            @default(0)
+  sentAt       DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([recipient])
+  @@index([messageId])
+  @@map("email_logs")
+}
+
+// ── Logs d'envoi SMS (Orange) ──────────────────────────────────────────────────
+
+enum SmsLogStatus {
+  pending
+  sent
+  delivered
+  failed
+  expired
+
+  @@map("sms_log_status")
+}
+
+model SmsLog {
+  id          String       @id @default(cuid())
+  recipient   String       // numéro destinataire au format +225XXXXXXXXXX
+  message     String       @db.Text
+  status      SmsLogStatus @default(pending)
+  requestId   String?      // ID Orange (dernier segment de resourceURL) pour corréler les webhooks
+  errorCode   String?      // code d'erreur Orange ou message d'exception
+  isOtp       Boolean      @default(false) // true = SMS OTP critique (fallback email si échec)
+  sentAt      DateTime     @default(now())
+  deliveredAt DateTime?
+  updatedAt   DateTime     @updatedAt
+
+  @@index([recipient])
+  @@index([requestId])
+  @@map("sms_logs")
+}
+
+// ── Feature flags dynamiques ───────────────────────────────────────────────────
+
+model FeatureFlag {
+  key         String   @id                    // identifiant unique ex: "show_ai_recommendations"
+  enabled     Boolean  @default(false)
+  description String?                         // explication lisible pour l'admin
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?                         // userId de l'admin qui a modifié
+
+  @@map("feature_flags")
+}

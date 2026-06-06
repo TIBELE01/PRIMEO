@@ -1,0 +1,100 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "close": "Fermer",
+    "seeAll": "Voir tout",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "reset": "Réinitialiser",
+    "apply": "Appliquer",
+    "yes": "Oui",
+    "no": "Non",
+    "noResults": "Aucun résultat",
+    "offline": "Pas de connexion internet",
+    "retry": "Réessayer"
+  },
+  "auth": {
+    "welcome": "Bienvenue sur PRIMEO",
+    "tagline": "Trouvez votre hébergement idéal en Afrique",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Se déconnecter",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "otpVerification": "Vérification OTP",
+    "twoFactor": "Authentification à deux facteurs",
+    "enterOtp": "Entrez le code reçu par SMS",
+    "enterTotp": "Entrez votre code TOTP",
+    "accountType": "Type de compte",
+    "client": "Client",
+    "professional_hebergement": "Professionnel Hébergement",
+    "professional_immobilier": "Professionnel Immobilier",
+    "restaurateur": "Restaurateur"
+  },
+  "property": {
+    "search": "Rechercher une propriété",
+    "book": "Réserver",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "guests": "Voyageurs",
+    "price": "Prix",
+    "perNight": "par nuit",
+    "amenities": "Équipements",
+    "rules": "Règles",
+    "location": "Localisation",
+    "reviews": "Avis",
+    "virtualTour": "Visite virtuelle 3D",
+    "host": "Hôte",
+    "contactHost": "Contacter l'hôte"
+  },
+  "booking": {
+    "myBookings": "Mes réservations",
+    "status": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "cancelled": "Annulée",
+      "completed": "Terminée",
+      "disputed": "En litige"
+    },
+    "paymentOptions": {
+      "full_online": "Paiement intégral",
+      "ten_percent_online": "Acompte 10%",
+      "zero_online": "Payer sur place"
+    },
+    "invoice": "Facture",
+    "downloadInvoice": "Télécharger la facture"
+  },
+  "profile": {
+    "myProfile": "Mon profil",
+    "editProfile": "Modifier le profil",
+    "changePassword": "Changer le mot de passe",
+    "twoFactorSetup": "Configurer le 2FA",
+    "legalLinks": "Mentions légales",
+    "referral": "Parrainage",
+    "settings": "Paramètres",
+    "support": "Support",
+    "logout": "Déconnexion"
+  },
+  "error": {
+    "generic": "Une erreur est survenue",
+    "network": "Erreur réseau",
+    "unauthorized": "Session expirée, veuillez vous reconnecter",
+    "notFound": "Ressource introuvable",
+    "validation": "Données invalides"
+  }
+}

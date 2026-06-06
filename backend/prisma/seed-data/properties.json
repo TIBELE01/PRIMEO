@@ -1,0 +1,22 @@
+[
+  {
+    "id": "seed-property-001",
+    "name": "Villa Cocody Premium",
+    "type": "villa",
+    "city": "Abidjan",
+    "address": "Rue des Jardins, Cocody",
+    "pricePerNight": 75000,
+    "amenities": ["wifi", "pool", "parking", "air_conditioning"],
+    "isPublished": true
+  },
+  {
+    "id": "seed-property-002",
+    "name": "Maquis Le Grilladin",
+    "type": "maquis",
+    "city": "Abidjan",
+    "address": "Boulevard de Marseille, Treichville",
+    "averagePrice": 5000,
+    "amenities": ["wifi", "terrace", "parking"],
+    "isPublished": true
+  }
+]

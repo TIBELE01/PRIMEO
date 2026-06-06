@@ -1,0 +1,95 @@
+name: Deploy Primeo Vitrine → Netlify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Primeo/**'
+      - '.github/workflows/deploy-vitrine.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Netlify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y jq zip
+
+      - name: Create Netlify site (if needed)
+        id: site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          SITE_NAME="primeo-vitrine"
+
+          # Try to get existing site
+          EXISTING=$(curl -sf \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites?filter=all&per_page=100" \
+            | jq -r --arg n "$SITE_NAME" '.[] | select(.name == $n) | .id' | head -1)
+
+          if [ -n "$EXISTING" ]; then
+            echo "✅ Site existant trouvé : $EXISTING"
+            echo "site_id=$EXISTING" >> $GITHUB_OUTPUT
+          else
+            echo "📦 Création du site $SITE_NAME..."
+            RESPONSE=$(curl -sf -X POST \
+              -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"$SITE_NAME\"}" \
+              "https://api.netlify.com/api/v1/sites")
+            SITE_ID=$(echo "$RESPONSE" | jq -r '.id')
+            echo "✅ Site créé : $SITE_ID"
+            echo "site_id=$SITE_ID" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Package & Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          SITE_ID: ${{ steps.site.outputs.site_id }}
+        run: |
+          echo "📦 Compression du dossier Primeo/..."
+          cd Primeo
+          zip -r ../vitrine.zip . -x "*.DS_Store" -x "__MACOSX/*"
+          cd ..
+
+          echo "🚀 Déploiement vers $SITE_ID..."
+          DEPLOY=$(curl -sf -X POST \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @vitrine.zip \
+            "https://api.netlify.com/api/v1/sites/$SITE_ID/deploys")
+
+          DEPLOY_ID=$(echo "$DEPLOY" | jq -r '.id')
+          DEPLOY_URL=$(echo "$DEPLOY" | jq -r '.deploy_ssl_url // .ssl_url // .url')
+          SITE_URL=$(echo "$DEPLOY" | jq -r '.links.permalink // empty')
+
+          echo "✅ Deploy ID : $DEPLOY_ID"
+          echo "🌐 URL : $DEPLOY_URL"
+
+          # Wait for deploy to be ready
+          echo "⏳ Attente de la mise en ligne..."
+          for i in $(seq 1 20); do
+            STATE=$(curl -sf \
+              -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              "https://api.netlify.com/api/v1/deploys/$DEPLOY_ID" \
+              | jq -r '.state')
+            echo "  état : $STATE"
+            if [ "$STATE" = "ready" ] || [ "$STATE" = "current" ]; then
+              echo "✅ Site en ligne !"
+              break
+            fi
+            sleep 5
+          done
+
+          # Get final site URL
+          FINAL_URL=$(curl -sf \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites/$SITE_ID" \
+            | jq -r '.ssl_url // .url')
+          echo "🌐 URL finale : $FINAL_URL"

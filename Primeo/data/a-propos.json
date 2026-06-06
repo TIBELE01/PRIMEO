@@ -1,0 +1,24 @@
+{
+  "mission": "Rendre la réservation d'hébergement, de restaurant et la mise en relation immobilière accessibles, transparentes et fiables pour tous les Ivoiriens, en donnant à chacun les outils pour réserver et gérer en toute sérénité.",
+  "vision": "Devenir la plateforme de référence de l'hospitalité et de l'immobilier digital en Afrique subsaharienne, en connectant voyageurs, hôtes, restaurateurs et agents immobiliers sur une seule application.",
+  "team": [
+    { "name": "Kouassi Abo",    "role": "CEO & Co-fondateur",     "initials": "KA", "bio": "Expert du secteur hôtelier et touristique, 10 ans d'expérience dans l'hospitalité en Côte d'Ivoire." },
+    { "name": "Aïssatou Fall",  "role": "CTO & Co-fondatrice",    "initials": "AF", "bio": "Développeuse full-stack, ancienne ingénieure chez Orange CI." },
+    { "name": "Moussa Yao",     "role": "Directeur Commercial",   "initials": "MY", "bio": "Spécialiste en développement des affaires B2B et partenariats stratégiques." },
+    { "name": "Sylvie Brou",    "role": "Responsable Produit",    "initials": "SB", "bio": "UX designer et chef de produit, passionnée par les interfaces inclusives." }
+  ],
+  "timeline": [
+    { "year": "2022", "title": "Création de Primeo",     "description": "Fondée à Abidjan par une équipe passionnée d'hospitalité et de technologie." },
+    { "year": "2023", "title": "Lancement de la plateforme", "description": "Ouverture au public avec plus de 1 000 utilisateurs inscrits dès le premier mois." },
+    { "year": "2024", "title": "Paiement mobile intégré", "description": "Intégration d'Orange Money, MTN MoMo et Wave pour des réservations payées en quelques secondes." },
+    { "year": "2025", "title": "Expansion régionale",     "description": "Extension du service à 14 villes et lancement des boosts d'annonce et de la visite 3D immersive." }
+  ],
+  "values": [
+    { "icon": "🎯", "title": "Impact réel",        "description": "Chaque fonctionnalité est conçue pour avoir un impact mesurable sur la vie de nos utilisateurs." },
+    { "icon": "🔍", "title": "Transparence",       "description": "Nous croyons en la clarté : données claires, tarifs lisibles, zéro frais cachés." },
+    { "icon": "🌍", "title": "Ancrage local",      "description": "Conçu en Côte d'Ivoire, pour les réalités africaines — accessibilité, mobile-first, langues locales." },
+    { "icon": "🚀", "title": "Innovation continue","description": "Nous itérons constamment pour offrir la meilleure expérience possible à nos utilisateurs." },
+    { "icon": "🤝", "title": "Partenariat",        "description": "Nous travaillons main dans la main avec les hôtes, restaurateurs et agents immobiliers pour construire ensemble." },
+    { "icon": "🔒", "title": "Confiance",          "description": "La sécurité et la confidentialité des données de nos utilisateurs sont non négociables." }
+  ]
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow">
+  <meta name="api-url" content="https://primeo-api.onrender.com">
+  <!-- Dynamic meta filled by JS -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Primeo">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Article — Primeo Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/blog.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main id="article-main">
+
+    <!-- Loading skeleton -->
+    <div id="article-skeleton">
+      <div class="article-hero-skeleton"></div>
+      <div class="container article-body-skeleton">
+        <div class="skeleton-line w60"></div>
+        <div class="skeleton-line w80"></div>
+        <div class="skeleton-line w50"></div>
+      </div>
+    </div>
+
+    <!-- Article content (hidden until loaded) -->
+    <article id="article-content" hidden>
+
+      <!-- Hero image -->
+      <div class="article-hero" id="article-hero">
+        <img id="article-cover" src="" alt="" loading="eager">
+        <div class="article-hero-overlay"></div>
+      </div>
+
+      <div class="container article-layout">
+        <!-- Main column -->
+        <div class="article-main-col">
+
+          <!-- Breadcrumb -->
+          <nav class="article-breadcrumb" aria-label="Fil d'Ariane">
+            <a href="/blog/">Blog</a>
+            <span>›</span>
+            <span id="article-breadcrumb-cat"></span>
+          </nav>
+
+          <!-- Header -->
+          <header class="article-header">
+            <div class="article-cats" id="article-cats"></div>
+            <h1 id="article-title"></h1>
+            <div class="article-meta">
+              <span class="article-author" id="article-author"></span>
+              <span class="article-sep">·</span>
+              <time id="article-date"></time>
+              <span class="article-sep">·</span>
+              <span id="article-reading-time"></span>
+            </div>
+          </header>
+
+          <!-- Body -->
+          <div class="article-body prose" id="article-body"></div>
+
+          <!-- Tags / share -->
+          <footer class="article-footer">
+            <div class="article-share">
+              <span>Partager :</span>
+              <button class="share-btn" id="share-linkedin" aria-label="Partager sur LinkedIn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.37V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.59 0 4.26 2.37 4.26 5.44v6.3zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.8 24 1.77 24h20.44C23.2 24 24 23.23 24 22.28V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+              </button>
+              <button class="share-btn" id="share-twitter" aria-label="Partager sur X">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </button>
+              <button class="share-btn" id="share-copy" aria-label="Copier le lien">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+              </button>
+            </div>
+          </footer>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="article-sidebar">
+          <div class="sidebar-sticky">
+            <h3>Articles récents</h3>
+            <div class="sidebar-posts" id="sidebar-posts"></div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Related posts -->
+      <section class="related-posts-section" id="related-section" hidden>
+        <div class="container">
+          <h2>Articles similaires</h2>
+          <div class="blog-grid" id="related-grid"></div>
+        </div>
+      </section>
+
+      <!-- Comments -->
+      <section class="comments-section">
+        <div class="container">
+          <div class="comments-layout">
+            <!-- Comment list -->
+            <div id="comments-list-wrap">
+              <h2>Commentaires (<span id="comments-count">0</span>)</h2>
+              <div id="comments-list"></div>
+            </div>
+
+            <!-- Comment form -->
+            <div class="comment-form-wrap">
+              <h3>Laisser un commentaire</h3>
+              <form id="comment-form" novalidate>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="comment-name">Nom *</label>
+                    <input type="text" id="comment-name" name="name" required autocomplete="name">
+                  </div>
+                  <div class="form-group">
+                    <label for="comment-email">Email *</label>
+                    <input type="email" id="comment-email" name="email" required autocomplete="email">
+                    <small>Votre email ne sera pas publié.</small>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="comment-text">Commentaire *</label>
+                  <textarea id="comment-text" name="comment" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="comment-submit">
+                  <span class="btn-text">Envoyer</span>
+                  <span class="btn-spinner" hidden></span>
+                </button>
+                <p class="comment-msg" id="comment-msg" hidden></p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </article>
+
+    <!-- Error state -->
+    <div id="article-error" class="article-error-wrap" hidden>
+      <div class="container">
+        <p>Article introuvable. <a href="/blog/">Retour au blog</a></p>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- Copy toast -->
+  <div id="copy-toast" class="copy-toast" role="status" aria-live="polite">Lien copié !</div>
+
+  <!-- DOMPurify deferred to avoid render-blocking -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+  <script src="../assets/js/main.js" data-base=".."></script>
+  <script src="../assets/js/blog.js" data-page="article"></script>
+</body>
+</html>

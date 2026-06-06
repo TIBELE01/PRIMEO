@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<!-- Render (static site) : ce fichier à la racine suffit.
+     Render sert automatiquement 404.html pour toute URL non résolue — aucune
+     configuration supplémentaire n'est nécessaire côté serveur. -->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Page introuvable — Primeo. Cette page n'existe pas ou a été déplacée.">
+  <meta name="robots" content="noindex, follow">
+  <title>404 — Page introuvable · Primeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+
+  <style>
+    /* ── 404 page ──────────────────────────────────────────────────────────── */
+
+    .error-page {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      text-align: center;
+    }
+
+    .error-inner { max-width: 560px; width: 100%; }
+
+    /* Illustration */
+    .error-illustration {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 2rem;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-illustration svg { width: 68px; height: 68px; color: #2563eb; }
+
+    /* 404 gradient number */
+    .error-code {
+      font-size: clamp(5.5rem, 18vw, 8.5rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.03em;
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 .25rem;
+    }
+
+    .error-title {
+      font-size: clamp(1.1rem, 3.5vw, 1.35rem);
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0 0 .75rem;
+    }
+
+    .error-subtitle {
+      font-size: .95rem;
+      color: var(--color-text-muted);
+      line-height: 1.7;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+    }
+
+    /* CTA buttons */
+    .error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Divider */
+    .error-divider {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 1rem;
+      opacity: .7;
+    }
+
+    /* Search */
+    .error-search-wrap {
+      position: relative;
+      max-width: 360px;
+      margin: 0 auto 2rem;
+    }
+
+    .error-search-icon {
+      position: absolute;
+      left: .9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px;
+      height: 17px;
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+
+    .error-search-input {
+      width: 100%;
+      padding: .65rem .9rem .65rem 2.5rem;
+      border: 1.5px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-bg-secondary);
+      color: var(--color-text);
+      font-family: inherit;
+      font-size: .9rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .error-search-input::placeholder { color: var(--color-text-muted); opacity: .7; }
+
+    .error-search-input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    /* Quick links */
+    .error-quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      justify-content: center;
+    }
+
+    .error-quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      padding: .32rem .75rem;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      background: var(--color-bg);
+      transition: all .2s;
+    }
+
+    .error-quick-link:hover {
+      border-color: #2563eb;
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .error-actions { flex-direction: column; align-items: center; }
+      .error-actions .btn { width: 100%; max-width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main>
+    <section class="error-page">
+      <div class="error-inner">
+
+        <!-- SVG illustration : feuille cassée + visage triste -->
+        <div class="error-illustration" role="img" aria-label="Illustration page cassée">
+          <svg viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Page body -->
+            <rect x="8" y="6" width="38" height="48" rx="4" fill="currentColor" opacity=".1"/>
+            <rect x="8" y="6" width="38" height="48" rx="4" stroke="currentColor" stroke-width="2"/>
+            <!-- Torn corner fold -->
+            <path d="M38 6L46 14H38V6Z" fill="white" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <!-- Page lines -->
+            <line x1="15" y1="24" x2="37" y2="24" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+            <line x1="15" y1="31" x2="33" y2="31" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+            <line x1="15" y1="38" x2="28" y2="38" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+            <!-- Lightning bolt (broken) -->
+            <path d="M21 16l-4 7h5l-4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Sad face circle -->
+            <circle cx="50" cy="52" r="14" fill="white" stroke="currentColor" stroke-width="2"/>
+            <!-- Eyes -->
+            <circle cx="46" cy="49" r="1.6" fill="currentColor"/>
+            <circle cx="54" cy="49" r="1.6" fill="currentColor"/>
+            <!-- Sad mouth -->
+            <path d="M45.5 55.5c1.3-2 7.7-2 9 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- Tear drop -->
+            <path d="M46 51.5c0 1.1-.9 2-2 2s-2-.9-2-2c0-1.1 2-3 2-3s2 1.9 2 3z" fill="currentColor" opacity=".5"/>
+          </svg>
+        </div>
+
+        <!-- 404 code -->
+        <p class="error-code" aria-label="Erreur 404">404</p>
+
+        <!-- Title + description -->
+        <h1 class="error-title">Oups&nbsp;! Cette page n'existe pas ou a été déplacée.</h1>
+        <p class="error-subtitle">
+          L'adresse que vous avez saisie est introuvable.
+          Elle a peut-être été supprimée, renommée, ou n'a jamais existé.
+        </p>
+
+        <!-- CTA buttons -->
+        <div class="error-actions">
+          <a href="/" class="btn btn-primary">← Retour à l'accueil</a>
+          <a href="/aide/" class="btn btn-outline">Consulter le centre d'aide</a>
+        </div>
+
+        <!-- Search bar -->
+        <p class="error-divider">Ou recherchez ce que vous cherchez</p>
+        <form
+          class="error-search-wrap"
+          role="search"
+          aria-label="Recherche sur le site"
+          onsubmit="onSearch(event)"
+        >
+          <svg class="error-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="search"
+            class="error-search-input"
+            id="site-search"
+            placeholder="Rechercher une question…"
+            autocomplete="off"
+            aria-label="Rechercher sur le site"
+          >
+        </form>
+
+        <!-- Quick nav links -->
+        <nav class="error-quick-links" aria-label="Pages principales">
+          <a href="/solutions/" class="error-quick-link">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+            </svg>
+            Solutions
+          </a>
+          <a href="/produits/" class="error-quick-link">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zm14 4H2v6a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            </svg>
+            Produits
+          </a>
+          <a href="/blog/" class="error-quick-link">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/>
+              <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/>
+            </svg>
+            Blog
+          </a>
+          <a href="/carrieres/" class="error-quick-link">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
+              <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15a24.98 24.98 0 01-8-1.308z"/>
+            </svg>
+            Carrières
+          </a>
+          <a href="/contact/" class="error-quick-link">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+            </svg>
+            Contact
+          </a>
+        </nav>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- main.js injecte header + footer depuis templates/ -->
+  <script src="assets/js/main.js" data-base="."></script>
+
+  <script>
+    /* Redirige la recherche vers le centre d'aide avec le paramètre ?q= */
+    function onSearch(e) {
+      e.preventDefault();
+      var q = document.getElementById('site-search').value.trim();
+      if (q) window.location.href = '/aide/?q=' + encodeURIComponent(q);
+    }
+  </script>
+</body>
+</html>

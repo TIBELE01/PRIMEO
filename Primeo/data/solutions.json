@@ -1,0 +1,72 @@
+{
+  "intro": {
+    "headline": "Une offre adaptée à chaque usage",
+    "subtext": "Que vous soyez voyageur, professionnel de l'hébergement, restaurateur ou agent immobilier, Primeo s'adapte à vos besoins."
+  },
+  "blocs": [
+    {
+      "icon": "✈️",
+      "title": "Pour les Voyageurs",
+      "subtitle": "Trouvez et réservez votre hébergement idéal",
+      "description": "Explorez des centaines d'hébergements vérifiés à Abidjan et partout en Côte d'Ivoire. Comparez les prix, lisez les avis authentiques, payez à votre convenance et vivez des séjours mémorables.",
+      "features": [
+        { "icon": "🔍", "text": "Recherche avancée par quartier, prix et type" },
+        { "icon": "🏅", "text": "Hébergements vérifiés et notés" },
+        { "icon": "💳", "text": "Paiement intégral, acompte ou sur place" },
+        { "icon": "🔭", "text": "Visites virtuelles 360° avant réservation" },
+        { "icon": "📱", "text": "Application mobile intuitive" },
+        { "icon": "🛡️", "text": "Garantie remboursement en cas de litige" }
+      ],
+      "ctaLabel": "Explorer les hébergements",
+      "ctaUrl": "/mobile"
+    },
+    {
+      "icon": "🏨",
+      "title": "Hôteliers & Propriétaires",
+      "subtitle": "Maximisez votre taux d'occupation",
+      "description": "Publiez vos annonces en quelques minutes, gérez vos réservations en temps réel et augmentez votre visibilité grâce aux boosts d'annonces. Primeo vous donne tous les outils pour développer votre activité.",
+      "features": [
+        { "icon": "📋", "text": "Tableau de bord de gestion complet" },
+        { "icon": "📅", "text": "Calendrier de disponibilités en temps réel" },
+        { "icon": "🚀", "text": "Boosts pour propulser vos annonces" },
+        { "icon": "📊", "text": "Statistiques de performance détaillées" },
+        { "icon": "💬", "text": "Messagerie intégrée avec les clients" },
+        { "icon": "🔭", "text": "Outil de création de visite 3D" }
+      ],
+      "ctaLabel": "Devenir partenaire",
+      "ctaUrl": "/mobile"
+    },
+    {
+      "icon": "🍽️",
+      "title": "Restaurateurs",
+      "subtitle": "Développez votre restaurant en ligne",
+      "description": "Acceptez des réservations de tables en ligne, gérez votre carte, publiez des offres spéciales et touchez une nouvelle clientèle. Primeo connecte votre restaurant aux gourmands d'Abidjan et d'ailleurs.",
+      "features": [
+        { "icon": "📅", "text": "Réservations de tables en ligne 24h/24" },
+        { "icon": "🍴", "text": "Gestion de la carte et des menus" },
+        { "icon": "🎉", "text": "Promotions et offres spéciales ciblées" },
+        { "icon": "⭐", "text": "Collecte d'avis clients vérifiés" },
+        { "icon": "📍", "text": "Référencement local optimisé" },
+        { "icon": "📊", "text": "Analyse des couverts et du chiffre d'affaires" }
+      ],
+      "ctaLabel": "Référencer mon restaurant",
+      "ctaUrl": "/mobile"
+    },
+    {
+      "icon": "🏗️",
+      "title": "Professionnels de l'Immobilier",
+      "subtitle": "Publiez et gérez vos offres immobilières",
+      "description": "Que vous soyez agent, promoteur ou particulier, Primeo vous permet de publier vos annonces de vente et de location avec photos HD, visites virtuelles et outils de suivi de prospects.",
+      "features": [
+        { "icon": "🏠", "text": "Annonces vente et location illimitées" },
+        { "icon": "📷", "text": "Photos HD et visites virtuelles 3D" },
+        { "icon": "👥", "text": "Suivi des prospects et des demandes" },
+        { "icon": "📝", "text": "Signature électronique des contrats" },
+        { "icon": "📣", "text": "Campagnes de boost ciblées" },
+        { "icon": "🌍", "text": "Visibilité nationale et internationale" }
+      ],
+      "ctaLabel": "Publier une annonce",
+      "ctaUrl": "/mobile"
+    }
+  ]
+}

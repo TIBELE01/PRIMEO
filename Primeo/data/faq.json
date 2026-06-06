@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "category": "Général",
+    "order": 1,
+    "question": "Qu'est-ce que Primeo ?",
+    "answer": "<p>Primeo est une plateforme de réservation d'hébergement et de mise en relation dédiée aux voyageurs et aux professionnels (hôteliers, restaurateurs, agents immobiliers) en Côte d'Ivoire. Elle vous permet de trouver, réserver et gérer un logement, une table de restaurant ou un bien immobilier, et de payer en toute sécurité par Mobile Money ou carte bancaire.</p>"
+  },
+  {
+    "id": 2,
+    "category": "Général",
+    "order": 2,
+    "question": "Comment créer un compte Primeo ?",
+    "answer": "<p>Rendez-vous sur <a href=\"https://app.primeo.ci/signup\">app.primeo.ci/signup</a> et renseignez votre adresse e-mail, votre numéro de téléphone et créez un mot de passe sécurisé. La vérification se fait par SMS ou e-mail.</p>"
+  },
+  {
+    "id": 3,
+    "category": "Général",
+    "order": 3,
+    "question": "Primeo est-il disponible partout en Côte d'Ivoire ?",
+    "answer": "<p>Oui, Primeo est accessible sur l'ensemble du territoire ivoirien. L'offre d'hébergements, de restaurants et de biens immobiliers s'enrichit progressivement, en commençant par Abidjan et les grandes agglomérations.</p>"
+  },
+  {
+    "id": 4,
+    "category": "Abonnements & Paiements",
+    "order": 1,
+    "question": "Quels sont les modes de paiement acceptés ?",
+    "answer": "<p>Nous acceptons :</p><ul><li>Mobile Money (Orange Money, MTN MoMo, Wave)</li><li>Carte bancaire (Visa, Mastercard)</li><li>Virement bancaire (pour les abonnements annuels entreprise)</li></ul>"
+  },
+  {
+    "id": 5,
+    "category": "Abonnements & Paiements",
+    "order": 2,
+    "question": "Puis-je annuler mon abonnement à tout moment ?",
+    "answer": "<p>Oui, vous pouvez résilier votre abonnement à tout moment depuis votre espace client (Paramètres → Abonnement → Résilier). La résiliation prend effet à la fin de la période en cours. Aucun remboursement pro rata n'est effectué sauf conditions spéciales.</p>"
+  },
+  {
+    "id": 6,
+    "category": "Abonnements & Paiements",
+    "order": 3,
+    "question": "Comment fonctionne la facturation ?",
+    "answer": "<p>La facturation est mensuelle (ou annuelle si vous avez choisi ce cycle). Vous recevez une facture par e-mail à chaque renouvellement. Vous pouvez consulter et télécharger toutes vos factures dans Paramètres → Facturation.</p>"
+  },
+  {
+    "id": 7,
+    "category": "Compte & Sécurité",
+    "order": 1,
+    "question": "J'ai oublié mon mot de passe, que faire ?",
+    "answer": "<p>Sur la page de connexion, cliquez sur \"Mot de passe oublié ?\", renseignez votre adresse e-mail. Vous recevrez un lien de réinitialisation valable 30 minutes. Si vous ne recevez pas l'e-mail, vérifiez vos spams ou contactez le support.</p>"
+  },
+  {
+    "id": 8,
+    "category": "Compte & Sécurité",
+    "order": 2,
+    "question": "Comment activer la double authentification ?",
+    "answer": "<p>Dans votre espace client, accédez à Paramètres → Sécurité → Authentification à deux facteurs. Choisissez entre SMS ou application d'authentification (Google Authenticator, Authy). Suivez les étapes de configuration et conservez vos codes de secours.</p>"
+  },
+  {
+    "id": 9,
+    "category": "Application Mobile",
+    "order": 1,
+    "question": "Sur quels appareils est disponible l'application Primeo ?",
+    "answer": "<p>L'application Primeo est disponible sur :</p><ul><li><strong>iOS</strong> : iPhone sous iOS 14 ou supérieur (App Store)</li><li><strong>Android</strong> : appareils sous Android 8.0 ou supérieur (Google Play Store)</li></ul>"
+  },
+  {
+    "id": 10,
+    "category": "Application Mobile",
+    "order": 2,
+    "question": "L'application fonctionne-t-elle sans connexion Internet ?",
+    "answer": "<p>Certaines données sont mises en cache localement et accessibles hors ligne (historique récent, vos réservations). Cependant, les mises à jour en temps réel et les paiements nécessitent une connexion Internet.</p>"
+  },
+  {
+    "id": 11,
+    "category": "Professionnels",
+    "order": 1,
+    "question": "Quels avantages pour les comptes professionnels ?",
+    "answer": "<p>Les comptes professionnels bénéficient de :</p><ul><li>Gestion multi-établissements centralisée</li><li>Rapports automatiques mensuels (revenus, taux d'occupation)</li><li>Alertes de nouvelles réservations personnalisables</li><li>Accès à l'API pour intégration à vos outils internes</li><li>Support dédié avec un chargé de compte</li></ul>"
+  },
+  {
+    "id": 12,
+    "category": "Professionnels",
+    "order": 2,
+    "question": "Comment migrer mon compte particulier en compte professionnel ?",
+    "answer": "<p>Dans votre espace client, allez dans Paramètres → Type de compte → Passer en compte professionnel. Renseignez vos informations RCCM et fiscales. La validation est effectuée sous 48h ouvrées par notre équipe KYC.</p>"
+  }
+]

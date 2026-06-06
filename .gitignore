@@ -1,0 +1,80 @@
+# ─── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+# pnpm monorepo — npm lock files are not used
+package-lock.json
+
+# ─── Build outputs ─────────────────────────────────────────────────────────────
+dist/
+build/
+.next/
+out/
+
+# ─── Environment files (real secrets — ne pas committer) ───────────────────────
+.env
+backend/.env
+admin/.env.local
+mobile/.env
+# Les fichiers templates sont committés intentionnellement :
+# .env.example, .env.test, .env.staging, .env.production
+
+# ─── Expo / React Native ───────────────────────────────────────────────────────
+.expo/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# ─── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Cache ─────────────────────────────────────────────────────────────────────
+.cache/
+.turbo/
+.eslintcache
+.prettiercache
+*.tsbuildinfo
+
+# ─── Test coverage ─────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+
+# ─── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ─── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*.vim
+
+# ─── Docker volumes locaux ─────────────────────────────────────────────────────
+postgres_data/
+
+# ─── Prisma ────────────────────────────────────────────────────────────────────
+# Les fichiers de migration sont committés intentionnellement
+# backend/prisma/migrations/
+
+# ─── Uploads locaux ────────────────────────────────────────────────────────────
+uploads/
+tmp/

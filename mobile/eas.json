@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 13.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://primeo-api.onrender.com"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://primeo-api.onrender.com"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://primeo-api.onrender.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

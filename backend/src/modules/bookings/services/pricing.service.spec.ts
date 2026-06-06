@@ -1,0 +1,253 @@
+// Unit tests for pricingService.compute
+import { pricingService } from './pricing.service';
+import { HttpError } from '../../../common/handlers/http-error.handler';
+
+// ── Mocks ──────────────────────────────────────────────────────────────────────
+
+jest.mock('../../../common/utils/logger', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+}));
+
+jest.mock('../../../database/prisma.service', () => ({
+  prisma: {
+    property:  { findUnique: jest.fn() },
+    promoCode: { findUnique: jest.fn() },
+  },
+}));
+
+import { prisma } from '../../../database/prisma.service';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = prisma as unknown as Record<string, Record<string, jest.Mock>>;
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+const now = new Date();
+const start = new Date(now.getTime() + 24 * 3600_000);
+const end   = new Date(start.getTime() + 3 * 24 * 3600_000); // 3 nights
+
+function makeProperty(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'prop-1',
+    status: 'active',
+    propertyType: 'hebergement',
+    pricePerNight: 75_000,
+    pricePerMonth: null,
+    priceSale: null,
+    paymentOptions: [],
+    capacity: 4,
+    owner: { subscription: { planType: 'starter', commissionRate: null } },
+    ...overrides,
+  };
+}
+
+const baseParams = {
+  propertyId: 'prop-1',
+  startDate: start,
+  endDate: end,
+  paymentOption: 'full_online' as const,
+};
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('pricingService.compute', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    db.property!.findUnique.mockResolvedValue(makeProperty());
+    db.promoCode!.findUnique.mockResolvedValue(null);
+  });
+
+  // ── Error cases ─────────────────────────────────────────────────────────────
+
+  it('throws 404 when property not found', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(null);
+    await expect(pricingService.compute(baseParams)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it('throws 400 when property is not active', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(makeProperty({ status: 'inactive' }));
+    await expect(pricingService.compute(baseParams)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when payment option is not allowed', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(
+      makeProperty({ paymentOptions: ['zero_online'] }),
+    );
+    await expect(pricingService.compute({ ...baseParams, paymentOption: 'full_online' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when endDate <= startDate (0 nights)', async () => {
+    await expect(pricingService.compute({ ...baseParams, endDate: start }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when property has no price defined', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(
+      makeProperty({ pricePerNight: null, pricePerMonth: null, priceSale: null }),
+    );
+    await expect(pricingService.compute(baseParams)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  // ── Happy path ───────────────────────────────────────────────────────────────
+
+  it('computes 3-night stay at 75000/night correctly', async () => {
+    const result = await pricingService.compute(baseParams);
+    expect(result.nights).toBe(3);
+    expect(result.pricePerUnit).toBe(75_000);
+    expect(result.basePrice).toBe(225_000);
+    expect(result.promoDiscount).toBe(0);
+    expect(result.walletDeduction).toBe(0);
+    expect(result.totalAmount).toBe(225_000);
+  });
+
+  it('full_online — onlinePaidAmount equals total', async () => {
+    const result = await pricingService.compute({ ...baseParams, paymentOption: 'full_online' });
+    expect(result.onlinePaidAmount).toBe(result.totalAmount);
+    expect(result.remainingCashAmount).toBe(0);
+  });
+
+  it('ten_percent_online — online is 10% of total (rounded up)', async () => {
+    const result = await pricingService.compute({ ...baseParams, paymentOption: 'ten_percent_online' });
+    expect(result.onlinePaidAmount).toBe(Math.ceil(225_000 * 0.1));
+    expect(result.remainingCashAmount).toBe(225_000 - result.onlinePaidAmount);
+  });
+
+  it('zero_online — onlinePaidAmount is 0', async () => {
+    const result = await pricingService.compute({ ...baseParams, paymentOption: 'zero_online' });
+    expect(result.onlinePaidAmount).toBe(0);
+    expect(result.remainingCashAmount).toBe(225_000);
+  });
+
+  // ── Commission ───────────────────────────────────────────────────────────────
+
+  it('commission 0% pour le plan Starter', async () => {
+    const result = await pricingService.compute(baseParams);
+    expect(result.commissionAmount).toBe(0);
+  });
+
+  it('commission 0% pour le plan Business', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(
+      makeProperty({ owner: { subscription: { planType: 'business', commissionRate: null } } }),
+    );
+    const result = await pricingService.compute(baseParams);
+    expect(result.commissionAmount).toBe(0);
+  });
+
+  it('commission 0% pour le plan Entreprise', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(
+      makeProperty({ owner: { subscription: { planType: 'entreprise', commissionRate: null } } }),
+    );
+    const result = await pricingService.compute(baseParams);
+    expect(result.commissionAmount).toBe(0);
+  });
+
+  it('commission 0% par défaut sans abonnement', async () => {
+    db.property!.findUnique.mockResolvedValueOnce(makeProperty({ owner: null }));
+    const result = await pricingService.compute(baseParams);
+    expect(result.commissionAmount).toBe(0);
+  });
+
+  // ── Wallet deduction ─────────────────────────────────────────────────────────
+
+  it('deducts wallet credit from total', async () => {
+    const result = await pricingService.compute({ ...baseParams, walletCredit: 10_000 });
+    expect(result.walletDeduction).toBe(10_000);
+    expect(result.totalAmount).toBe(215_000);
+  });
+
+  it('caps wallet deduction at the remaining amount', async () => {
+    const result = await pricingService.compute({ ...baseParams, walletCredit: 999_999 });
+    expect(result.walletDeduction).toBe(225_000); // capped at basePrice
+    expect(result.totalAmount).toBe(0);
+  });
+
+  // ── Promo codes ──────────────────────────────────────────────────────────────
+
+  it('throws 400 for invalid promo code', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({ isActive: false });
+    await expect(pricingService.compute({ ...baseParams, promoCode: 'BAD' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 for expired promo code', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({
+      isActive: true,
+      validFrom: new Date(Date.now() - 10 * 3600_000),
+      validUntil: new Date(Date.now() - 1 * 3600_000), // expired 1h ago
+      maxUses: null,
+      usesCount: 0,
+      minAmount: null,
+      discountType: 'percent',
+      discountValue: 10,
+      id: 'promo-1',
+    });
+    await expect(pricingService.compute({ ...baseParams, promoCode: 'EXP' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('applies percent discount correctly', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({
+      isActive: true,
+      validFrom: new Date(Date.now() - 3600_000),
+      validUntil: new Date(Date.now() + 3600_000),
+      maxUses: null,
+      usesCount: 0,
+      minAmount: null,
+      discountType: 'percent',
+      discountValue: 10,
+      id: 'promo-1',
+    });
+    const result = await pricingService.compute({ ...baseParams, promoCode: 'TEN' });
+    expect(result.promoDiscount).toBe(Math.floor(225_000 * 0.1));
+    expect(result.totalAmount).toBe(225_000 - result.promoDiscount);
+  });
+
+  it('applies fixed discount correctly', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({
+      isActive: true,
+      validFrom: new Date(Date.now() - 3600_000),
+      validUntil: new Date(Date.now() + 3600_000),
+      maxUses: null,
+      usesCount: 0,
+      minAmount: null,
+      discountType: 'fixed',
+      discountValue: 20_000,
+      id: 'promo-2',
+    });
+    const result = await pricingService.compute({ ...baseParams, promoCode: 'FLAT' });
+    expect(result.promoDiscount).toBe(20_000);
+    expect(result.totalAmount).toBe(205_000);
+  });
+
+  it('throws 400 when minimum amount not met', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({
+      isActive: true,
+      validFrom: new Date(Date.now() - 3600_000),
+      validUntil: new Date(Date.now() + 3600_000),
+      maxUses: null,
+      usesCount: 0,
+      minAmount: 500_000, // more than our 225000 base
+      discountType: 'percent',
+      discountValue: 10,
+      id: 'promo-3',
+    });
+    await expect(pricingService.compute({ ...baseParams, promoCode: 'MIN' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when promo usage limit reached', async () => {
+    db.promoCode!.findUnique.mockResolvedValueOnce({
+      isActive: true,
+      validFrom: new Date(Date.now() - 3600_000),
+      validUntil: new Date(Date.now() + 3600_000),
+      maxUses: 5,
+      usesCount: 5, // exhausted
+      minAmount: null,
+      discountType: 'percent',
+      discountValue: 10,
+      id: 'promo-4',
+    });
+    await expect(pricingService.compute({ ...baseParams, promoCode: 'MAX' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+});

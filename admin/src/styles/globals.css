@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #1056e0;     /* Primeo blue */
+    --color-secondary: #d67309;   /* amber */
+    --color-cta: #5bbd15;         /* action green */
+    --color-danger: #d41313;
+    --color-bg: #f6f8fc;
+    --color-surface: #ffffff;
+    --color-border: #e6eaf2;
+    --sidebar-width: 240px;
+  }
+
+  * { box-sizing: border-box; }
+  body { @apply bg-gray-50 text-gray-900 font-sans antialiased; }
+  h1 { @apply text-2xl font-bold tracking-tight text-gray-900; }
+  h2 { @apply text-xl font-semibold tracking-tight text-gray-800; }
+  h3 { @apply text-lg font-semibold text-gray-700; }
+}
+
+@layer components {
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-xl font-semibold shadow-primary
+           hover:bg-primary-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ease-premium
+           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-600/25
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+  .btn-cta {
+    @apply inline-flex items-center justify-center gap-2 bg-cta-500 text-white px-4 py-2 rounded-xl font-semibold shadow-cta
+           hover:bg-cta-600 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ease-premium
+           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cta-500/25
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 border border-gray-300 bg-white text-gray-700 px-4 py-2 rounded-xl font-semibold shadow-sm
+           hover:bg-gray-50 hover:border-gray-400 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ease-premium;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 bg-danger-600 text-white px-4 py-2 rounded-xl font-semibold
+           hover:bg-danger-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ease-premium;
+  }
+
+  /* ── Surfaces ────────────────────────────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-gray-100 p-6 transition-all duration-300 ease-premium;
+  }
+  .card-interactive {
+    @apply hover:shadow-card-hover hover:-translate-y-1 hover:border-gray-200 cursor-pointer;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────────────────── */
+  .input {
+    @apply block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm
+           transition-all duration-200 ease-premium placeholder:text-gray-400
+           hover:border-gray-400
+           focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-600/15;
+  }
+
+  /* ── Badges ──────────────────────────────────────────────────────────── */
+  .badge-success { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cta-100 text-cta-800; }
+  .badge-warning { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary-100 text-secondary-800; }
+  .badge-danger  { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-danger-100 text-danger-700; }
+  .badge-info    { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-100 text-primary-700; }
+  .badge-gray    { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700; }
+
+  /* ── Skeleton loader ─────────────────────────────────────────────────── */
+  .skeleton {
+    @apply relative overflow-hidden bg-gray-100 rounded-xl;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    content: '';
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+  }
+}

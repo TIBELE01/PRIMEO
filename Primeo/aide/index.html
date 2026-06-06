@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Centre d'aide Primeo – réponses à vos questions sur les abonnements, paiements, compte, application mobile et services professionnels.">
+  <meta name="robots" content="index, follow">
+  <meta name="api-url" content="https://primeo-api.onrender.com">
+  <title>Centre d'aide — Primeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/aide.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Primeo">
+  <meta property="og:url" content="https://primeo.ci/aide/">
+  <meta property="og:title" content="Centre d'aide — Primeo">
+  <meta property="og:description" content="Centre d'aide Primeo – réponses à vos questions sur les abonnements, paiements, compte, application mobile et services professionnels.">
+  <meta property="og:image" content="https://primeo.ci/assets/img/og-home.jpg">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Centre d'aide — Primeo">
+  <meta name="twitter:description" content="Centre d'aide Primeo – réponses à vos questions sur les abonnements, paiements, compte, application mobile et services professionnels.">
+  <meta name="twitter:image" content="https://primeo.ci/assets/img/og-home.jpg">
+  <link rel="canonical" href="https://primeo.ci/aide/">
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","url":"https://primeo.ci/aide/","name":"Centre d'aide Primeo","mainEntity":[{"@type":"Question","name":"Qu'est-ce que Primeo ?","acceptedAnswer":{"@type":"Answer","text":"Primeo est une plateforme de réservation d'hébergement et de mise en relation dédiée aux voyageurs et aux professionnels en Côte d'Ivoire."}},{"@type":"Question","name":"Quels sont les modes de paiement acceptés ?","acceptedAnswer":{"@type":"Answer","text":"Primeo accepte Orange Money, MTN MoMo, Wave et les cartes bancaires Visa/Mastercard."}},{"@type":"Question","name":"Comment créer un compte Primeo ?","acceptedAnswer":{"@type":"Answer","text":"Rendez-vous sur l'application Primeo, renseignez votre e-mail et votre numéro de téléphone, puis créez un mot de passe sécurisé."}},{"@type":"Question","name":"Puis-je annuler mon abonnement à tout moment ?","acceptedAnswer":{"@type":"Answer","text":"Oui, vous pouvez résilier votre abonnement à tout moment depuis votre espace client. La résiliation prend effet à la fin de la période en cours."}}]}
+  </script>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="aide-hero">
+      <div class="container">
+        <h1>Centre d'aide</h1>
+        <p>Comment pouvons-nous vous aider ?</p>
+
+        <!-- Search -->
+        <div class="aide-search-wrap" role="search">
+          <label for="faq-search" class="sr-only">Rechercher une question</label>
+          <svg class="aide-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="search"
+            id="faq-search"
+            class="aide-search-input"
+            placeholder="Rechercher une question..."
+            autocomplete="off"
+            aria-label="Rechercher une question dans le centre d'aide"
+          >
+          <button class="aide-search-clear" id="search-clear" aria-label="Effacer la recherche" hidden>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+
+        <!-- Results count -->
+        <p class="aide-results-count" id="results-count" aria-live="polite" aria-atomic="true" hidden></p>
+      </div>
+    </section>
+
+    <!-- Category quick-nav -->
+    <section class="aide-nav-section" id="aide-cat-nav" hidden>
+      <div class="container">
+        <div class="aide-cat-nav" id="cat-nav-links" role="navigation" aria-label="Catégories FAQ"></div>
+      </div>
+    </section>
+
+    <!-- FAQ content -->
+    <section class="section aide-content-section">
+      <div class="container">
+
+        <!-- Skeleton -->
+        <div id="faq-skeleton" class="faq-skeleton-wrap">
+          <div class="faq-skeleton-cat"></div>
+          <div class="faq-skeleton-item"></div>
+          <div class="faq-skeleton-item"></div>
+          <div class="faq-skeleton-cat" style="margin-top:2rem"></div>
+          <div class="faq-skeleton-item"></div>
+          <div class="faq-skeleton-item"></div>
+        </div>
+
+        <!-- FAQ groups (populated by JS) -->
+        <div id="faq-content" hidden></div>
+
+        <!-- Empty state -->
+        <div id="faq-empty" class="faq-empty" hidden>
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" opacity=".2"/><path d="M24 14v8M24 28v2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <p>Aucun résultat pour "<strong id="empty-query"></strong>"</p>
+          <a href="/contact/" class="btn btn-outline">Contactez le support</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="aide-cta-section">
+      <div class="container">
+        <div class="aide-cta-box">
+          <div class="aide-cta-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="rgba(255,255,255,.1)"/><path d="M14 16c0-3.314 2.686-6 6-6s6 2.686 6 6c0 2.5-1.5 4.5-3.5 5.5-.833.417-1.5 1.167-1.5 2.5" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="21" cy="30" r="1.5" fill="white"/></svg>
+          </div>
+          <div class="aide-cta-text">
+            <h2>Vous n'avez pas trouvé votre réponse ?</h2>
+            <p>Consultez notre documentation détaillée ou contactez notre équipe support disponible du lundi au vendredi, de 8h à 18h (heure d'Abidjan).</p>
+          </div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <a href="/documentation/" class="btn btn-outline aide-cta-btn">Voir la documentation →</a>
+            <a href="/contact/" class="btn btn-primary aide-cta-btn">Contacter le support →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../assets/js/main.js" data-base=".."></script>
+  <script src="../assets/js/aide.js"></script>
+</body>
+</html>
