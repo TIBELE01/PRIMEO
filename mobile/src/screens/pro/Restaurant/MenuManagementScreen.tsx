@@ -128,7 +128,10 @@ export default function MenuManagementScreen() {
   };
 
   const handleSave = async () => {
-    if (!propertyId) return;
+    if (!propertyId) {
+      Alert.alert('Erreur', 'Aucun établissement trouvé. Veuillez d\'abord créer votre établissement.');
+      return;
+    }
     if (!formName.trim()) { Alert.alert('Erreur', 'Le nom est requis.'); return; }
     const price = parseFloat(formPrice);
     if (isNaN(price) || price < 0) { Alert.alert('Erreur', 'Prix invalide.'); return; }
