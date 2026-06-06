@@ -247,6 +247,7 @@ model User {
   accountType AccountType @default(client)
   extraRoles  Json? // rôles complémentaires (admin sub-roles)
   status      UserStatus  @default(pending)
+  deactivatedUntil  DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
 
   // Portefeuille et parrainage
   walletBalance Int    @default(0) // FCFA — crédits clients
