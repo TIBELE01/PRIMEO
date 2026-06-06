@@ -27,10 +27,10 @@ export function CharacteristicsSection({ property }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 16, paddingBottom: 12 },
-  row: { flexDirection: 'row', gap: 10 },
-  item: { flex: 1, alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 4, gap: 4 },
-  icon: { fontSize: 22 },
-  value: { fontSize: 17, fontWeight: '800', color: '#111827' },
-  label: { fontSize: 11, color: '#6B7280', textAlign: 'center' },
+  wrap: { paddingHorizontal: 16, paddingBottom: 8 },
+  row: { flexDirection: 'row', gap: 8 },
+  item: { flex: 1, alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 4, gap: 3 },
+  icon: { fontSize: 20 },
+  value: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  label: { fontSize: 10.5, color: '#6B7280', textAlign: 'center' },
 });
