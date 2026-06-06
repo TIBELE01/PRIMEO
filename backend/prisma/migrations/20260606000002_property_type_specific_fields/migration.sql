@@ -6,3 +6,6 @@ ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "diagnostics"        JSONB;
 
 -- Types de chambres hôtel
 ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "roomTypes"          JSONB;
+
+-- Date de disponibilité estimée (immobilier) — requise par le client Prisma
+ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "availableFrom"      TIMESTAMP(3);

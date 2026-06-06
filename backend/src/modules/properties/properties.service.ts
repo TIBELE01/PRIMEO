@@ -276,6 +276,42 @@ export const propertiesService = {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   },
 
+  // Garantit qu'un restaurateur possède toujours un établissement.
+  // Un compte restaurant = un restaurant : si aucun n'existe, on en
+  // provisionne un brouillon automatiquement à partir du profil pro.
+  // Renvoie l'établissement existant ou nouvellement créé.
+  async ensureRestaurant(ownerId: string) {
+    const existing = await prisma.property.findFirst({
+      where: { ownerId, propertyType: 'restaurant' },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (existing) return existing;
+
+    // Récupère le nom commercial pour titrer l'établissement
+    const [profile, user] = await Promise.all([
+      prisma.professionalProfile.findUnique({ where: { userId: ownerId }, select: { businessName: true } }),
+      prisma.user.findUnique({ where: { id: ownerId }, select: { firstName: true, lastName: true } }),
+    ]);
+    const title =
+      profile?.businessName?.trim() ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() ||
+      'Mon restaurant';
+
+    // Crée un établissement brouillon que le restaurateur pourra compléter
+    return prisma.property.create({
+      data: {
+        ownerId,
+        title,
+        propertyType: 'restaurant',
+        description: 'Complétez la description de votre établissement.',
+        city: 'Abidjan',
+        capacity: 20,
+        paymentOptions: ['zero_online'],
+        status: 'draft',
+      },
+    });
+  },
+
   // ── Media management ────────────────────────────────────────────────────────
 
   async addMedia(propertyId: string, userId: string, input: AddMediaInput) {

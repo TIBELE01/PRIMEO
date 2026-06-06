@@ -59,6 +59,12 @@ export async function publishProperty(req: Request, res: Response, next: NextFun
 
 export async function getMyProperties(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // Un restaurateur possède toujours un établissement : on le provisionne
+    // automatiquement s'il n'existe pas encore, pour atterrir directement
+    // sur le tableau de bord sans étape de création manuelle.
+    if (req.user!.role === 'restaurateur') {
+      await propertiesService.ensureRestaurant(req.user!.sub).catch(() => undefined);
+    }
     const properties = await propertiesService.getByOwner(req.user!.sub, req.query as never);
     res.json(properties);
   } catch (err) {
