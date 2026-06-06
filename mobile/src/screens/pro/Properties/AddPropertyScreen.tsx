@@ -10,8 +10,26 @@ import { subscriptionsApi } from '../../../services/api/endpoints/subscriptions'
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
 import { uploadPropertyMedia } from '../../../services/mediaUpload';
 import { useProTheme } from '../../../hooks/useProTheme';
+import { useAuthStore } from '../../../store/authStore';
 
-// ── Parcours d'étapes par type de bien ───────────────────────────────────────
+// Déduit le type de bien unique imposé par le rôle du professionnel.
+// Renvoie undefined pour les cas multi-types (immobilier) ou inconnus.
+function getLockedTypeForRole(role?: string): string | undefined {
+  if (role === 'restaurateur')           return 'restaurant';
+  if (role === 'professional_hotel')     return 'hotel';
+  if (role === 'professional_hebergement') return 'residence';
+  return undefined; // professional_immobilier : plusieurs types possibles
+}
+
+// Filtre les types de biens affichables selon le rôle
+function getAllowedTypes(role?: string): readonly string[] {
+  if (role === 'restaurateur')             return ['restaurant'];
+  if (role === 'professional_hotel')       return ['hotel'];
+  if (role === 'professional_hebergement') return ['residence'];
+  if (role === 'professional_immobilier')  return ['immobilier_location', 'immobilier_terrain', 'immobilier_achat'];
+  return PROPERTY_TYPES;
+}
+
 
 const STEPS_RESIDENCE  = ['Informations', 'Caractéristiques', 'Équipements', 'Médias', 'Tarification', 'Disponibilités', 'Règles'] as const;
 const STEPS_HOTEL      = ['Informations', 'Caractéristiques', 'Types de chambre', 'Équipements', 'Médias', 'Disponibilités', 'Règles'] as const;
@@ -124,46 +142,59 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
 
 // ── Étape 1 — Informations (universel) ───────────────────────────────────────
 
-function StepInformations({ data, onChange, errors }: any) {
+function StepInformations({ data, onChange, errors, allowedTypes }: any) {
+  const allowed: readonly string[] = allowedTypes ?? PROPERTY_TYPES;
+  const typeLocked = allowed.length === 1;
+
   return (
     <View>
       <TextField
         label="Nom de l'annonce" required
         value={data.name}
         onChange={(v: string) => onChange('name', v)}
-        placeholder="Ex: Belle villa avec piscine à Cocody"
+        placeholder={isRestaurant(data.type) ? 'Ex: Restaurant La Savane' : 'Ex: Belle villa avec piscine à Cocody'}
         error={errors.name}
       />
-      <View style={styles.field}>
-        <FieldLabel label="Type de bien" required />
-        <View style={styles.chipRow}>
-          {PROPERTY_TYPES.map(t => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.chip, data.type === t && styles.chipActive]}
-              onPress={() => onChange('type', t)}
-            >
-              <Text style={[styles.chipText, data.type === t && styles.chipTextActive]}>
-                {PROPERTY_TYPE_LABELS[t]}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+      {/* Sélecteur de type — masqué si le type est verrouillé par le rôle */}
+      {!typeLocked && (
+        <View style={styles.field}>
+          <FieldLabel label="Type de bien" required />
+          <View style={styles.chipRow}>
+            {allowed.map((t: string) => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.chip, data.type === t && styles.chipActive]}
+                onPress={() => onChange('type', t)}
+              >
+                <Text style={[styles.chipText, data.type === t && styles.chipTextActive]}>
+                  {PROPERTY_TYPE_LABELS[t]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.type && <Text style={styles.fieldError}>{errors.type}</Text>}
         </View>
-        {errors.type && <Text style={styles.fieldError}>{errors.type}</Text>}
-      </View>
+      )}
+
       <TextField
         label="Description" required multiline
         value={data.description}
         onChange={(v: string) => onChange('description', v)}
-        placeholder="Décrivez votre bien en détail (min. 10 caractères)…"
+        placeholder={
+          isRestaurant(data.type)
+            ? 'Décrivez votre restaurant, son ambiance, ses spécialités…'
+            : 'Décrivez votre bien en détail (min. 10 caractères)…'
+        }
         error={errors.description}
       />
       {isRestaurant(data.type) && (
         <TextField
-          label="Type de cuisine"
+          label="Type de cuisine" required
           value={data.cuisineType}
           onChange={(v: string) => onChange('cuisineType', v)}
           placeholder="Ex: Africaine, Ivoirienne, Française, Seafood…"
+          error={errors.cuisineType}
         />
       )}
       <TextField
@@ -242,6 +273,9 @@ function StepCaracteristiques({ data, onChange }: any) {
       </View>
     );
   }
+
+  // Restaurant : pas de champ Caractéristiques (géré dans Configuration)
+  if (type === 'restaurant') return null;
 
   // Résidence (default)
   return (
@@ -1050,15 +1084,19 @@ function validateStep(stepName: string, data: Record<string, any>): Record<strin
 
 export default function AddPropertyScreen({ navigation, route }: any) {
   const theme  = useProTheme();
+  const role   = useAuthStore((s) => s.user?.role);
   const editId: string | undefined = route?.params?.propertyId;
   const isEdit = !!editId;
-  // Type pré-sélectionné depuis les paramètres de navigation (ex. compte restaurant)
-  const initialType: string | undefined = route?.params?.initialType;
+
+  // Type déduit depuis le rôle ou depuis les paramètres de navigation
+  const allowedTypes = useMemo(() => getAllowedTypes(role), [role]);
+  const lockedType   = getLockedTypeForRole(role);
+  const initialType: string | undefined = route?.params?.initialType ?? lockedType;
 
   const [isLoadingProperty, setIsLoadingProperty] = useState(isEdit);
   const [step, setStep]     = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({
-    capacity:       2,
+    capacity:       lockedType === 'restaurant' ? 20 : 2,
     bedrooms:       1,
     beds:           1,
     bathrooms:      1,
@@ -1071,9 +1109,9 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     images:         [],
     tourImages:     [],
     roomTypes:      [],
-    paymentOptions: ['full_online'],
+    paymentOptions: lockedType === 'restaurant' ? ['zero_online'] : ['full_online'],
     instantBooking: true,
-    // Pré-sélection du type si fourni (restaurant, immobilier_location, etc.)
+    // Type déterminé par le rôle ou les paramètres de navigation
     ...(initialType ? { type: initialType } : {}),
   });
   const [errors, setErrors]         = useState<Record<string, string>>({});
@@ -1330,7 +1368,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
   const renderStep = () => {
     const stepName = currentSteps[step] ?? '';
     switch (stepName) {
-      case 'Informations':      return <StepInformations      data={formData} onChange={onChange} errors={errors} />;
+      case 'Informations':      return <StepInformations      data={formData} onChange={onChange} errors={errors} allowedTypes={allowedTypes} />;
       case 'Caractéristiques':  return <StepCaracteristiques  data={formData} onChange={onChange} />;
       case 'Types de chambre':  return <StepTypesChambres     data={formData} onChange={onChange} errors={errors} />;
       case 'Équipements':       return <StepEquipements       data={formData} onChange={onChange} />;
