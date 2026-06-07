@@ -80,6 +80,16 @@ const SUB_BUSINESS = {
   features: {},
 };
 
+/** Abonnement Entreprise actif minimal */
+const SUB_ENTREPRISE = {
+  id: 'sub-1',
+  planType: 'entreprise',
+  status: 'active',
+  boostsFreeMonthly: 7,
+  boostsFreeUsedThisMonth: 0,
+  features: {},
+};
+
 beforeEach(() => {
   // Réinitialise tous les mocks entre chaque test pour éviter les interférences
   jest.clearAllMocks();
@@ -107,6 +117,7 @@ describe('updatePlanBenefits — upgrade starter → business', () => {
     );
 
     // Aucune annonce ne doit être suspendue lors d'un upgrade
+    expect(mockPrisma.property.findMany).not.toHaveBeenCalled();
     expect(result.suspendedProperties).toHaveLength(0);
     expect(result.previousPlan).toBe('starter');
 
@@ -130,7 +141,7 @@ describe('updatePlanBenefits — upgrade starter → business', () => {
 // ── Scénario 2 : downgrade Business → Starter avec 5 annonces (limite=3) ─────
 
 describe('updatePlanBenefits — downgrade business → starter avec suspension', () => {
-  it('suspend les 2 annonces excédentaires et notifie subscription_downgraded', async () => {
+  it('suspend les 2 annonces excédentaires (p4, p5) et retourne suspendedProperties', async () => {
     mockPrisma.subscription.findUnique.mockResolvedValueOnce(SUB_BUSINESS);
     mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'professional_hebergement' });
 
@@ -154,14 +165,11 @@ describe('updatePlanBenefits — downgrade business → starter avec suspension'
       }),
     );
 
-    // Le résultat doit contenir les 2 annonces suspendues
-    expect(result.suspendedProperties).toHaveLength(2);
-    expect(result.suspendedProperties).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'p4', title: 'D' }),
-        expect.objectContaining({ id: 'p5', title: 'E' }),
-      ]),
-    );
+    // Le résultat doit contenir exactement les 2 annonces suspendues
+    expect(result.suspendedProperties).toEqual([
+      { id: 'p4', title: 'D' },
+      { id: 'p5', title: 'E' },
+    ]);
     expect(result.previousPlan).toBe('business');
 
     // La notification de downgrade doit être envoyée
@@ -182,10 +190,12 @@ describe('updatePlanBenefits — payment_failure', () => {
 
     await updatePlanBenefits('user-1', 'starter', 'payment_failure');
 
-    // Le statut de l'abonnement ne doit PAS être forcé à 'active'
+    // Inspection de l'appel update
     const updateCall = mockPrisma.subscription.update.mock.calls[0][0];
-    // Le contexte payment_failure ne passe pas à 'active' depuis 'active'
-    expect(updateCall.data.status).toBe('active'); // sub.status était 'active', conservé
+
+    // Le statut ne doit PAS être forcé à 'active' — il reste celui du sub original
+    // (sub.status était 'active', la logique payment_failure le conserve tel quel)
+    expect(updateCall.data.status).toBe('active');
 
     // Le champ suspendedFromPlan doit être ajouté aux features
     expect(updateCall.data.features).toMatchObject({ suspendedFromPlan: 'business' });
@@ -194,13 +204,22 @@ describe('updatePlanBenefits — payment_failure', () => {
     expect(notificationsService.notify).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'subscription_suspended' }),
     );
+
+    // Le log d'audit avec le contexte payment_failure doit être créé
+    expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'subscription.payment_failure',
+        }),
+      }),
+    );
   });
 });
 
 // ── Scénario 4 : réactivation — retour à Business après suspension ────────────
 
 describe('updatePlanBenefits — reactivation', () => {
-  it('repasse le statut à active, réactive les annonces et notifie subscription_reactivated', async () => {
+  it('repasse le statut à active, réactive les annonces suspendues et notifie subscription_reactivated', async () => {
     // Abonnement actuellement suspendu sur Starter, précédemment Business
     const subSuspendu = {
       id: 'sub-1',
@@ -222,7 +241,7 @@ describe('updatePlanBenefits — reactivation', () => {
     // Les annonces précédemment suspendues doivent être réactivées
     expect(mockPrisma.property.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ status: 'suspended' }),
+        where: expect.objectContaining({ ownerId: 'user-1', status: 'suspended' }),
         data: expect.objectContaining({ status: 'active' }),
       }),
     );
@@ -250,36 +269,18 @@ describe('updatePlanBenefits — abonnement introuvable', () => {
   });
 });
 
-// ── Scénario 6 : restaurateur Entreprise — aucune suspension (limit=9999) ─────
+// ── Scénario 6 : restaurateur — limites selon type de compte ─────────────────
 
-describe('updatePlanBenefits — restaurateur Entreprise (limit illimitée)', () => {
-  it('ne suspend aucune annonce quand pubLimit=9999, même en downgrade apparent', async () => {
-    // Passage de business à entreprise pour un restaurateur
-    // (entreprise → includedMenusLimit = 9999 pour restaurateur)
-    // On teste en réalité un downgrade business→entreprise qui n'existe pas
-    // dans les prix (entreprise coûte plus), mais on force le contexte 'downgrade'
-    // pour valider que pubLimit=9999 court-circuite la suspension.
-    const subBusiness = {
-      id: 'sub-1',
-      planType: 'business',
-      status: 'active',
-      boostsFreeMonthly: 2,
-      boostsFreeUsedThisMonth: 0,
-      features: {},
-    };
-    mockPrisma.subscription.findUnique.mockResolvedValueOnce(subBusiness);
-    // Type restaurateur → getPublicationLimit('entreprise', 'restaurateur') = 9999
+describe('updatePlanBenefits — restaurateur Entreprise (pubLimit=9999, bypass suspension)', () => {
+  it('ne suspend aucun menu quand pubLimit=9999 (restaurateur Entreprise)', async () => {
+    // Pour un restaurateur, getPublicationLimit('entreprise', 'restaurateur') = 9999
+    // Le code court-circuite le check de suspension quand pubLimit >= 9999
+    mockPrisma.subscription.findUnique.mockResolvedValueOnce(SUB_BUSINESS);
     mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'restaurateur' });
-
-    // 8 menus actifs — en dessous de la limite 9999 même pour un downgrade forcé
-    const huitMenus = Array.from({ length: 8 }, (_, i) => ({
-      id: `m${i + 1}`,
-      title: `Menu ${i + 1}`,
-    }));
 
     await updatePlanBenefits('user-1', 'entreprise', 'downgrade');
 
-    // property.findMany ne doit PAS être appelé car pubLimit = 9999 bypass le check
+    // property.findMany ne doit PAS être appelé car pubLimit = 9999 court-circuite
     expect(mockPrisma.property.findMany).not.toHaveBeenCalled();
 
     // Aucune annonce suspendue
@@ -288,6 +289,80 @@ describe('updatePlanBenefits — restaurateur Entreprise (limit illimitée)', ()
     // La notification de downgrade doit quand même être envoyée
     expect(notificationsService.notify).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'subscription_downgraded' }),
+    );
+  });
+
+  it('ne suspend aucun menu si le nombre actif (8) est inférieur à la limite (10) après downgrade', async () => {
+    // Restaurateur business → downgrade vers une formule avec limit=10 menus
+    // 8 menus actifs — aucune suspension attendue (8 < 10)
+    mockPrisma.subscription.findUnique.mockResolvedValueOnce(SUB_ENTREPRISE);
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'restaurateur' });
+
+    const huitMenus = Array.from({ length: 8 }, (_, i) => ({
+      id: `m${i + 1}`,
+      title: `Menu ${i + 1}`,
+    }));
+    (mockPrisma.property.findMany as jest.Mock).mockResolvedValueOnce(huitMenus);
+
+    const result = await updatePlanBenefits('user-1', 'business', 'downgrade');
+
+    // property.findMany est appelé (pubLimit=10 pour restaurateur business < 9999)
+    expect(mockPrisma.property.findMany).toHaveBeenCalled();
+
+    // Aucune suspension car 8 < 10
+    expect(mockPrisma.property.updateMany).not.toHaveBeenCalled();
+    expect(result.suspendedProperties).toHaveLength(0);
+
+    // La notification de downgrade doit être envoyée
+    expect(notificationsService.notify).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'subscription_downgraded' }),
+    );
+  });
+});
+
+// ── Scénario 7 : log d'audit — vérification fine du contenu et résilience ─────
+
+describe('updatePlanBenefits — audit log', () => {
+  it('écrit un log d\'audit avec description et métadonnées old/new', async () => {
+    mockPrisma.subscription.findUnique.mockResolvedValueOnce(SUB_STARTER);
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'professional_hotel' });
+
+    await updatePlanBenefits('user-1', 'business', 'upgrade');
+
+    // Vérification du contenu détaillé du log d'audit
+    expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        action: 'subscription.upgrade',
+        targetType: 'subscription',
+        targetId: 'sub-1',
+        description: 'Formule starter → business [upgrade]',
+        metadata: expect.objectContaining({
+          old: { plan: 'starter' },
+          new: expect.objectContaining({ plan: 'business' }),
+        }),
+      }),
+    });
+  });
+
+  it('ne bloque pas le flux principal si auditLog.create rejette', async () => {
+    // Si l'écriture du log échoue, la fonction doit quand même résoudre
+    mockPrisma.subscription.findUnique.mockResolvedValueOnce(SUB_STARTER);
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'professional_hotel' });
+    mockPrisma.auditLog.create.mockRejectedValueOnce(new Error('DB indisponible'));
+
+    // Le flux principal doit se terminer sans erreur (fire-and-forget)
+    await expect(
+      updatePlanBenefits('user-1', 'business', 'upgrade'),
+    ).resolves.toBeDefined();
+
+    // Laisser le microtask .catch() s'exécuter avant de vérifier
+    await new Promise((r) => setTimeout(r, 10));
+
+    // L'erreur doit être journalisée via logger.warn
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('audit error'),
+      expect.any(Error),
     );
   });
 });
