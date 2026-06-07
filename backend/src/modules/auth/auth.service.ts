@@ -34,7 +34,13 @@ const TOTP_PENDING_KEY = (userId: string) => `totp_pending:${userId}`;
 const pendingUserMemory = new Map<string, string>();
 const otpMemory         = new Map<string, string>();
 
-const BYPASS_OTP = '000000'; // code accepté quand SKIP_OTP_VERIFICATION=true
+const BYPASS_OTP = '000000'; // code accepté UNIQUEMENT en développement quand le bypass est actif
+
+// Défense en profondeur : le bypass OTP n'est JAMAIS actif en production, même si
+// SKIP_OTP_VERIFICATION=true (en plus du garde-fou dans env.config). Toute
+// vérification (inscription, renvoi, etc.) passe par la validation réelle du code.
+const isOtpBypassEnabled = (): boolean =>
+  env.SKIP_OTP_VERIFICATION === true && env.NODE_ENV !== 'production';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -193,9 +199,9 @@ export const authService = {
       throw new HttpError(409, 'Un compte avec ce numéro de téléphone existe déjà');
     }
 
-    // ── Bypass mode: create account immediately, return tokens, skip OTP screen ──
-    if (env.SKIP_OTP_VERIFICATION) {
-      logger.info(`[OTP BYPASS] création immédiate du compte pour ${input.phone}`);
+    // ── Bypass mode (DÉVELOPPEMENT UNIQUEMENT) : crée le compte immédiatement ──
+    if (isOtpBypassEnabled()) {
+      logger.warn(`[OTP BYPASS — DEV] création immédiate du compte pour ${input.phone} (vérification SMS court-circuitée)`);
       return createUserAndSession(input);
     }
 
@@ -238,12 +244,14 @@ export const authService = {
   // ── Vérification OTP → activation du compte ──────────────────────────────
 
   async verifyPhone(input: VerifyPhoneInput): Promise<{ accessToken: string; refreshToken: string; user: SafeUser }> {
-    if (env.SKIP_OTP_VERIFICATION) {
-      // Bypass mode: accept BYPASS_OTP code only
+    if (isOtpBypassEnabled()) {
+      // Bypass DÉV uniquement : accepte seulement le code de test
       if (input.otp !== BYPASS_OTP) {
         throw new HttpError(400, `Mode test : utilisez le code ${BYPASS_OTP}`);
       }
     } else {
+      // Mode normal (incluant TOUTE la production) : validation réelle du code stocké.
+      // Aucun code (y compris 000000) n'est accepté sans correspondance exacte non expirée.
       const storedOtp = (await redisGet(OTP_KEY(input.phone))) ?? otpMemory.get(input.phone) ?? null;
       if (!storedOtp) {
         throw new HttpError(400, 'Code OTP expiré. Demandez-en un nouveau.');
@@ -357,10 +365,10 @@ export const authService = {
       throw new HttpError(400, 'Aucune inscription en cours pour ce numéro. Recommencez l\'inscription.');
     }
 
-    if (env.SKIP_OTP_VERIFICATION) {
+    if (isOtpBypassEnabled()) {
       await redisSet(OTP_KEY(phone), BYPASS_OTP, OTP_TTL);
       otpMemory.set(phone, BYPASS_OTP);
-      logger.info(`[OTP BYPASS] resend pour ${phone} : ${BYPASS_OTP}`);
+      logger.warn(`[OTP BYPASS — DEV] resend pour ${phone} : ${BYPASS_OTP}`);
       return;
     }
 

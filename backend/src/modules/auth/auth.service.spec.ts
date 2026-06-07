@@ -124,6 +124,7 @@ function resetMocks() {
   redisStore.clear();
   jest.clearAllMocks();
   envMock.SKIP_OTP_VERIFICATION = false;
+  envMock.NODE_ENV = 'test';
   // Restore persistent mock defaults that clearAllMocks would leave as no-ops
   mockPrisma.user.findFirst.mockImplementation(async () => null);
   mockPrisma.professionalProfile.create.mockImplementation(async () => ({}));
@@ -216,6 +217,14 @@ describe('authService.register', () => {
     it('does NOT create professional profile for client account', async () => {
       await authService.register(CLIENT_REGISTER);
       expect(mockPrisma.professionalProfile.create).not.toHaveBeenCalled();
+    });
+
+    it('ignore le bypass en production : passe par le flux OTP (envoi SMS, pas de tokens)', async () => {
+      envMock.NODE_ENV = 'production'; // SKIP reste true mais doit être neutralisé
+      const result = await authService.register({ ...CLIENT_REGISTER, phone: '+2250707002777' });
+      expect(result.accessToken).toBeUndefined();
+      expect(result.message).toMatch(/code de vérification/i);
+      expect(sendSms).toHaveBeenCalledTimes(1);
     });
 
     it('throws 500 when Supabase user creation fails', async () => {
@@ -321,6 +330,45 @@ describe('authService.verifyPhone', () => {
     it('rejects any other code in bypass mode', async () => {
       await expect(authService.verifyPhone({ phone: bypassPhone, otp: '123456' }))
         .rejects.toMatchObject({ statusCode: 400 });
+    });
+  });
+
+  // Sécurité : même si SKIP_OTP_VERIFICATION=true, le bypass DOIT être neutralisé
+  // en production. Le code 000000 ne doit jamais passer.
+  describe('bypass désactivé en production (sécurité)', () => {
+    const prodPhone = '+2250707004099';
+
+    beforeEach(() => {
+      envMock.SKIP_OTP_VERIFICATION = true;
+      envMock.NODE_ENV = 'production';
+      redisStore.set(`pending:${prodPhone}`, JSON.stringify({
+        email: 'prod@test.ci', phone: prodPhone, password: 'Pass1234!',
+        passwordHash: 'hashed:Pass1234!', firstName: 'Prod', lastName: 'User', accountType: 'client',
+      }));
+    });
+
+    it('rejette 000000 en production malgré SKIP_OTP_VERIFICATION=true', async () => {
+      // Aucun OTP réel stocké → doit échouer (pas de bypass)
+      await expect(authService.verifyPhone({ phone: prodPhone, otp: '000000' }))
+        .rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('exige le vrai code OTP stocké en production', async () => {
+      redisStore.set(`otp:${prodPhone}`, '777111');
+      mockSupabaseAdmin.auth.admin.createUser.mockResolvedValue({
+        data: { user: { ...supabaseUser, email: 'prod@test.ci' } }, error: null,
+      });
+      mockPrisma.user.create.mockResolvedValue({ ...prismaUser, phone: prodPhone, email: 'prod@test.ci' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...prismaUser, phone: prodPhone, email: 'prod@test.ci' });
+      mockSupabaseAuth.auth.signInWithPassword.mockResolvedValue({
+        data: { session: { access_token: 'acc', refresh_token: 'ref' }, user: supabaseUser }, error: null,
+      });
+
+      // 000000 refusé, le vrai code accepté
+      await expect(authService.verifyPhone({ phone: prodPhone, otp: '000000' }))
+        .rejects.toMatchObject({ statusCode: 400 });
+      const ok = await authService.verifyPhone({ phone: prodPhone, otp: '777111' });
+      expect(ok.accessToken).toBe('acc');
     });
   });
 });

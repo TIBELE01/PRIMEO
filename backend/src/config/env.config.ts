@@ -122,6 +122,18 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
+// ─── Sécurité : le bypass OTP est INTERDIT en production ──────────────────────
+// SKIP_OTP_VERIFICATION ne doit jamais court-circuiter la vérification SMS en
+// production. Si la variable est positionnée à true en prod, on l'ignore et on
+// force la vérification, avec un avertissement bien visible dans les logs.
+if (env.NODE_ENV === 'production' && env.SKIP_OTP_VERIFICATION) {
+  // eslint-disable-next-line no-console
+  console.error(
+    '[SÉCURITÉ] SKIP_OTP_VERIFICATION=true est IGNORÉ en production — la vérification OTP est forcée.',
+  );
+  env.SKIP_OTP_VERIFICATION = false;
+}
+
 // Derived: parsed Cloudinary credentials from CLOUDINARY_URL
 export const cloudinaryParsed = parseCloudinaryUrl(env.CLOUDINARY_URL);
 
