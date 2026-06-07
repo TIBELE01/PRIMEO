@@ -51,4 +51,14 @@ export const adminApi = {
     apiClient.get('/admin/bookings', { params }),
   getBooking: (id: string) =>
     apiClient.get(`/admin/bookings/${id}`),
+
+  // Gestion admin des abonnements
+  changeUserPlan: (userId: string, plan: 'starter' | 'business' | 'entreprise') =>
+    apiClient.patch(`/admin/users/${userId}/plan`, { plan }),
+  getSubscriptionHistory: (userId: string) =>
+    apiClient.get(`/admin/users/${userId}/subscription-history`),
+  forceRecalculateBenefits: (userId: string) =>
+    apiClient.post(`/admin/users/${userId}/subscription/recalculate`),
+  getPaymentFailures: (params?: { page?: number; limit?: number }) =>
+    apiClient.get('/admin/subscriptions/payment-failures', { params }),
 };

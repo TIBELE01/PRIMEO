@@ -24,10 +24,12 @@ import { useProTheme } from '../../../hooks/useProTheme';
 interface Subscription {
   id: string;
   plan: string;
-  status: string;
+  status?: string;
   renewalDate?: string;
   monthlyCost?: number;
   currentPeriodEnd?: string;
+  pendingPlan?: string | null;
+  freeBoostsRemaining?: number;
 }
 
 interface Invoice {
@@ -199,6 +201,19 @@ interface CurrentPlanCardProps {
   subscription: Subscription | null;
 }
 
+// Retourne le libellé, la couleur de fond et la couleur du texte du badge selon le statut
+function getStatusBadge(status?: string): { label: string; bg: string; text: string } {
+  switch (status) {
+    case 'suspended':
+      return { label: 'Suspendu', bg: '#FEE2E2', text: '#B91C1C' };
+    case 'cancelled':
+      return { label: 'Annulé', bg: '#F3F4F6', text: '#6B7280' };
+    case 'active':
+    default:
+      return { label: 'Actif', bg: '#D1FAE5', text: '#065F46' };
+  }
+}
+
 function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
   const planKey = normalizePlanKey(subscription?.plan);
   const planDef = PLANS.find((p) => p.key === planKey);
@@ -207,35 +222,68 @@ function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
     subscription?.renewalDate ??
     subscription?.currentPeriodEnd;
   const cost = subscription?.monthlyCost ?? planDef?.cost ?? 0;
+  const badge = getStatusBadge(subscription?.status);
+
+  // Afficher les boosts gratuits restants si le plan est business/entreprise ou si la valeur est > 0
+  const showBoosts =
+    (planKey === 'business' || planKey === 'entreprise') ||
+    (subscription?.freeBoostsRemaining !== undefined && subscription.freeBoostsRemaining > 0);
+  const freeBoostsRemaining = subscription?.freeBoostsRemaining ?? 0;
+
+  // Plan en attente de rétrogradation/changement programmé
+  const pendingPlanKey = normalizePlanKey(subscription?.pendingPlan ?? undefined);
+  const pendingPlanDef = PLANS.find((p) => p.key === pendingPlanKey);
+  const pendingPlanName = pendingPlanDef?.name ?? subscription?.pendingPlan ?? '';
 
   return (
-    <View style={styles.currentPlanCard}>
-      <View style={styles.currentPlanTop}>
-        <View>
-          <Text style={styles.currentPlanLabel}>Formule actuelle</Text>
-          <Text style={styles.currentPlanName}>{planName}</Text>
+    <>
+      <View style={styles.currentPlanCard}>
+        <View style={styles.currentPlanTop}>
+          <View>
+            <Text style={styles.currentPlanLabel}>Formule actuelle</Text>
+            <Text style={styles.currentPlanName}>{planName}</Text>
+          </View>
+          {/* Badge de statut dynamique selon le statut de l'abonnement */}
+          <View style={[styles.currentPlanBadge, { backgroundColor: badge.bg }]}>
+            <Text style={[styles.currentPlanBadgeText, { color: badge.text }]}>{badge.label}</Text>
+          </View>
         </View>
-        <View style={styles.currentPlanBadge}>
-          <Text style={styles.currentPlanBadgeText}>Actif</Text>
-        </View>
-      </View>
-      <View style={styles.currentPlanDetails}>
-        <View style={styles.currentPlanDetail}>
-          <Ionicons name="pricetag-outline" size={16} color="#1056E0" />
-          <Text style={styles.currentPlanDetailText}>
-            {cost === 0 ? 'Gratuit' : formatAmount(cost) + '/mois'}
-          </Text>
-        </View>
-        {renewalDate ? (
+        <View style={styles.currentPlanDetails}>
           <View style={styles.currentPlanDetail}>
-            <Ionicons name="refresh-outline" size={16} color="#6B7280" />
+            <Ionicons name="pricetag-outline" size={16} color="#1056E0" />
             <Text style={styles.currentPlanDetailText}>
-              Renouvellement : {formatDate(renewalDate)}
+              {cost === 0 ? 'Gratuit' : formatAmount(cost) + '/mois'}
             </Text>
           </View>
-        ) : null}
+          {renewalDate ? (
+            <View style={styles.currentPlanDetail}>
+              <Ionicons name="refresh-outline" size={16} color="#6B7280" />
+              <Text style={styles.currentPlanDetailText}>
+                Renouvellement : {formatDate(renewalDate)}
+              </Text>
+            </View>
+          ) : null}
+          {/* Boosts gratuits restants ce mois */}
+          {showBoosts && (
+            <View style={styles.currentPlanDetail}>
+              <Text style={styles.currentPlanDetailText}>
+                🚀 {freeBoostsRemaining} boost{freeBoostsRemaining !== 1 ? 's' : ''} gratuit{freeBoostsRemaining !== 1 ? 's' : ''} restant{freeBoostsRemaining !== 1 ? 's' : ''} ce mois
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
+      {/* Bannière d'avertissement si un changement de plan est programmé */}
+      {subscription?.pendingPlan ? (
+        <View style={styles.pendingPlanBanner}>
+          <Ionicons name="warning-outline" size={16} color="#92400E" />
+          <Text style={styles.pendingPlanBannerText}>
+            Passage à {pendingPlanName} programmé pour le{' '}
+            {renewalDate ? formatDate(renewalDate) : '—'}
+          </Text>
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -654,6 +702,23 @@ export default function SubscriptionsScreen() {
           />
         }
       >
+        {/* ── Bannière abonnement suspendu ── */}
+        {subscription?.status === 'suspended' && (
+          <View style={styles.suspendedBanner}>
+            <Ionicons name="alert-circle-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.suspendedBannerText}>
+              Votre abonnement est suspendu. Régularisez votre paiement pour restaurer vos accès.
+            </Text>
+            <TouchableOpacity
+              style={styles.suspendedBannerBtn}
+              onPress={() => handleChoosePlan(activePlanKey ?? 'starter')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.suspendedBannerBtnText}>Régulariser</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── Section 1: Current plan & wallet ── */}
         <SectionHeader title="Mon abonnement" />
         <CurrentPlanCard subscription={subscription} />
@@ -1125,5 +1190,51 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+
+  // Bannière changement de plan programmé (orange/amber)
+  pendingPlanBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF3C7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#D97706',
+    borderRadius: 8,
+    padding: 12,
+  },
+  pendingPlanBannerText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '500',
+  },
+
+  // Bannière abonnement suspendu (rouge pleine largeur)
+  suspendedBanner: {
+    backgroundColor: '#DC2626',
+    borderRadius: 10,
+    padding: 14,
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  suspendedBannerText: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  suspendedBannerBtn: {
+    marginTop: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  suspendedBannerBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#DC2626',
   },
 });

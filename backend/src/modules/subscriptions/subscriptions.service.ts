@@ -181,6 +181,21 @@ export async function updatePlanBenefits(
     },
   }).catch((err) => logger.warn(`updatePlanBenefits notify error (userId=${userId})`, err));
 
+  // Journalisation d'audit — non-bloquant (fire-and-forget) pour ne pas perturber le flux principal
+  prisma.auditLog.create({
+    data: {
+      userId,
+      action:      `subscription.${context}`,
+      targetType:  'subscription',
+      targetId:    sub.id,
+      description: `Formule ${previousPlan} → ${newPlanType} [${context}]`,
+      metadata:    JSON.parse(JSON.stringify({
+        old: { plan: previousPlan },
+        new: { plan: newPlanType, suspendedCount: suspendedProperties.length },
+      })),
+    },
+  }).catch((err) => logger.warn(`updatePlanBenefits audit error (userId=${userId})`, err));
+
   logger.info(`updatePlanBenefits [${context}]: ${previousPlan} → ${newPlanType} (userId=${userId})`);
   return { suspendedProperties, previousPlan };
 }
