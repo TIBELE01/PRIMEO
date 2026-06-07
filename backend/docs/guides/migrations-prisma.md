@@ -36,10 +36,12 @@ les migrations déjà reflétées par le schéma.
 - Script : [`prisma/baseline.sql`](../../prisma/baseline.sql) (métadonnées uniquement,
   aucune donnée applicative touchée, idempotent).
 - 20 migrations marquées appliquées.
-- **Exception volontaire** : `20260606000003_restaurant_review_criteria_and_immo_available_from`
-  laissée *pending* car les colonnes `reviews.cuisineRating / serviceRating /
-  ambianceRating` manquaient en production (dérive db push). Le prochain
-  `migrate deploy` l'appliquera (idempotente `IF NOT EXISTS`) et réparera la dérive.
+- **Dérive `20260606000003`** : les colonnes `reviews.cuisineRating / serviceRating /
+  ambianceRating` manquaient en production (dérive db push). Cette migration a été
+  **appliquée manuellement via MCP le 2026-06-07** (SQL idempotent `IF NOT EXISTS`,
+  non destructif) puis enregistrée dans `_prisma_migrations`. Résultat : les
+  **21 migrations** sont désormais suivies et le prochain `migrate deploy` est un
+  no-op (aucune migration pending) — état stable et sûr.
 
 Procédure officielle équivalente si la CLI a un accès réseau direct à la base :
 
@@ -56,11 +58,12 @@ done
 
 | Élément | Schéma attendu | Production (avant) | Après `migrate deploy` |
 |---|---|---|---|
-| `reviews.cuisineRating` | présent | **absent** | créé |
-| `reviews.serviceRating` | présent | **absent** | créé |
-| `reviews.ambianceRating` | présent | **absent** | créé |
+| `reviews.cuisineRating` | présent | **absent** | créé ✓ |
+| `reviews.serviceRating` | présent | **absent** | créé ✓ |
+| `reviews.ambianceRating` | présent | **absent** | créé ✓ |
 
-Tout le reste du schéma était conforme (vérifié colonne par colonne).
+Colonnes créées le 2026-06-07 (vérifié : `review_cols = 3`, `migrations_tracked = 21`).
+Tout le reste du schéma était déjà conforme (vérifié colonne par colonne).
 
 ---
 
