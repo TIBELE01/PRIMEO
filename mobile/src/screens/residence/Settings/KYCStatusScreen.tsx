@@ -1,9 +1,7 @@
-// KYCStatusScreen: shows KYC verification status for residence professionals
+// Statut KYC — résidences (délègue à l'écran partagé)
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { ScreenWrapper } from '../../../components/layout/ScreenWrapper';
+import { KycStatusScreenBase } from '../../common/KycStatusScreenBase';
 
 export default function KYCStatusScreen() {
-  return <ScreenWrapper><View style={styles.c}><Text style={styles.t}>Statut KYC</Text></View></ScreenWrapper>;
+  return <KycStatusScreenBase />;
 }
-const styles = StyleSheet.create({ c: { flex: 1, justifyContent: 'center', alignItems: 'center' }, t: { color: '#999' } });

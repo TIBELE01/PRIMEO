@@ -13,7 +13,8 @@ export async function getProfessionalProfile(req: Request, res: Response, next: 
 
 export async function submitKyc(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await professionalService.submitKyc(req.user!.sub, req.body);
+    // req.files est peuplé par multer (upload.fields) — documents justificatifs
+    const result = await professionalService.submitKyc(req.user!.sub, req.body, req.files as never);
     res.json(result);
   } catch (err) {
     next(err);

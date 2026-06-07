@@ -10,7 +10,14 @@ export type AuthStackParamList = {
   Register: { role?: string };
   ProRegister: undefined;
   ForgotPassword: undefined;
-  OtpVerification: { phone: string; context: 'registration' | 'reset'; bypassCode?: string };
+  OtpVerification: {
+    phone: string;
+    context: 'registration' | 'reset';
+    bypassCode?: string;
+    // Documents KYC à téléverser après vérification OTP (inscription pro)
+    kycDocuments?: Array<{ key: string; uri: string; name: string }>;
+    kycBusinessInfo?: { businessName: string; rccm?: string; taxId?: string; street?: string };
+  };
   TwoFactor: { userId: string };
   ResetPassword: { token: string };
 };

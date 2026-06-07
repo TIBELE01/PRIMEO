@@ -1,3 +1,7 @@
-import React from 'react'; import { View, Text, StyleSheet } from 'react-native'; import { ScreenWrapper } from '../../../components/layout/ScreenWrapper';
-export default function HotelKYCStatusScreen() { return (<ScreenWrapper><View style={styles.c}><Text style={styles.t}>HotelKYCStatusScreen</Text></View></ScreenWrapper>); }
-const styles = StyleSheet.create({ c: { flex: 1, justifyContent: 'center', alignItems: 'center' }, t: { color: '#999' } });
+// Statut KYC — hôtels (délègue à l'écran partagé)
+import React from 'react';
+import { KycStatusScreenBase } from '../../common/KycStatusScreenBase';
+
+export default function HotelKYCStatusScreen() {
+  return <KycStatusScreenBase />;
+}

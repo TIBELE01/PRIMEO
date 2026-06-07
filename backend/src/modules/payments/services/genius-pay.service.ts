@@ -59,8 +59,9 @@ export const geniusPayService = {
       throw new Error('Numéro de téléphone du client requis pour le paiement Genius Pay');
     }
 
-    // URL de notification serveur-à-serveur (webhook) — distincte de la redirection navigateur
-    const webhookUrl = `${env.BACKEND_URL}/webhooks/genius-pay`;
+    // URL de notification serveur-à-serveur (webhook) — distincte de la redirection navigateur.
+    // Le routeur webhooks est monté sous /api/webhooks (voir app.ts).
+    const webhookUrl = `${env.BACKEND_URL}/api/webhooks/genius-pay`;
 
     // POST /payments — création d'un paiement avec redirection vers la page de checkout.
     // return_url : redirection du navigateur après paiement (frontend).

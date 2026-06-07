@@ -11,10 +11,15 @@ export interface UploadResult {
   bytes: number;
 }
 
+// Type de ressource Cloudinary : 'image' pour les photos, 'auto' pour gérer
+// indifféremment images ET PDF (documents KYC, factures…), 'raw' pour binaire pur.
+export type CloudinaryResourceType = 'image' | 'auto' | 'raw';
+
 export async function uploadToCloudinary(
   fileBuffer: Buffer,
   folder: string,
-  filename: string
+  filename: string,
+  resourceType: CloudinaryResourceType = 'image'
 ): Promise<UploadResult> {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
   if (!cloudName || !apiKey || !apiSecret) {
@@ -30,7 +35,7 @@ export async function uploadToCloudinary(
   form.append('timestamp', timestamp);
 
   const response = await axios.post(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
     form,
     { headers: form.getHeaders(), auth: { username: apiKey, password: apiSecret } }
   );

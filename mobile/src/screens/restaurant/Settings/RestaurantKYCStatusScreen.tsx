@@ -1,3 +1,7 @@
-import React from 'react'; import { View, Text, StyleSheet } from 'react-native'; import { ScreenWrapper } from '../../../components/layout/ScreenWrapper';
-export default function RestaurantKYCStatusScreen() { return (<ScreenWrapper><View style={styles.c}><Text style={styles.t}>RestaurantKYCStatusScreen</Text></View></ScreenWrapper>); }
-const styles = StyleSheet.create({ c: { flex: 1, justifyContent: 'center', alignItems: 'center' }, t: { color: '#999' } });
+// Statut KYC — restaurants (délègue à l'écran partagé)
+import React from 'react';
+import { KycStatusScreenBase } from '../../common/KycStatusScreenBase';
+
+export default function RestaurantKYCStatusScreen() {
+  return <KycStatusScreenBase />;
+}

@@ -82,8 +82,8 @@ export const paymentsService = {
     return { transactions, total, page, limit, totalPages: Math.ceil(total / limit) };
   },
 
-  // Les webhooks Genius Pay sont traités par /webhooks/genius-pay (webhooks.service.ts)
+  // Les webhooks Genius Pay sont traités par /api/webhooks/genius-pay (webhooks.service.ts)
   async processWebhook(_payload: unknown, _signature: string, _rawBody: Buffer): Promise<void> {
-    throw new HttpError(501, 'Utilisez le endpoint /webhooks/genius-pay pour les événements Genius Pay');
+    throw new HttpError(501, 'Utilisez le endpoint /api/webhooks/genius-pay pour les événements Genius Pay');
   },
 };

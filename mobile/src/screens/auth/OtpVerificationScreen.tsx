@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api/endpoints/auth';
+import { submitKyc as submitKycDocuments } from '../../services/kycUpload';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 
@@ -17,7 +18,7 @@ const OTP_LEN      = 6;
 const RESEND_DELAY = 60;
 
 export function OtpVerificationScreen({ route, navigation }: Props) {
-  const { phone, context, bypassCode } = route.params;
+  const { phone, context, bypassCode, kycDocuments, kycBusinessInfo } = route.params;
   const { theme } = useTheme();
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);
@@ -59,6 +60,16 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
         await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken as string);
         await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(data.user));
         setTokens(data.accessToken as string, data.refreshToken as string);
+
+        // Upload des documents KYC une fois authentifié (best-effort — non bloquant)
+        if (kycDocuments && kycDocuments.length > 0 && kycBusinessInfo) {
+          try {
+            await submitKycDocuments(kycBusinessInfo, kycDocuments);
+          } catch {
+            // En cas d'échec, le pro pourra re-soumettre depuis l'écran Statut KYC
+          }
+        }
+
         setUser(data.user);
       } else {
         navigation.navigate('ResetPassword', { token: code });

@@ -1,9 +1,2 @@
-// Update KYC DTO — allows resubmitting documents after rejection
-import { z } from 'zod';
-
-export const UpdateKycDto = z.object({
-  businessName: z.string().min(2).max(200).optional(),
-  siret: z.string().optional(),
-  kycDocumentUrl: z.string().url().optional(),
-});
-export type UpdateKycInput = z.infer<typeof UpdateKycDto>;
+// DTO de mise à jour KYC — re-soumission après rejet (réutilise le DTO consolidé)
+export { SubmitKycDto as UpdateKycDto, SubmitKycInput as UpdateKycInput } from './professional.dto';

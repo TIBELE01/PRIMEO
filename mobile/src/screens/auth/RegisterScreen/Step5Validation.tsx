@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import { normalizeIvorianPhone } from '../auth.utils';
 import { authApi } from '../../../services/api/endpoints/auth';
+import { submitKyc as submitKycDocuments } from '../../../services/kycUpload';
 import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
 import type { AuthScreenProps } from '../../../navigation/types';
@@ -61,9 +62,6 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
         payload.businessAddress = data.businessAddress.trim();
         payload.rccm            = data.rccm.trim();
         payload.taxNumber       = data.taxNumber.trim();
-        if (data.kycDocuments.length > 0) {
-          payload.kycDocumentUris = data.kycDocuments.map((d) => d.uri);
-        }
       }
       if (data.referralCode?.trim()) {
         payload.referralCode = data.referralCode.trim();
@@ -82,14 +80,40 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
         await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, resData.refreshToken);
         await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(resData.user));
         setTokens(resData.accessToken, resData.refreshToken);
+
+        // Upload des documents KYC une fois authentifié (best-effort — non bloquant)
+        if (isPro && data.kycDocuments.length > 0) {
+          try {
+            await submitKycDocuments(
+              {
+                businessName: data.businessName.trim(),
+                rccm: data.rccm.trim() || undefined,
+                taxId: data.taxNumber.trim() || undefined,
+                street: data.businessAddress.trim() || undefined,
+              },
+              data.kycDocuments,
+            );
+          } catch {
+            // En cas d'échec, le pro pourra re-soumettre depuis l'écran Statut KYC
+          }
+        }
+
         setUser(resData.user);
         return;
       }
 
-      // Normal mode: navigate to OTP verification
+      // Normal mode: navigate to OTP verification.
+      // Les documents KYC sont transmis pour upload après vérification OTP.
       navigation.navigate('OtpVerification', {
         phone: normalizedPhone,
         context: 'registration',
+        kycDocuments: isPro && data.kycDocuments.length > 0 ? data.kycDocuments : undefined,
+        kycBusinessInfo: isPro ? {
+          businessName: data.businessName.trim(),
+          rccm: data.rccm.trim() || undefined,
+          taxId: data.taxNumber.trim() || undefined,
+          street: data.businessAddress.trim() || undefined,
+        } : undefined,
       });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string; message?: string }; status?: number }; message?: string };
