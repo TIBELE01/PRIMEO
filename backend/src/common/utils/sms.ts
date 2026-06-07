@@ -1,11 +1,19 @@
 // Orange SMS API client — envoi de SMS + logs de livraison
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { randomInt } from 'crypto';
 import { orangeSmsConfig } from '../../config/orange-sms.config';
 import { env } from '../../config/env.config';
 import { logger } from './logger';
 import { prisma } from '../../database/prisma.service';
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
+
+function axiosErrorDetails(err: unknown): { status?: number; body?: unknown } {
+  if (err instanceof AxiosError) {
+    return { status: err.response?.status, body: err.response?.data };
+  }
+  return {};
+}
 
 async function getOrangeToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt) {
@@ -16,17 +24,23 @@ async function getOrangeToken(): Promise<string> {
     `${orangeSmsConfig.clientId}:${orangeSmsConfig.clientSecret}`
   ).toString('base64');
 
-  const response = await axios.post(
-    orangeSmsConfig.tokenUrl,
-    'grant_type=client_credentials',
-    { headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' } }
-  );
+  try {
+    const response = await axios.post(
+      orangeSmsConfig.tokenUrl,
+      'grant_type=client_credentials',
+      { headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
 
-  cachedToken = {
-    value: response.data.access_token,
-    expiresAt: Date.now() + (response.data.expires_in - 60) * 1000,
-  };
-  return cachedToken.value;
+    cachedToken = {
+      value: response.data.access_token,
+      expiresAt: Date.now() + (response.data.expires_in - 60) * 1000,
+    };
+    return cachedToken.value;
+  } catch (err) {
+    const { status, body } = axiosErrorDetails(err);
+    logger.error(`Orange OAuth : échec de récupération du token [HTTP ${status ?? '?'}]`, body ?? err);
+    throw err;
+  }
 }
 
 /**
@@ -76,7 +90,9 @@ export async function sendSms(
 
   try {
     const token = await getOrangeToken();
-    const senderAddress = encodeURIComponent(`tel:+${orangeSmsConfig.sender}`);
+    // Supprime le '+' initial si présent pour éviter un double '+' dans tel:+<numéro>
+    const rawSender = orangeSmsConfig.sender.replace(/^\+/, '');
+    const senderAddress = encodeURIComponent(`tel:+${rawSender}`);
 
     // URL de callback pour les delivery reports Orange (optionnel — si BACKEND_URL configurée)
     const notifyURL = env.BACKEND_URL
@@ -91,7 +107,7 @@ export async function sendSms(
       {
         outboundSMSMessageRequest: {
           address: [`tel:${phoneNumber}`],
-          senderAddress: `tel:+${orangeSmsConfig.sender}`,
+          senderAddress: `tel:+${rawSender}`,
           outboundSMSTextMessage: { message },
           ...(notifyURL ? { notifyURL, callbackData } : {}),
         },
@@ -114,8 +130,9 @@ export async function sendSms(
     logger.debug(`SMS envoyé à ${phoneNumber}${requestId ? ` [${requestId}]` : ''}`);
     return requestId;
   } catch (err) {
+    const { status, body } = axiosErrorDetails(err);
     const errorCode = err instanceof Error ? err.message : String(err);
-    logger.error(`Échec envoi SMS à ${phoneNumber}`, err);
+    logger.error(`Échec envoi SMS à ${phoneNumber} [HTTP ${status ?? '?'}]`, body ?? err);
 
     if (logId) {
       await prisma.smsLog.update({
@@ -161,7 +178,5 @@ async function triggerOtpSmsFallback(phone: string, logId: string): Promise<void
 
 export function generateOtp(): string {
   const length = orangeSmsConfig.otpLength;
-  return Math.floor(Math.random() * Math.pow(10, length))
-    .toString()
-    .padStart(length, '0');
+  return randomInt(0, Math.pow(10, length)).toString().padStart(length, '0');
 }

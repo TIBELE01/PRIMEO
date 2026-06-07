@@ -7,6 +7,7 @@ import { initSocketServer } from './modules/messaging/socket.server';
 import { startAllJobs } from './jobs';
 import { logger } from './common/utils/logger';
 import { env } from './config/env.config';
+import { validateSmtpConnection } from './common/utils/mailer';
 
 async function bootstrap(): Promise<void> {
   const app = createApp();
@@ -14,6 +15,9 @@ async function bootstrap(): Promise<void> {
 
   // Socket.io server attached to the HTTP server
   initSocketServer(server);
+
+  // Probe des services externes au démarrage (non-bloquant)
+  validateSmtpConnection().catch(() => null);
 
   // Start all cron jobs
   startAllJobs();
