@@ -1,6 +1,6 @@
 // Rate limiting via express-rate-limit + store Upstash Redis (partagé inter-instances)
 import { Application, Request, Response } from 'express';
-import { rateLimit, Store, Options, IncrementResponse } from 'express-rate-limit';
+import { rateLimit, Store, IncrementResponse } from 'express-rate-limit';
 import { getRedisClient } from '../utils/redis-client';
 import { redisConfig } from '../../config/redis.config';
 import { logger } from '../utils/logger';

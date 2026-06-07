@@ -1,6 +1,6 @@
 // Zod request validation middleware — validates body, params and query
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema } from 'zod';
 import { HttpError } from '../handlers/http-error.handler';
 
 type Target = 'body' | 'query' | 'params';

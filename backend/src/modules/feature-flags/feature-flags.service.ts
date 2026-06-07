@@ -51,7 +51,6 @@ export const featureFlagsService = {
     description: string | undefined,
     adminId: string,
   ): Promise<FlagFull> {
-    const existing = await prisma.featureFlag.findUnique({ where: { key } });
 
     const flag = await prisma.featureFlag.upsert({
       where: { key },

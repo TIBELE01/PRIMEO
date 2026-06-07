@@ -85,7 +85,6 @@ import { authService } from './auth.service';
 import { redisSet } from '../../common/utils/redis-client';
 import { generateOtp, sendSms } from '../../common/utils/sms';
 import { AccountType, UserStatus } from '@prisma/client';
-import { HttpError } from '../../common/handlers/http-error.handler';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

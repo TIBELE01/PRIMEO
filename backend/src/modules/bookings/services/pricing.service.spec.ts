@@ -1,6 +1,5 @@
 // Unit tests for pricingService.compute
 import { pricingService } from './pricing.service';
-import { HttpError } from '../../../common/handlers/http-error.handler';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 

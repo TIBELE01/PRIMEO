@@ -41,14 +41,14 @@ const FAQ: Record<string, { answer: string; replies: QReply[] }> = {
     ],
   },
   resa_view: {
-    answer: `Toutes vos reservations sont dans l\'onglet Reservations. Vous y trouverez :\n• Le statut de chaque reservation\n• Les details du sejour\n• L\'historique des paiements\n• Les options d\'annulation`,
+    answer: `Toutes vos reservations sont dans l'onglet Reservations. Vous y trouverez :\n• Le statut de chaque reservation\n• Les details du sejour\n• L'historique des paiements\n• Les options d'annulation`,
     replies: [
       { id: 'cancel', label: '❌ Annuler une reservation' },
       { id: 'ticket', label: '🎫 Contacter le support' },
     ],
   },
   resa_modify: {
-    answer: `La modification directe d\'une reservation n\'est pas disponible. Pour changer vos dates :\n1. Annulez la reservation actuelle (verifiez les conditions)\n2. Effectuez une nouvelle reservation\n\nNotre support peut vous aider dans les cas particuliers.`,
+    answer: `La modification directe d'une reservation n'est pas disponible. Pour changer vos dates :\n1. Annulez la reservation actuelle (verifiez les conditions)\n2. Effectuez une nouvelle reservation\n\nNotre support peut vous aider dans les cas particuliers.`,
     replies: [
       { id: 'cancel', label: '❌ Annulation' },
       { id: 'ticket', label: '🎫 Contacter le support' },
@@ -78,7 +78,7 @@ const FAQ: Record<string, { answer: string; replies: QReply[] }> = {
     ],
   },
   pay_refund: {
-    answer: `En cas de remboursement :\n• Traite sous 5 a 10 jours ouvrables\n• Recredite sur le moyen de paiement initial\n• La politique d\'annulation de l\'hebergeur s\'applique\n\nPour un remboursement non recu, ouvrez un litige depuis la reservation.`,
+    answer: `En cas de remboursement :\n• Traite sous 5 a 10 jours ouvrables\n• Recredite sur le moyen de paiement initial\n• La politique d'annulation de l'hebergeur s'applique\n\nPour un remboursement non recu, ouvrez un litige depuis la reservation.`,
     replies: [
       { id: 'cancel', label: '❌ Annulation' },
       { id: 'ticket', label: '🎫 Contacter le support' },
@@ -94,21 +94,21 @@ const FAQ: Record<string, { answer: string; replies: QReply[] }> = {
     ],
   },
   cancel_how: {
-    answer: `Pour annuler une reservation :\n1. Allez dans Reservations\n2. Selectionnez la reservation\n3. Appuyez sur "Annuler la reservation"\n4. Confirmez\n\n⚠️ Les conditions de remboursement varient selon l\'hebergeur.`,
+    answer: `Pour annuler une reservation :\n1. Allez dans Reservations\n2. Selectionnez la reservation\n3. Appuyez sur "Annuler la reservation"\n4. Confirmez\n\n⚠️ Les conditions de remboursement varient selon l'hebergeur.`,
     replies: [
       { id: 'cancel_refund', label: 'Conditions de remboursement' },
       { id: 'ticket',        label: '🎫 Contacter le support' },
     ],
   },
   cancel_refund: {
-    answer: `Le remboursement depend de la politique d\'annulation de l\'hebergeur :\n\n• Flexible : remboursement complet si annulation avant 24h\n• Moderee : remboursement partiel selon delai\n• Stricte : pas de remboursement sauf cas exceptionnels\n\nLa politique est indiquee sur chaque annonce.`,
+    answer: `Le remboursement depend de la politique d'annulation de l'hebergeur :\n\n• Flexible : remboursement complet si annulation avant 24h\n• Moderee : remboursement partiel selon delai\n• Stricte : pas de remboursement sauf cas exceptionnels\n\nLa politique est indiquee sur chaque annonce.`,
     replies: [
       { id: 'cancel_dispute', label: 'Ouvrir un litige' },
       { id: 'ticket',         label: '🎫 Contacter le support' },
     ],
   },
   cancel_dispute: {
-    answer: `Vous pouvez ouvrir un litige si :\n• Le remboursement promis n\'a pas ete recu\n• L\'hebergement ne correspond pas a l\'annonce\n• L\'hebergeur n\'a pas respecte ses engagements\n\nPour ouvrir un litige : allez dans la reservation concernee et appuyez sur "Signaler un probleme".`,
+    answer: `Vous pouvez ouvrir un litige si :\n• Le remboursement promis n'a pas ete recu\n• L'hebergement ne correspond pas a l'annonce\n• L'hebergeur n'a pas respecte ses engagements\n\nPour ouvrir un litige : allez dans la reservation concernee et appuyez sur "Signaler un probleme".`,
     replies: [{ id: 'ticket', label: '🎫 Contacter le support' }],
   },
   account: {
@@ -121,14 +121,14 @@ const FAQ: Record<string, { answer: string; replies: QReply[] }> = {
     ],
   },
   account_profile: {
-    answer: `Pour modifier votre profil :\n1. Allez dans l\'onglet Profil\n2. Appuyez sur "Modifier mon profil"\n3. Mettez a jour vos informations\n4. Sauvegardez`,
+    answer: `Pour modifier votre profil :\n1. Allez dans l'onglet Profil\n2. Appuyez sur "Modifier mon profil"\n3. Mettez a jour vos informations\n4. Sauvegardez`,
     replies: [
       { id: 'account_password', label: 'Changer le mot de passe' },
       { id: 'ticket',           label: '🎫 Contacter le support' },
     ],
   },
   account_password: {
-    answer: `Pour changer votre mot de passe :\n1. Allez dans Profil > "Changer le mot de passe"\n2. Entrez votre mot de passe actuel\n3. Choisissez un nouveau mot de passe securise\n4. Confirmez et sauvegardez\n\nSi vous l\'avez oublie, utilisez "Mot de passe oublie" sur l\'ecran de connexion.`,
+    answer: `Pour changer votre mot de passe :\n1. Allez dans Profil > "Changer le mot de passe"\n2. Entrez votre mot de passe actuel\n3. Choisissez un nouveau mot de passe securise\n4. Confirmez et sauvegardez\n\nSi vous l'avez oublie, utilisez "Mot de passe oublie" sur l'ecran de connexion.`,
     replies: [
       { id: 'account_2fa', label: 'Authentification 2FA' },
       { id: 'ticket',      label: '🎫 Contacter le support' },
@@ -139,7 +139,7 @@ const FAQ: Record<string, { answer: string; replies: QReply[] }> = {
     replies: [{ id: 'ticket', label: '🎫 Contacter le support' }],
   },
   other: {
-    answer: `Je n\'ai pas trouve de reponse dans ma base de connaissances. Notre equipe de support est la pour vous aider !`,
+    answer: `Je n'ai pas trouve de reponse dans ma base de connaissances. Notre equipe de support est la pour vous aider !`,
     replies: [
       { id: 'ticket',      label: '🎫 Creer un ticket de support' },
       { id: 'tickets_nav', label: '📋 Voir mes tickets' },

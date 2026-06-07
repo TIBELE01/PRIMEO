@@ -9,7 +9,6 @@ import { brevoConfig } from '../config/brevo.config';
 import { PLAN_DETAILS } from '../common/constants/subscription-plans';
 import { notificationsService } from '../modules/notifications/notifications.service';
 import { updatePlanBenefits } from '../modules/subscriptions/subscriptions.service';
-import { Decimal } from '@prisma/client/runtime/library';
 
 const GRACE_PERIOD_DAYS = 7;
 // Avertissement envoyé à J-3 avant suspension (4ème échec = 3 jours restants)
@@ -35,7 +34,6 @@ async function processSubscriptionRenewal(sub: {
   const pendingPlanType = features['pendingPlanType'] as string | undefined;
 
   let activePlanType = sub.planType;
-  const newFeatures = { ...features };
 
   if (pendingPlanType) {
     const newPlan = PLAN_DETAILS[pendingPlanType];

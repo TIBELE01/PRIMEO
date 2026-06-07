@@ -1,6 +1,6 @@
 // User repository — thin wrapper over Prisma for user-related DB operations
 import { prisma } from '../prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export const userRepository = {
   findById: (id: string) =>

@@ -49,7 +49,7 @@ export const disputesService = {
     return dispute;
   },
 
-  async getById(id: string, userId: string) {
+  async getById(id: string, _userId: string) {
     const dispute = await prisma.dispute.findUnique({
       where: { id },
       include: { booking: { include: { property: { select: { id: true, title: true } } } } },

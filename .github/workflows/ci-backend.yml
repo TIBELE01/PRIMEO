@@ -11,9 +11,14 @@ on:
     paths:
       - 'backend/**'
 
+# Annule les exécutions précédentes encore en cours sur la même réf
+concurrency:
+  group: ci-backend-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build & Lint
+  build-test:
+    name: Build · Lint · TypeCheck · Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,22 +30,22 @@ jobs:
         with:
           node-version: '20'
 
-      # npm per-package, install fresh (no committed lockfile — matches Render).
+      # npm par package, install propre (pas de lockfile — comme sur Render).
       - name: Install dependencies
         run: npm install
 
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # Hard gate: the deployable artifact must compile.
-      - name: Build
+      # Gate dur : le code TypeScript doit compiler (artefact déployable).
+      - name: TypeScript build
         run: npm run build
 
-      # Non-blocking: surfaces lint debt without blocking the pipeline.
+      # Gate dur : aucune erreur de lint (les avertissements restent tolérés).
       - name: Lint
         run: npm run lint
-        continue-on-error: true
 
-      # No spec files yet; don't fail the suite on an empty test set.
-      - name: Test
-        run: npm test -- --passWithNoTests
+      # Gate dur : tests + seuils de couverture (jest échoue si la couverture
+      # passe sous coverageThreshold — voir jest.config.js).
+      - name: Tests + couverture
+        run: npm run test:coverage

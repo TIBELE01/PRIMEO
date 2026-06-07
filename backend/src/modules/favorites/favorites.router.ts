@@ -2,7 +2,6 @@
 import { Router } from 'express';
 import { listFavorites, addFavorite, removeFavorite } from './favorites.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
-import { parseId } from '../../common/validators/parse-id.middleware';
 
 export const favoritesRouter = Router();
 

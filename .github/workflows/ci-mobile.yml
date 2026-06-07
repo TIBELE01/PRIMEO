@@ -11,9 +11,13 @@ on:
     paths:
       - 'mobile/**'
 
+concurrency:
+  group: ci-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint-and-typecheck:
-    name: Lint & TypeCheck
+  lint-typecheck-test:
+    name: Lint · TypeCheck · Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,15 +29,22 @@ jobs:
         with:
           node-version: '20'
 
-      # npm per-package, install fresh (no committed lockfile — matches Netlify build).
+      # npm par package, install propre (comme sur Netlify).
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      # Hard gate: types must check.
+      # Gate dur : les types doivent passer.
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      # Non-blocking: surfaces lint debt without blocking the pipeline.
+      # Gate dur : aucune erreur de lint (avertissements tolérés).
       - name: Lint
         run: npm run lint
-        continue-on-error: true
+
+      # Gate dur : tests de logique + seuils de couverture (coverageThreshold).
+      - name: Tests + couverture
+        run: npm test
+
+      # Gate dur : tests de composants (React Native Testing Library).
+      - name: Tests de composants (RNTL)
+        run: npm run test:components

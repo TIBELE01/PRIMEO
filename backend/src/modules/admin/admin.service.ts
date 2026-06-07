@@ -1189,7 +1189,7 @@ export const adminService = {
     const { getPublicationLimit } = await import('../../common/constants/subscription-plans');
     const pubLimit = getPublicationLimit(plan, user.accountType ?? '');
 
-    let sub = await prisma.subscription.findUnique({ where: { userId } });
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
     const oldPlan = sub?.planType ?? 'starter';
 
     if (!sub) {

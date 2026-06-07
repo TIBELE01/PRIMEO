@@ -110,7 +110,7 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
     const user = await prisma.user.findFirst({ where: { email: signInData.user.email! } });
     if (!user) {
       // Edge case: Supabase user exists but Prisma doesn't — create it
-      const { data: supaUser } = await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
+      await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
       await prisma.user.create({
         data: {
           id: signInData.user.id,
@@ -141,7 +141,7 @@ async function continueLogin(
   signInData: { session: { access_token: string; refresh_token: string }; user: { id: string; app_metadata?: Record<string, unknown> } },
   user: { id: string; email: string; firstName: string; lastName: string; accountType: string; twoFactorEnabled: boolean; twoFactorSecret: string | null },
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<void> {
   // TOTP si activé
   if (user.twoFactorEnabled && user.twoFactorSecret) {

@@ -29,12 +29,6 @@ function addOneMonth(date: Date): Date {
   return d;
 }
 
-// Calcule la limite de publications pour un utilisateur (tient compte du type de compte)
-async function resolvePubLimit(userId: string, planType: string): Promise<number> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { accountType: true } });
-  return getPublicationLimit(planType, user?.accountType ?? '');
-}
-
 // Normalise un abonnement pour le mobile : expose `plan`, `renewalDate`, `monthlyCost`,
 // `pendingPlan` et les capacités dérivées du plan actif.
 function serializeSubscription<T extends Record<string, unknown>>(sub: T | null): (T & {
@@ -96,7 +90,6 @@ export async function updatePlanBenefits(
   // - Upgrade : créditer le nombre mensuel complet, conserver les utilisations en cours
   // - Downgrade : le nouveau plafond mensuel s'applique, on conserve les utilisations
   //   (ne pas enlever les boosts déjà consommés, ne plus en accorder de nouveaux au-delà)
-  const usedThisMonth = sub.boostsFreeUsedThisMonth ?? 0;
   const newMonthly = newPlan.freeBoostsPerMonth;
 
   // Suppression du pendingPlanType si présent

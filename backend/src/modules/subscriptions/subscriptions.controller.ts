@@ -1,7 +1,6 @@
 // Subscriptions controller
 import { Request, Response, NextFunction } from 'express';
 import { subscriptionsService } from './subscriptions.service';
-import { PLAN_DETAILS } from '../../common/constants/subscription-plans';
 
 // Retourne les formules adaptées au type de compte de l'utilisateur authentifié
 export async function listPlans(req: Request, res: Response, next: NextFunction): Promise<void> {

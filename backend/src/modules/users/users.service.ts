@@ -83,7 +83,7 @@ export const usersService = {
       if (input.city !== undefined)           proFields.city = input.city;
     }
 
-    const [updatedUser] = await prisma.$transaction([
+    await prisma.$transaction([
       prisma.user.update({ where: { id }, data: userFields as any }),
       ...(isPro && Object.keys(proFields).length > 0 ? [
         prisma.professionalProfile.upsert({
