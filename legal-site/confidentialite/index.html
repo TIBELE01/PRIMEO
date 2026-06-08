@@ -156,20 +156,57 @@
 
   <footer>
     <div class="footer-inner">
-      <div class="footer-grid">
-        <div><div class="footer-brand">PRIM<span>EO</span></div><p class="footer-desc">Plateforme immobilière de référence en Côte d'Ivoire.</p></div>
-        <div class="footer-col"><h4>Légal</h4><ul><li><a href="/cgu/">CGU</a></li><li><a href="/confidentialite/">Confidentialité</a></li><li><a href="/mentions-legales/">Mentions légales</a></li></ul></div>
-        <div class="footer-col"><h4>Contact</h4><ul><li><a href="/contact/">Formulaire</a></li><li><a href="mailto:dpo@primeo.ci">dpo@primeo.ci</a></li></ul></div>
+      <div class="footer-grid" style="grid-template-columns:2fr 1fr 1fr 1fr">
+        <div>
+          <div class="footer-brand">PRIM<span>EO</span></div>
+          <p class="footer-desc" style="margin-top:0.5rem">Plateforme de référence pour l'immobilier, l'hébergement et la restauration en Côte d'Ivoire.</p>
+          <p style="font-size:0.8rem;margin-top:0.75rem"><a href="mailto:legal@primeo.ci" style="color:var(--gold)">legal@primeo.ci</a></p>
+        </div>
+        <div class="footer-col">
+          <h4>Utilisation</h4>
+          <ul>
+            <li><a href="/cgu/">CGU</a></li>
+            <li><a href="/professionnels/">Conditions Pros</a></li>
+            <li><a href="/conditions-api/">Conditions API</a></li>
+            <li><a href="/reglement-interieur/">Règlement intérieur</a></li>
+            <li><a href="/charte-communaute/">Charte communauté</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Données &amp; Vie privée</h4>
+          <ul>
+            <li><a href="/confidentialite/">Confidentialité</a></li>
+            <li><a href="/charte-donnees/">Charte RGPD</a></li>
+            <li><a href="/confidentialite-pros/">Vie privée Pros</a></li>
+            <li><a href="/recrutement-confidentialite/">Recrutement</a></li>
+            <li><a href="/transferts-donnees/">Transferts CEDEAO</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Légal &amp; Autres</h4>
+          <ul>
+            <li><a href="/mentions-legales/">Mentions légales</a></li>
+            <li><a href="/conditions-vente/">CGV &amp; Remboursement</a></li>
+            <li><a href="/litiges-mediation/">Litiges &amp; Médiation</a></li>
+            <li><a href="/propriete-intellectuelle/">Propriété intellectuelle</a></li>
+            <li><a href="/signalement/">Signalement</a></li>
+            <li><a href="/disclaimer/">Avis juridique</a></li>
+            <li><a href="/parrainage/">Parrainage</a></li>
+            <li><a href="/jeux-concours/">Jeux-concours</a></li>
+          </ul>
+        </div>
       </div>
-      <div class="footer-bottom"><span>© 2026 PRIMEO SARL</span><a href="/">Retour à l'accueil</a></div>
+      <div class="footer-bottom">
+        <span>© 2026 PRIMEO SARL · Tous droits réservés · Enregistrée en Côte d'Ivoire</span>
+        <a href="https://primeo.ci" target="_blank" rel="noopener">Retour au site principal</a>
+      </div>
     </div>
   </footer>
-
-  <div id="cookie-banner">
-    <p>🍪 Nous utilisons des cookies essentiels et, avec votre accord, des cookies analytics. <a href="/confidentialite/">En savoir plus</a></p>
+  <div id="cookie-banner" style="display:none">
+    <span>Nous utilisons des cookies pour améliorer votre expérience. <a href="/confidentialite/">En savoir plus</a></span>
     <div class="cookie-btns">
-      <button class="cookie-decline" onclick="hideCookieBanner(false)">Refuser</button>
-      <button class="cookie-accept" onclick="hideCookieBanner(true)">Accepter</button>
+      <button class="cookie-accept" onclick="acceptCookies()">Accepter</button>
+      <button class="cookie-decline" onclick="declineCookies()">Refuser</button>
     </div>
   </div>
   <script src="../assets/js/cookies.js"></script>

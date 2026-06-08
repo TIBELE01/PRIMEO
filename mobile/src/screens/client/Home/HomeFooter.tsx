@@ -5,6 +5,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 
 const VITRINE = 'https://primeo-vitrine.onrender.com';
+const LEGAL = 'https://legal.primeo.ci';
 
 type Link = { label: string; url: string };
 
@@ -31,11 +32,13 @@ const FOOTER_SUPPORT: Link[] = [
   { label: 'Contact',            url: `${VITRINE}/contact/` },
 ];
 const FOOTER_LEGAL: Link[] = [
-  { label: 'Mentions légales',      url: `${VITRINE}/legal/mentions-legales.html` },
-  { label: 'Confidentialité',       url: `${VITRINE}/legal/confidentialite.html` },
-  { label: 'CGU',                   url: `${VITRINE}/legal/cgu.html` },
-  { label: 'Conditions de vente',   url: `${VITRINE}/legal/conditions-vente.html` },
-  { label: 'Professionnels',        url: `${VITRINE}/legal/professionnels.html` },
+  { label: 'Mentions légales',              url: `${LEGAL}/mentions-legales/` },
+  { label: 'Confidentialité',               url: `${LEGAL}/confidentialite/` },
+  { label: 'CGU',                           url: `${LEGAL}/cgu/` },
+  { label: 'Conditions de vente',           url: `${LEGAL}/conditions-vente/` },
+  { label: 'Professionnels',                url: `${LEGAL}/professionnels/` },
+  { label: 'Litiges & Médiation',           url: `${LEGAL}/litiges-mediation/` },
+  { label: 'Tous les documents',            url: `${LEGAL}/` },
 ];
 const SOCIAL_LINKS: Link[] = [
   { label: 'LinkedIn',  url: 'https://linkedin.com/company/primeo-ci' },

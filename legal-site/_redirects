@@ -1,0 +1,15 @@
+# Clean URLs (folder → index.html handled automatically by Render static sites)
+# Fallback for 404
+/* /404.html 404
+
+# Redirect old vitrine legal URLs to legal site (if accessed directly)
+/legal/cgu /cgu/ 301
+/legal/confidentialite /confidentialite/ 301
+/legal/mentions-legales /mentions-legales/ 301
+/legal/conditions-vente /conditions-vente/ 301
+/legal/professionnels /professionnels/ 301
+/legal/cgu.html /cgu/ 301
+/legal/confidentialite.html /confidentialite/ 301
+/legal/mentions-legales.html /mentions-legales/ 301
+/legal/conditions-vente.html /conditions-vente/ 301
+/legal/professionnels.html /professionnels/ 301
