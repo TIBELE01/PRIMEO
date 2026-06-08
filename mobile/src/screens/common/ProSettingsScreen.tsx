@@ -216,7 +216,7 @@ export default function ProSettingsScreen() {
               if (navigation.getState().routeNames?.includes('LegalLinks')) {
                 navigation.navigate('LegalLinks');
               } else {
-                Linking.openURL('https://primeo-vitrine.onrender.com/legal/cgu.html').catch(() => null);
+                Linking.openURL('https://legal.primeo.ci/cgu/').catch(() => null);
               }
             }}
           />

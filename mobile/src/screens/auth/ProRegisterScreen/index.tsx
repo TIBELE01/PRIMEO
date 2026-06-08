@@ -242,7 +242,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   onPress={e => {
                     // Empêche le toggle de la checkbox lors du clic sur le lien
                     e.stopPropagation?.();
-                    Linking.openURL('https://primeo-vitrine.onrender.com/legal/cgu.html');
+                    Linking.openURL('https://legal.primeo.ci/cgu/');
                   }}
                   accessibilityRole="link"
                 >
@@ -253,7 +253,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   style={step1Styles.cguLink}
                   onPress={e => {
                     e.stopPropagation?.();
-                    Linking.openURL('https://primeo-vitrine.onrender.com/legal/confidentialite.html');
+                    Linking.openURL('https://legal.primeo.ci/confidentialite/');
                   }}
                   accessibilityRole="link"
                 >
@@ -264,7 +264,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   style={step1Styles.cguLink}
                   onPress={e => {
                     e.stopPropagation?.();
-                    Linking.openURL('https://primeo-vitrine.onrender.com/legal/professionnels.html');
+                    Linking.openURL('https://legal.primeo.ci/professionnels/');
                   }}
                   accessibilityRole="link"
                 >

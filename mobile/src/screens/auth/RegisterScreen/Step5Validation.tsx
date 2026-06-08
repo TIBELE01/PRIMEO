@@ -189,7 +189,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
             J'accepte les{' '}
             <Text
               style={s.cguLink}
-              onPress={() => Linking.openURL('https://primeo-vitrine.onrender.com/legal/cgu.html')}
+              onPress={() => Linking.openURL('https://legal.primeo.ci/cgu/')}
               accessibilityRole="link"
             >
               Conditions Générales d'Utilisation
@@ -197,7 +197,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
             {' '}et la{' '}
             <Text
               style={s.cguLink}
-              onPress={() => Linking.openURL('https://primeo-vitrine.onrender.com/legal/confidentialite.html')}
+              onPress={() => Linking.openURL('https://legal.primeo.ci/confidentialite/')}
               accessibilityRole="link"
             >
               Politique de Confidentialité
