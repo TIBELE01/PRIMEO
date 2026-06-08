@@ -17,6 +17,10 @@
     if (banner) banner.style.display = 'none';
   };
 
+  // Alias utilisés par les boutons du footer commun.
+  window.acceptCookies  = function () { window.hideCookieBanner(true); };
+  window.declineCookies = function () { window.hideCookieBanner(false); };
+
   if (banner) {
     var consent = getCookie(COOKIE_KEY);
     if (consent) {
