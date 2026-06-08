@@ -21,6 +21,12 @@
   window.acceptCookies  = function () { window.hideCookieBanner(true); };
   window.declineCookies = function () { window.hideCookieBanner(false); };
 
+  // Réinitialise le consentement et réaffiche le bandeau (page /cookies/).
+  window.resetCookieConsent = function () {
+    document.cookie = COOKIE_KEY + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    if (banner) banner.style.display = 'flex';
+  };
+
   if (banner) {
     var consent = getCookie(COOKIE_KEY);
     if (consent) {

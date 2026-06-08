@@ -13,6 +13,12 @@
   <url><loc>https://legal.primeo.ci/reglement-interieur/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://legal.primeo.ci/signalement/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://legal.primeo.ci/disclaimer/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/cookies/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/lutte-anti-blanchiment/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/protection-consommateur/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/protection-mineurs/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/securite/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/accessibilite/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://legal.primeo.ci/conditions-api/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://legal.primeo.ci/parrainage/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://legal.primeo.ci/jeux-concours/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
