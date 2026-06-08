@@ -2,7 +2,7 @@
 import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, Dimensions, StatusBar,
+  SafeAreaView, Dimensions, StatusBar, Image,
 } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LottieView = require('lottie-react-native').default as React.ComponentType<{
@@ -30,13 +30,8 @@ export function WelcomeScreen({ navigation }: Props) {
       <SafeAreaView style={s.safe}>
         {/* ── Top brand area ── */}
         <View style={s.brandArea}>
-          {/* Logo mark */}
-          <View style={s.logoMark}>
-            <Text style={s.logoMarkText}>P</Text>
-          </View>
-
-          {/* Brand name */}
-          <Text style={s.brandName}>PRIMEO</Text>
+          {/* Logo */}
+          <Image source={require('../../../assets/logo.png')} style={s.logoImg} />
 
           {/* Tagline */}
           <View style={s.taglineWrap}>
@@ -130,21 +125,14 @@ const s = StyleSheet.create({
   brandArea: {
     alignItems: 'center', paddingTop: 24, gap: 6,
   },
-  logoMark: {
-    width: 52, height: 52, borderRadius: 16,
-    backgroundColor: BRAND_BLUE,
-    alignItems: 'center', justifyContent: 'center',
+  logoImg: {
+    width: 80, height: 80, borderRadius: 22,
     marginBottom: 10,
     shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.55,
     shadowRadius: 16,
     elevation: 10,
-  },
-  logoMarkText: { fontSize: 26, fontWeight: '900', color: '#FFFFFF' },
-  brandName: {
-    fontSize: 40, fontWeight: '900', color: '#FFFFFF',
-    letterSpacing: 5, lineHeight: 46,
   },
   taglineWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4,

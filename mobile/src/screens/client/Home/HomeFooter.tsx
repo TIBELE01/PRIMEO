@@ -2,7 +2,7 @@
 // PublicHomeScreen (visiteur). Source unique de vérité pour les liens vers le
 // site vitrine : toute mise à jour d'URL se fait ici, jamais en double.
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
 
 const VITRINE = 'https://primeo-vitrine.onrender.com';
 const LEGAL = 'https://legal.primeo.ci';
@@ -80,11 +80,8 @@ export function HomeFooter({ onBecomePro }: { onBecomePro?: () => void } = {}) {
       </TouchableOpacity>
 
       <View style={s.footerBrand}>
-        <View style={s.footerLogoBox}><Text style={s.footerLogoLetter}>P</Text></View>
-        <View style={s.footerBrandText}>
-          <Text style={s.footerBrandName}>PRIMEO</Text>
-          <Text style={s.footerBrandSub}>Hébergement · Côte d'Ivoire</Text>
-        </View>
+        <Image source={require('../../../../assets/logo.png')} style={s.footerLogoImg} />
+        <Text style={s.footerBrandSub}>Hébergement · Côte d'Ivoire</Text>
       </View>
       <Text style={s.footerDesc}>
         La plateforme de réservation d'hébergement et de mise en relation pour voyageurs, hôteliers, restaurateurs et professionnels de l'immobilier en Côte d'Ivoire.
@@ -134,12 +131,9 @@ const s = StyleSheet.create({
   proCtaTitle:   { fontSize: 14, fontWeight: '800', color: '#fff' },
   proCtaDesc:    { fontSize: 12, color: 'rgba(255,255,255,0.62)' },
   proCtaArrow:   { fontSize: 20, color: 'rgba(255,255,255,0.50)', fontWeight: '700' },
-  footerBrand:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  footerLogoBox:    { width: 42, height: 42, borderRadius: 12, backgroundColor: '#1056E0', alignItems: 'center', justifyContent: 'center' },
-  footerLogoLetter: { fontSize: 20, fontWeight: '900', color: '#fff' },
-  footerBrandText:  { gap: 2 },
-  footerBrandName:  { fontSize: 18, fontWeight: '900', color: '#fff', letterSpacing: 1.5 },
-  footerBrandSub:   { fontSize: 11, color: 'rgba(255,255,255,0.55)' },
+  footerBrand:    { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  footerLogoImg:  { width: 42, height: 42, borderRadius: 12 },
+  footerBrandSub: { fontSize: 11, color: 'rgba(255,255,255,0.55)' },
   footerDesc:       { fontSize: 12.5, color: 'rgba(255,255,255,0.65)', lineHeight: 19, marginBottom: 4 },
   footerSep:        { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: 18 },
   footerColumns:    { flexDirection: 'row', gap: 16 },

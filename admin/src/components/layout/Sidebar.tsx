@@ -63,9 +63,10 @@ export function Sidebar() {
     <aside className={cn('flex flex-col bg-primary-900 text-white transition-all duration-300 shrink-0', sidebarCollapsed ? 'w-16' : 'w-64')}>
       <div className="flex items-center justify-between px-4 py-5 border-b border-primary-800">
         {!sidebarCollapsed && (
-          <div>
-            <span className="text-xl font-bold tracking-tight">PRIMEO</span>
-            <p className="text-xs text-primary-400 mt-0.5">Administration</p>
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Primeo" className="h-8 w-8 rounded-lg" />
+            <p className="text-xs text-primary-400">Administration</p>
           </div>
         )}
         <button onClick={toggleSidebar} className="text-primary-300 hover:text-white p-1 rounded">

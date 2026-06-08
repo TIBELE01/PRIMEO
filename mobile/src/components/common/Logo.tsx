@@ -1,17 +1,15 @@
-// Logo: app logotype with PRIMEO wordmark
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
-  color?: string;
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 'md', color = '#1056E0' }) => {
-  const fontSize = size === 'sm' ? 20 : size === 'lg' ? 40 : 30;
-  return <Text style={[styles.text, { fontSize, color }]}>PRIMEO</Text>;
+export const Logo: React.FC<LogoProps> = ({ size = 'md' }) => {
+  const dim = size === 'sm' ? 28 : size === 'lg' ? 56 : 40;
+  return <Image source={require('../../../assets/logo.png')} style={[styles.img, { width: dim, height: dim }]} />;
 };
 
 const styles = StyleSheet.create({
-  text: { fontWeight: '800', letterSpacing: 3 },
+  img: { borderRadius: 8 },
 });
