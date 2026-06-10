@@ -34,4 +34,11 @@ describe('Smoke test — démarrage de l\'API', () => {
     const res = await request(app).get('/api/cette-route-nexiste-pas');
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
+
+  it('GET /api-docs.json expose la spécification OpenAPI', async () => {
+    const res = await request(app).get('/api-docs.json');
+    expect(res.status).toBe(200);
+    expect(res.body.openapi).toMatch(/^3\./);
+    expect(res.body.info.title).toBe('Primeo API');
+  });
 });

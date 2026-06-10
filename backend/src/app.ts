@@ -11,6 +11,8 @@ import { applyRequestId } from './common/middleware/request-id.middleware';
 import { handleHttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
 import { env } from './config/env.config';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.config';
 
 // Module routers
 import { authRouter } from './modules/auth/auth.router';
@@ -69,6 +71,13 @@ export function createApp(): Application {
 
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+  });
+
+  // Documentation OpenAPI interactive (Swagger UI) — sans authentification
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'Primeo API — Docs' }));
+  // Spécification brute (utile pour la génération de clients)
+  app.get('/api-docs.json', (_req: Request, res: Response) => {
+    res.json(swaggerSpec);
   });
 
   // API routes

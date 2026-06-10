@@ -172,7 +172,7 @@ const DEFAULT_ABOUT_VALUES = [
 ];
 
 const DEFAULT_ABOUT_TEAM = [
-  { name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Ingénieur en énergie, 10 ans d'expérience dans le secteur électrique ivoirien.", sortOrder: 0 },
+  { name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Entrepreneur de l'immobilier, 10 ans d'expérience dans le logement et l'hospitalité en Côte d'Ivoire.", sortOrder: 0 },
   { name: 'Aïssatou Fall', role: 'CTO & Co-fondatrice', initials: 'AF', bio: 'Développeuse full-stack, ancienne ingénieure chez Orange CI.', sortOrder: 1 },
   { name: 'Moussa Yao', role: 'Directeur Commercial', initials: 'MY', bio: 'Spécialiste en développement des affaires B2B et partenariats stratégiques.', sortOrder: 2 },
   { name: 'Sylvie Brou', role: 'Responsable Produit', initials: 'SB', bio: 'UX designer et chef de produit, passionnée par les interfaces inclusives.', sortOrder: 3 },
@@ -694,8 +694,8 @@ export const websiteService = {
 
   async getCareersPresentation() {
     return prisma.careersPresentation.findFirst() ?? {
-      title: "Construisons l'avenir énergétique ensemble",
-      intro1: "Chez Primeo, chaque ligne de code, chaque partenariat, chaque décision contribue à un objectif commun : rendre l'énergie accessible et maîtrisable pour tous.",
+      title: "Construisons l'avenir de l'immobilier ensemble",
+      intro1: "Chez Primeo, chaque ligne de code, chaque partenariat, chaque décision contribue à un objectif commun : rendre le logement et l'hospitalité accessibles et fiables pour tous les Ivoiriens.",
       intro2: "Rejoindre Primeo, c'est intégrer une équipe soudée qui travaille sur des problématiques réelles, avec un impact direct sur le quotidien de milliers d'Ivoiriens.",
       intro3: null,
     };
@@ -961,14 +961,14 @@ export const websiteService = {
   async getAboutHistory() {
     return prisma.aboutHistory.findFirst() ?? {
       title: 'Notre histoire',
-      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent des outils modernes pour comprendre et maîtriser leur consommation d'énergie.\n\nFondée à Daloa en 2022 par des ingénieurs passionnés, Primeo s'est imposée comme la première plateforme de gestion énergétique adaptée aux réalités africaines — mobile-first, accessible, et connectée aux données réelles de la CIE.\n\nAujourd'hui présente dans 14 villes, nous continuons notre mission avec ambition : devenir la référence de la transition énergétique en Afrique subsaharienne.",
+      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2022 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
     };
   },
 
   async getAboutMission() {
     return prisma.aboutMission.findFirst() ?? {
       title: 'Notre mission',
-      content: "Rendre la gestion de l'énergie accessible, transparente et efficace pour tous les Ivoiriens, en leur donnant les outils pour maîtriser leur consommation et réduire leurs dépenses énergétiques.\n\nNous croyons qu'un accès clair à ses données d'énergie est un droit, pas un privilège.",
+      content: "Faciliter l'accès au logement et à l'hospitalité pour tous les Ivoiriens, en connectant clients et professionnels — résidences, hôtels, agences immobilières et restaurants — au sein d'une plateforme transparente, sécurisée et sans frais cachés.\n\nNous croyons qu'un accès simple et fiable à un logement de qualité est un droit, pas un privilège.",
     };
   },
 
@@ -987,7 +987,7 @@ export const websiteService = {
     const rows = await prisma.aboutTeam.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } });
     if (rows.length) return rows;
     return [
-      { id: 'd1', name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Ingénieur en énergie, 10 ans d'expérience dans le secteur électrique ivoirien.", photoUrl: null },
+      { id: 'd1', name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Entrepreneur de l'immobilier, 10 ans d'expérience dans le logement et l'hospitalité en Côte d'Ivoire.", photoUrl: null },
       { id: 'd2', name: 'Aïssatou Fall', role: 'CTO & Co-fondatrice', initials: 'AF', bio: 'Développeuse full-stack, ancienne ingénieure chez Orange CI.', photoUrl: null },
       { id: 'd3', name: 'Moussa Yao', role: 'Directeur Commercial', initials: 'MY', bio: 'Spécialiste en développement des affaires B2B et partenariats stratégiques.', photoUrl: null },
       { id: 'd4', name: 'Sylvie Brou', role: 'Responsable Produit', initials: 'SB', bio: 'UX designer et chef de produit, passionnée par les interfaces inclusives.', photoUrl: null },
@@ -1003,7 +1003,7 @@ export const websiteService = {
   async adminGetAboutHistory() {
     return prisma.aboutHistory.findFirst() ?? {
       title: 'Notre histoire',
-      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent des outils modernes pour comprendre et maîtriser leur consommation d'énergie.\n\nFondée à Daloa en 2022 par des ingénieurs passionnés, Primeo s'est imposée comme la première plateforme de gestion énergétique adaptée aux réalités africaines — mobile-first, accessible, et connectée aux données réelles de la CIE.\n\nAujourd'hui présente dans 14 villes, nous continuons notre mission avec ambition : devenir la référence de la transition énergétique en Afrique subsaharienne.",
+      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2022 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
     };
   },
 
@@ -1016,7 +1016,7 @@ export const websiteService = {
   async adminGetAboutMission() {
     return prisma.aboutMission.findFirst() ?? {
       title: 'Notre mission',
-      content: "Rendre la gestion de l'énergie accessible, transparente et efficace pour tous les Ivoiriens, en leur donnant les outils pour maîtriser leur consommation et réduire leurs dépenses énergétiques.\n\nNous croyons qu'un accès clair à ses données d'énergie est un droit, pas un privilège.",
+      content: "Faciliter l'accès au logement et à l'hospitalité pour tous les Ivoiriens, en connectant clients et professionnels — résidences, hôtels, agences immobilières et restaurants — au sein d'une plateforme transparente, sécurisée et sans frais cachés.\n\nNous croyons qu'un accès simple et fiable à un logement de qualité est un droit, pas un privilège.",
     };
   },
 

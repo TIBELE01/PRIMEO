@@ -1,3 +1,0 @@
-import React from 'react'; import { ScreenWrapper } from '../../components/layout/ScreenWrapper'; import { ScrollView, StyleSheet } from 'react-native'; import { StatsCard } from '../../components/dashboard/StatsCard';
-export default function RestaurantStatisticsScreen() { return (<ScreenWrapper><ScrollView contentContainerStyle={styles.c}><StatsCard title="Statistiques restaurant" stats={[{ label: 'Réservations totales', value: '0' }, { label: 'Revenus', value: '0 XOF' }, { label: 'Note moyenne', value: '0/5' }]} /></ScrollView></ScreenWrapper>); }
-const styles = StyleSheet.create({ c: { padding: 16 } });
