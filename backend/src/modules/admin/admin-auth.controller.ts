@@ -4,7 +4,6 @@ import { prisma } from '../../database/prisma.service';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 import { redisSet, redisDel, redisGet } from '../../common/utils/redis-client';
 import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
-import { comparePassword } from '../../common/utils/bcrypt';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
 import { AccountType, UserStatus } from '@prisma/client';
@@ -16,88 +15,14 @@ function adminProfile(user: { id: string; email: string; firstName: string; last
   return { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.accountType };
 }
 
-// Auto-provision: create Supabase user for an admin that only exists in Prisma (legacy seed)
-async function provisionSupabaseAdmin(email: string, password: string): Promise<string | null> {
-  try {
-    // Check if already in Supabase (different error path)
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existing?.users?.find(u => u.email === email);
-    if (existingUser) {
-      // Update password and ensure role is set
-      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-        password,
-        app_metadata: { role: 'admin' },
-      });
-      return existingUser.id;
-    }
-
-    // Create new Supabase user
-    const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      app_metadata: { role: 'admin' },
-    });
-
-    if (createError || !createData.user) {
-      logger.error('provisionSupabaseAdmin createUser failed', { error: createError?.message });
-      return null;
-    }
-
-    return createData.user.id;
-  } catch (err) {
-    logger.error('provisionSupabaseAdmin unexpected error', { error: (err as Error).message });
-    return null;
-  }
-}
-
 export async function adminLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { email, password } = req.body as { email: string; password: string };
 
-    type SignInData = Awaited<ReturnType<typeof supabaseAuth.auth.signInWithPassword>>['data'];
-    let signInData: SignInData = null as unknown as SignInData;
+    const { data: signInData, error: signInError } = await supabaseAuth.auth.signInWithPassword({ email, password });
 
-    const { data, error: signInError } = await supabaseAuth.auth.signInWithPassword({ email, password });
-
-    if (signInError || !data.session || !data.user) {
-      // Supabase doesn't know this user — check if it's a legacy Prisma-only admin
-      const prismaAdmin = await prisma.user.findUnique({ where: { email } });
-      if (!prismaAdmin || prismaAdmin.accountType !== AccountType.admin) {
-        return next(new HttpError(401, 'Identifiants incorrects'));
-      }
-
-      // Validate password against Prisma hash (legacy)
-      const validHash = prismaAdmin.passwordHash !== 'supabase_managed'
-        && await comparePassword(password, prismaAdmin.passwordHash);
-      if (!validHash) {
-        return next(new HttpError(401, 'Identifiants incorrects'));
-      }
-
-      // First-time Supabase provisioning for this legacy admin
-      const supabaseId = await provisionSupabaseAdmin(email, password);
-      if (!supabaseId) {
-        return next(new HttpError(500, 'Erreur provisionnement du compte administrateur. Contactez le support.'));
-      }
-
-      // Sync Prisma record: update ID to Supabase UUID if different
-      if (prismaAdmin.id !== supabaseId) {
-        try {
-          await prisma.$executeRaw`UPDATE "users" SET id = ${supabaseId} WHERE email = ${email}`;
-          logger.info('Admin Prisma ID migrated to Supabase UUID', { oldId: prismaAdmin.id, newId: supabaseId });
-        } catch (err) {
-          logger.warn('Admin Prisma ID migration failed (may already be synced)', { error: (err as Error).message });
-        }
-      }
-
-      // Now sign in with Supabase
-      const { data: retryData, error: retryError } = await supabaseAuth.auth.signInWithPassword({ email, password });
-      if (retryError || !retryData.session || !retryData.user) {
-        return next(new HttpError(500, 'Erreur de connexion après provisionnement. Réessayez.'));
-      }
-      signInData = retryData;
-    } else {
-      signInData = data;
+    if (signInError || !signInData.session || !signInData.user) {
+      return next(new HttpError(401, 'Identifiants incorrects'));
     }
 
     // Vérification du rôle admin
@@ -107,28 +32,25 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
       return next(new HttpError(403, 'Accès réservé aux administrateurs'));
     }
 
-    const user = await prisma.user.findFirst({ where: { email: signInData.user.email! } });
+    let user = await prisma.user.findFirst({ where: { email: signInData.user.email! } });
     if (!user) {
       // Edge case: Supabase user exists but Prisma doesn't — create it
-      await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
       await prisma.user.create({
         data: {
           id: signInData.user.id,
           email: email,
-          phone: '+2250000000000',
-          passwordHash: 'supabase_managed',
+          phone: null,
           firstName: 'Super',
           lastName: 'Admin',
           accountType: AccountType.admin,
           status: UserStatus.active,
         },
       }).catch(() => null);
-      const freshUser = await prisma.user.findFirst({ where: { email } });
-      if (!freshUser) {
+      user = await prisma.user.findFirst({ where: { email } });
+      if (!user) {
         await supabaseAdmin.auth.admin.signOut(signInData.session.access_token).catch(() => null);
         return next(new HttpError(401, 'Compte introuvable'));
       }
-      return continueLogin(signInData, freshUser, res, next);
     }
 
     return continueLogin(signInData, user, res, next);
@@ -139,12 +61,16 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
 
 async function continueLogin(
   signInData: { session: { access_token: string; refresh_token: string }; user: { id: string; app_metadata?: Record<string, unknown> } },
-  user: { id: string; email: string; firstName: string; lastName: string; accountType: string; twoFactorEnabled: boolean; twoFactorSecret: string | null },
+  user: { id: string; email: string; firstName: string; lastName: string; accountType: string },
   res: Response,
   _next: NextFunction,
 ): Promise<void> {
-  // TOTP si activé
-  if (user.twoFactorEnabled && user.twoFactorSecret) {
+  // Lire les données 2FA depuis Supabase user_metadata
+  const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
+  const twoFactorEnabled = sbUser?.user_metadata?.twoFactorEnabled as boolean | undefined;
+  const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
+
+  if (twoFactorEnabled && twoFactorSecret) {
     await redisSet(
       TOTP_PENDING_KEY(user.id),
       JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token }),
@@ -168,10 +94,15 @@ export async function adminVerifyTotp(req: Request, res: Response, next: NextFun
 
     const { supabaseRefreshToken } = JSON.parse(pendingRaw) as { supabaseRefreshToken: string };
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.twoFactorSecret) return next(new HttpError(400, 'Utilisateur introuvable'));
+    // Lire le secret TOTP depuis Supabase user_metadata
+    const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const twoFactorSecret = sbUser?.user_metadata?.twoFactorSecret as string | undefined;
+    if (!twoFactorSecret) return next(new HttpError(400, 'Utilisateur introuvable'));
 
-    const isValid = verifyTotpCode(user.twoFactorSecret, token);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return next(new HttpError(400, 'Utilisateur introuvable'));
+
+    const isValid = verifyTotpCode(twoFactorSecret, token);
     if (!isValid) return next(new HttpError(401, 'Code TOTP incorrect ou expiré'));
 
     await redisDel(TOTP_PENDING_KEY(userId));

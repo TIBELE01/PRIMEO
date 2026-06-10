@@ -22,12 +22,42 @@ import { apiClient } from './src/services/api/client';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 // Deep-link mapping
+// Supabase password-reset redirects to primeo://reset-password#access_token=xxx&type=recovery
+// React Navigation strips the fragment, so we parse it manually in the transformer.
 const linking = {
   prefixes: ['primeo://'],
   config: {
     screens: {
-      ResetPassword: { path: 'reset-password', parse: { token: (t: string) => t } },
+      ResetPassword: {
+        path: 'reset-password',
+        parse: {
+          recoveryToken: (_: string) => {
+            // The real token lives in the URL fragment (?access_token= or #access_token=).
+            // React Navigation gives us the path-level params here, but the fragment
+            // is handled by the getStateFromPath transformer below.
+            return '';
+          },
+        },
+      },
     },
+  },
+  getStateFromPath(path: string, options?: object) {
+    // Supabase appends tokens in the fragment: reset-password#access_token=xxx&type=recovery
+    const [pathPart, fragment] = path.split('#');
+    const params = new URLSearchParams(fragment ?? '');
+    const accessToken = params.get('access_token');
+    const type = params.get('type');
+
+    if (pathPart.replace(/^\//, '') === 'reset-password' && accessToken && type === 'recovery') {
+      return {
+        routes: [{ name: 'ResetPassword', params: { recoveryToken: accessToken } }],
+      };
+    }
+
+    // Fallback to default React Navigation linking handler
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getStateFromPath: defaultParser } = require('@react-navigation/native');
+    return defaultParser(path, options);
   },
 };
 

@@ -1,8 +1,7 @@
-// bcrypt password hashing utilities — cost factor from BCRYPT_SALT env var
+// bcrypt password hashing utilities — no longer used for auth (Supabase Auth manages passwords)
 import * as bcrypt from 'bcrypt';
-import { env } from '../../config/env.config';
 
-const SALT_ROUNDS = env.BCRYPT_SALT;
+const SALT_ROUNDS = 12;
 
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, SALT_ROUNDS);

@@ -35,13 +35,6 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
-  // JWT
-  JWT_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32).optional(),
-  JWT_EXPIRE: z.string().default('15m'),
-  JWT_REFRESH_EXPIRE: z.string().default('7d'),
-  BCRYPT_SALT: z.coerce.number().int().min(4).max(20).default(12),
-
   // Admin seed
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().optional(),

@@ -1,7 +1,5 @@
 // Auth service — inscription, vérification OTP, connexion, TOTP, rotation de tokens (Supabase Auth)
-import * as crypto from 'crypto';
 import { prisma } from '../../database/prisma.service';
-import { hashPassword } from '../../common/utils/bcrypt';
 import { generateOtp, sendSms } from '../../common/utils/sms';
 import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
 import { redisSet, redisGet, redisDel } from '../../common/utils/redis-client';
@@ -24,7 +22,6 @@ import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 // ─── Redis key helpers ────────────────────────────────────────────────────────
 
 const OTP_TTL          = orangeSmsConfig.otpExpiresInSeconds; // 300 s = 5 min
-const RESET_TTL_MS     = 30 * 60 * 1000;                     // 30 min
 const TOTP_PENDING_TTL = 300;                                 // 5 min
 
 const OTP_KEY          = (phone: string)  => `otp:${phone}`;
@@ -48,8 +45,7 @@ const isOtpBypassEnabled = (): boolean =>
 interface PendingUser {
   email: string;
   phone: string;
-  password: string;     // raw — needed for Supabase user creation
-  passwordHash: string; // bcrypt hash stored in Prisma (legacy field)
+  password: string; // raw — needed for Supabase user creation after OTP
   firstName: string;
   lastName: string;
   accountType: AccountType;
@@ -88,14 +84,12 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
   }
 
   const supabaseUserId = createData.user.id;
-  const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.user.create({
     data: {
       id: supabaseUserId,
       email: input.email,
       phone: input.phone,
-      passwordHash: 'supabase_managed',
       firstName: input.firstName,
       lastName: input.lastName,
       accountType: input.accountType as AccountType,
@@ -138,7 +132,6 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
       logger.warn('Erreur création parrainage (bypass)', { error: (err as Error).message });
     }
   }
-  void passwordHash; // hash calculé mais non utilisé (Supabase gère les mots de passe)
 
   const { data: signInData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
     email: input.email,
@@ -213,13 +206,10 @@ export const authService = {
     }
 
     // ── Normal mode: store pending data + send OTP via SMS ──────────────────────
-    const passwordHash = await hashPassword(input.password);
-
     const pending: PendingUser = {
       email: input.email,
       phone: input.phone,
       password: input.password,
-      passwordHash,
       firstName: input.firstName,
       lastName: input.lastName,
       accountType: input.accountType as AccountType,
@@ -302,7 +292,6 @@ export const authService = {
         id: supabaseUserId,
         email: pending.email,
         phone: pending.phone,
-        passwordHash: 'supabase_managed',
         firstName: pending.firstName,
         lastName: pending.lastName,
         accountType: pending.accountType,
@@ -438,7 +427,11 @@ export const authService = {
     }
 
     // TOTP obligatoire si activé — stocker le refresh token Supabase en Redis
-    if (user.twoFactorEnabled && user.twoFactorSecret) {
+    const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
+    const twoFactorEnabled = sbUser?.user_metadata?.twoFactorEnabled as boolean | undefined;
+    const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
+
+    if (twoFactorEnabled && twoFactorSecret) {
       await redisSet(
         TOTP_PENDING_KEY(user.id),
         JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token }),
@@ -522,7 +515,6 @@ export const authService = {
           id: sbUser.id,
           email: sbUser.email.toLowerCase(),
           phone: null, // pas de numéro : compte Google, aucune vérification OTP requise
-          passwordHash: 'supabase_managed',
           firstName: firstName || 'Client',
           lastName: rest.join(' ') || 'Primeo',
           avatarUrl,
@@ -560,12 +552,14 @@ export const authService = {
 
     const { supabaseRefreshToken } = JSON.parse(pendingRaw) as { supabaseRefreshToken: string };
 
-    const user = await prisma.user.findUnique({ where: { id: input.userId } });
-    if (!user || !user.twoFactorSecret) {
-      throw new HttpError(400, 'Utilisateur introuvable');
+    // Lire le secret TOTP depuis Supabase user_metadata
+    const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(input.userId);
+    const twoFactorSecret = sbUser?.user_metadata?.twoFactorSecret as string | undefined;
+    if (!twoFactorSecret) {
+      throw new HttpError(400, 'Utilisateur introuvable ou 2FA non configuré');
     }
 
-    const isValid = verifyTotpCode(user.twoFactorSecret, input.token);
+    const isValid = verifyTotpCode(twoFactorSecret, input.token);
     if (!isValid) {
       throw new HttpError(401, 'Code TOTP incorrect ou expiré');
     }
@@ -580,6 +574,9 @@ export const authService = {
     if (refreshError || !refreshData.session) {
       throw new HttpError(401, 'Session expirée. Reconnectez-vous.');
     }
+
+    const user = await prisma.user.findUnique({ where: { id: input.userId } });
+    if (!user) throw new HttpError(400, 'Utilisateur introuvable');
 
     return {
       accessToken: refreshData.session.access_token,
@@ -630,31 +627,33 @@ export const authService = {
   },
 
   // ── Mot de passe oublié ──────────────────────────────────────────────────────
+  // Génère un lien de récupération via Supabase Auth et l'envoie via Brevo.
 
   async forgotPassword(email: string): Promise<void> {
     const user = await prisma.user.findUnique({ where: { email } });
-
     if (!user) {
       logger.debug('forgotPassword: email non trouvé (réponse générique)', { email });
       return;
     }
 
-    const rawToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + RESET_TTL_MS);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { resetToken: rawToken, resetTokenExpiresAt: expiresAt },
+    const redirectTo = `${env.FRONTEND_URL ?? env.PUBLIC_URL}/reset-password`;
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo },
     });
 
-    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+    if (linkError || !linkData?.properties?.action_link) {
+      logger.error('forgotPassword: erreur génération lien Supabase', { email, error: linkError?.message });
+      throw new HttpError(500, 'Erreur lors de l\'envoi du lien de réinitialisation');
+    }
 
     try {
       await sendPasswordResetEmail({
         to: [{ email: user.email, name: `${user.firstName} ${user.lastName}` }],
         firstName: user.firstName,
-        resetUrl,
-        expiresInMinutes: 30,
+        resetUrl: linkData.properties.action_link,
+        expiresInMinutes: 60,
       });
     } catch (err) {
       logger.error('Échec envoi email de réinitialisation', {
@@ -665,33 +664,24 @@ export const authService = {
   },
 
   // ── Réinitialisation du mot de passe ────────────────────────────────────────
+  // Accepte le recovery token Supabase extrait du fragment de l'URL de redirection.
 
   async resetPassword(input: ResetPasswordInput): Promise<void> {
-    const user = await prisma.user.findFirst({ where: { resetToken: input.token } });
-
-    if (!user || !user.resetTokenExpiresAt) {
-      throw new HttpError(400, 'Lien de réinitialisation invalide');
+    // Valider le recovery token via Supabase
+    const { data: { user: sbUser }, error: getUserError } = await supabaseAdmin.auth.getUser(input.recoveryToken);
+    if (getUserError || !sbUser) {
+      throw new HttpError(400, 'Lien de réinitialisation invalide ou expiré');
     }
 
-    if (user.resetTokenExpiresAt < new Date()) {
-      throw new HttpError(400, 'Lien de réinitialisation expiré. Faites une nouvelle demande.');
-    }
-
-    // Mettre à jour le mot de passe dans Supabase Auth
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(sbUser.id, {
       password: input.password,
     });
 
     if (updateError) {
-      logger.error('Erreur maj mot de passe Supabase', { userId: user.id, error: updateError.message });
+      logger.error('Erreur maj mot de passe Supabase', { userId: sbUser.id, error: updateError.message });
       throw new HttpError(500, 'Erreur lors de la réinitialisation du mot de passe');
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { resetToken: null, resetTokenExpiresAt: null },
-    });
-
-    logger.info('Mot de passe réinitialisé', { userId: user.id });
+    logger.info('Mot de passe réinitialisé', { userId: sbUser.id });
   },
 };

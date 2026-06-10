@@ -1,12 +1,11 @@
 // Users service — gestion complète du profil, désactivation, suppression
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { hashPassword, comparePassword } from '../../common/utils/bcrypt';
 import { generateTotpSecret, generateTotpUri, generateQrCode, verifyTotp } from '../../common/utils/totp';
 import { sendEmail } from '../../common/utils/mailer';
 import { logger } from '../../common/utils/logger';
 import { UpdateProfileInput, ChangePasswordInput, DeactivateInput, DeleteAccountInput } from './dto/users.dto';
-import { supabaseAdmin } from '../../config/supabase.config';
+import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 
 // ── Aide audit log ─────────────────────────────────────────────────────────────
 
@@ -52,8 +51,7 @@ export const usersService = {
       },
     });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-    const { passwordHash, twoFactorSecret, resetToken, otpCode, ...safe } = user;
-    return safe;
+    return user;
   },
 
   // ── Mise à jour du profil ─────────────────────────────────────────────────
@@ -96,11 +94,10 @@ export const usersService = {
 
     await writeAudit(id, 'user.profile_updated', { fields: Object.keys(userFields).concat(Object.keys(proFields)) });
 
-    const { passwordHash, twoFactorSecret, resetToken, otpCode, ...safe } = await prisma.user.findUnique({
+    return prisma.user.findUnique({
       where: { id },
       include: { professionalProfile: { include: { documents: true } } },
-    }) as any;
-    return safe;
+    });
   },
 
   // ── Changement de mot de passe ────────────────────────────────────────────
@@ -108,10 +105,23 @@ export const usersService = {
   async changePassword(id: string, input: ChangePasswordInput) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-    const valid = await comparePassword(input.currentPassword, user.passwordHash);
-    if (!valid) throw new HttpError(400, 'Mot de passe actuel incorrect');
-    const passwordHash = await hashPassword(input.newPassword);
-    await prisma.user.update({ where: { id }, data: { passwordHash } });
+
+    // Valider le mot de passe actuel via Supabase
+    const { error: signInError } = await supabaseAuth.auth.signInWithPassword({
+      email: user.email,
+      password: input.currentPassword,
+    });
+    if (signInError) throw new HttpError(400, 'Mot de passe actuel incorrect');
+
+    // Mettre à jour dans Supabase Auth
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(id, {
+      password: input.newPassword,
+    });
+    if (updateError) {
+      logger.error('changePassword: erreur Supabase', { userId: id, error: updateError.message });
+      throw new HttpError(500, 'Erreur lors de la mise à jour du mot de passe');
+    }
+
     await writeAudit(id, 'user.password_changed');
     // Email de confirmation
     sendEmail({
@@ -183,9 +193,12 @@ export const usersService = {
     });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
-    // Vérifier le mot de passe
-    const valid = await comparePassword(input.password, user.passwordHash);
-    if (!valid) throw new HttpError(400, 'Mot de passe incorrect');
+    // Valider le mot de passe via Supabase (les comptes Google sans mot de passe sont refusés ici)
+    const { error: signInError } = await supabaseAuth.auth.signInWithPassword({
+      email: user.email,
+      password: input.password,
+    });
+    if (signInError) throw new HttpError(400, 'Mot de passe incorrect');
 
     // Bloquer si réservations futures en cours
     if (user.clientBookings.length > 0) {
@@ -204,14 +217,11 @@ export const usersService = {
         phone:       `+2250000000000_${id.slice(0, 8)}`,
         firstName:   'Compte',
         lastName:    'Supprimé',
-        passwordHash:'[DELETED]',
         avatarUrl:   null,
         birthDate:   null,
         gender:      null,
         status:      'banned',
         onesignalPlayerId: null,
-        otpCode:     null,
-        resetToken:  null,
       } as any,
     });
 
@@ -233,29 +243,44 @@ export const usersService = {
     }).catch(() => null);
   },
 
-  // ── 2FA (TOTP) ─────────────────────────────────────────────────────────────
+  // ── 2FA (TOTP) — secrets stockés dans Supabase user_metadata ──────────────
 
   async setup2fa(userId: string): Promise<{ secret: string; qrCode: string }> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
+
     const secret = generateTotpSecret();
-    await prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+    // Stocker temporairement le secret (non encore confirmé) dans Supabase user_metadata
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { twoFactorSecret: secret, twoFactorEnabled: false },
+    });
+
     const uri = generateTotpUri(secret, user.email);
     const qrCode = await generateQrCode(uri);
     return { secret, qrCode };
   },
 
   async confirm2fa(userId: string, token: string): Promise<void> {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.twoFactorSecret) throw new HttpError(400, 'Configuration 2FA non initialisée. Appelez d\'abord /2fa/setup.');
-    if (!verifyTotp(user.twoFactorSecret, token)) throw new HttpError(400, 'Code TOTP incorrect ou expiré');
-    await prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
+    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (error || !sbUser) throw new HttpError(404, 'Utilisateur introuvable');
+
+    const secret = sbUser.user_metadata?.twoFactorSecret as string | undefined;
+    if (!secret) throw new HttpError(400, 'Configuration 2FA non initialisée. Appelez d\'abord /2fa/setup.');
+    if (!verifyTotp(secret, token)) throw new HttpError(400, 'Code TOTP incorrect ou expiré');
+
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: true },
+    });
   },
 
   async disable2fa(userId: string): Promise<void> {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-    if (!user.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
-    await prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: false, twoFactorSecret: null } });
+    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (error || !sbUser) throw new HttpError(404, 'Utilisateur introuvable');
+
+    if (!sbUser.user_metadata?.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
+
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
+    });
   },
 };

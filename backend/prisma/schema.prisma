@@ -236,7 +236,6 @@ model User {
   id           String    @id @default(cuid())
   email        String    @unique
   phone        String?   @unique // null pour les comptes créés via Google OAuth
-  passwordHash String
   firstName    String
   lastName     String
   birthDate    DateTime? @db.Date
@@ -257,18 +256,6 @@ model User {
   onesignalPlayerId       String?
   notificationPreferences Json?   // { email: bool, push: bool, sms: bool }
 
-  // Réinitialisation mot de passe (§3.1)
-  resetToken          String?
-  resetTokenExpiresAt DateTime?
-
-  // OTP inscription / vérification
-  otpCode      String?
-  otpExpiresAt DateTime?
-
-  // Double authentification TOTP
-  twoFactorEnabled Boolean @default(false)
-  twoFactorSecret  String? // base32 (speakeasy)
-
   // Note admin interne (§9.4)
   adminNotes String?
 
@@ -287,7 +274,6 @@ model User {
   sentMessages          Message[]            @relation("SentMessages")
   receivedMessages      Message[]            @relation("ReceivedMessages")
   notifications         Notification[]
-  refreshTokens         RefreshToken[]
   favorites             Favorite[]
   favoriteLists         FavoriteList[]
   clientDisputes        Dispute[]            @relation("DisputeOpener")
@@ -308,23 +294,6 @@ model User {
 
   @@index([accountType, status])
   @@map("users")
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §4.2 — JETONS DE RAFRAÎCHISSEMENT (table dédiée pour révocation)
-// ─────────────────────────────────────────────────────────────────────────────
-
-model RefreshToken {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  expiresAt DateTime
-  isRevoked Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@map("refresh_tokens")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

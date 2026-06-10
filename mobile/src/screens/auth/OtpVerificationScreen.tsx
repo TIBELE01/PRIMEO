@@ -72,7 +72,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
 
         setUser(data.user);
       } else {
-        navigation.navigate('ResetPassword', { token: code });
+        navigation.navigate('ResetPassword', { recoveryToken: code });
       }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string; message?: string } } };

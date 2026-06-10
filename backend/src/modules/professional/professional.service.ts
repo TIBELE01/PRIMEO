@@ -7,6 +7,7 @@ import { uploadToCloudinary } from '../../common/utils/s3-client';
 import { cloudinaryConfig } from '../../config/cloudinary.config';
 import { logger } from '../../common/utils/logger';
 import { SubmitKycInput } from './dto/professional.dto';
+import { supabaseAdmin } from '../../config/supabase.config';
 
 // Mapping nom de champ multipart → type de document KYC en base
 const KYC_DOCUMENT_FIELDS: Record<string, DocumentType> = {
@@ -152,8 +153,10 @@ export const professionalService = {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new HttpError(404, 'User not found');
 
-    // Store secret temporarily (not enabled until confirmed)
-    await prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+    // Store secret temporarily in Supabase user_metadata (not enabled until confirmed)
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { twoFactorSecret: secret, twoFactorEnabled: false },
+    });
 
     const uri = generateTotpUri(secret, user.email);
     const qrCode = await generateQrCode(uri);
@@ -161,19 +164,24 @@ export const professionalService = {
   },
 
   async confirmTotp(userId: string, token: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.twoFactorSecret) throw new HttpError(400, 'TOTP setup not started');
+    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (error || !sbUser) throw new HttpError(404, 'User not found');
 
-    const isValid = verifyTotp(user.twoFactorSecret, token);
+    const secret = sbUser.user_metadata?.twoFactorSecret as string | undefined;
+    if (!secret) throw new HttpError(400, 'TOTP setup not started');
+
+    const isValid = verifyTotp(secret, token);
     if (!isValid) throw new HttpError(400, 'Invalid TOTP token');
 
-    await prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: true },
+    });
   },
 
   async disableTotp(userId: string) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { twoFactorEnabled: false, twoFactorSecret: null },
+    const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...sbUser?.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
     });
   },
 };

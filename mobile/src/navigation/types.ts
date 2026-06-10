@@ -19,7 +19,7 @@ export type AuthStackParamList = {
     kycBusinessInfo?: { businessName: string; rccm?: string; taxId?: string; street?: string };
   };
   TwoFactor: { userId: string };
-  ResetPassword: { token: string };
+  ResetPassword: { recoveryToken: string };
 };
 
 // ─── Client Stack ─────────────────────────────────────────────────────────────

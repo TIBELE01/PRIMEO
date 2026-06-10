@@ -1,239 +1,146 @@
-# Authentification Primeo — Audit & Refonte (juin 2026)
+# Authentification Primeo — Architecture Supabase Auth Exclusive (juin 2026)
 
-> Document de référence : audit complet du système d'authentification
-> (Supabase Auth) et description des modifications apportées au flux **clients**
-> (suppression de l'OTP + connexion Google).
+> Document de référence : architecture d'authentification après migration complète
+> vers Supabase Auth. Plus aucun mécanisme legacy (JWT maison, bcrypt local,
+> tokens de réinitialisation en base, TOTP stocké en Prisma, table refresh_tokens).
 
 ---
 
-## 1. Rapport d'audit initial
+## 1. Architecture finale
 
-### 1.1 Architecture réelle constatée
+### 1.1 Vue d'ensemble
 
-| Couche | Implémentation | Supabase ? |
+| Couche | Implémentation | Supabase Auth ? |
 |---|---|---|
-| **Backend** (`backend/src/modules/auth`) | Express + Supabase Auth (création/connexion/refresh des sessions) + OTP SMS Orange + TOTP | ✅ Oui (sessions, mots de passe, JWT) |
-| **Mobile** (`mobile/src/screens/auth`, `src/store/authStore.ts`) | Appels REST vers le backend, tokens en SecureStore | Indirect (les tokens reçus sont des JWT Supabase) |
-| **Admin** (`admin/src/app/(auth)`) | Login email/mdp + TOTP via `/admin/auth/login`, token en cookie `SameSite=Strict` | Indirect |
+| **Backend** (`backend/src/modules/auth`) | Express + Supabase Auth exclusivement | ✅ Sessions, JWT, passwords, password reset, TOTP metadata |
+| **Mobile** (`mobile/src/screens/auth`, `src/store/authStore.ts`) | Appels REST backend, tokens en SecureStore | ✅ JWT Supabase |
+| **Admin** (`admin/src/app/(auth)`) | Login via `/admin/auth/login`, token en cookie | ✅ JWT Supabase |
 
-La migration Supabase est **effective côté backend** : `signInWithPassword`,
-`refreshSession`, `admin.createUser`, vérification des JWT via
-`supabaseAdmin.auth.getUser(token)` (middleware `jwt-auth.middleware.ts`).
-Le rôle est porté par `app_metadata.role` du JWT Supabase.
+### 1.2 Principes clés
 
-### 1.2 Points fonctionnels corrects
+- **Aucun mot de passe stocké localement** : Supabase Auth est la seule source
+  de vérité pour les credentials.
+- **Aucun JWT maison** : `JWT_SECRET`, `JWT_REFRESH_SECRET`, `BCRYPT_SALT`
+  supprimés de l'environnement. Les JWT sont émis et vérifiés par Supabase.
+- **Rôles via `app_metadata.role`** : le middleware lit le rôle directement
+  depuis le JWT Supabase (`supabaseAdmin.auth.getUser(token)`).
+- **TOTP stocké dans `user_metadata` Supabase** : `twoFactorEnabled` et
+  `twoFactorSecret` sont dans `user_metadata` du user Supabase, plus dans Prisma.
+- **Réinitialisation de mot de passe** : Supabase `admin.generateLink({ type: 'recovery' })`
+  génère un lien sécurisé envoyé via Brevo. Le mobile parse le `access_token`
+  du deep link `primeo://reset-password#access_token=xxx&type=recovery`.
 
-- **Inscription** : validation Zod stricte (email, téléphone ivoirien
-  `+2250XXXXXXXXX`, mot de passe 8+ caractères avec majuscule/minuscule/chiffre),
-  unicité email + téléphone vérifiée en base avant tout envoi de SMS.
-- **OTP** : code 6 chiffres généré par `crypto.randomInt`, TTL 5 min, stocké
-  dans Upstash Redis avec repli mémoire ; envoi via Orange SMS (OAuth2) ;
-  le bypass `SKIP_OTP_VERIFICATION` est doublement neutralisé en production.
-- **Connexion** : identifiants validés par Supabase ; contrôles applicatifs
-  (statut `suspended`/`banned`) après l'authentification, avec révocation
-  immédiate de la session Supabase en cas de refus.
-- **TOTP (2FA)** : RFC 6238 (OTPAuth), fenêtre de 5 min pour saisir le code,
-  refresh token mis en attente dans Redis pendant la vérification.
-- **Rotation de tokens** : `POST /auth/refresh` via `refreshSession` Supabase ;
-  le mobile gère le refresh silencieux au démarrage et la file d'attente des 401.
-- **Rate limiting** : 5 tentatives échouées / 15 min / IP sur tous les
-  endpoints sensibles (`authRateLimit`).
-- **Réinitialisation de mot de passe** : token 256 bits, TTL 30 min, réponse
-  générique (pas de divulgation d'existence d'email), mise à jour via
-  `admin.updateUserById`.
-- **Mobile** : tokens dans SecureStore (chiffré), profil dans AsyncStorage,
-  hydratation silencieuse au démarrage, déconnexion non bloquante.
-- **Admin** : token en cookie `SameSite=Strict` + `Secure`, expiration de
-  session 8 h avec suivi d'activité, TOTP, en-têtes de sécurité Next.js.
-- **KYC professionnels** : profil `ProfessionalProfile` créé dès l'inscription
-  (`verificationStatus: pending`), endpoints admin d'approbation/rejet avec
-  motif, écran mobile `PendingValidationScreen` qui reflète le statut.
+---
 
-### 1.3 Anomalies détectées
+## 2. Flux par type de compte
 
-1. **Secrets de production exposés dans le dépôt** (`backend/.env`,
-   `render.yaml`) : clé service_role Supabase, URL base de données avec mot de
-   passe, identifiants Orange SMS, Brevo, Genius Pay, et identifiants admin.
-   → **À faire impérativement : faire tourner (rotate) toutes ces clés.**
-2. **Incohérence rôle/middleware** : si `app_metadata.role` est absent, le
-   middleware JWT retombe sur `client` au lieu de refuser ; le rôle Prisma
-   (`accountType`) n'est jamais recoupé avec le rôle Supabase.
-3. **KYC non bloquant** : un professionnel `pending`/`rejected` peut appeler
-   les routes pro — le statut est purement informatif, aucune vérification
-   dans les middlewares d'autorisation.
-4. **Table `RefreshToken` morte** : définie dans Prisma mais jamais alimentée ;
-   aucune liste de révocation applicative (la révocation repose sur Supabase).
-5. **Secrets JWT inutilisés** : `JWT_SECRET`/`JWT_REFRESH_SECRET` sont validés
-   dans `env.config` mais ne servent plus à rien (tout est délégué à Supabase).
-6. **OTP dans les logs** : le contenu du SMS (donc le code) est enregistré dans
-   `sms_logs` ; pas de hachage du code stocké dans Redis.
-7. **Pas de backoff sur la vérification OTP/TOTP** : seule la limite IP
-   s'applique ; pas de compteur d'échecs par téléphone/utilisateur.
-8. **Token de réinitialisation stocké en clair** dans Prisma (non haché).
-9. **Refresh token en clair dans Redis** pendant la fenêtre TOTP (5 min).
-10. **Repli OTP en mémoire par processus** : état perdu au redéploiement,
-    incompatible multi-instances.
-11. **Admin** : protection des routes uniquement côté client (pas de
-    `middleware.ts` Next), fallback de rôle laxiste dans la Sidebar
-    (`super_admin` par défaut), pas de token CSRF explicite.
-12. **Auto-provisioning admin hérité** : un admin Prisma sans compte Supabase
-    est migré automatiquement à la première connexion — chemin de connexion
-    alternatif à surveiller.
+### 2.1 Clients
 
-### 1.4 Risques (par criticité)
-
-| Criticité | Risque |
+| Action | Flux |
 |---|---|
-| **Critique** | Secrets exposés dans le dépôt → compromission totale (DB, Supabase service_role = contrôle des comptes, rôle admin modifiable). |
-| **Élevé** | KYC non appliqué → un pro rejeté peut continuer à opérer. |
-| **Élevé** | Pas de recoupement rôle Supabase ↔ Prisma → une corruption de `app_metadata` change les droits effectifs. |
-| **Moyen** | Brute-force OTP/TOTP partiellement couvert (uniquement par IP). |
-| **Moyen** | Tokens de reset / refresh stockés en clair (DB / Redis). |
-| **Faible** | Code mort (RefreshToken, secrets JWT) → confusion et fausse impression de sécurité. |
+| **Inscription email** | Formulaire → `POST /auth/register` → compte créé + session immédiate (sans OTP) |
+| **Inscription Google** | OAuth Supabase → deep link `primeo://auth-callback` → `POST /auth/google` |
+| **Connexion email** | `POST /auth/login` → `signInWithPassword` → tokens |
+| **Connexion Google** | OAuth Supabase → `POST /auth/google` |
+| **Mot de passe oublié** | `POST /auth/forgot-password` → `generateLink` → email Brevo |
+| **Réinitialisation** | Deep link `primeo://reset-password#access_token=xxx` → `POST /auth/reset-password` avec `recoveryToken` |
+| **2FA (TOTP)** | Setup: `user_metadata.twoFactorSecret` ; vérification: `POST /auth/verify-totp` |
+
+### 2.2 Professionnels
+
+| Action | Flux |
+|---|---|
+| **Inscription** | Formulaire → `POST /auth/register` → SMS OTP via Orange → `POST /auth/verify-phone` → compte créé |
+| **Connexion** | `POST /auth/login` → `signInWithPassword` → tokens (+ TOTP si activé) |
+| **KYC** | Documents soumis → admin approuve/rejette → statut `verificationStatus` mis à jour |
+
+### 2.3 Admins
+
+| Action | Flux |
+|---|---|
+| **Connexion** | `POST /admin/auth/login` → `signInWithPassword` Supabase → token cookie |
+| **2FA** | Identique au flux utilisateur (TOTP via `user_metadata` Supabase) |
 
 ---
 
-## 2. Modifications implémentées (clients uniquement)
+## 3. Schéma Prisma
 
-### 2.1 Inscription client sans OTP
+Les champs suivants ont été supprimés de la table `users` :
 
-- `backend/src/modules/auth/auth.service.ts` — `register()` : si
-  `accountType === 'client'`, le compte Supabase + la ligne `users` sont créés
-  **immédiatement** et une session est ouverte (`signInWithPassword`). La
-  réponse contient `accessToken`, `refreshToken` et `user` → l'app mobile
-  authentifie directement (ce chemin de réponse était déjà géré par
-  `Step5Validation.tsx`, aucun écran OTP n'est affiché).
-- **Professionnels inchangés** : `pending user` en Redis → SMS OTP →
-  `POST /auth/verify-phone` → création du compte (statut `pending`) →
-  validation admin (KYC). Les endpoints `/auth/verify-phone` et
-  `/auth/resend-otp` restent en place pour eux.
+| Champ supprimé | Raison |
+|---|---|
+| `passwordHash` | Supabase Auth gère les mots de passe |
+| `resetToken` / `resetTokenExpiresAt` | Remplacé par Supabase `generateLink` |
+| `otpCode` / `otpExpiresAt` | L'OTP était déjà stocké dans Redis |
+| `twoFactorEnabled` / `twoFactorSecret` | Migré dans `user_metadata` Supabase |
 
-### 2.2 Connexion / inscription Google (Supabase OAuth 2.0)
-
-**Nouveau endpoint** : `POST /api/auth/google` (`{ accessToken, refreshToken }`).
-
-Flux complet :
-1. L'app ouvre `https://<projet>.supabase.co/auth/v1/authorize?provider=google&redirect_to=<deep link>`
-   (`mobile/src/services/googleAuth.ts`, via `expo-web-browser`).
-2. Supabase exécute l'OAuth Google puis redirige vers
-   `primeo://auth-callback` (natif) ou l'origine web, avec
-   `#access_token=…&refresh_token=…` dans le fragment.
-3. L'app appelle `POST /api/auth/google` ; le backend :
-   - valide le token via `supabaseAdmin.auth.getUser()` et vérifie que la
-     session provient bien du provider `google` ;
-   - **compte existant (même UUID Supabase)** → connexion ; refus `403` si le
-     compte est professionnel ou admin, contrôles `suspended`/`banned` ;
-   - **premier login Google** → création de la ligne `users` avec
-     `id = UUID Supabase`, `accountType: client`, `status: active`,
-     `phone: null`, nom/prénom/avatar issus de `user_metadata` ;
-   - fixe `app_metadata.role = 'client'` si absent.
-4. L'app stocke les tokens (SecureStore) comme un login classique.
-
-**Comptes Google = sans mot de passe** : `passwordHash = 'supabase_managed'`,
-la session est entièrement gérée par Supabase. Un client existant
-(email/mdp) qui se connecte avec Google sur **le même email vérifié** est
-automatiquement lié par Supabase (même UUID) → ses données sont conservées.
-
-**Migration DB** : `users.phone` devient **nullable**
-(`prisma/migrations/20260610000000_phone_nullable_google_auth`) car les
-comptes Google n'ont pas de numéro vérifié.
-
-### 2.3 Frontend mobile
-
-- `LoginScreen.tsx` : bouton **« Se connecter avec Google »** sous le
-  formulaire (séparateur « ou »). L'écran de connexion est commun ; si un
-  professionnel utilise le bouton, le backend répond
-  `403 — La connexion Google est réservée aux comptes clients`.
-- `RegisterScreen/Step2PersonalInfo.tsx` : bouton **« S'inscrire avec
-  Google »** affiché **uniquement quand `accountType === 'client'`** — les
-  étapes professionnelles et `ProRegisterScreen` n'affichent jamais l'option.
-- Nouveau service `mobile/src/services/googleAuth.ts` (OAuth + stockage +
-  mise à jour du store) ; `authApi.google()` ; dépendance `expo-web-browser`.
-- Config : `EXPO_PUBLIC_SUPABASE_URL` ajouté à `.env`, `app.config.js`
-  (`extra.supabaseUrl`), `eas.json` (3 profils) et `render.yaml`.
-
-### 2.4 Ce qui ne change pas
-
-- Connexion client email/mdp (avec TOTP si activé).
-- Tout le flux professionnel : email + mdp + **OTP SMS** + **validation
-  admin du KYC** ; pas de bouton Google sur leurs écrans d'inscription.
-- Authentification admin (login + TOTP).
-- Mot de passe oublié / réinitialisation.
+La table `refresh_tokens` a été supprimée : Supabase gère les refresh tokens nativement.
 
 ---
 
-## 3. Configuration Supabase requise (à faire dans le dashboard)
+## 4. Variables d'environnement
 
-> Projet : `qaiplagtbnxvctvpofuh` — https://supabase.com/dashboard
-
-### 3.1 Activer le provider Google
-
-1. **Google Cloud Console** (https://console.cloud.google.com) :
-   - Créer un projet « Primeo » → *APIs & Services → Credentials* →
-     **Create OAuth client ID** (type *Web application*).
-   - **Authorized redirect URI** (obligatoire, fournie par Supabase) :
-     `https://qaiplagtbnxvctvpofuh.supabase.co/auth/v1/callback`
-   - Configurer l'écran de consentement (nom « Primeo », logo, domaine
-     `primeo.ci`), scopes `email`, `profile`, `openid`.
-   - Récupérer **Client ID** et **Client Secret**.
-2. **Supabase Dashboard** → *Authentication → Sign In / Providers → Google* :
-   - **Enable Sign in with Google** : ON
-   - **Client ID** / **Client Secret** : valeurs de l'étape 1.
-
-### 3.2 URLs de redirection autorisées
-
-*Authentication → URL Configuration → Redirect URLs* — ajouter :
+### 4.1 Variables supprimées
 
 ```
-primeo://auth-callback
-https://primeo-mobile-web-xt9o.onrender.com/*
-https://app.primeo.ci/*
-http://localhost:8081/*          (dev Expo)
-http://localhost:19006/*         (dev Expo web)
+JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE, BCRYPT_SALT
 ```
 
-`Site URL` : `https://primeo-mobile-web-xt9o.onrender.com`
+### 4.2 Variables actives requises
 
-### 3.3 Liaison de comptes
-
-*Authentication → Sign In / Providers* : laisser activée la liaison
-automatique des identités sur email vérifié (comportement par défaut) — c'est
-elle qui permet à un client existant email/mdp de « lier » son compte Google
-sans perdre ses données (même UUID).
+```
+SUPABASE_URL=https://qaiplagtbnxvctvpofuh.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
 
 ---
 
-## 4. Scénarios de test
+## 5. Configuration Supabase requise
+
+### 5.1 Google OAuth
+
+Dans le dashboard Supabase → Authentication → Providers → Google :
+- Activer Google Provider
+- Ajouter `Client ID` et `Client Secret` Google
+- Redirect URLs autorisées :
+  - `primeo://auth-callback` (mobile natif)
+  - `https://primeo-mobile-web-xt9o.onrender.com` (web)
+
+### 5.2 Email templates
+
+Les emails de réinitialisation de mot de passe sont envoyés via Brevo (pas les templates Supabase par défaut). Le lien généré par `generateLink` est inséré dans le template Brevo.
+
+### 5.3 URL de redirection pour reset password
+
+Dans Supabase → Authentication → URL Configuration :
+- Site URL : `https://primeo-mobile-web-xt9o.onrender.com`
+- Redirect URLs : ajouter `primeo://reset-password`
+
+---
+
+## 6. Deep links mobiles
+
+| Deep link | Action |
+|---|---|
+| `primeo://auth-callback#access_token=...&refresh_token=...` | Callback Google OAuth → écran principal |
+| `primeo://reset-password#access_token=...&type=recovery` | Réinitialisation mot de passe → `ResetPasswordScreen` |
+
+Le parsing du fragment est géré dans `App.tsx` via `getStateFromPath`.
+
+---
+
+## 7. Scénarios de test
 
 | # | Scénario | Résultat attendu |
 |---|---|---|
-| 1 | Inscription client email/mdp | `201` avec `accessToken`/`refreshToken`/`user` — **aucun SMS envoyé, aucun écran OTP**, session ouverte immédiatement, `status=active`. |
-| 2 | Connexion client email/mdp | `200` avec tokens (ou `requiresTwoFactor` si TOTP activé). |
-| 3 | Inscription via Google (nouveau compte) | Navigateur OAuth → retour app → `users` créé (`accountType=client`, `phone=null`) → session ouverte, `isNewUser=true`. |
-| 4 | Connexion via Google (compte Google existant) | Session ouverte, `isNewUser=false`. |
-| 5 | Connexion Google avec un compte **professionnel** | `403 — La connexion Google est réservée aux comptes clients`. Session Supabase révoquée. |
-| 6 | Écrans pros (ProRegister, étapes pro de Register) | **Aucun bouton Google** affiché. |
-| 7 | Inscription professionnelle | SMS OTP reçu → `verify-phone` → compte `pending` → visible dans l'admin (Modération/KYC) → approbation admin requise. |
-| 8 | Client existant (email/mdp) se connecte avec Google (même email vérifié) | Supabase lie l'identité (même UUID) → connexion réussie, données conservées, mot de passe toujours valide. |
-
-Vérifications effectuées dans cette session : compilation TypeScript backend
-et mobile sans erreur ; le schéma Prisma migré (`phone` nullable) est couvert
-par la migration SQL livrée (`prisma migrate deploy` l'applique au déploiement).
-Les scénarios 1-8 nécessitent l'activation du provider Google dans le
-dashboard Supabase (section 3) pour être joués en conditions réelles.
-
----
-
-## 5. Recommandations restantes (issues de l'audit, non traitées ici)
-
-1. **Rotation immédiate de tous les secrets** exposés dans le dépôt, puis
-   passage aux variables d'environnement Render (valeurs `sync: false`).
-2. Faire respecter le KYC dans les middlewares (bloquer les routes pro tant
-   que `verificationStatus !== 'approved'`).
-3. Recouper `app_metadata.role` avec `users.accountType` à chaque requête et
-   refuser en cas d'incohérence (au lieu du fallback `client`).
-4. Hacher les tokens de réinitialisation en base ; compteur d'échecs
-   OTP/TOTP par cible avec backoff.
-5. Supprimer le code mort (`RefreshToken`, `JWT_SECRET`/`JWT_REFRESH_SECRET`).
-6. Admin : ajouter un `middleware.ts` Next pour la protection serveur des
-   routes, et durcir le fallback de rôle de la Sidebar.
+| 1 | Inscription client email/mdp | Compte créé, session ouverte immédiatement (sans OTP) |
+| 2 | Inscription pro → SMS OTP | Code reçu, vérification, compte `status: pending` |
+| 3 | Inscription Google (client) | OAuth Supabase, compte créé, session ouverte |
+| 4 | Inscription Google (pro) | Refus 403 côté backend |
+| 5 | Connexion email/mdp | Tokens retournés |
+| 6 | Mot de passe oublié | Email Brevo reçu avec lien Supabase |
+| 7 | Réinitialisation (lien email) | Deep link ouvre ResetPasswordScreen, nouveau mdp accepté |
+| 8 | 2FA setup + vérification | Secret en `user_metadata` Supabase, code TOTP vérifié |
+| 9 | Admin login | Supabase sign-in, role=admin vérifié, token cookie |
+| 10 | Token refresh | `refreshSession` Supabase, nouveau accessToken |

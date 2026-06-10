@@ -1,5 +1,4 @@
 // Admin service — platform oversight and moderation
-import crypto from 'crypto';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { subscriptionsService } from '../subscriptions/subscriptions.service';
@@ -8,6 +7,7 @@ import { geniusPayService } from '../payments/services/genius-pay.service';
 import { sendEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
+import { supabaseAdmin } from '../../config/supabase.config';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -457,22 +457,25 @@ export const adminService = {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2h
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { resetToken: token, resetTokenExpiresAt: expiresAt },
+    const redirectTo = `${env.FRONTEND_URL ?? env.PUBLIC_URL}/reset-password`;
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: user.email,
+      options: { redirectTo },
     });
 
-    const resetLink = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+    if (linkError || !linkData?.properties?.action_link) {
+      logger.error('forcePasswordReset: erreur génération lien Supabase', { userId, error: linkError?.message });
+      throw new HttpError(500, 'Erreur lors de la génération du lien de réinitialisation');
+    }
+
     await sendEmail({
       to: [{ email: user.email, name: `${user.firstName} ${user.lastName}` }],
       subject: 'Réinitialisation de votre mot de passe',
       htmlContent: `<p>Bonjour ${user.firstName},</p>
 <p>Un administrateur a demandé la réinitialisation de votre mot de passe.</p>
-<p><a href="${resetLink}">Cliquez ici pour définir un nouveau mot de passe</a></p>
-<p>Ce lien expire dans 2 heures.</p>`,
+<p><a href="${linkData.properties.action_link}">Cliquez ici pour définir un nouveau mot de passe</a></p>
+<p>Ce lien expire dans 1 heure.</p>`,
     });
 
     await createAudit({
@@ -575,11 +578,13 @@ export const adminService = {
   async revoke2fa(userId: string, adminId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-    if (!user.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { twoFactorEnabled: false, twoFactorSecret: null },
+    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (error || !sbUser) throw new HttpError(404, 'Utilisateur Supabase introuvable');
+    if (!sbUser.user_metadata?.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
+
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
     });
 
     await createAudit({

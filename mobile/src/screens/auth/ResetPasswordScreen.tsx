@@ -12,7 +12,7 @@ import type { AuthScreenProps } from '../../navigation/types';
 type Props = AuthScreenProps<'ResetPassword'>;
 
 export function ResetPasswordScreen({ route, navigation }: Props) {
-  const { token } = route.params;
+  const { recoveryToken } = route.params;
   const { theme } = useTheme();
   const s = makeStyles(theme);
 
@@ -32,7 +32,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
     setError(null);
     setLoading(true);
     try {
-      await authApi.resetPassword(token, password);
+      await authApi.resetPassword(recoveryToken, password);
       setSuccess(true);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string; message?: string } } };
