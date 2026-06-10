@@ -14,6 +14,7 @@ import {
   LoginInput,
   VerifyTotpInput,
   ResetPasswordInput,
+  GoogleAuthInput,
 } from './dto/auth.dto';
 import { AccountType, UserStatus } from '@prisma/client';
 import { env } from '../../config/env.config';
@@ -149,10 +150,10 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
     throw new HttpError(500, 'Compte créé mais erreur de connexion. Reconnectez-vous.');
   }
 
-  logger.info('Nouveau compte créé (bypass)', { userId: user.id, accountType: user.accountType });
+  logger.info('Nouveau compte créé (sans OTP)', { userId: user.id, accountType: user.accountType });
 
   return {
-    message: 'Compte créé avec succès (mode test).',
+    message: 'Compte créé avec succès.',
     accessToken: signInData.session.access_token,
     refreshToken: signInData.session.refresh_token,
     user: toSafeUser(user),
@@ -162,7 +163,7 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
 function toSafeUser(user: {
   id: string;
   email: string;
-  phone: string;
+  phone: string | null;
   firstName: string;
   lastName: string;
   accountType: AccountType;
@@ -172,7 +173,7 @@ function toSafeUser(user: {
   return {
     id: user.id,
     email: user.email,
-    phone: user.phone,
+    phone: user.phone ?? '',
     firstName: user.firstName,
     lastName: user.lastName,
     accountType: user.accountType,
@@ -197,6 +198,12 @@ export const authService = {
     const phoneExists = await prisma.user.findUnique({ where: { phone: input.phone } });
     if (phoneExists) {
       throw new HttpError(409, 'Un compte avec ce numéro de téléphone existe déjà');
+    }
+
+    // ── Clients : inscription SANS OTP — compte créé et session ouverte
+    // immédiatement. La vérification SMS est réservée aux comptes professionnels.
+    if (input.accountType === 'client') {
+      return createUserAndSession(input);
     }
 
     // ── Bypass mode (DÉVELOPPEMENT UNIQUEMENT) : crée le compte immédiatement ──
@@ -444,6 +451,102 @@ export const authService = {
       accessToken: signInData.session.access_token,
       refreshToken: signInData.session.refresh_token,
       user: toSafeUser(user),
+    };
+  },
+
+  // ── Connexion / inscription via Google (clients uniquement) ─────────────────
+  //
+  // Flux : le client mobile/web complète l'OAuth Google via Supabase Auth
+  // (GET {SUPABASE_URL}/auth/v1/authorize?provider=google) et reçoit une
+  // session Supabase (access + refresh token). Il appelle ensuite cet endpoint
+  // pour synchroniser la table `users` (création du compte client si premier
+  // login) et récupérer le profil applicatif.
+
+  async googleAuth(input: GoogleAuthInput): Promise<{ accessToken: string; refreshToken: string; user: SafeUser; isNewUser: boolean }> {
+    // Valider le token de session Supabase et récupérer l'identité
+    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.getUser(input.accessToken);
+    if (error || !sbUser) {
+      throw new HttpError(401, 'Session Google invalide ou expirée. Réessayez.');
+    }
+
+    // S'assurer que la session provient bien du provider Google
+    const providers: string[] = (sbUser.app_metadata?.providers as string[] | undefined)
+      ?? (sbUser.app_metadata?.provider ? [sbUser.app_metadata.provider as string] : []);
+    if (!providers.includes('google')) {
+      throw new HttpError(400, 'Cette session ne provient pas d\'une connexion Google.');
+    }
+
+    if (!sbUser.email) {
+      throw new HttpError(400, 'Le compte Google ne fournit pas d\'adresse email.');
+    }
+
+    // Compte applicatif existant (même UUID Supabase) → connexion
+    let user = await prisma.user.findUnique({
+      where: { id: sbUser.id },
+      include: { professionalProfile: { select: { verificationStatus: true, verificationNotes: true } } },
+    });
+    let isNewUser = false;
+
+    if (user) {
+      // Google est réservé aux clients : les pros et admins gardent leur flux dédié
+      if (user.accountType !== AccountType.client) {
+        await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
+        throw new HttpError(403, 'La connexion Google est réservée aux comptes clients. Utilisez votre email et mot de passe.');
+      }
+      if (user.status === UserStatus.suspended) {
+        await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
+        throw new HttpError(403, 'Votre compte est suspendu. Contactez le support.');
+      }
+      if (user.status === UserStatus.banned) {
+        await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
+        throw new HttpError(403, 'Votre compte a été désactivé.');
+      }
+    } else {
+      // Cohérence : un compte applicatif avec le même email mais un autre UUID
+      // Supabase signifie que l'identité Google n'a pas été liée (ex : email non
+      // vérifié côté Google). On refuse plutôt que de créer un doublon.
+      const emailUser = await prisma.user.findUnique({ where: { email: sbUser.email.toLowerCase() } });
+      if (emailUser) {
+        await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
+        throw new HttpError(409, 'Un compte existe déjà avec cet email. Connectez-vous avec votre mot de passe.');
+      }
+
+      // Premier login Google → création du compte client (statut actif, sans téléphone)
+      const meta = (sbUser.user_metadata ?? {}) as Record<string, unknown>;
+      const fullName = (meta.full_name as string | undefined) ?? (meta.name as string | undefined) ?? '';
+      const [firstName, ...rest] = fullName.trim().split(/\s+/);
+      const avatarUrl = (meta.avatar_url as string | undefined) ?? (meta.picture as string | undefined) ?? null;
+
+      const created = await prisma.user.create({
+        data: {
+          id: sbUser.id,
+          email: sbUser.email.toLowerCase(),
+          phone: null, // pas de numéro : compte Google, aucune vérification OTP requise
+          passwordHash: 'supabase_managed',
+          firstName: firstName || 'Client',
+          lastName: rest.join(' ') || 'Primeo',
+          avatarUrl,
+          accountType: AccountType.client,
+          status: UserStatus.active,
+        },
+      });
+      user = { ...created, professionalProfile: null };
+      isNewUser = true;
+      logger.info('Nouveau compte client créé via Google', { userId: created.id });
+    }
+
+    // Garantir le rôle dans les metadata Supabase (utilisé par le middleware JWT)
+    if (sbUser.app_metadata?.role !== 'client') {
+      await supabaseAdmin.auth.admin
+        .updateUserById(sbUser.id, { app_metadata: { ...sbUser.app_metadata, role: 'client' } })
+        .catch((err) => logger.warn('googleAuth: impossible de fixer app_metadata.role', { userId: sbUser.id, error: (err as Error).message }));
+    }
+
+    return {
+      accessToken: input.accessToken,
+      refreshToken: input.refreshToken,
+      user: toSafeUser(user),
+      isNewUser,
     };
   },
 

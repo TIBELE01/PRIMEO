@@ -235,7 +235,7 @@ enum FoodOrderDeliveryType {
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
-  phone        String    @unique
+  phone        String?   @unique // null pour les comptes créés via Google OAuth
   passwordHash String
   firstName    String
   lastName     String

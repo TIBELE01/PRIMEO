@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api/endpoints/auth';
+import { signInWithGoogle } from '../../services/googleAuth';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 
@@ -24,6 +25,7 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [showPw,   setShowPw]   = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
   const canSubmit = email.trim().length > 0 && password.length >= 1;
@@ -52,6 +54,21 @@ export function LoginScreen({ navigation }: Props) {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Connexion Google (Supabase OAuth) — réservée aux comptes clients ;
+  // le backend refuse les comptes professionnels avec un message explicite.
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.status === 'error') setError(result.message);
+      // 'success' : le store est mis à jour, la navigation bascule automatiquement.
+      // 'cancelled' : l'utilisateur a fermé le navigateur, rien à faire.
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -133,6 +150,30 @@ export function LoginScreen({ navigation }: Props) {
               }
             </TouchableOpacity>
 
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>ou</Text>
+              <View style={s.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={[s.googleBtn, googleLoading && s.btnDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading || loading}
+              accessibilityRole="button"
+              accessibilityLabel="Se connecter avec Google"
+            >
+              {googleLoading
+                ? <ActivityIndicator color={theme.colors.text} />
+                : (
+                  <>
+                    <Text style={s.googleIcon}>G</Text>
+                    <Text style={s.googleBtnText}>Se connecter avec Google</Text>
+                  </>
+                )
+              }
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={() => navigation.navigate('Register', { role: 'client' })} accessibilityRole="link">
               <Text style={s.registerLink}>
                 Pas encore de compte ?{' '}
@@ -180,5 +221,11 @@ function makeStyles(t: Theme) {
     registerLinkBold: { color: t.colors.primary, fontWeight: '700' },
     proBtn:           { borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
     proBtnText:       { fontSize: 15, fontWeight: '600', color: t.colors.text },
+    dividerRow:       { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    dividerLine:      { flex: 1, height: 1, backgroundColor: t.colors.border },
+    dividerText:      { fontSize: 13, color: t.colors.textSecondary, fontWeight: '600' },
+    googleBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, backgroundColor: t.colors.surface },
+    googleIcon:       { fontSize: 18, fontWeight: '900', color: '#4285F4' },
+    googleBtnText:    { fontSize: 15, fontWeight: '600', color: t.colors.text },
   });
 }

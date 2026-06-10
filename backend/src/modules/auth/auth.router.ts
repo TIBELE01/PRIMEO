@@ -4,6 +4,7 @@ import {
   register,
   verifyPhone,
   login,
+  googleAuth,
   verifyTotp,
   refreshToken,
   logout,
@@ -19,6 +20,7 @@ import {
   VerifyPhoneDto,
   ResendOtpDto,
   LoginDto,
+  GoogleAuthDto,
   VerifyTotpDto,
   RefreshTokenDto,
   ForgotPasswordDto,
@@ -34,6 +36,8 @@ authRouter.post('/resend-otp', authRateLimit, validate(ResendOtpDto), resendOtp)
 
 // Connexion et 2FA
 authRouter.post('/login', authRateLimit, validate(LoginDto), login);
+// Connexion/inscription Google via Supabase OAuth — clients uniquement
+authRouter.post('/google', authRateLimit, validate(GoogleAuthDto), googleAuth);
 authRouter.post('/2fa/verify',    authRateLimit, validate(VerifyTotpDto), verifyTotp);
 authRouter.post('/verify-totp',   authRateLimit, validate(VerifyTotpDto), verifyTotp);
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import { isValidIvorianPhone, validatePassword } from '../auth.utils';
+import { signInWithGoogle } from '../../../services/googleAuth';
 import type { RegistrationData } from './index';
 
 type Props = {
@@ -20,6 +21,24 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
   const s = makeStyles(theme);
   const [showPw, setShowPw] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  // Inscription Google : uniquement pour les comptes clients — les
+  // professionnels suivent obligatoirement le flux email + OTP + validation admin.
+  const isClient = data.accountType === 'client';
+
+  const handleGoogleSignUp = async () => {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.status === 'error') setGoogleError(result.message);
+      // 'success' : session ouverte, le RootNavigator bascule sur l'app.
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const touch = (field: string) => setTouched((p) => ({ ...p, [field]: true }));
 
@@ -72,6 +91,34 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
           <Text style={s.title}>Informations personnelles</Text>
           <Text style={s.subtitle}>Ces informations seront utilisées pour votre compte Primeo.</Text>
         </View>
+
+        {isClient && (
+          <View style={s.googleSection}>
+            <TouchableOpacity
+              style={[s.googleBtn, googleLoading && { opacity: 0.5 }]}
+              onPress={handleGoogleSignUp}
+              disabled={googleLoading}
+              accessibilityRole="button"
+              accessibilityLabel="S'inscrire avec Google"
+            >
+              {googleLoading
+                ? <ActivityIndicator color={theme.colors.text} />
+                : (
+                  <>
+                    <Text style={s.googleIcon}>G</Text>
+                    <Text style={s.googleBtnText}>S'inscrire avec Google</Text>
+                  </>
+                )
+              }
+            </TouchableOpacity>
+            {googleError && <Text style={s.hint}>{googleError}</Text>}
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>ou avec votre email</Text>
+              <View style={s.dividerLine} />
+            </View>
+          </View>
+        )}
 
         <View style={s.form}>
           {field('firstName', 'Prénom', { autoCapitalize: 'words', returnKeyType: 'next', accessibilityLabel: 'Prénom' })}
@@ -174,6 +221,13 @@ function makeStyles(t: Theme) {
     rules:        { gap: 2, marginTop: 4 },
     rule:         { fontSize: 12, color: t.colors.textSecondary },
     referralSection: { marginTop: 8, borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: 16 },
+    googleSection: { gap: 14 },
+    googleBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, backgroundColor: t.colors.surface },
+    googleIcon:    { fontSize: 18, fontWeight: '900', color: '#4285F4' },
+    googleBtnText: { fontSize: 15, fontWeight: '600', color: t.colors.text },
+    dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    dividerLine:   { flex: 1, height: 1, backgroundColor: t.colors.border },
+    dividerText:   { fontSize: 13, color: t.colors.textSecondary, fontWeight: '600' },
     optional: { fontSize: 12, color: t.colors.textDisabled, fontWeight: '400' },
     actions:      { gap: 12 },
     nextBtn:      { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },

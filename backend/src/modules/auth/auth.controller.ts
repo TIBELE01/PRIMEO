@@ -38,6 +38,15 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
+export async function googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await authService.googleAuth(req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function verifyTotp(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const result = await authService.verifyTotp(req.body);

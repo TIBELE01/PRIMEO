@@ -55,6 +55,14 @@ export const RefreshTokenDto = z.object({
   refreshToken: z.string().min(1),
 });
 
+// Connexion/inscription Google (clients uniquement) — tokens de session Supabase
+// obtenus côté client après l'OAuth (fragment de l'URL de redirection).
+export const GoogleAuthDto = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1),
+});
+export type GoogleAuthInput = z.infer<typeof GoogleAuthDto>;
+
 export const ForgotPasswordDto = z.object({
   email: z.string().email().toLowerCase().trim(),
 });
