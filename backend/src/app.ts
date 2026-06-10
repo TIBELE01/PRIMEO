@@ -10,6 +10,7 @@ import { applyRawBody } from './common/middleware/raw-body.middleware';
 import { applyRequestId } from './common/middleware/request-id.middleware';
 import { handleHttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
+import { maintenanceMode } from './common/middleware/maintenance.middleware';
 import { env } from './config/env.config';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config';
@@ -63,6 +64,12 @@ export function createApp(): Application {
 
   // Global rate limiting (tighter limits applied per-route for auth endpoints)
   applyRateLimit(app);
+
+  // Static assets (error pages, public files)
+  app.use(express.static('public'));
+
+  // Maintenance mode — intercepts all API routes before they are registered
+  app.use(maintenanceMode);
 
   // Health check (no auth required)
   app.get('/', (_req: Request, res: Response) => {

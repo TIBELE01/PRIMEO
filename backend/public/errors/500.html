@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Erreur serveur — Primeo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f7f8fc;
+      color: #1a2340;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 32px rgba(3, 21, 74, 0.10);
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #03154A;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #03154A;
+      letter-spacing: -0.5px;
+    }
+
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      color: #03154A;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      letter-spacing: -2px;
+    }
+
+    .error-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1a2340;
+      margin-bottom: 0.75rem;
+    }
+
+    .error-desc {
+      font-size: 0.9375rem;
+      color: #5a6480;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: #03154A;
+      color: #fff;
+    }
+
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-ghost {
+      background: #f0f2f8;
+      color: #03154A;
+    }
+
+    .btn-ghost:hover { background: #e4e8f3; }
+
+    .divider {
+      width: 48px;
+      height: 4px;
+      background: #03154A;
+      border-radius: 2px;
+      margin: 1.5rem auto;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.8125rem;
+      color: #8a93ad;
+    }
+
+    footer a {
+      color: #03154A;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a class="logo" href="/">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </span>
+      <span class="logo-text">Primeo</span>
+    </a>
+
+    <div class="error-code">500</div>
+    <div class="divider"></div>
+    <h1 class="error-title">Erreur interne du serveur</h1>
+    <p class="error-desc">
+      Une erreur inattendue s'est produite de notre côté. Notre équipe a été
+      notifiée et travaille à résoudre le problème. Veuillez réessayer dans quelques instants.
+    </p>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="location.reload()">
+        ↺ &nbsp;Rafraîchir la page
+      </button>
+      <a class="btn btn-ghost" href="mailto:support@primeo.ci">
+        Contacter le support
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    &copy; <span id="year"></span> Primeo &mdash;
+    <a href="mailto:support@primeo.ci">support@primeo.ci</a>
+  </footer>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

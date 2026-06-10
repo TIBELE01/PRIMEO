@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service indisponible — Primeo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f7f8fc;
+      color: #1a2340;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 32px rgba(3, 21, 74, 0.10);
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #03154A;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #03154A;
+      letter-spacing: -0.5px;
+    }
+
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      color: #03154A;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      letter-spacing: -2px;
+    }
+
+    .error-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1a2340;
+      margin-bottom: 0.75rem;
+    }
+
+    .error-desc {
+      font-size: 0.9375rem;
+      color: #5a6480;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .retry-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f0f2f8;
+      border-radius: 8px;
+      padding: 0.625rem 1rem;
+      font-size: 0.875rem;
+      color: #03154A;
+      font-weight: 500;
+      margin-bottom: 2rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: #03154A;
+      color: #fff;
+    }
+
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-ghost {
+      background: #f0f2f8;
+      color: #03154A;
+    }
+
+    .btn-ghost:hover { background: #e4e8f3; }
+
+    .divider {
+      width: 48px;
+      height: 4px;
+      background: #03154A;
+      border-radius: 2px;
+      margin: 1.5rem auto;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.8125rem;
+      color: #8a93ad;
+    }
+
+    footer a {
+      color: #03154A;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a class="logo" href="/">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      <span class="logo-text">Primeo</span>
+    </a>
+
+    <div class="error-code">503</div>
+    <div class="divider"></div>
+    <h1 class="error-title">Service temporairement indisponible</h1>
+    <p class="error-desc">
+      Nos serveurs sont momentanément surchargés ou en cours de mise à jour.
+      Le service sera rétabli très prochainement. Merci de votre patience.
+    </p>
+
+    <div class="retry-info">
+      ⏱ &nbsp;Réessayez dans quelques minutes
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="retryBtn" onclick="retryWithCountdown()">
+        ↺ &nbsp;Réessayer
+      </button>
+      <a class="btn btn-ghost" href="mailto:support@primeo.ci">
+        Contacter le support
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    &copy; <span id="year"></span> Primeo &mdash;
+    <a href="mailto:support@primeo.ci">support@primeo.ci</a>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function retryWithCountdown() {
+      const btn = document.getElementById('retryBtn');
+      let count = 5;
+      btn.disabled = true;
+      const timer = setInterval(() => {
+        btn.textContent = `↺  Réessai dans ${count}s…`;
+        if (--count < 0) {
+          clearInterval(timer);
+          location.reload();
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
