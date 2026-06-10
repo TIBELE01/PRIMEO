@@ -10,6 +10,7 @@ import {
 } from './reviews.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { parseId } from '../../common/validators/parse-id.middleware';
 import { CreateReviewDto, UpdateReviewDto, ReviewReplyDto } from './dto/review.dto';
@@ -32,6 +33,7 @@ reviewsRouter.delete('/:id', parseId, deleteReview);
 reviewsRouter.post(
   '/:id/reply',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   parseId,
   validate(ReviewReplyDto),
   replyToReview,

@@ -13,6 +13,7 @@ jest.mock('../../common/utils/redis-client', () => ({
   redisGet: jest.fn(async (k: string) => redisStore.get(k) ?? null),
   redisSet: jest.fn(async (k: string, v: string) => { redisStore.set(k, v); }),
   redisDel: jest.fn(async (k: string) => { redisStore.delete(k); }),
+  getRedisClient: jest.fn(() => null), // null → repli mémoire (rate limit OTP)
 }));
 
 jest.mock('../../common/utils/logger', () => ({
@@ -22,11 +23,6 @@ jest.mock('../../common/utils/logger', () => ({
 jest.mock('../../common/utils/sms', () => ({
   generateOtp: jest.fn(() => '123456'),
   sendSms: jest.fn(async () => undefined),
-}));
-
-jest.mock('../../common/utils/bcrypt', () => ({
-  hashPassword: jest.fn(async (p: string) => `hashed:${p}`),
-  comparePassword: jest.fn(async (plain: string, hash: string) => hash === `hashed:${plain}`),
 }));
 
 jest.mock('../../common/utils/mailer', () => ({
@@ -58,6 +54,8 @@ const mockSupabaseAdmin = {
     admin: {
       createUser: jest.fn(),
       signOut: jest.fn(async () => ({})),
+      getUserById: jest.fn(),
+      updateUserById: jest.fn(async () => ({ error: null })),
     },
   },
 };
@@ -72,7 +70,7 @@ jest.mock('../../config/supabase.config', () => ({
   supabaseAuth: mockSupabaseAuth,
 }));
 
-const envMock = { SKIP_OTP_VERIFICATION: false, NODE_ENV: 'test' };
+const envMock = { SKIP_OTP_VERIFICATION: false, NODE_ENV: 'test', SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key-for-crypto' };
 jest.mock('../../config/env.config', () => ({ env: envMock }));
 
 jest.mock('../../config/orange-sms.config', () => ({
@@ -83,6 +81,7 @@ jest.mock('../../config/orange-sms.config', () => ({
 
 import { authService } from './auth.service';
 import { redisSet } from '../../common/utils/redis-client';
+import { encryptSecret, decryptSecret } from '../../common/utils/secret-crypto';
 import { generateOtp, sendSms } from '../../common/utils/sms';
 import { AccountType, UserStatus } from '@prisma/client';
 
@@ -114,8 +113,6 @@ const prismaUser = {
   lastName: 'Assi',
   accountType: AccountType.client,
   status: UserStatus.active,
-  twoFactorEnabled: false,
-  twoFactorSecret: null,
   professionalProfile: null,
 };
 
@@ -128,6 +125,12 @@ function resetMocks() {
   mockPrisma.user.findFirst.mockImplementation(async () => null);
   mockPrisma.professionalProfile.create.mockImplementation(async () => ({}));
   mockPrisma.referral.create.mockImplementation(async () => ({}));
+  mockSupabaseAdmin.auth.admin.updateUserById.mockImplementation(async () => ({ error: null }));
+  // 2FA lu depuis Supabase user_metadata — désactivé par défaut
+  mockSupabaseAdmin.auth.admin.getUserById.mockImplementation(async () => ({
+    data: { user: { id: 'supa-uid-001', user_metadata: {} } },
+    error: null,
+  }));
 }
 
 function setupBypassSuccess() {
@@ -162,38 +165,51 @@ describe('authService.register', () => {
   });
 
   describe('normal mode (OTP flow)', () => {
-    // Use a phone that is never used in bypass tests to avoid memory leakage
-    const phone = '+2250707002001';
-    const input = { ...CLIENT_REGISTER, phone };
+    // L'OTP SMS ne concerne que les comptes professionnels (les clients sont
+    // créés immédiatement). Un téléphone DIFFÉRENT par test : la limite
+    // anti-abus (3 OTP/heure/numéro) utilise un compteur mémoire module-level.
+    const mkInput = (phone: string) => ({ ...PRO_REGISTER, phone });
 
     beforeEach(() => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
     });
 
     it('returns a pending message and sends SMS', async () => {
-      const result = await authService.register(input);
+      const result = await authService.register(mkInput('+2250707002001'));
       expect(result.message).toMatch(/code de vérification/i);
       expect(sendSms).toHaveBeenCalledTimes(1);
     });
 
-    it('stores pending user in Redis', async () => {
-      await authService.register(input);
-      expect(redisSet).toHaveBeenCalledWith(
-        `pending:${phone}`,
-        expect.stringContaining(input.email),
-        300,
-      );
+    it('stores pending user encrypted in Redis (password never in clear)', async () => {
+      const phone = '+2250707002002';
+      await authService.register(mkInput(phone));
+      const stored = redisStore.get(`pending:${phone}`)!;
+      // Chiffré : le payload brut ne doit contenir ni email ni mot de passe
+      expect(stored).not.toContain(PRO_REGISTER.email);
+      expect(stored).not.toContain(PRO_REGISTER.password);
+      // Mais déchiffrable et complet
+      const pending = JSON.parse(decryptSecret(stored));
+      expect(pending.email).toBe(PRO_REGISTER.email);
     });
 
     it('stores OTP in Redis', async () => {
+      const phone = '+2250707002003';
       (generateOtp as jest.Mock).mockReturnValueOnce('654321');
-      await authService.register(input);
+      await authService.register(mkInput(phone));
       expect(redisSet).toHaveBeenCalledWith(`otp:${phone}`, '654321', 300);
     });
 
     it('does not throw when SMS fails (degraded mode)', async () => {
       (sendSms as jest.Mock).mockRejectedValueOnce(new Error('SMS provider down'));
-      await expect(authService.register(input)).resolves.toBeDefined();
+      await expect(authService.register(mkInput('+2250707002004'))).resolves.toBeDefined();
+    });
+
+    it('throws 429 after 3 OTP requests for the same phone within the window', async () => {
+      const phone = '+2250707002005';
+      await authService.register(mkInput(phone));
+      await authService.register(mkInput(phone));
+      await authService.register(mkInput(phone));
+      await expect(authService.register(mkInput(phone))).rejects.toMatchObject({ statusCode: 429 });
     });
   });
 
@@ -220,7 +236,7 @@ describe('authService.register', () => {
 
     it('ignore le bypass en production : passe par le flux OTP (envoi SMS, pas de tokens)', async () => {
       envMock.NODE_ENV = 'production'; // SKIP reste true mais doit être neutralisé
-      const result = await authService.register({ ...CLIENT_REGISTER, phone: '+2250707002777' });
+      const result = await authService.register({ ...PRO_REGISTER, phone: '+2250707002777' });
       expect(result.accessToken).toBeUndefined();
       expect(result.message).toMatch(/code de vérification/i);
       expect(sendSms).toHaveBeenCalledTimes(1);
@@ -242,21 +258,20 @@ describe('authService.verifyPhone', () => {
   // Use a phone number isolated from other describe blocks
   const phone = '+2250707003001';
   const email = 'verify@test.ci';
-  const pendingPayload = JSON.stringify({
+  const pendingPayload = () => encryptSecret(JSON.stringify({
     email,
     phone,
     password: 'Pass1234!',
-    passwordHash: 'hashed:Pass1234!',
     firstName: 'Test',
     lastName: 'User',
     accountType: 'client',
-  });
+  }));
 
   beforeEach(() => {
     resetMocks();
     // Pre-populate Redis for most tests
     redisStore.set(`otp:${phone}`, '999999');
-    redisStore.set(`pending:${phone}`, pendingPayload);
+    redisStore.set(`pending:${phone}`, pendingPayload());
     mockSupabaseAdmin.auth.admin.createUser.mockResolvedValue({
       data: { user: { ...supabaseUser, email } },
       error: null,
@@ -296,19 +311,18 @@ describe('authService.verifyPhone', () => {
 
   describe('bypass mode', () => {
     const bypassPhone = '+2250707003099';
-    const bypassPending = JSON.stringify({
+    const bypassPending = () => encryptSecret(JSON.stringify({
       email: 'bypass@test.ci',
       phone: bypassPhone,
       password: 'Pass1234!',
-      passwordHash: 'hashed:Pass1234!',
       firstName: 'Bypass',
       lastName: 'User',
       accountType: 'client',
-    });
+    }));
 
     beforeEach(() => {
       envMock.SKIP_OTP_VERIFICATION = true;
-      redisStore.set(`pending:${bypassPhone}`, bypassPending);
+      redisStore.set(`pending:${bypassPhone}`, bypassPending());
       mockSupabaseAdmin.auth.admin.createUser.mockResolvedValue({
         data: { user: { ...supabaseUser, email: 'bypass@test.ci' } },
         error: null,
@@ -340,10 +354,10 @@ describe('authService.verifyPhone', () => {
     beforeEach(() => {
       envMock.SKIP_OTP_VERIFICATION = true;
       envMock.NODE_ENV = 'production';
-      redisStore.set(`pending:${prodPhone}`, JSON.stringify({
+      redisStore.set(`pending:${prodPhone}`, encryptSecret(JSON.stringify({
         email: 'prod@test.ci', phone: prodPhone, password: 'Pass1234!',
-        passwordHash: 'hashed:Pass1234!', firstName: 'Prod', lastName: 'User', accountType: 'client',
-      }));
+        firstName: 'Prod', lastName: 'User', accountType: 'client',
+      })));
     });
 
     it('rejette 000000 en production malgré SKIP_OTP_VERIFICATION=true', async () => {
@@ -441,34 +455,36 @@ describe('authService.login', () => {
     expect(result.user.kycStatus).toBe('pending');
   });
 
-  it('returns requiresTwoFactor when 2FA is enabled', async () => {
+  it('returns requiresTwoFactor when 2FA is enabled in Supabase user_metadata', async () => {
     mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({
       data: { session: { access_token: 't', refresh_token: 'ref' }, user: supabaseUser },
       error: null,
     });
-    mockPrisma.user.findUnique.mockResolvedValueOnce({
-      ...prismaUser,
-      twoFactorEnabled: true,
-      twoFactorSecret: 'JBSWY3DPEHPK3PXP',
+    mockPrisma.user.findUnique.mockResolvedValueOnce(prismaUser);
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: prismaUser.id, user_metadata: { twoFactorEnabled: true, twoFactorSecret: 'JBSWY3DPEHPK3PXP' } } },
+      error: null,
     });
 
     const result = await authService.login(creds);
     expect(result).toMatchObject({ requiresTwoFactor: true, userId: prismaUser.id });
   });
 
-  it('stores TOTP pending data in Redis when 2FA required', async () => {
+  it('stores the refresh token ENCRYPTED in Redis when 2FA required', async () => {
     mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({
-      data: { session: { access_token: 't', refresh_token: 'ref' }, user: supabaseUser },
+      data: { session: { access_token: 't', refresh_token: 'ref-secret' }, user: supabaseUser },
       error: null,
     });
-    mockPrisma.user.findUnique.mockResolvedValueOnce({
-      ...prismaUser,
-      twoFactorEnabled: true,
-      twoFactorSecret: 'SECRET',
+    mockPrisma.user.findUnique.mockResolvedValueOnce(prismaUser);
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: prismaUser.id, user_metadata: { twoFactorEnabled: true, twoFactorSecret: 'SECRET' } } },
+      error: null,
     });
 
     await authService.login(creds);
-    expect(redisStore.has(`totp_pending:${prismaUser.id}`)).toBe(true);
+    const stored = redisStore.get(`totp_pending:${prismaUser.id}`)!;
+    expect(stored).not.toContain('ref-secret'); // jamais en clair
+    expect(JSON.parse(decryptSecret(stored)).supabaseRefreshToken).toBe('ref-secret');
   });
 });
 

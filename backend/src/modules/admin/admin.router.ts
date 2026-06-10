@@ -11,6 +11,7 @@ import {
   reactivateUser,
   banUser,
   updateUserNotes,
+  updateUserRole,
   getKycDocuments,
   forcePasswordReset,
   approveKyc,
@@ -66,6 +67,7 @@ import {
   RefundDisputeDto,
   UserNotesDto,
   SuspendUserDto,
+  ChangeUserRoleDto,
   RejectPropertyDto,
   RequestModificationsDto,
   SuspendPropertyDto,
@@ -90,6 +92,7 @@ adminRouter.post('/users/:id/suspend', parseId, validate(SuspendUserDto), suspen
 adminRouter.post('/users/:id/reactivate', parseId, reactivateUser);
 adminRouter.post('/users/:id/ban', parseId, banUser);
 adminRouter.patch('/users/:id/notes', parseId, validate(UserNotesDto), updateUserNotes);
+adminRouter.patch('/users/:id/role', parseId, validate(ChangeUserRoleDto), updateUserRole);
 adminRouter.get('/users/:id/kyc-documents', parseId, getKycDocuments);
 adminRouter.post('/users/:id/force-password-reset', parseId, forcePasswordReset);
 adminRouter.post('/users/:id/kyc/approve', parseId, approveKyc);

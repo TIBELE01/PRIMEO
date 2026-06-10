@@ -23,6 +23,16 @@ export const SuspendUserDto = z.object({
   reason: z.string().min(5).max(500),
 });
 
+export const ChangeUserRoleDto = z.object({
+  accountType: z.enum([
+    'client',
+    'professional_hebergement',
+    'professional_hotel',
+    'professional_immobilier',
+    'restaurateur',
+  ]),
+});
+
 export const RejectPropertyDto = z.object({
   reason: z.string().min(10).max(500),
 });

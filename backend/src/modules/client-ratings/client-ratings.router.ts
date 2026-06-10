@@ -10,6 +10,7 @@ import {
 } from './client-ratings.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { parseId } from '../../common/validators/parse-id.middleware';
 import { CreateClientRatingDto, ReportClientRatingDto } from './dto/client-rating.dto';
@@ -23,6 +24,7 @@ clientRatingsRouter.use(authenticate);
 clientRatingsRouter.post(
   '/',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(CreateClientRatingDto),
   createClientRating,
 );
@@ -31,6 +33,7 @@ clientRatingsRouter.post(
 clientRatingsRouter.get(
   '/given',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   listGivenRatings,
 );
 
@@ -38,6 +41,7 @@ clientRatingsRouter.get(
 clientRatingsRouter.get(
   '/client/:clientId',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   getClientAggregate,
 );
 
@@ -45,6 +49,7 @@ clientRatingsRouter.get(
 clientRatingsRouter.get(
   '/can-rate/:bookingId',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   checkCanRate,
 );
 

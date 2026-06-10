@@ -1,7 +1,7 @@
 // Bookings service — availability check, Genius Pay initiation, status transitions
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { TokenPayload } from '../../common/utils/jwt';
+import { TokenPayload } from '../../common/middleware/jwt-auth.middleware';
 import { CreateBookingInput, CancelBookingInput, ListBookingsQueryInput } from './dto/booking.dto';
 import { availabilityService } from './services/availability.service';
 import { pricingService } from './services/pricing.service';

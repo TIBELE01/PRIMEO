@@ -27,6 +27,7 @@ import {
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { parseId } from '../../common/validators/parse-id.middleware';
 import { PROFESSIONAL_ROLES } from '../../common/constants/roles';
@@ -60,6 +61,7 @@ propertiesRouter.post(
   '/',
   authenticate,
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(CreatePropertyDto),
   createProperty
 );
@@ -88,7 +90,7 @@ propertiesRouter.post(
 propertiesRouter.get('/:id', parseId, getProperty);
 
 // Statistiques d'une annonce (propriétaire uniquement)
-propertiesRouter.get('/:id/stats', authenticate, authorize(...PROFESSIONAL_ROLES), parseId, getPropertyStats);
+propertiesRouter.get('/:id/stats', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, getPropertyStats);
 
 // Immobilier : exprimer son intérêt pour un bien (client authentifié)
 propertiesRouter.post('/:id/interest', authenticate, parseId, expressPropertyInterest);
@@ -98,21 +100,23 @@ propertiesRouter.post(
   '/:id/suspend',
   authenticate,
   authorize(...PROFESSIONAL_ROLES),
+  requireKycApproved,
   parseId,
   suspendProperty
 );
 
 // Media management (owner only — professionnels)
 // Upload fichier → Supabase Storage (prioritaire sur l'upload direct Cloudinary)
-propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), parseId, upload.single('file'), uploadMediaFile);
-propertiesRouter.post('/:id/media', authenticate, authorize(...PROFESSIONAL_ROLES), parseId, validate(AddMediaDto), addMedia);
-propertiesRouter.delete('/:id/media/:mediaId', authenticate, authorize(...PROFESSIONAL_ROLES), parseId, deleteMedia);
+propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload.single('file'), uploadMediaFile);
+propertiesRouter.post('/:id/media', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, validate(AddMediaDto), addMedia);
+propertiesRouter.delete('/:id/media/:mediaId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, deleteMedia);
 
 // Owner submits draft for review
 propertiesRouter.post(
   '/:id/publish',
   authenticate,
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   parseId,
   publishProperty
 );
@@ -122,6 +126,7 @@ propertiesRouter.patch(
   '/:id',
   authenticate,
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur', 'admin'),
+  requireKycApproved,
   parseId,
   validate(UpdatePropertyDto),
   updateProperty
@@ -132,6 +137,7 @@ propertiesRouter.delete(
   '/:id',
   authenticate,
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur', 'admin'),
+  requireKycApproved,
   parseId,
   deleteProperty
 );

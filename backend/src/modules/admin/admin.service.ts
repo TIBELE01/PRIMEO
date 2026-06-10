@@ -8,6 +8,8 @@ import { sendEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { supabaseAdmin } from '../../config/supabase.config';
+import { syncSupabaseRole } from '../../common/utils/role-sync';
+import { AccountType } from '@prisma/client';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -441,6 +443,48 @@ export const adminService = {
       targetType: 'user',
       targetId: id,
       description: `Mise à jour des notes internes pour l'utilisateur ${id}`,
+    });
+  },
+
+  /**
+   * Change le type de compte d'un utilisateur en synchronisant les deux sources
+   * de vérité : Supabase (app_metadata.role, lu par le JWT) PUIS Prisma
+   * (users.accountType). L'ordre garantit qu'en cas d'échec Supabase, la base
+   * n'est pas modifiée — le middleware refuserait sinon tous les JWT (403).
+   */
+  async updateUserRole(id: string, adminId: string, accountType: AccountType) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw new HttpError(404, 'Utilisateur introuvable');
+    if (user.accountType === 'admin') throw new HttpError(403, 'Impossible de modifier le rôle d\'un administrateur');
+    if (user.accountType === accountType) return;
+
+    try {
+      await syncSupabaseRole(id, accountType);
+    } catch (err) {
+      logger.error('updateUserRole: échec synchronisation Supabase', { userId: id, error: (err as Error).message });
+      throw new HttpError(500, 'Erreur lors de la synchronisation du rôle avec Supabase');
+    }
+
+    await prisma.user.update({ where: { id }, data: { accountType } });
+
+    // Un compte qui devient professionnel doit passer par le KYC
+    if (accountType !== 'client') {
+      const profile = await prisma.professionalProfile.findUnique({ where: { userId: id } });
+      if (!profile) {
+        const businessName = `${user.firstName} ${user.lastName}`.trim() || 'Professionnel';
+        await prisma.professionalProfile.create({
+          data: { userId: id, businessName, verificationStatus: 'pending' },
+        }).catch((err) => logger.warn('updateUserRole: création ProfessionalProfile échouée', err));
+      }
+    }
+
+    await createAudit({
+      adminId,
+      action: 'admin.user.role_updated',
+      targetType: 'user',
+      targetId: id,
+      description: `Changement de type de compte pour l'utilisateur ${id}`,
+      metadata: { old: { accountType: user.accountType }, new: { accountType } },
     });
   },
 

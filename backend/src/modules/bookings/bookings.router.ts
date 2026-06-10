@@ -14,6 +14,7 @@ import {
 } from './bookings.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { parseId } from '../../common/validators/parse-id.middleware';
 import { idempotency } from '../../common/middleware/idempotency.middleware';
@@ -36,24 +37,28 @@ bookingsRouter.post('/:id/cancel', parseId, validate(CancelBookingDto), cancelBo
 bookingsRouter.post(
   '/:id/confirm',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   parseId,
   confirmBooking,
 );
 bookingsRouter.post(
   '/:id/complete',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur', 'admin'),
+  requireKycApproved,
   parseId,
   completeBooking,
 );
 bookingsRouter.post(
   '/:id/cash-received',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   parseId,
   markCashReceived,
 );
 bookingsRouter.post(
   '/:id/no-show',
   authorize('restaurateur', 'professional_hebergement', 'professional_hotel', 'professional_immobilier'),
+  requireKycApproved,
   parseId,
   markNoShow,
 );

@@ -2,7 +2,8 @@
 import { prisma } from '../../database/prisma.service';
 import { generateOtp, sendSms } from '../../common/utils/sms';
 import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
-import { redisSet, redisGet, redisDel } from '../../common/utils/redis-client';
+import { redisSet, redisGet, redisDel, getRedisClient } from '../../common/utils/redis-client';
+import { encryptSecret, decryptSecret } from '../../common/utils/secret-crypto';
 import { sendPasswordResetEmail } from '../../common/utils/mailer';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
@@ -27,10 +28,47 @@ const TOTP_PENDING_TTL = 300;                                 // 5 min
 const OTP_KEY          = (phone: string)  => `otp:${phone}`;
 const PENDING_USER_KEY = (phone: string)  => `pending:${phone}`;
 const TOTP_PENDING_KEY = (userId: string) => `totp_pending:${userId}`;
+const OTP_RATE_KEY     = (phone: string)  => `otp_rate:${phone}`;
+
+// Limite anti-abus : 3 demandes d'OTP par numéro et par heure
+const OTP_RATE_LIMIT     = 3;
+const OTP_RATE_WINDOW_S  = 3600;
 
 // In-memory fallback for pending users when Redis is not configured
 const pendingUserMemory = new Map<string, string>();
 const otpMemory         = new Map<string, string>();
+const otpRateMemory     = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Limite les demandes d'envoi d'OTP par numéro de téléphone (3/heure).
+ * Compteur partagé inter-instances via Redis ; repli mémoire locale sans Redis.
+ */
+async function assertOtpRateLimit(phone: string): Promise<void> {
+  const tooMany = new HttpError(429, 'Trop de demandes de code pour ce numéro. Réessayez dans une heure.');
+
+  const client = getRedisClient();
+  if (client) {
+    try {
+      const key = OTP_RATE_KEY(phone);
+      const count = await client.incr(key) as number;
+      if (count === 1) await client.expire(key, OTP_RATE_WINDOW_S);
+      if (count > OTP_RATE_LIMIT) throw tooMany;
+      return;
+    } catch (err) {
+      if (err instanceof HttpError) throw err;
+      logger.warn('OTP rate limit : erreur Redis — repli mémoire', { error: (err as Error).message });
+    }
+  }
+
+  const now = Date.now();
+  const entry = otpRateMemory.get(phone);
+  if (!entry || now > entry.resetAt) {
+    otpRateMemory.set(phone, { count: 1, resetAt: now + OTP_RATE_WINDOW_S * 1000 });
+    return;
+  }
+  entry.count += 1;
+  if (entry.count > OTP_RATE_LIMIT) throw tooMany;
+}
 
 const BYPASS_OTP = '000000'; // code accepté UNIQUEMENT en développement quand le bypass est actif
 
@@ -206,6 +244,8 @@ export const authService = {
     }
 
     // ── Normal mode: store pending data + send OTP via SMS ──────────────────────
+    await assertOtpRateLimit(input.phone);
+
     const pending: PendingUser = {
       email: input.email,
       phone: input.phone,
@@ -215,7 +255,8 @@ export const authService = {
       accountType: input.accountType as AccountType,
       referralCode: input.referralCode,
     };
-    const pendingJson = JSON.stringify(pending);
+    // Chiffré avant stockage : le payload contient le mot de passe en clair
+    const pendingJson = encryptSecret(JSON.stringify(pending));
     await redisSet(PENDING_USER_KEY(input.phone), pendingJson, OTP_TTL);
     pendingUserMemory.set(input.phone, pendingJson);
     setTimeout(() => pendingUserMemory.delete(input.phone), OTP_TTL * 1000);
@@ -229,10 +270,8 @@ export const authService = {
     try {
       await sendSms(input.phone, message, { isOtp: true });
     } catch (err) {
+      // Le code OTP n'est JAMAIS loggué — seul l'échec d'envoi est tracé.
       logger.error('Échec envoi OTP SMS', { phone: input.phone, error: (err as Error).message });
-      if (env.NODE_ENV !== 'production') {
-        logger.debug(`[DEV] OTP pour ${input.phone} : ${otp}`);
-      }
     }
 
     return { message: 'Un code de vérification a été envoyé par SMS. Valable 5 minutes.' };
@@ -262,7 +301,7 @@ export const authService = {
     if (!pendingRaw) {
       throw new HttpError(400, 'Session d\'inscription expirée. Recommencez l\'inscription.');
     }
-    const pending: PendingUser = JSON.parse(pendingRaw);
+    const pending: PendingUser = JSON.parse(decryptSecret(pendingRaw));
 
     await Promise.all([
       redisDel(OTP_KEY(input.phone)),
@@ -364,9 +403,11 @@ export const authService = {
     if (isOtpBypassEnabled()) {
       await redisSet(OTP_KEY(phone), BYPASS_OTP, OTP_TTL);
       otpMemory.set(phone, BYPASS_OTP);
-      logger.warn(`[OTP BYPASS — DEV] resend pour ${phone} : ${BYPASS_OTP}`);
+      logger.warn(`[OTP BYPASS — DEV] resend pour ${phone}`);
       return;
     }
+
+    await assertOtpRateLimit(phone);
 
     const otp = generateOtp();
     await redisSet(OTP_KEY(phone), otp, OTP_TTL);
@@ -377,10 +418,8 @@ export const authService = {
     try {
       await sendSms(phone, message, { isOtp: true });
     } catch (err) {
+      // Le code OTP n'est JAMAIS loggué — seul l'échec d'envoi est tracé.
       logger.error('Échec renvoi OTP', { phone, error: (err as Error).message });
-      if (env.NODE_ENV !== 'production') {
-        logger.debug(`[DEV] OTP pour ${phone} : ${otp}`);
-      }
     }
   },
 
@@ -432,9 +471,11 @@ export const authService = {
     const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
 
     if (twoFactorEnabled && twoFactorSecret) {
+      // Refresh token chiffré (AES-256-GCM) avant stockage en Redis,
+      // et supprimé immédiatement après usage dans verifyTotp.
       await redisSet(
         TOTP_PENDING_KEY(user.id),
-        JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token }),
+        encryptSecret(JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token })),
         TOTP_PENDING_TTL,
       );
       return { requiresTwoFactor: true, userId: user.id };
@@ -550,7 +591,7 @@ export const authService = {
       throw new HttpError(400, 'Session 2FA expirée. Reconnectez-vous.');
     }
 
-    const { supabaseRefreshToken } = JSON.parse(pendingRaw) as { supabaseRefreshToken: string };
+    const { supabaseRefreshToken } = JSON.parse(decryptSecret(pendingRaw)) as { supabaseRefreshToken: string };
 
     // Lire le secret TOTP depuis Supabase user_metadata
     const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(input.userId);

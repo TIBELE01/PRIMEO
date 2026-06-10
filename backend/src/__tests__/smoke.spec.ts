@@ -8,7 +8,6 @@ process.env['DIRECT_URL'] = 'postgresql://u:p@localhost:5432/test?schema=public'
 process.env['SUPABASE_URL'] = 'https://test.supabase.co';
 process.env['SUPABASE_ANON_KEY'] = 'anon-key-test';
 process.env['SUPABASE_SERVICE_ROLE_KEY'] = 'service-role-key-test';
-process.env['JWT_SECRET'] = 'test-jwt-secret-at-least-32-characters-long-xx';
 process.env['PUBLIC_URL'] = 'http://localhost:4000';
 process.env['BACKEND_URL'] = 'http://localhost:4000';
 

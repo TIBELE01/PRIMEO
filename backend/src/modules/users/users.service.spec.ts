@@ -8,11 +8,6 @@ jest.mock('../../common/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 
-jest.mock('../../common/utils/bcrypt', () => ({
-  hashPassword: jest.fn(async (p: string) => `hashed:${p}`),
-  comparePassword: jest.fn(async (plain: string, hash: string) => hash === `hashed:${plain}`),
-}));
-
 jest.mock('../../common/utils/mailer', () => ({
   sendEmail: jest.fn(async () => undefined),
 }));
@@ -40,9 +35,25 @@ const mockPrisma = {
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 const mockSupabaseAdmin = {
-  auth: { admin: { deleteUser: jest.fn(async () => ({})) } },
+  auth: {
+    admin: {
+      deleteUser: jest.fn(async () => ({})),
+      updateUserById: jest.fn(async () => ({ error: null })),
+      getUserById: jest.fn(async () => ({ data: { user: { id: 'user-1', user_metadata: {} } }, error: null })),
+    },
+  },
 };
-jest.mock('../../config/supabase.config', () => ({ supabaseAdmin: mockSupabaseAdmin }));
+const mockSupabaseAuth = {
+  auth: {
+    signInWithPassword: jest.fn(
+      async (): Promise<{ error: { message: string } | null }> => ({ error: null }),
+    ),
+  },
+};
+jest.mock('../../config/supabase.config', () => ({
+  supabaseAdmin: mockSupabaseAdmin,
+  supabaseAuth: mockSupabaseAuth,
+}));
 
 // ── Imports après les mocks ──────────────────────────────────────────────────
 
@@ -56,27 +67,29 @@ const CLIENT = {
   firstName: 'Jean',
   lastName: 'Kouassi',
   accountType: 'client',
-  passwordHash: 'hashed:Secret123',
   status: 'active',
-  twoFactorEnabled: false,
-  twoFactorSecret: null,
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSupabaseAuth.auth.signInWithPassword.mockImplementation(async () => ({ error: null }));
+  mockSupabaseAdmin.auth.admin.updateUserById.mockImplementation(async () => ({ error: null }));
+  mockSupabaseAdmin.auth.admin.getUserById.mockImplementation(async () => ({
+    data: { user: { id: 'user-1', user_metadata: {} } },
+    error: null,
+  }));
+  mockSupabaseAdmin.auth.admin.deleteUser.mockImplementation(async () => ({}));
+  mockPrisma.user.update.mockImplementation(async (args: any) => ({ id: args.where.id, ...args.data }));
+  mockPrisma.professionalProfile.upsert.mockImplementation(async () => ({}));
+  mockPrisma.auditLog.create.mockImplementation(async () => ({}));
+  mockPrisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
 });
 
 describe('usersService.getById', () => {
-  it('retourne le profil sans les champs sensibles', async () => {
-    mockPrisma.user.findUnique.mockResolvedValueOnce({
-      ...CLIENT, passwordHash: 'hashed:x', twoFactorSecret: 's', resetToken: 'r', otpCode: 'o',
-    });
+  it('retourne le profil utilisateur (plus aucun champ sensible en base)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ ...CLIENT });
     const result = await usersService.getById('user-1') as Record<string, unknown>;
     expect(result.email).toBe('jean@example.com');
-    expect(result.passwordHash).toBeUndefined();
-    expect(result.twoFactorSecret).toBeUndefined();
-    expect(result.resetToken).toBeUndefined();
-    expect(result.otpCode).toBeUndefined();
   });
 
   it('lève 404 si introuvable', async () => {
@@ -108,18 +121,20 @@ describe('usersService.update', () => {
 });
 
 describe('usersService.changePassword', () => {
-  it('refuse si le mot de passe actuel est incorrect', async () => {
+  it('refuse si le mot de passe actuel est incorrect (rejet Supabase)', async () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce(CLIENT);
+    mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid credentials' } });
     await expect(
       usersService.changePassword('user-1', { currentPassword: 'WrongPass', newPassword: 'NewSecret123' }),
     ).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it('change le mot de passe et envoie un email', async () => {
+  it('change le mot de passe via Supabase et envoie un email', async () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce(CLIENT);
     await usersService.changePassword('user-1', { currentPassword: 'Secret123', newPassword: 'NewSecret123' });
-    expect(mockPrisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { passwordHash: 'hashed:NewSecret123' } }),
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
+      'user-1',
+      { password: 'NewSecret123' },
     );
     expect(sendEmail).toHaveBeenCalled();
   });
@@ -150,8 +165,9 @@ describe('usersService.deactivate / reactivate', () => {
 });
 
 describe('usersService.deleteAccount', () => {
-  it('refuse si le mot de passe est incorrect', async () => {
+  it('refuse si le mot de passe est incorrect (rejet Supabase)', async () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce({ ...CLIENT, clientBookings: [] });
+    mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid credentials' } });
     await expect(
       usersService.deleteAccount('user-1', { password: 'WrongPass' }),
     ).rejects.toMatchObject({ statusCode: 400 });
@@ -178,18 +194,26 @@ describe('usersService.deleteAccount', () => {
 });
 
 describe('usersService.2FA', () => {
-  it('setup2fa génère un secret et un QR code', async () => {
+  it('setup2fa génère un secret, un QR code et stocke le secret dans Supabase user_metadata', async () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce(CLIENT);
     const res = await usersService.setup2fa('user-1');
     expect(res.secret).toBe('SECRET123');
     expect(res.qrCode).toContain('data:image');
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
+      'user-1',
+      { user_metadata: { twoFactorSecret: 'SECRET123', twoFactorEnabled: false } },
+    );
   });
 
-  it('confirm2fa active le 2FA quand le code est valide', async () => {
-    mockPrisma.user.findUnique.mockResolvedValueOnce({ ...CLIENT, twoFactorSecret: 'SECRET123' });
+  it('confirm2fa active le 2FA dans Supabase user_metadata quand le code est valide', async () => {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET123' } } },
+      error: null,
+    });
     await usersService.confirm2fa('user-1', '123456');
-    expect(mockPrisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { twoFactorEnabled: true } }),
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
+      'user-1',
+      { user_metadata: { twoFactorSecret: 'SECRET123', twoFactorEnabled: true } },
     );
   });
 });

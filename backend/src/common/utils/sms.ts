@@ -72,13 +72,15 @@ export async function sendSms(
     return null;
   }
 
-  // Crée le log en statut "pending" avant l'appel API
+  // Crée le log en statut "pending" avant l'appel API.
+  // Les messages OTP ne sont JAMAIS stockés en clair — seul le fait
+  // qu'un code a été envoyé est tracé.
   let logId: string | null = null;
   try {
     const log = await prisma.smsLog.create({
       data: {
         recipient: phoneNumber,
-        message,
+        message: options.isOtp ? '[Code OTP — contenu masqué]' : message,
         status: 'pending',
         isOtp: options.isOtp ?? false,
       },

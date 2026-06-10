@@ -10,6 +10,7 @@ import {
 } from './collaborators.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { InviteCollaboratorDto, UpdateCollaboratorRoleDto, AcceptInvitationDto } from './dto/collaborator.dto';
 
@@ -21,6 +22,7 @@ collaboratorsRouter.use(authenticate);
 collaboratorsRouter.post(
   '/invite',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(InviteCollaboratorDto),
   inviteCollaborator,
 );
@@ -28,12 +30,14 @@ collaboratorsRouter.post(
 collaboratorsRouter.get(
   '/list',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   listCollaborators,
 );
 
 collaboratorsRouter.patch(
   '/:id/role',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(UpdateCollaboratorRoleDto),
   updateCollaboratorRole,
 );
@@ -41,6 +45,7 @@ collaboratorsRouter.patch(
 collaboratorsRouter.delete(
   '/:id',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   revokeCollaborator,
 );
 

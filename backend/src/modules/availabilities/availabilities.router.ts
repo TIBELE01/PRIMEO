@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { getAvailability, setAvailability, blockDates, exportIcal } from './availabilities.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { SetAvailabilityDto, BlockDatesDto } from './dto/availability.dto';
 
@@ -18,12 +19,14 @@ availabilitiesRouter.use(authenticate);
 availabilitiesRouter.post(
   '/property/:propertyId',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(SetAvailabilityDto),
   setAvailability
 );
 availabilitiesRouter.post(
   '/property/:propertyId/block',
   authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
   validate(BlockDatesDto),
   blockDates
 );

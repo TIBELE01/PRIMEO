@@ -3,13 +3,14 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { foodOrdersService } from './food-orders.service';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { FoodOrderDeliveryType, FoodOrderStatus } from '@prisma/client';
 
 export const foodOrdersRouter = Router();
 
 const authClient        = [authenticate, authorize('client')];
-const authRestaurateur  = [authenticate, authorize('restaurateur', 'admin')];
+const authRestaurateur  = [authenticate, authorize('restaurateur', 'admin'), requireKycApproved];
 const authAny           = [authenticate];
 
 // ── Client : passer une commande ──────────────────────────────────────────────

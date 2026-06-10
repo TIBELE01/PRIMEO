@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../database/prisma.service';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 import { redisSet, redisDel, redisGet } from '../../common/utils/redis-client';
+import { encryptSecret, decryptSecret } from '../../common/utils/secret-crypto';
 import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
@@ -71,9 +72,11 @@ async function continueLogin(
   const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
 
   if (twoFactorEnabled && twoFactorSecret) {
+    // Refresh token chiffré (AES-256-GCM) avant stockage en Redis,
+    // et supprimé immédiatement après usage dans adminVerifyTotp.
     await redisSet(
       TOTP_PENDING_KEY(user.id),
-      JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token }),
+      encryptSecret(JSON.stringify({ supabaseRefreshToken: signInData.session.refresh_token })),
       TOTP_PENDING_TTL,
     );
     res.json({ requiresTwoFactor: true, tempToken: user.id });
@@ -92,7 +95,7 @@ export async function adminVerifyTotp(req: Request, res: Response, next: NextFun
     const pendingRaw = await redisGet(TOTP_PENDING_KEY(userId));
     if (!pendingRaw) return next(new HttpError(400, 'Session 2FA expirée. Reconnectez-vous.'));
 
-    const { supabaseRefreshToken } = JSON.parse(pendingRaw) as { supabaseRefreshToken: string };
+    const { supabaseRefreshToken } = JSON.parse(decryptSecret(pendingRaw)) as { supabaseRefreshToken: string };
 
     // Lire le secret TOTP depuis Supabase user_metadata
     const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(userId);

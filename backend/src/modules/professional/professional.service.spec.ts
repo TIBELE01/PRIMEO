@@ -27,6 +27,19 @@ const mockPrisma = {
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
+// supabase.config valide les variables d'environnement au chargement (process.exit) —
+// indispensable de le mocker, le service l'importe pour le TOTP en user_metadata.
+jest.mock('../../config/supabase.config', () => ({
+  supabaseAdmin: {
+    auth: {
+      admin: {
+        getUserById: jest.fn(async () => ({ data: { user: { id: 'user-1', user_metadata: {} } }, error: null })),
+        updateUserById: jest.fn(async () => ({ error: null })),
+      },
+    },
+  },
+}));
+
 import { professionalService } from './professional.service';
 
 function fakeFile(name: string, mimetype: string, size = 1000): Express.Multer.File {

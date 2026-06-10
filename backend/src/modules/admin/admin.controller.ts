@@ -107,6 +107,15 @@ export async function updateUserNotes(req: Request, res: Response, next: NextFun
   }
 }
 
+export async function updateUserRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await adminService.updateUserRole(req.params['id']!, req.user!.sub, req.body.accountType);
+    res.json({ message: 'Type de compte mis à jour et synchronisé avec Supabase' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getKycDocuments(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const profile = await adminService.getKycDocuments(req.params['id']!);

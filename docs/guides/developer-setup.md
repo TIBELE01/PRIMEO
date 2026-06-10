@@ -58,7 +58,9 @@ cp .env.example backend/.env
 Éditer `backend/.env` et renseigner **au minimum** :
 ```
 DATABASE_URL=postgresql://primeo:primeo_dev@localhost:5432/primeo_dev
-JWT_SECRET=<générer avec : openssl rand -hex 64>
+SUPABASE_URL=<URL du projet Supabase>
+SUPABASE_ANON_KEY=<clé anon Supabase>
+SUPABASE_SERVICE_ROLE_KEY=<clé service role Supabase>
 ```
 
 Les autres clés (Genius Pay, Brevo, OneSignal, etc.) peuvent être laissées avec des valeurs factices pour le développement local — les fonctionnalités correspondantes seront désactivées ou mockées.

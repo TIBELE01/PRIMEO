@@ -5,6 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import { restaurantService } from './restaurant.service';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { HttpError } from '../../common/handlers/http-error.handler';
 
 export const restaurantRouter = Router({ mergeParams: true }); // mergeParams to get :propertyId
@@ -12,6 +13,7 @@ export const restaurantRouter = Router({ mergeParams: true }); // mergeParams to
 const ownerOnly = [
   authenticate,
   authorize('restaurateur', 'professional_hebergement', 'professional_hotel', 'professional_immobilier', 'admin'),
+  requireKycApproved, // les admins passent, les pros doivent avoir un KYC approuvé
 ];
 
 // ── Time slots ────────────────────────────────────────────────────────────────
