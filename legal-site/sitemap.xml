@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://legal.primeo.ci/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://legal.primeo.ci/cgu/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://legal.primeo.ci/conditions-vente/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://legal.primeo.ci/confidentialite/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://legal.primeo.ci/mentions-legales/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://legal.primeo.ci/professionnels/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/litiges-mediation/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/propriete-intellectuelle/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/charte-communaute/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/charte-donnees/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/reglement-interieur/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/signalement/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/disclaimer/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/cookies/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/lutte-anti-blanchiment/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/protection-consommateur/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://legal.primeo.ci/protection-mineurs/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/securite/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/accessibilite/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://legal.primeo.ci/conditions-api/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://legal.primeo.ci/parrainage/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://legal.primeo.ci/jeux-concours/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://legal.primeo.ci/confidentialite-pros/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://legal.primeo.ci/transferts-donnees/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://legal.primeo.ci/recrutement-confidentialite/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://legal.primeo.ci/a-propos/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://legal.primeo.ci/contact/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+</urlset>

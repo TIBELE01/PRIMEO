@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conditions d'utilisation de l'API PRIMEO — PRIMEO</title>
+  <meta name="description" content="Conditions d'utilisation de l'API PRIMEO : accès, authentification, quotas, données accessibles, interdictions, facturation et résiliation." />
+  <link rel="canonical" href="https://legal.primeo.ci/conditions-api/" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=3" />
+  <link rel="icon" href="/assets/images/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/assets/images/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0055FF" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo"><img src="/assets/images/logo.png" alt="Primeo" class="brand-logo-img" /></a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+      <ul class="nav-links">
+        <li><a href="/">Accueil</a></li>
+        <li><a href="/cgu/">CGU</a></li>
+        <li><a href="/confidentialite/">Confidentialité</a></li>
+        <li><a href="/mentions-legales/">Mentions légales</a></li>
+        <li><a href="/contact/">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="section">
+    <div class="breadcrumb"><a href="/">Accueil</a> <span>›</span> Conditions d'utilisation de l'API PRIMEO</div>
+    <h1 class="page-title">Conditions d'utilisation de l'API PRIMEO</h1>
+    <p class="page-subtitle">Dernière mise à jour : 8 juin 2026 · Version 1.0</p>
+
+    <div class="toc">
+      <h4>Table des matières</h4>
+      <ol>
+        <li><a href="#acces">Accès à l'API et authentification</a></li>
+        <li><a href="#limites">Limites d'utilisation et quotas</a></li>
+        <li><a href="#donnees">Données accessibles via l'API</a></li>
+        <li><a href="#interdictions">Interdictions et usages prohibés</a></li>
+        <li><a href="#responsabilite">Responsabilité et garanties</a></li>
+        <li><a href="#facturation">Facturation et plans API</a></li>
+        <li><a href="#modifications">Modifications et résiliation</a></li>
+      </ol>
+    </div>
+
+    <h2 class="section-title" id="acces">1. Accès à l'API et authentification</h2>
+
+    <h3>1.1 Présentation de l'API PRIMEO</h3>
+    <p>L'API PRIMEO (Application Programming Interface) est une interface de programmation qui permet aux développeurs et aux entreprises partenaires d'accéder programmatiquement aux données et aux fonctionnalités de la plateforme PRIMEO, notamment les annonces immobilières, les établissements d'hébergement et de restauration, les disponibilités et les réservations. L'API est accessible via HTTPS à l'adresse <code>api.primeo.ci</code>.</p>
+    <p>Les présentes Conditions d'utilisation de l'API (ci-après « Conditions API ») constituent un accord juridiquement contraignant entre PRIMEO SARL et toute personne physique ou morale (ci-après « le Partenaire API ») souhaitant accéder à l'API PRIMEO. Ces Conditions API complètent les <a href="/cgu/">Conditions Générales d'Utilisation</a>. En cas de contradiction, les Conditions API prévalent pour les aspects spécifiques à l'accès par API.</p>
+
+    <h3>1.2 Conditions d'accès</h3>
+    <p>L'accès à l'API PRIMEO est réservé aux entités satisfaisant les conditions suivantes :</p>
+    <ul>
+      <li>Être une personne morale régulièrement immatriculée ou une personne physique majeure capable juridiquement de contracter ;</li>
+      <li>Avoir accepté les présentes Conditions API et les CGU de PRIMEO ;</li>
+      <li>Avoir soumis et obtenu l'approbation d'une demande d'accès via le portail développeur PRIMEO ;</li>
+      <li>Pour les partenaires commerciaux : avoir signé un accord de partenariat avec PRIMEO.</li>
+    </ul>
+    <p>PRIMEO se réserve le droit de refuser ou de révoquer l'accès à l'API à tout Partenaire sans obligation de motivation, notamment si le projet ou l'usage envisagé est incompatible avec les valeurs ou les intérêts de PRIMEO.</p>
+
+    <h3>1.3 Authentification par clé API</h3>
+    <p>L'accès à l'API nécessite l'utilisation d'une clé API (API Key) attribuée individuellement à chaque Partenaire. Les clés API sont :</p>
+    <ul>
+      <li>Générées depuis le tableau de bord du portail développeur ;</li>
+      <li>Strictement personnelles et non cessibles ;</li>
+      <li>À inclure dans l'en-tête HTTP <code>Authorization: Bearer {API_KEY}</code> de chaque requête ;</li>
+      <li>Révocables à tout moment par PRIMEO en cas de violation des Conditions API.</li>
+    </ul>
+    <p>Le Partenaire est seul responsable de la sécurisation de sa clé API. Toute utilisation effectuée avec sa clé, qu'elle soit autorisée ou non, est réputée effectuée par le Partenaire. En cas de compromission suspectée, le Partenaire doit immédiatement régénérer sa clé depuis le portail développeur et notifier PRIMEO à <a href="mailto:api@primeo.ci">api@primeo.ci</a>.</p>
+
+    <h3>1.4 Authentification OAuth 2.0</h3>
+    <p>Pour les intégrations nécessitant d'agir au nom d'utilisateurs PRIMEO (accès aux données personnelles d'un utilisateur, réservations), l'API PRIMEO implémente le protocole OAuth 2.0. Le Partenaire doit enregistrer son application cliente dans le portail développeur pour obtenir un <code>client_id</code> et un <code>client_secret</code>. Le flux Authorization Code avec PKCE est recommandé pour les applications web et mobiles. Le flux Client Credentials est utilisé pour les accès machine à machine.</p>
+
+    <h3>1.5 Webhooks</h3>
+    <p>L'API PRIMEO propose un système de webhooks permettant de recevoir des notifications en temps réel lors d'événements spécifiques (nouvelle réservation, annulation, modification de disponibilité, etc.). Les webhooks sont configurés depuis le portail développeur. PRIMEO signe chaque notification avec une clé HMAC-SHA256 que le Partenaire doit vérifier pour s'assurer de l'authenticité des messages.</p>
+
+    <h2 class="section-title" id="limites">2. Limites d'utilisation et quotas</h2>
+
+    <h3>2.1 Limites de débit (Rate Limiting)</h3>
+    <p>Afin de garantir la qualité de service pour l'ensemble des Partenaires, l'API PRIMEO applique des limites de débit selon le plan souscrit :</p>
+    <ul>
+      <li><strong>Plan Découverte (gratuit)</strong> : 100 requêtes par minute, 5 000 requêtes par jour ;</li>
+      <li><strong>Plan Starter</strong> : 500 requêtes par minute, 50 000 requêtes par jour ;</li>
+      <li><strong>Plan Business</strong> : 2 000 requêtes par minute, 500 000 requêtes par jour ;</li>
+      <li><strong>Plan Enterprise</strong> : limites négociées individuellement selon les besoins.</li>
+    </ul>
+    <p>Les limites sont contrôlées par une fenêtre glissante. Les en-têtes HTTP <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> et <code>X-RateLimit-Reset</code> sont inclus dans chaque réponse pour permettre au Partenaire de gérer sa consommation. En cas de dépassement, l'API retourne une réponse HTTP 429 (Too Many Requests).</p>
+
+    <h3>2.2 Quotas mensuels</h3>
+    <p>En complément des limites de débit, des quotas mensuels s'appliquent selon le plan. En cas de dépassement du quota mensuel, les requêtes supplémentaires sont facturées à la requête (voir article 6) ou entraînent la suspension temporaire de l'accès jusqu'au renouvellement mensuel du quota.</p>
+
+    <h3>2.3 Mise en cache et optimisation</h3>
+    <p>Le Partenaire est encouragé à mettre en place une stratégie de mise en cache (caching) de son côté pour réduire le nombre de requêtes. Les réponses de l'API incluent des en-têtes <code>Cache-Control</code> et <code>ETag</code> indiquant les durées de validité recommandées. Il est interdit de désactiver ou contourner ces mécanismes pour augmenter artificiellement la fréquence des requêtes.</p>
+
+    <h3>2.4 Limites sur les données en masse</h3>
+    <p>L'extraction de données en masse (bulk) est soumise à des endpoints dédiés disponibles uniquement sur les plans Business et Enterprise. L'utilisation de l'API standard pour tenter de récupérer l'intégralité du catalogue PRIMEO par requêtes successives est interdite et peut entraîner la suspension immédiate de l'accès.</p>
+
+    <h2 class="section-title" id="donnees">3. Données accessibles via l'API</h2>
+
+    <h3>3.1 Données publiques</h3>
+    <p>Les données suivantes sont accessibles via l'API sans authentification utilisateur (avec authentification par clé API uniquement) :</p>
+    <ul>
+      <li>Annonces immobilières publiques (description, localisation, prix, photos) ;</li>
+      <li>Informations sur les établissements d'hébergement et de restauration (nom, description, catégorie, localisation, horaires, tarifs indicatifs) ;</li>
+      <li>Disponibilités en temps réel des hébergements ;</li>
+      <li>Avis et notes publiés sur la plateforme (données agrégées) ;</li>
+      <li>Données géographiques (communes, quartiers, points d'intérêt).</li>
+    </ul>
+
+    <h3>3.2 Données nécessitant une autorisation utilisateur (OAuth)</h3>
+    <p>Les données suivantes nécessitent un accès autorisé par l'utilisateur concerné via OAuth 2.0 :</p>
+    <ul>
+      <li>Profil utilisateur (nom, email, préférences) ;</li>
+      <li>Historique de réservations de l'utilisateur ;</li>
+      <li>Favoris et listes personnalisées ;</li>
+      <li>Messages de la messagerie interne ;</li>
+      <li>Actions au nom de l'utilisateur (création de réservation, annulation, publication d'avis).</li>
+    </ul>
+
+    <h3>3.3 Données réservées aux partenaires certifiés</h3>
+    <p>Certaines données sont accessibles uniquement aux partenaires ayant signé un accord de partenariat spécifique avec PRIMEO :</p>
+    <ul>
+      <li>Données analytiques agrégées du secteur (tendances des prix, taux d'occupation) ;</li>
+      <li>Export de catalogue complet pour les agences immobilières partenaires ;</li>
+      <li>Données de performance des annonces pour les professionnels hébergeurs.</li>
+    </ul>
+
+    <h3>3.4 Propriété des données</h3>
+    <p>Les données accessibles via l'API PRIMEO restent la propriété de PRIMEO et/ou des membres qui les ont publiées. L'accès à ces données via l'API ne confère au Partenaire aucun droit de propriété sur lesdites données. Le Partenaire ne peut utiliser les données que dans le cadre des usages autorisés par les présentes Conditions API.</p>
+
+    <h2 class="section-title" id="interdictions">4. Interdictions et usages prohibés</h2>
+
+    <h3>4.1 Interdictions générales</h3>
+    <p>Il est strictement interdit d'utiliser l'API PRIMEO pour :</p>
+    <ul>
+      <li>Reproduire, redistribuer ou revendre les données PRIMEO à des tiers sans accord préalable écrit ;</li>
+      <li>Créer une application ou un service concurrent directement à PRIMEO utilisant les données de la plateforme ;</li>
+      <li>Contourner les mécanismes d'authentification ou de contrôle d'accès ;</li>
+      <li>Tester la résistance des systèmes PRIMEO (tests de charge, fuzzing, scanning de vulnérabilités) sans autorisation écrite préalable ;</li>
+      <li>Utiliser les données personnelles des utilisateurs PRIMEO à des fins non déclarées ou incompatibles avec les finalités autorisées ;</li>
+      <li>Entraîner des modèles d'intelligence artificielle avec les données PRIMEO sans accord spécifique.</li>
+    </ul>
+
+    <h3>4.2 Attribution obligatoire</h3>
+    <p>Toute application ou service utilisant des données PRIMEO accessibles via l'API doit afficher de manière visible et lisible la mention « Données fournies par PRIMEO » (ou « Powered by PRIMEO ») accompagnée d'un lien vers <a href="https://primeo.ci" target="_blank" rel="noopener">primeo.ci</a>. Le Partenaire ne peut pas utiliser cette attribution pour suggérer que PRIMEO cautionne ou approuve le service du Partenaire sans accord écrit explicite.</p>
+
+    <h3>4.3 Restrictions relatives aux données personnelles</h3>
+    <p>L'utilisation des données personnelles accessibles via l'API est strictement encadrée par la loi ivoirienne n°2013-450. Le Partenaire qui accède à des données personnelles via OAuth agit en qualité de sous-traitant de PRIMEO et doit :</p>
+    <ul>
+      <li>Traiter les données uniquement pour les finalités autorisées par l'utilisateur ;</li>
+      <li>Ne pas croiser les données PRIMEO avec d'autres bases de données sans autorisation explicite ;</li>
+      <li>Supprimer les données dès que l'accès OAuth est révoqué par l'utilisateur ;</li>
+      <li>Mettre en place des mesures de sécurité adéquates pour protéger les données.</li>
+    </ul>
+
+    <h2 class="section-title" id="responsabilite">5. Responsabilité et garanties</h2>
+
+    <h3>5.1 Disponibilité de l'API</h3>
+    <p>PRIMEO s'efforce de maintenir l'API disponible 24h/24 et 7j/7, avec un objectif de disponibilité de 99,5 % sur une base mensuelle pour les plans Business et Enterprise (SLA). Aucune garantie de disponibilité n'est offerte pour le plan Découverte. Les maintenances planifiées sont annoncées avec un préavis minimum de quarante-huit (48) heures via le portail développeur et le tableau de bord du Partenaire.</p>
+
+    <h3>5.2 Exactitude des données</h3>
+    <p>Les données disponibles via l'API PRIMEO sont fournies « en l'état » (as-is). PRIMEO s'efforce de maintenir leur exactitude mais ne garantit pas que les informations sont à jour, exactes ou complètes à tout moment. Le Partenaire utilise ces données sous sa propre responsabilité et doit mettre en place les vérifications nécessaires avant de les présenter à ses propres utilisateurs.</p>
+
+    <h3>5.3 Limitation de responsabilité</h3>
+    <p>Dans les limites autorisées par le droit ivoirien et le droit OHADA, PRIMEO n'est pas responsable des dommages indirects, consécutifs, spéciaux ou punitifs subis par le Partenaire du fait de l'utilisation ou de l'impossibilité d'utiliser l'API. La responsabilité totale de PRIMEO envers un Partenaire ne saurait excéder les sommes effectivement versées par ce Partenaire à PRIMEO au cours des trois (3) mois précédant l'événement dommageable.</p>
+
+    <h3>5.4 Responsabilité du Partenaire</h3>
+    <p>Le Partenaire est entièrement responsable des applications et services qu'il développe en utilisant l'API PRIMEO, notamment :</p>
+    <ul>
+      <li>De la conformité de son application avec la législation ivoirienne et les législations applicables à ses utilisateurs ;</li>
+      <li>De la sécurité de son application et de la protection des données personnelles qu'il traite ;</li>
+      <li>Du respect des droits de propriété intellectuelle de PRIMEO et de tiers ;</li>
+      <li>De l'exactitude des informations présentées à ses utilisateurs sur la base des données PRIMEO.</li>
+    </ul>
+
+    <h2 class="section-title" id="facturation">6. Facturation et plans API</h2>
+
+    <h3>6.1 Plan Découverte (gratuit)</h3>
+    <p>Le Plan Découverte est gratuit et permet aux développeurs de tester l'API PRIMEO pour des projets personnels, des prototypes ou des petites applications. Il est limité à 5 000 requêtes par jour et ne donne pas accès aux données en masse ni aux SLA de disponibilité. Il est interdit d'utiliser le Plan Découverte pour une application commerciale dépassant les seuils de quota.</p>
+
+    <h3>6.2 Plans payants</h3>
+    <p>Les plans payants (Starter, Business, Enterprise) sont facturés mensuellement ou annuellement (avec réduction pour le paiement annuel) en francs CFA (XOF). Les tarifs en vigueur sont disponibles sur le portail développeur. PRIMEO se réserve le droit de modifier ses tarifs avec un préavis de soixante (60) jours. Le Partenaire bénéficiant d'un plan annuel est protégé contre toute hausse de tarif jusqu'au renouvellement de son contrat annuel.</p>
+
+    <h3>6.3 Facturation à l'usage</h3>
+    <p>En cas de dépassement des quotas inclus dans le plan, les requêtes supplémentaires sont facturées selon le barème en vigueur sur le portail développeur. Le Partenaire peut configurer des alertes de consommation et des plafonds de dépenses depuis son tableau de bord pour éviter les dépassements non anticipés.</p>
+
+    <h3>6.4 Modalités de paiement</h3>
+    <p>Le paiement s'effectue par virement bancaire, mobile money (Orange Money, MTN Money) ou carte bancaire via le système de paiement sécurisé PRIMEO. Les factures sont émises en début de mois pour la consommation du mois précédent. En cas de défaut de paiement, PRIMEO peut suspendre l'accès à l'API après un rappel resté sans effet pendant quinze (15) jours.</p>
+
+    <h2 class="section-title" id="modifications">7. Modifications et résiliation</h2>
+
+    <h3>7.1 Versionnage de l'API</h3>
+    <p>L'API PRIMEO suit un schéma de versionnage sémantique (v1, v2, etc.). Chaque version majeure est maintenue pendant une période minimale de dix-huit (18) mois après la publication de la version suivante (période de dépréciation). Pendant cette période, le Partenaire est notifié et encouragé à migrer vers la nouvelle version. À l'issue de la période de dépréciation, la version ancienne peut être désactivée.</p>
+
+    <h3>7.2 Modifications des Conditions API</h3>
+    <p>PRIMEO peut modifier les présentes Conditions API avec un préavis de trente (30) jours. La poursuite de l'utilisation de l'API après l'entrée en vigueur des nouvelles Conditions vaut acceptation. Pour les modifications substantielles affectant les droits des Partenaires, un délai de préavis de soixante (60) jours est accordé.</p>
+
+    <h3>7.3 Résiliation par le Partenaire</h3>
+    <p>Le Partenaire peut résilier son accès à l'API à tout moment en supprimant ses clés API depuis le portail développeur et en notifiant PRIMEO à <a href="mailto:api@primeo.ci">api@primeo.ci</a>. En cas d'abonnement annuel prépayé, aucun remboursement au prorata n'est accordé sauf accord exprès de PRIMEO.</p>
+
+    <h3>7.4 Résiliation par PRIMEO</h3>
+    <p>PRIMEO peut résilier l'accès d'un Partenaire à l'API pour violation des présentes Conditions, avec effet immédiat en cas de violation grave (fraude, utilisation illicite des données) ou avec un préavis de trente (30) jours pour d'autres motifs. En cas de résiliation pour faute imputable à PRIMEO, les sommes prépayées non utilisées sont remboursées au prorata.</p>
+
+    <h3>7.5 Effets de la résiliation</h3>
+    <p>À la résiliation, le Partenaire doit : cesser immédiatement d'utiliser l'API ; supprimer toutes les données PRIMEO stockées en cache ou en base de données (sauf obligations légales de conservation) ; cesser d'afficher les données PRIMEO dans ses applications. Les dispositions relatives à la propriété intellectuelle, à la confidentialité et à la limitation de responsabilité survivent à la résiliation.</p>
+
+    <div class="highlight">
+      <strong>Support développeur :</strong> Pour toute question technique relative à l'API ou pour soumettre une demande d'accès, contactez l'équipe API à <a href="mailto:api@primeo.ci">api@primeo.ci</a> ou consultez la documentation disponible sur le portail développeur.
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <a href="/" class="footer-brand-logo"><img src="/assets/images/logo.png" alt="Primeo" class="brand-logo-img" /></a>
+          <p class="footer-desc">Plateforme de référence pour la réservation d'hébergement, l'immobilier et la restauration en Côte d'Ivoire.</p>
+          <p style="font-size:.8rem;margin-top:.85rem"><a href="mailto:legal@primeo.ci" style="color:var(--orange)">legal@primeo.ci</a></p>
+        </div>
+        <div class="footer-col">
+          <h4>Utilisation</h4>
+          <ul>
+            <li><a href="/cgu/">CGU</a></li>
+            <li><a href="/professionnels/">Conditions Pros</a></li>
+            <li><a href="/conditions-api/">Conditions API</a></li>
+            <li><a href="/reglement-interieur/">Règlement intérieur</a></li>
+            <li><a href="/charte-communaute/">Charte communauté</a></li>
+            <li><a href="/protection-consommateur/">Protection consommateur</a></li>
+            <li><a href="/accessibilite/">Accessibilité</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Données &amp; Vie privée</h4>
+          <ul>
+            <li><a href="/confidentialite/">Confidentialité</a></li>
+            <li><a href="/cookies/">Politique cookies</a></li>
+            <li><a href="/charte-donnees/">Charte RGPD</a></li>
+            <li><a href="/confidentialite-pros/">Vie privée Pros</a></li>
+            <li><a href="/protection-mineurs/">Protection des mineurs</a></li>
+            <li><a href="/recrutement-confidentialite/">Recrutement</a></li>
+            <li><a href="/transferts-donnees/">Transferts CEDEAO</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Légal &amp; Sécurité</h4>
+          <ul>
+            <li><a href="/mentions-legales/">Mentions légales</a></li>
+            <li><a href="/conditions-vente/">CGV &amp; Remboursement</a></li>
+            <li><a href="/litiges-mediation/">Litiges &amp; Médiation</a></li>
+            <li><a href="/propriete-intellectuelle/">Propriété intellectuelle</a></li>
+            <li><a href="/lutte-anti-blanchiment/">LCB-FT / Anti-blanchiment</a></li>
+            <li><a href="/securite/">Sécurité &amp; vulnérabilités</a></li>
+            <li><a href="/signalement/">Signalement</a></li>
+            <li><a href="/disclaimer/">Avis juridique</a></li>
+            <li><a href="/parrainage/">Parrainage</a></li>
+            <li><a href="/jeux-concours/">Jeux-concours</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; <span id="footer-year">2026</span> PRIMEO SARL &middot; Tous droits r&eacute;serv&eacute;s &middot; Cocody Riviera, Abidjan, C&ocirc;te d'Ivoire</span>
+        <a href="https://primeo.ci" target="_blank" rel="noopener noreferrer">&#8599; Retour au site principal</a>
+      </div>
+    </div>
+  </footer>
+  <div id="cookie-banner" style="display:none">
+    <span>Nous utilisons des cookies pour améliorer votre expérience. <a href="/confidentialite/">En savoir plus</a></span>
+    <div class="cookie-btns">
+      <button class="cookie-accept" onclick="acceptCookies()">Accepter</button>
+      <button class="cookie-decline" onclick="declineCookies()">Refuser</button>
+    </div>
+  </div>
+  <script src="../assets/js/cookies.js?v=3"></script>
+</body>
+</html>
