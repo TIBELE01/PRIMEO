@@ -223,27 +223,26 @@ describe('uploadMediaFile — subscription plan gating', () => {
 
 // ── Video count limit ─────────────────────────────────────────────────────────
 
-describe('uploadMediaFile — 2-video-per-property limit', () => {
-  it('rejects upload when property already has 2 videos', async () => {
+describe('uploadMediaFile — 1-video-per-property limit', () => {
+  it('rejects upload when property already has 1 video', async () => {
     mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business' });
-    mockPrisma.propertyMedia.count.mockResolvedValue(2);
+    mockPrisma.propertyMedia.count.mockResolvedValue(1);
     const req = makeReq();
     const res = makeRes();
     await uploadMediaFile(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      error: expect.stringContaining('2'),
+      error: expect.stringContaining('1'),
     }));
   });
 
-  it('rejects upload when property already has 1 video and limit is 2', async () => {
+  it('allows upload when property has no video yet', async () => {
     mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business' });
-    mockPrisma.propertyMedia.count.mockResolvedValue(1);
-    mockUploadAndSaveMedia.mockResolvedValue({ id: 'm6', url: 'https://example.com/v2.mp4' });
+    mockPrisma.propertyMedia.count.mockResolvedValue(0);
+    mockUploadAndSaveMedia.mockResolvedValue({ id: 'm6', url: 'https://example.com/v.mp4' });
     const req = makeReq();
     const res = makeRes();
     await uploadMediaFile(req, res, next);
-    // 1 existing → still allowed (< 2)
     expect(res.status).toHaveBeenCalledWith(201);
   });
 

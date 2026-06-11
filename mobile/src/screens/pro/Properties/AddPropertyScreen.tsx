@@ -576,7 +576,7 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
     const result = await DocumentPicker.getDocumentAsync({ type: 'video/*', multiple: false, copyToCacheDirectory: true });
     if (result.canceled) return;
     const assets = result.assets ?? [];
-    onChange('videoFiles', [...videoFiles, ...assets.slice(0, 2 - videoFiles.length).map((a: any) => ({ uri: a.uri, name: a.name ?? 'video.mp4', file: a.file ?? undefined }))]);
+    onChange('videoFiles', [...videoFiles, ...assets.slice(0, 1 - videoFiles.length).map((a: any) => ({ uri: a.uri, name: a.name ?? 'video.mp4', file: a.file ?? undefined }))]);
   };
   const removeVideo = (i: number) => {
     const updated = [...videoFiles]; updated.splice(i, 1); onChange('videoFiles', updated);
@@ -609,13 +609,13 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
           </Text>
           <Text style={styles.infoBoxText}>
             {isBusinessPlus
-              ? `Ajoutez jusqu'à 2 vidéos de présentation (MP4, MOV, max 100 Mo). ${videoFiles.length}/2`
+              ? `Ajoutez 1 vidéo de présentation (MP4, MOV, max 100 Mo). ${videoFiles.length}/1`
               : 'Passez à la formule Business ou Entreprise pour ajouter des vidéos.'}
           </Text>
           {isBusinessPlus && (
             <>
-              <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 2}>
-                <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/2)</Text>
+              <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 1}>
+                <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/1)</Text>
               </TouchableOpacity>
               {videoFiles.map((v, i) => (
                 <View key={i} style={styles.videoRow}>

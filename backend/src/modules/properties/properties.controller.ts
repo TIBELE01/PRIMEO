@@ -149,13 +149,13 @@ export async function uploadMediaFile(req: Request, res: Response, next: NextFun
         return;
       }
 
-      // Max 2 vidéos par propriété
+      // Max 1 vidéo par propriété
       if (mediaType === 'video') {
         const videoCount = await prisma.propertyMedia.count({
           where: { propertyId: req.params.id, mediaType: 'video' as never },
         });
-        if (videoCount >= 2) {
-          res.status(400).json({ error: 'Maximum 2 vidéos par propriété.' });
+        if (videoCount >= 1) {
+          res.status(400).json({ error: 'Maximum 1 vidéo par propriété.' });
           return;
         }
       }

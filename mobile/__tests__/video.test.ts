@@ -2,8 +2,8 @@
 // Vérifie que la contrainte "max 2 vidéos par propriété" est correctement
 // appliquée côté client avant l'envoi au backend.
 
-describe('limite vidéo formulaire pro (2 max)', () => {
-  const MAX_VIDEOS = 2;
+describe('limite vidéo formulaire pro (1 max)', () => {
+  const MAX_VIDEOS = 1;
 
   function simulatePickVideo(
     existing: { uri: string; name: string }[],
@@ -18,45 +18,40 @@ describe('limite vidéo formulaire pro (2 max)', () => {
     expect(result[0].name).toBe('a.mp4');
   });
 
-  it('ajoute la seconde vidéo quand une existe déjà', () => {
+  it("n'ajoute pas de seconde vidéo quand une existe déjà", () => {
     const existing = [{ uri: 'file://a.mp4', name: 'a.mp4' }];
     const result = simulatePickVideo(existing, [{ uri: 'file://b.mp4', name: 'b.mp4' }]);
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(1);
   });
 
-  it('ne dépasse pas 2 vidéos même si plusieurs sont sélectionnées', () => {
-    const existing = [{ uri: 'file://a.mp4', name: 'a.mp4' }];
+  it('ne dépasse pas 1 vidéo même si plusieurs sont sélectionnées', () => {
+    const existing: any[] = [];
     const picked = [
+      { uri: 'file://a.mp4', name: 'a.mp4' },
       { uri: 'file://b.mp4', name: 'b.mp4' },
-      { uri: 'file://c.mp4', name: 'c.mp4' },
-      { uri: 'file://d.mp4', name: 'd.mp4' },
     ];
     const result = simulatePickVideo(existing, picked);
     expect(result).toHaveLength(MAX_VIDEOS);
-    expect(result[1].name).toBe('b.mp4');
+    expect(result[0].name).toBe('a.mp4');
   });
 
   it("n'ajoute rien quand la limite est déjà atteinte", () => {
     const existing = [
       { uri: 'file://a.mp4', name: 'a.mp4' },
-      { uri: 'file://b.mp4', name: 'b.mp4' },
     ];
     const result = simulatePickVideo(existing, [{ uri: 'file://c.mp4', name: 'c.mp4' }]);
     expect(result).toHaveLength(MAX_VIDEOS);
     expect(result.find(v => v.name === 'c.mp4')).toBeUndefined();
   });
 
-  it('le bouton est désactivé quand videoFiles.length >= 2', () => {
-    const videoFiles = [
-      { uri: 'file://a.mp4', name: 'a.mp4' },
-      { uri: 'file://b.mp4', name: 'b.mp4' },
-    ];
+  it('le bouton est désactivé quand videoFiles.length >= 1', () => {
+    const videoFiles = [{ uri: 'file://a.mp4', name: 'a.mp4' }];
     const isDisabled = videoFiles.length >= MAX_VIDEOS;
     expect(isDisabled).toBe(true);
   });
 
-  it('le bouton est actif quand videoFiles.length < 2', () => {
-    const videoFiles = [{ uri: 'file://a.mp4', name: 'a.mp4' }];
+  it('le bouton est actif quand videoFiles est vide', () => {
+    const videoFiles: any[] = [];
     const isDisabled = videoFiles.length >= MAX_VIDEOS;
     expect(isDisabled).toBe(false);
   });
@@ -123,12 +118,11 @@ describe('filtrage médias photo/vidéo (PropertyDetailScreen)', () => {
     expect(videos).toHaveLength(0);
   });
 
-  it('supporte jusqu\'à 2 vidéos par propriété', () => {
+  it('supporte 1 vidéo par propriété', () => {
     const media: MediaItem[] = [
       { id: '1', url: 'https://cdn/v1.mp4', mediaType: 'video' },
-      { id: '2', url: 'https://cdn/v2.mp4', mediaType: 'video' },
     ];
     const { videos } = filterMedia(media);
-    expect(videos).toHaveLength(2);
+    expect(videos).toHaveLength(1);
   });
 });
