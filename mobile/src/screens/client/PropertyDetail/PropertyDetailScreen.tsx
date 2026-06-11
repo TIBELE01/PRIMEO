@@ -37,6 +37,7 @@ import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } fr
 import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 import { trackEvent } from '../../../services/analytics';
+import { VideoView, useVideoPlayer } from 'expo-video';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -79,6 +80,15 @@ const rtStyles = RNStyleSheet.create({
 
 const DAYS_NEW = 30;
 const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 < DAYS_NEW;
+
+function VideoPlayerCard({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, p => { p.loop = false; });
+  return (
+    <View style={styles.videoCard}>
+      <VideoView player={player} style={styles.videoView} allowsFullscreen nativeControls contentFit="contain" />
+    </View>
+  );
+}
 
 export function PropertyDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -237,7 +247,9 @@ export function PropertyDetailScreen() {
     );
   }
 
-  const images = (property.images ?? []).map(i => i.url);
+  const allMedia = (property.images ?? []) as Array<{ id?: string; url: string; mediaType?: string }>;
+  const images = allMedia.filter(i => i.mediaType !== 'video').map(i => i.url);
+  const videoMedia = allMedia.filter(i => i.mediaType === 'video');
   const showNew = isNew(property.createdAt);
   const ownerName = `${property.owner?.firstName ?? ''} ${property.owner?.lastName ?? ''}`.trim() || 'Le responsable';
 
@@ -330,6 +342,17 @@ export function PropertyDetailScreen() {
           <View style={styles.vtWrap}>
             <VirtualTourButton virtualTour={property.virtualTour} propertyName={property.name} />
           </View>
+        )}
+
+        {/* ── Vidéos de présentation ── */}
+        {videoMedia.length > 0 && (
+          <Accordion title="Vidéos" icon="🎬" color={theme.color}>
+            <View style={styles.videoSection}>
+              {videoMedia.map((v, idx) => (
+                <VideoPlayerCard key={v.id ?? String(idx)} uri={v.url} />
+              ))}
+            </View>
+          </Accordion>
         )}
 
         {/* ── 1. Présentation ── */}
@@ -585,6 +608,9 @@ const styles = StyleSheet.create({
   orderBtnText: { fontSize: 13, fontWeight: '700' },
 
   vtWrap: { paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
+  videoSection: { paddingHorizontal: 16, paddingBottom: 8, gap: 12 },
+  videoCard: { borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
+  videoView: { width: '100%', height: 210 },
 
   // Sticky bottom bar
   stickyBar: {

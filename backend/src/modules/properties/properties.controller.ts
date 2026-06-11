@@ -124,6 +124,15 @@ export async function uploadMediaFile(req: Request, res: Response, next: NextFun
     const isPrimary = req.body?.isPrimary === 'true' || req.body?.isPrimary === true;
     const sortOrder = parseInt(req.body?.sortOrder ?? '0', 10);
 
+    // Validation MIME pour les vidéos
+    if (mediaType === 'video') {
+      const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi'];
+      if (!ALLOWED_VIDEO_MIMES.includes(file.mimetype)) {
+        res.status(400).json({ error: 'Format vidéo non supporté. Utilisez MP4, MOV ou AVI.' });
+        return;
+      }
+    }
+
     // Vérification des droits d'upload selon la formule
     if (mediaType === 'video' || mediaType === 'virtual_tour_360') {
       const { prisma } = await import('../../database/prisma.service');
@@ -138,6 +147,17 @@ export async function uploadMediaFile(req: Request, res: Response, next: NextFun
       if (mediaType === 'virtual_tour_360' && !plan?.virtualTour) {
         res.status(403).json({ error: 'La visite 3D est réservée à la formule Entreprise.' });
         return;
+      }
+
+      // Max 2 vidéos par propriété
+      if (mediaType === 'video') {
+        const videoCount = await prisma.propertyMedia.count({
+          where: { propertyId: req.params.id, mediaType: 'video' as never },
+        });
+        if (videoCount >= 2) {
+          res.status(400).json({ error: 'Maximum 2 vidéos par propriété.' });
+          return;
+        }
       }
     }
 

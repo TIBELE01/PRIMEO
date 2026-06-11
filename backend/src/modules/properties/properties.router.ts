@@ -23,8 +23,8 @@ import {
   expressPropertyInterest,
 } from './properties.controller';
 
-// Multer : mémoire tampon (pas de disque), 10 Mo max par fichier
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+// Multer : mémoire tampon (pas de disque), 100 Mo max (vidéos)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
