@@ -24,10 +24,14 @@ import {
 export function serializeProperty<T extends Record<string, unknown>>(property: T): T {
   const media = (property as { media?: Array<{ url: string; isPrimary?: boolean }> }).media ?? [];
   const primary = media.find((m) => m.isPrimary) ?? media[0];
+  // Bien en mode visite 3D : la première scène panoramique sert d'image de
+  // couverture (cartes de recherche, favoris) puisqu'il n'a plus de photos.
+  const scenes = (property as { scenes3d?: Array<{ url: string }> }).scenes3d ?? [];
+  const coverFallback = scenes[0]?.url ?? null;
   return {
     ...property,
     images: media,
-    mainImageUrl: primary?.url ?? null,
+    mainImageUrl: primary?.url ?? coverFallback,
     virtualTour: buildVirtualTour(property),
   };
 }
@@ -331,12 +335,85 @@ export const propertiesService = {
     });
   },
 
+  // ── Type de média exclusif (photos | video | threed) ───────────────────────
+
+  // Vérifie que la formule du professionnel autorise le type de média demandé.
+  async _assertPlanAllowsMediaChoice(userId: string, choice: 'photos' | 'video' | 'threed'): Promise<void> {
+    if (choice === 'photos') return; // toujours autorisé, toutes formules
+    const { PLAN_DETAILS } = await import('../../common/constants/subscription-plans');
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    const plan = sub ? PLAN_DETAILS[sub.planType] : null;
+    if (choice === 'video' && !plan?.videoUpload) {
+      throw new HttpError(403, 'La vidéo est réservée aux formules Business et Entreprise.');
+    }
+    if (choice === 'threed' && !plan?.virtualTour) {
+      throw new HttpError(403, 'La visite 3D est réservée à la formule Entreprise.');
+    }
+  },
+
+  // Vérifie qu'un upload correspond au type de média exclusif déclaré du bien.
+  _assertUploadMatchesChoice(propertyChoice: string, uploadKind: 'photo' | 'video' | 'threed'): void {
+    const expected: Record<string, string> = { photo: 'photos', video: 'video', threed: 'threed' };
+    if (propertyChoice !== expected[uploadKind]) {
+      const labels: Record<string, string> = { photos: 'images', video: 'vidéo', threed: 'visite 3D' };
+      throw new HttpError(
+        409,
+        `Ce bien est configuré en « ${labels[propertyChoice] ?? propertyChoice} ». ` +
+        `Changez d'abord le type de média du bien pour téléverser ce fichier.`,
+      );
+    }
+  },
+
+  /**
+   * Change le type de média exclusif d'un bien. Supprime atomiquement tous les
+   * médias des autres types (photos/vidéo dans property_media, scènes dans
+   * property_3d_scenes) — le mobile demande confirmation avant l'appel.
+   */
+  async setMediaType(propertyId: string, userId: string, choice: 'photos' | 'video' | 'threed') {
+    const property = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new HttpError(404, 'Propriété introuvable');
+    if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    await propertiesService._assertPlanAllowsMediaChoice(userId, choice);
+
+    if (property.mediaType === choice) return property; // no-op
+
+    const [updated] = await prisma.$transaction([
+      prisma.property.update({
+        where: { id: propertyId },
+        data: { mediaType: choice, hasVirtualTour: choice === 'threed' },
+      }),
+      // Purge des médias photo/vidéo non conformes au nouveau type
+      prisma.propertyMedia.deleteMany({
+        where: choice === 'photos'
+          ? { propertyId, mediaType: { not: 'photo' } }
+          : choice === 'video'
+            ? { propertyId, mediaType: { not: 'video' } }
+            : { propertyId }, // threed : plus aucune ligne photo/vidéo
+      }),
+      // Purge des scènes 3D si on quitte le mode visite 3D
+      ...(choice !== 'threed'
+        ? [prisma.property3dScene.deleteMany({ where: { propertyId } })]
+        : []),
+    ]);
+
+    logger.info(`Property ${propertyId}: media type switched to ${choice} (owner ${userId})`);
+    return updated;
+  },
+
   // ── Media management ────────────────────────────────────────────────────────
 
   async addMedia(propertyId: string, userId: string, input: AddMediaInput) {
     const property = await prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    // Type exclusif : l'upload doit correspondre au media_type du bien.
+    // Les panoramas 360° passent exclusivement par /3d-scenes (property_3d_scenes).
+    if (input.mediaType === 'virtual_tour_360') {
+      throw new HttpError(400, 'Les photos 360° doivent être téléversées via l\'endpoint /3d-scenes.');
+    }
+    propertiesService._assertUploadMatchesChoice(property.mediaType, input.mediaType === 'video' ? 'video' : 'photo');
 
     const count = await prisma.propertyMedia.count({ where: { propertyId } });
     if (count >= 20) throw new HttpError(400, 'Limite de 20 médias par propriété atteinte');
@@ -375,6 +452,13 @@ export const propertiesService = {
     const property = await prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    // Type exclusif : l'upload doit correspondre au media_type du bien.
+    // Les panoramas 360° passent exclusivement par /3d-scenes (property_3d_scenes).
+    if (opts.mediaType === 'virtual_tour_360') {
+      throw new HttpError(400, 'Les photos 360° doivent être téléversées via l\'endpoint /3d-scenes.');
+    }
+    propertiesService._assertUploadMatchesChoice(property.mediaType, opts.mediaType === 'video' ? 'video' : 'photo');
 
     const count = await prisma.propertyMedia.count({ where: { propertyId } });
     if (count >= 20) throw new HttpError(400, 'Limite de 20 médias par propriété atteinte');
@@ -437,6 +521,9 @@ export const propertiesService = {
     const property = await prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    // Type exclusif : le bien doit être configuré en « visite 3D »
+    propertiesService._assertUploadMatchesChoice(property.mediaType, 'threed');
 
     const count = await prisma.property3dScene.count({ where: { propertyId } });
     if (count >= 10) throw new HttpError(400, 'Limite de 10 photos 360° par propriété atteinte');

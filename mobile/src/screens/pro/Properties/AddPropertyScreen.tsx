@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  Switch, Image, ActivityIndicator, Modal,
+  Switch, Image, ActivityIndicator, Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
@@ -543,15 +543,60 @@ function StepEquipements({ data, onChange }: any) {
 
 // ── Étape — Médias ────────────────────────────────────────────────────────────
 
+// Type de média exclusif : un bien expose SOIT des photos, SOIT une vidéo,
+// SOIT une visite 3D. Les trois options sont toujours visibles ; celles non
+// incluses dans la formule sont verrouillées (Starter = photos ;
+// Business = photos|vidéo ; Entreprise = photos|vidéo|visite 3D).
+const MEDIA_CHOICES: { value: 'photos' | 'video' | 'threed'; icon: string; label: string; hint: string }[] = [
+  { value: 'photos', icon: '📷', label: 'Images',    hint: 'Jusqu\'à 20 photos' },
+  { value: 'video',  icon: '🎬', label: 'Vidéo',     hint: '1 vidéo de présentation' },
+  { value: 'threed', icon: '🌐', label: 'Visite 3D', hint: 'Photos 360° immersives' },
+];
+
 function StepMedias({ data, onChange, subscriptionPlan }: any) {
   const images: { uri: string; name: string }[]     = data.images     ?? [];
   const tourImages: { uri: string; name: string; roomName?: string; existing?: boolean }[] = data.tourImages ?? [];
   const videoFiles: { uri: string; name: string }[] = data.videoFiles ?? [];
-  const type: string = data.type ?? '';
+  const mediaChoice: 'photos' | 'video' | 'threed' = data.mediaChoice ?? 'photos';
 
-  const planNorm       = (subscriptionPlan ?? '').toLowerCase();
-  const isBusinessPlus  = planNorm === 'business'   || planNorm === 'entreprise';
+  const planNorm        = (subscriptionPlan ?? '').toLowerCase();
+  const isBusinessPlus   = planNorm === 'business'   || planNorm === 'entreprise';
   const isEntreprisePlan = planNorm === 'entreprise';
+
+  const isChoiceAllowed = (choice: string): boolean =>
+    choice === 'photos' || (choice === 'video' && isBusinessPlus) || (choice === 'threed' && isEntreprisePlan);
+
+  const hasAnyMedia = images.length > 0 || videoFiles.length > 0 || tourImages.length > 0;
+
+  const applyChoice = (choice: 'photos' | 'video' | 'threed') => {
+    // Changer de type efface les médias des autres types (le backend purge
+    // également côté serveur lors de la soumission)
+    onChange('images', []);
+    onChange('videoFiles', []);
+    onChange('tourImages', []);
+    onChange('mediaChoice', choice);
+  };
+
+  const handleSelectChoice = (choice: 'photos' | 'video' | 'threed') => {
+    if (choice === mediaChoice) return;
+    if (!isChoiceAllowed(choice)) {
+      const needed = choice === 'threed' ? 'Entreprise' : 'Business ou Entreprise';
+      Alert.alert('Formule requise', `Cette option est réservée à la formule ${needed}. Mettez à niveau votre abonnement pour l'activer.`);
+      return;
+    }
+    if (hasAnyMedia) {
+      Alert.alert(
+        'Changer de type de média ?',
+        'Les médias déjà ajoutés à cette annonce seront supprimés. Voulez-vous continuer ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Changer et supprimer', style: 'destructive', onPress: () => applyChoice(choice) },
+        ],
+      );
+      return;
+    }
+    applyChoice(choice);
+  };
 
   const pickImages = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'image/*', multiple: true, copyToCacheDirectory: true });
@@ -593,98 +638,132 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
 
   return (
     <View>
-      <Text style={styles.fieldLabel}>Photos ({images.length}/20)</Text>
-      <Text style={styles.fieldHint}>La 1ère photo sera l&apos;image principale. Formats acceptés : JPG, PNG, WebP.</Text>
-      <TouchableOpacity style={styles.uploadBtn} onPress={pickImages} disabled={images.length >= 20}>
-        <Text style={styles.uploadBtnText}>📷 Choisir des photos</Text>
-      </TouchableOpacity>
-      <View style={styles.imageGrid}>
-        {images.map((img, i) => (
-          <View key={i} style={styles.imageThumb}>
-            <Image source={{ uri: img.uri }} style={styles.imagePrev} />
-            <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeImage(i)}>
-              <Text style={styles.removeImgText}>✕</Text>
+      {/* ── Sélecteur du type de média (exclusif) ── */}
+      <Text style={styles.fieldLabel}>Type de média de l\'annonce</Text>
+      <Text style={styles.fieldHint}>
+        Choisissez UN type : images, vidéo ou visite 3D. Un seul type de média par annonce.
+      </Text>
+      <View style={mtStyles.row}>
+        {MEDIA_CHOICES.map((opt) => {
+          const locked = !isChoiceAllowed(opt.value);
+          const active = mediaChoice === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[mtStyles.card, active && mtStyles.cardActive, locked && mtStyles.cardLocked]}
+              onPress={() => handleSelectChoice(opt.value)}
+              accessibilityRole="radio"
+              accessibilityLabel={`Type de média : ${opt.label}${locked ? ' (formule supérieure requise)' : ''}`}
+              accessibilityState={{ selected: active, disabled: locked }}
+            >
+              <Text style={mtStyles.cardIcon}>{locked ? '🔒' : opt.icon}</Text>
+              <Text style={[mtStyles.cardLabel, active && mtStyles.cardLabelActive, locked && mtStyles.cardLabelLocked]}>
+                {opt.label}
+              </Text>
+              <Text style={[mtStyles.cardHint, locked && mtStyles.cardLabelLocked]}>
+                {locked ? (opt.value === 'threed' ? 'Entreprise' : 'Business+') : opt.hint}
+              </Text>
             </TouchableOpacity>
-            {i === 0 && <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>Principale</Text></View>}
-          </View>
-        ))}
+          );
+        })}
       </View>
 
-      {/* Vidéo — non proposée pour les restaurants */}
-      {!isRestaurant(type) && (
-        <View style={[styles.infoBox, !isBusinessPlus && styles.infoBoxLocked]}>
-          <Text style={styles.infoBoxTitle}>
-            {isBusinessPlus ? '🎬 Vidéo de présentation' : '🔒 Vidéo — Business et Entreprise'}
-          </Text>
+      {/* ── Upload selon le type choisi ── */}
+      {mediaChoice === 'photos' && (
+        <>
+          <Text style={styles.fieldLabel}>Photos ({images.length}/20)</Text>
+          <Text style={styles.fieldHint}>La 1ère photo sera l&apos;image principale. Formats acceptés : JPG, PNG, WebP.</Text>
+          <TouchableOpacity style={styles.uploadBtn} onPress={pickImages} disabled={images.length >= 20}>
+            <Text style={styles.uploadBtnText}>📷 Choisir des photos</Text>
+          </TouchableOpacity>
+          <View style={styles.imageGrid}>
+            {images.map((img, i) => (
+              <View key={i} style={styles.imageThumb}>
+                <Image source={{ uri: img.uri }} style={styles.imagePrev} />
+                <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeImage(i)}>
+                  <Text style={styles.removeImgText}>✕</Text>
+                </TouchableOpacity>
+                {i === 0 && <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>Principale</Text></View>}
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
+      {mediaChoice === 'video' && (
+        <View style={styles.infoBox}>
+          <Text style={styles.infoBoxTitle}>🎬 Vidéo de présentation</Text>
           <Text style={styles.infoBoxText}>
-            {isBusinessPlus
-              ? `Ajoutez 1 vidéo de présentation (MP4, MOV, max 100 Mo). ${videoFiles.length}/1`
-              : 'Passez à la formule Business ou Entreprise pour ajouter des vidéos.'}
+            {`Ajoutez 1 vidéo de présentation (MP4, MOV, max 100 Mo). ${videoFiles.length}/1`}
           </Text>
-          {isBusinessPlus && (
-            <>
-              <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 1}>
-                <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/1)</Text>
+          <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 1}>
+            <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/1)</Text>
+          </TouchableOpacity>
+          {videoFiles.map((v, i) => (
+            <View key={i} style={styles.videoRow}>
+              <Text style={styles.videoName} numberOfLines={1}>🎬 {v.name}</Text>
+              <TouchableOpacity onPress={() => removeVideo(i)}>
+                <Text style={styles.removeImgText}>✕</Text>
               </TouchableOpacity>
-              {videoFiles.map((v, i) => (
-                <View key={i} style={styles.videoRow}>
-                  <Text style={styles.videoName} numberOfLines={1}>🎬 {v.name}</Text>
-                  <TouchableOpacity onPress={() => removeVideo(i)}>
-                    <Text style={styles.removeImgText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </>
-          )}
+            </View>
+          ))}
         </View>
       )}
 
-      {/* Visite 3D — uniquement hébergements */}
-      {(isLodging(type) || isRealEstate(type)) && (
-        <View style={[styles.infoBox, !isEntreprisePlan && styles.infoBoxLocked]}>
-          <Text style={styles.infoBoxTitle}>
-            {isEntreprisePlan ? '🔭 Visite 3D disponible' : '🔒 Visite 3D — Entreprise uniquement'}
-          </Text>
+      {mediaChoice === 'threed' && (
+        <View style={styles.infoBox}>
+          <Text style={styles.infoBoxTitle}>🔭 Visite 3D immersive</Text>
           <Text style={styles.infoBoxText}>
-            {isEntreprisePlan
-              ? 'Ajoutez des photos équirectangulaires (2:1, min 4000×2000 px) pour activer la visite 3D.'
-              : 'Passez à la formule Entreprise pour proposer une visite virtuelle 3D à vos clients.'}
+            Ajoutez des photos équirectangulaires (2:1, min 4000×2000 px). Chaque photo devient une pièce visitable.
           </Text>
-          {isEntreprisePlan && (
-            <>
-              <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages} disabled={tourImages.length >= 10}>
-                <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length}/10)</Text>
-              </TouchableOpacity>
-              {tourImages.length > 0 && (
-                <View style={styles.tourSheet}>
-                  {tourImages.map((img: any, i) => (
-                    <View key={i} style={styles.tourCard}>
-                      <Image source={{ uri: img.uri }} style={styles.tourCardImg} />
-                      <View style={styles.tourCardBody}>
-                        <TextInput
-                          style={styles.tourCardInput}
-                          value={img.roomName ?? `Pièce ${i + 1}`}
-                          onChangeText={(v) => renameTourImage(i, v)}
-                          placeholder="Nom de la pièce (Salon, Chambre…)"
-                          placeholderTextColor="#9CA3AF"
-                          editable={!img.existing}
-                        />
-                        <TouchableOpacity onPress={() => removeTourImage(i)} hitSlop={8}>
-                          <Text style={styles.removeImgText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>360°</Text></View>
-                    </View>
-                  ))}
+          <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages} disabled={tourImages.length >= 10}>
+            <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length}/10)</Text>
+          </TouchableOpacity>
+          {tourImages.length > 0 && (
+            <View style={styles.tourSheet}>
+              {tourImages.map((img: any, i) => (
+                <View key={i} style={styles.tourCard}>
+                  <Image source={{ uri: img.uri }} style={styles.tourCardImg} />
+                  <View style={styles.tourCardBody}>
+                    <TextInput
+                      style={styles.tourCardInput}
+                      value={img.roomName ?? `Pièce ${i + 1}`}
+                      onChangeText={(v) => renameTourImage(i, v)}
+                      placeholder="Nom de la pièce (Salon, Chambre…)"
+                      placeholderTextColor="#9CA3AF"
+                      editable={!img.existing}
+                    />
+                    <TouchableOpacity onPress={() => removeTourImage(i)} hitSlop={8}>
+                      <Text style={styles.removeImgText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>360°</Text></View>
                 </View>
-              )}
-            </>
+              ))}
+            </View>
           )}
         </View>
       )}
     </View>
   );
 }
+
+// Styles du sélecteur de type de média exclusif
+const mtStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 8, marginBottom: 18 },
+  card: {
+    flex: 1, alignItems: 'center', gap: 4,
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
+    paddingVertical: 14, paddingHorizontal: 6, backgroundColor: '#fff',
+  },
+  cardActive: { borderColor: '#1056E0', backgroundColor: '#EFF4FF' },
+  cardLocked: { backgroundColor: '#F9FAFB' },
+  cardIcon:   { fontSize: 22 },
+  cardLabel:       { fontSize: 13.5, fontWeight: '700', color: '#374151' },
+  cardLabelActive: { color: '#1056E0' },
+  cardLabelLocked: { color: '#9CA3AF' },
+  cardHint:   { fontSize: 10.5, color: '#6B7280', textAlign: 'center' },
+});
 
 // ── Étape — Tarification (résidence + immobilier) ────────────────────────────
 
@@ -1127,6 +1206,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     amenities:      [],
     images:         [],
     tourImages:     [],
+    videoFiles:     [],
+    mediaChoice:    'photos', // type de média exclusif : photos | video | threed
     roomTypes:      [],
     paymentOptions: lockedType === 'restaurant' ? ['zero_online'] : ['full_online'],
     instantBooking: true,
@@ -1202,6 +1283,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
           roomTypes:      p.roomTypes     ?? [],
           amenities:      p.amenities     ?? [],
           paymentOptions: p.paymentOptions?.length ? p.paymentOptions : prev.paymentOptions,
+          mediaChoice:    p.mediaType ?? 'photos',
           pricePerNight:  p.pricePerNight ?? undefined,
           pricePerMonth:  p.pricePerMonth ?? undefined,
           priceSale:      p.priceSale     ?? undefined,
@@ -1341,10 +1423,15 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         }).catch(() => {});
       }
 
-      // Upload des nouveaux médias
-      const allImages     = (formData.images     ?? []).filter((img: any) => !img.existing);
-      const allTourImages = (formData.tourImages ?? []).filter((img: any) => !img.existing);
-      const allVideoFiles = (formData.videoFiles ?? []).filter((v: any) => !v.existing);
+      // Type de média exclusif : déclaré AVANT l'upload. Le backend vérifie la
+      // formule (403) et purge les médias des autres types si on change.
+      const mediaChoice: 'photos' | 'video' | 'threed' = formData.mediaChoice ?? 'photos';
+      await propertiesApi.setMediaType(propId, mediaChoice);
+
+      // Upload des nouveaux médias — uniquement ceux du type choisi
+      const allImages     = mediaChoice === 'photos' ? (formData.images     ?? []).filter((img: any) => !img.existing) : [];
+      const allTourImages = mediaChoice === 'threed' ? (formData.tourImages ?? []).filter((img: any) => !img.existing) : [];
+      const allVideoFiles = mediaChoice === 'video'  ? (formData.videoFiles ?? []).filter((v: any) => !v.existing)     : [];
       let mediaResult = { uploaded: 0, failed: 0 };
 
       if (allImages.length > 0 || allTourImages.length > 0 || allVideoFiles.length > 0) {

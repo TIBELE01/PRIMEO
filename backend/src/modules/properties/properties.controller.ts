@@ -113,6 +113,22 @@ export async function deleteMedia(req: Request, res: Response, next: NextFunctio
   }
 }
 
+// Change le type de média exclusif du bien (photos | video | threed).
+// Vérifie les droits de la formule (403) et purge les médias des autres types.
+export async function setMediaType(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const choice = req.body?.mediaType as 'photos' | 'video' | 'threed';
+    if (!['photos', 'video', 'threed'].includes(choice)) {
+      res.status(400).json({ error: 'mediaType invalide (photos | video | threed)' });
+      return;
+    }
+    const property = await propertiesService.setMediaType(req.params.id, req.user!.sub, choice);
+    res.json(property);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Upload direct d'un fichier image/vidéo/360 → Cloudinary → PropertyMedia
 // Les vidéos nécessitent Business ou Entreprise ; les visites 3D nécessitent Entreprise.
 export async function uploadMediaFile(req: Request, res: Response, next: NextFunction): Promise<void> {

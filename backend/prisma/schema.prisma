@@ -101,6 +101,13 @@ enum MediaType {
   virtual_tour_360
 }
 
+// Type de média exclusif d'une fiche bien (properties.media_type)
+enum PropertyMediaChoice {
+  photos
+  video
+  threed
+}
+
 // §3.5 — Statut de disponibilité
 enum AvailabilityStatus {
   available
@@ -540,6 +547,11 @@ model Property {
 
   // Visite virtuelle 3D (§7.3)
   hasVirtualTour Boolean @default(false)
+
+  // Type de média exclusif de la fiche : un bien expose SOIT des photos,
+  // SOIT une vidéo, SOIT une visite 3D (selon la formule du professionnel :
+  // Starter = photos ; Business = photos|video ; Entreprise = photos|video|threed).
+  mediaType PropertyMediaChoice @default(photos) @map("media_type")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

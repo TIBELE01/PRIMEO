@@ -5,6 +5,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, StatusBar, ActivityIndicator, Share, Alert,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +14,6 @@ import { useCurrency } from '../../../hooks/useCurrency';
 import { useAuthStore } from '../../../store/authStore';
 import { usePropertyDetail } from './hooks/usePropertyDetail';
 import { ImageGallery } from './components/ImageGallery';
-import { VirtualTourButton } from './components/VirtualTourButton';
 import { Accordion } from './components/Accordion';
 import { BookingModal } from './components/BookingModal';
 import { RestaurantReservationModal } from './components/RestaurantReservationModal';
@@ -81,11 +81,11 @@ const rtStyles = RNStyleSheet.create({
 const DAYS_NEW = 30;
 const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 < DAYS_NEW;
 
-function VideoPlayerCard({ uri }: { uri: string }) {
+function VideoPlayerCard({ uri, hero }: { uri: string; hero?: boolean }) {
   const player = useVideoPlayer(uri, p => { p.loop = false; });
   return (
-    <View style={styles.videoCard}>
-      <VideoView player={player} style={styles.videoView} allowsFullscreen nativeControls contentFit="contain" />
+    <View style={[styles.videoCard, hero && styles.videoCardHero]}>
+      <VideoView player={player} style={hero ? styles.videoViewHero : styles.videoView} allowsFullscreen nativeControls contentFit="contain" />
     </View>
   );
 }
@@ -250,6 +250,12 @@ export function PropertyDetailScreen() {
   const allMedia = (property.images ?? []) as Array<{ id?: string; url: string; mediaType?: string }>;
   const images = allMedia.filter(i => i.mediaType !== 'video').map(i => i.url);
   const videoMedia = allMedia.filter(i => i.mediaType === 'video');
+  // Type de média exclusif du bien (photos | video | threed). Repli par
+  // inférence pour les biens antérieurs à la migration.
+  const mediaKind: 'photos' | 'video' | 'threed' =
+    (property as { mediaType?: 'photos' | 'video' | 'threed' }).mediaType
+    ?? (property.virtualTour?.available ? 'threed' : videoMedia.length > 0 ? 'video' : 'photos');
+  const tourPanoramas = property.virtualTour?.panoramas ?? [];
   const showNew = isNew(property.createdAt);
   const ownerName = `${property.owner?.firstName ?? ''} ${property.owner?.lastName ?? ''}`.trim() || 'Le responsable';
 
@@ -288,8 +294,32 @@ export function PropertyDetailScreen() {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Image carousel */}
-        <ImageGallery images={images} />
+        {/* ── Zone média unique : photos OU vidéo OU visite 3D ── */}
+        {mediaKind === 'video' && videoMedia.length > 0 ? (
+          <View style={styles.heroMedia}>
+            <VideoPlayerCard uri={videoMedia[0].url} hero />
+          </View>
+        ) : mediaKind === 'threed' && tourPanoramas.length > 0 ? (
+          <TouchableOpacity
+            style={styles.heroMedia}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('VirtualTour', { panoramas: tourPanoramas, propertyName: property.name })}
+            accessibilityRole="button"
+            accessibilityLabel="Lancer la visite virtuelle 3D"
+          >
+            <ImageBackground source={{ uri: tourPanoramas[0].imageUrl }} style={styles.heroTour} resizeMode="cover">
+              <View style={styles.heroTourOverlay}>
+                <Text style={styles.heroTourIcon}>🔭</Text>
+                <Text style={styles.heroTourTitle}>Visite virtuelle 3D</Text>
+                <Text style={styles.heroTourSub}>
+                  {tourPanoramas.length} pièce{tourPanoramas.length > 1 ? 's' : ''} à explorer · Touchez pour démarrer
+                </Text>
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+        ) : (
+          <ImageGallery images={images} />
+        )}
 
         {/* Badges */}
         <View style={styles.badges}>
@@ -336,24 +366,6 @@ export function PropertyDetailScreen() {
             )}
           </View>
         </View>
-
-        {/* Virtual tour (3D) — only when available */}
-        {property.virtualTour?.available && (
-          <View style={styles.vtWrap}>
-            <VirtualTourButton virtualTour={property.virtualTour} propertyName={property.name} />
-          </View>
-        )}
-
-        {/* ── Vidéos de présentation ── */}
-        {videoMedia.length > 0 && (
-          <Accordion title="Vidéos" icon="🎬" color={theme.color}>
-            <View style={styles.videoSection}>
-              {videoMedia.map((v, idx) => (
-                <VideoPlayerCard key={v.id ?? String(idx)} uri={v.url} />
-              ))}
-            </View>
-          </Accordion>
-        )}
 
         {/* ── 1. Présentation ── */}
         <Accordion title="Présentation" icon="📝" color={theme.color}>
@@ -608,6 +620,17 @@ const styles = StyleSheet.create({
   orderBtnText: { fontSize: 13, fontWeight: '700' },
 
   vtWrap: { paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
+  heroMedia: { width: '100%', backgroundColor: '#000' },
+  videoCardHero: { borderRadius: 0 },
+  videoViewHero: { width: '100%', height: 280 },
+  heroTour: { width: '100%', height: 280, justifyContent: 'flex-end' },
+  heroTourOverlay: {
+    backgroundColor: 'rgba(11, 18, 32, 0.55)', alignItems: 'center',
+    paddingVertical: 22, paddingHorizontal: 16, gap: 4,
+  },
+  heroTourIcon: { fontSize: 30 },
+  heroTourTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  heroTourSub: { color: '#D1D5DB', fontSize: 13 },
   videoSection: { paddingHorizontal: 16, paddingBottom: 8, gap: 12 },
   videoCard: { borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
   videoView: { width: '100%', height: 210 },

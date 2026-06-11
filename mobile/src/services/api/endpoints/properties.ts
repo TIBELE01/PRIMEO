@@ -26,4 +26,9 @@ export const propertiesApi = {
   }) => apiClient.post(`/properties/${id}/media`, data),
   deleteMedia: (id: string, mediaId: string) =>
     apiClient.delete(`/properties/${id}/media/${mediaId}`),
+
+  // Type de média exclusif du bien (photos | video | threed).
+  // Le backend purge les médias des autres types — demander confirmation avant.
+  setMediaType: (id: string, mediaType: 'photos' | 'video' | 'threed') =>
+    apiClient.put(`/properties/${id}/media-type`, { mediaType }),
 };
