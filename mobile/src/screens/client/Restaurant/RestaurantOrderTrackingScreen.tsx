@@ -21,7 +21,7 @@ const STATUS_CONFIG: Record<FoodOrderStatus, { label: string; color: string; ico
 const STATUS_ORDER: FoodOrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'delivered'];
 
 export default function RestaurantOrderTrackingScreen({ navigation, route }: Props) {
-  const { orderId } = route.params;
+  const { orderId } = route.params ?? ({} as Partial<Props['route']['params']>);
   const { theme } = useTheme();
   const s = makeStyles(theme);
   const [order, setOrder] = useState<FoodOrder | null>(null);

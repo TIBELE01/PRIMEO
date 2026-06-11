@@ -34,6 +34,7 @@ import { CancellationPolicySection } from './sections/CancellationPolicySection'
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
 import { favoritesApi } from '../../../services/api/endpoints/favorites';
 import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } from './detailContent';
+import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 import { trackEvent } from '../../../services/analytics';
 
@@ -82,10 +83,12 @@ const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 <
 export function PropertyDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<any>();
-  const { propertyId } = route.params as { propertyId: string };
+  // route.params peut être absent (deep link, notification, restauration d'état) :
+  // ne jamais déstructurer sans repli sous peine de crash immédiat.
+  const { propertyId } = (route.params ?? {}) as { propertyId?: string };
   const { formatPrice } = useCurrency();
 
-  const { property, isLoading, error, isFromCache } = usePropertyDetail(propertyId);
+  const { property, isLoading, error, isFromCache } = usePropertyDetail(propertyId ?? '');
   const [showBooking, setShowBooking] = useState(false);
   const [showRestaurant, setShowRestaurant] = useState(false);
   const [selectedDates, setSelectedDates] = useState<{ checkIn: string; checkOut: string } | null>(null);
@@ -142,7 +145,7 @@ export function PropertyDetailScreen() {
 
   const handleToggleFavorite = useCallback(async () => {
     if (!isAuthenticated) { requireAuth(); return; }
-    if (favLoading) return;
+    if (favLoading || !propertyId) return;
     setFavLoading(true);
     const wasF = isFav;
     setIsFav(!wasF);
@@ -291,7 +294,7 @@ export function PropertyDetailScreen() {
             <Text style={styles.location}>📍 {property.city}</Text>
             <View style={styles.ratingRow}>
               <Text style={styles.star}>★</Text>
-              <Text style={styles.rating}>{property.rating.toFixed(1)}</Text>
+              <Text style={styles.rating}>{(Number(property.rating) || 0).toFixed(1)}</Text>
               <Text style={styles.reviewCount}>({property.reviewCount} avis)</Text>
             </View>
           </View>
@@ -378,7 +381,7 @@ export function PropertyDetailScreen() {
             subtitle={kind === 'restaurant' ? 'Choisissez votre créneau' : 'Sélectionnez vos dates'}
           >
             <CalendarSection
-              propertyId={propertyId}
+              propertyId={property.id}
               propertyType={property.type}
               onDatesSelected={setSelectedDates}
             />
@@ -438,7 +441,7 @@ export function PropertyDetailScreen() {
           <ContactHostSection
             ownerId={property.owner?.id ?? ''}
             ownerName={ownerName}
-            propertyId={propertyId}
+            propertyId={property.id}
             color={theme.color}
           />
         </Accordion>
@@ -515,11 +518,14 @@ export function PropertyDetailScreen() {
         onClose={() => setShowRestaurant(false)}
         onConfirm={(date, time, guests, note) => {
           setShowRestaurant(false);
+          // endDate doit être postérieur : on passe le lendemain (non affiché en mode table).
+          // addDaysStr retourne null sur une date invalide — repli sur aujourd'hui/demain
+          // plutôt que de jeter RangeError: Invalid time value (crash en production).
+          const safeDate = addDaysStr(date, 0) ?? todayStr();
           navigation.navigate('Booking', {
             propertyId: property.id,
-            checkIn: date,
-            // endDate doit être postérieur : on passe le lendemain (non affiché en mode table)
-            checkOut: new Date(new Date(date).getTime() + 86_400_000).toISOString().split('T')[0],
+            checkIn: safeDate,
+            checkOut: addDaysStr(safeDate, 1) ?? safeDate,
             guests,
             propertyName: property.name,
             mode: 'table',

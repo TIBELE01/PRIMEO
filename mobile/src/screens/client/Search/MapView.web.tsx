@@ -145,7 +145,7 @@ export function SearchMapView({ properties, onMarkerPress, color = '#1056E0' }: 
                   <Text style={[st.cardPrice, { color }]}>{fmt(p)}</Text>
                   <View style={st.cardRating}>
                     <Text style={st.cardStar}>★</Text>
-                    <Text style={st.cardRatingText}>{p.rating.toFixed(1)}</Text>
+                    <Text style={st.cardRatingText}>{(Number(p.rating) || 0).toFixed(1)}</Text>
                     <Text style={st.cardReviews}>({p.reviewCount})</Text>
                   </View>
                 </View>

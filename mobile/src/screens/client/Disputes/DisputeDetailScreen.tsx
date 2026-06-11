@@ -67,7 +67,7 @@ const REASON_LABELS: Record<string, string> = {
 type Props = ClientScreenProps<'DisputeDetail'>;
 
 export function DisputeDetailScreen({ navigation, route }: Props) {
-  const { disputeId } = route.params;
+  const { disputeId } = route.params ?? ({} as Partial<Props['route']['params']>);
   const { user } = useAuth();
 
   const [dispute, setDispute] = useState<DisputeData | null>(null);

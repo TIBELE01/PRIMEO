@@ -172,6 +172,57 @@ describe('sélection de plage calendrier (régression CalendarSection)', () => {
   });
 });
 
+// ─── Régression : date sûre du tunnel restaurant (PropertyDetailScreen) ───────
+// L'ancien code faisait `new Date(new Date(date).getTime() + 86_400_000)
+// .toISOString()` : une date invalide jetait « RangeError: Invalid time value »
+// et crashait l'app. Le code corrigé passe par addDaysStr (null-safe) avec
+// repli sur aujourd'hui.
+describe('date sûre réservation restaurant (régression RangeError)', () => {
+  function safeRestaurantDates(date: string) {
+    const safeDate = addDaysStr(date, 0) ?? todayStr();
+    return { checkIn: safeDate, checkOut: addDaysStr(safeDate, 1) ?? safeDate };
+  }
+
+  it('produit arrivée + lendemain pour une date valide', () => {
+    expect(safeRestaurantDates('2026-07-10')).toEqual({
+      checkIn: '2026-07-10',
+      checkOut: '2026-07-11',
+    });
+  });
+
+  it('ne jette jamais pour une date invalide — repli sur aujourd\'hui', () => {
+    const { checkIn, checkOut } = safeRestaurantDates('invalid');
+    expect(isValidDateStr(checkIn)).toBe(true);
+    expect(isValidDateStr(checkOut)).toBe(true);
+    expect(countNights(checkIn, checkOut)).toBe(1);
+  });
+
+  it('ne jette jamais pour une chaîne vide', () => {
+    expect(() => safeRestaurantDates('')).not.toThrow();
+    expect(isValidStayRange(safeRestaurantDates('').checkIn, safeRestaurantDates('').checkOut)).toBe(true);
+  });
+});
+
+// ─── Régression : params de navigation absents (deep link / restauration) ─────
+// Plusieurs écrans déstructuraient `route.params` sans repli : un deep link ou
+// une restauration d'état sans params provoquait « Cannot read property of
+// undefined ». Le motif corrigé est `route.params ?? {}`.
+describe('garde route.params (régression deep link)', () => {
+  function guardedDestructure(params: { propertyId?: string } | undefined) {
+    const { propertyId } = (params ?? {}) as { propertyId?: string };
+    return propertyId;
+  }
+
+  it('extrait le paramètre quand il est présent', () => {
+    expect(guardedDestructure({ propertyId: 'abc' })).toBe('abc');
+  });
+
+  it('retourne undefined sans jeter quand params est absent', () => {
+    expect(() => guardedDestructure(undefined)).not.toThrow();
+    expect(guardedDestructure(undefined)).toBeUndefined();
+  });
+});
+
 // ─── Régression : stepper de dates du BookingModal ────────────────────────────
 // Le bouton « + » de l'arrivée contenait `if (d < checkOut) setCheckIn(d); else
 // setCheckIn(d);` (branches identiques) : l'arrivée pouvait dépasser le départ.

@@ -16,7 +16,7 @@ type Props = AuthScreenProps<'TwoFactor'>;
 const TOTP_LEN = 6;
 
 export function TwoFactorScreen({ route, navigation }: Props) {
-  const { userId } = route.params;
+  const { userId } = route.params ?? ({} as Partial<Props['route']['params']>);
   const { theme } = useTheme();
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);

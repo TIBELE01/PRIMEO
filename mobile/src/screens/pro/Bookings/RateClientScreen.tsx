@@ -35,7 +35,7 @@ function StarRow({ label, value, onChange }: StarRowProps) {
 export default function RateClientScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { bookingId, clientId } = route.params as { bookingId: string; clientId: string };
+  const { bookingId = '', clientId = '' } = (route.params ?? {}) as { bookingId?: string; clientId?: string };
 
   const [respectRating,       setRespectRating]       = useState(0);
   const [communicationRating, setCommunicationRating] = useState(0);

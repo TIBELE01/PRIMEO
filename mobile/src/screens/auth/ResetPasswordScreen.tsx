@@ -12,7 +12,9 @@ import type { AuthScreenProps } from '../../navigation/types';
 type Props = AuthScreenProps<'ResetPassword'>;
 
 export function ResetPasswordScreen({ route, navigation }: Props) {
-  const { recoveryToken } = route.params;
+  // Cible de deep link (primeo://reset-password) : params absents si le lien
+  // est ouvert sans fragment — ne jamais déstructurer sans repli.
+  const { recoveryToken = '' } = route.params ?? {};
   const { theme } = useTheme();
   const s = makeStyles(theme);
 

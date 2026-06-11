@@ -51,7 +51,8 @@ const SORT_LABELS: Record<string, string> = {
 export function SectorScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<any>();
-  const { sectorType, title } = route.params as { sectorType: string; title: string };
+  const { sectorType = 'apartment', title = 'Explorer' } =
+    (route.params ?? {}) as { sectorType?: string; title?: string };
 
   const meta = SECTOR_META[sectorType] ?? SECTOR_META.apartment;
 

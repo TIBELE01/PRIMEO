@@ -18,7 +18,8 @@ const OTP_LEN      = 6;
 const RESEND_DELAY = 60;
 
 export function OtpVerificationScreen({ route, navigation }: Props) {
-  const { phone, context, bypassCode, kycDocuments, kycBusinessInfo } = route.params;
+  const { phone, context, bypassCode, kycDocuments, kycBusinessInfo } =
+    route.params ?? ({} as Partial<Props['route']['params']>);
   const { theme } = useTheme();
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);

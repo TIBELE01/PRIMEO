@@ -58,7 +58,7 @@ function MsgBubble({ msg }: { msg: TicketMessage }) {
 export default function SupportTicketDetailScreen() {
   const navigation        = useNavigation<any>();
   const route             = useRoute<any>();
-  const { ticketId }      = route.params as { ticketId: string };
+  const { ticketId = '' } = (route.params ?? {}) as { ticketId?: string };
   const flatRef           = useRef<FlatList>(null);
 
   const [ticket, setTicket]     = useState<SupportTicket | null>(null);

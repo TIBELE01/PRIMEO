@@ -43,7 +43,7 @@ const CATEGORIES: { key: string; label: string; icon: string; description: strin
 ];
 
 export function NewDisputeScreen({ navigation, route }: Props) {
-  const { bookingId } = route.params;
+  const { bookingId } = route.params ?? ({} as Partial<Props['route']['params']>);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);

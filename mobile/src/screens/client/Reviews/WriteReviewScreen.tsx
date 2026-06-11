@@ -36,7 +36,7 @@ function avgCriteria(ratings: Record<string, number>): number {
 }
 
 export function WriteReviewScreen({ navigation, route }: Props) {
-  const { bookingId, propertyId } = route.params;
+  const { bookingId, propertyId } = route.params ?? ({} as Partial<Props['route']['params']>);
 
   const [globalRating, setGlobalRating] = useState(0);
   const [criteria, setCriteria] = useState<Record<string, number>>({

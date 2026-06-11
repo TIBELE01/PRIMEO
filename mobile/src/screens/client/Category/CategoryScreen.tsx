@@ -56,7 +56,7 @@ function CarouselCard({ item, color, onPress }: { item: Property; color: string;
           <Text style={[cst.cardPrice, { color }]}>
             {price > 0 ? `${price.toLocaleString('fr-FR')} F` : '—'}
           </Text>
-          <Text style={cst.cardRating}>★ {item.rating.toFixed(1)}</Text>
+          <Text style={cst.cardRating}>★ {(Number(item.rating) || 0).toFixed(1)}</Text>
         </View>
       </View>
     </TouchableOpacity>

@@ -86,7 +86,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function BookingDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { bookingId } = route.params as { bookingId: string };
+  const { bookingId = '' } = (route.params ?? {}) as { bookingId?: string };
   const theme = useProTheme();
 
   const [booking, setBooking] = useState<Booking | null>(null);

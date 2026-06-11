@@ -17,7 +17,7 @@ const DELIVERY_LABELS: Record<FoodOrderDeliveryType, string> = {
 };
 
 export default function RestaurantOrderCartScreen({ navigation, route }: Props) {
-  const { propertyId, propertyName } = route.params;
+  const { propertyId, propertyName } = route.params ?? ({} as Partial<Props['route']['params']>);
   const { theme } = useTheme();
   const s = makeStyles(theme);
 
