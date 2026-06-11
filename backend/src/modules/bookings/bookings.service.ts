@@ -16,8 +16,8 @@ import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { notificationsService } from '../notifications/notifications.service';
 import { messagingService } from '../messaging/messaging.service';
-
-const REFERRAL_REWARD_AMOUNT = 2000; // FCFA
+import { referralsService } from '../referrals/referrals.service';
+import { walletService } from '../wallets/wallets.service';
 
 export const bookingsService = {
   async create(clientId: string, input: CreateBookingInput) {
@@ -82,8 +82,9 @@ export const bookingsService = {
       await availabilityService.checkDatesAvailable(input.propertyId, startDate, endDate);
     }
 
-    // Use client wallet balance if they have credits
-    const walletCredit = client.walletBalance > 0 ? client.walletBalance : 0;
+    // Use client wallet balance if they have credits (source de vérité : table wallets)
+    const currentWalletBalance = await walletService.getBalance(clientId);
+    const walletCredit = currentWalletBalance > 0 ? currentWalletBalance : 0;
 
     // Restaurant : réservation de table gratuite → tarification nulle, paiement ignoré.
     // Sinon : tarification standard selon l'option de paiement choisie.
@@ -110,12 +111,9 @@ export const bookingsService = {
     const initialStatus = effectivePaymentOption === 'zero_online' ? 'confirmed' : 'pending_payment';
 
     const booking = await prisma.$transaction(async (tx) => {
-      // Deduct wallet balance if used
+      // Deduct wallet balance if used (table wallets + walletBalance, atomique)
       if (pricing.walletDeduction > 0) {
-        await tx.user.update({
-          where: { id: clientId },
-          data: { walletBalance: { decrement: pricing.walletDeduction } },
-        });
+        await walletService.debit(clientId, pricing.walletDeduction, tx);
       }
 
       // Increment promo code uses
@@ -479,10 +477,7 @@ export const bookingsService = {
         });
 
         // Credit wallet for immediate refund (Genius Pay refund handled via webhook)
-        await tx.user.update({
-          where: { id: booking.clientId },
-          data: { walletBalance: { increment: refundAmount } },
-        });
+        await walletService.credit(booking.clientId, refundAmount, tx);
       }
     });
 
@@ -500,10 +495,17 @@ export const bookingsService = {
       throw new HttpError(400, 'Seules les réservations en attente de paiement peuvent être confirmées');
     }
 
-    return prisma.booking.update({
+    const updated = await prisma.booking.update({
       where: { id },
       data: { status: 'confirmed', confirmedAt: new Date() },
     });
+
+    // Filleul client : récompense de parrainage à la première réservation confirmée
+    await referralsService.triggerReward(booking.clientId).catch((err) =>
+      logger.warn(`Referral reward trigger failed on confirm for client ${booking.clientId}`, err),
+    );
+
+    return updated;
   },
 
   async complete(id: string, userId: string) {
@@ -523,7 +525,9 @@ export const bookingsService = {
     }
 
     await prisma.booking.update({ where: { id }, data: { status: 'completed' } });
-    await bookingsService._triggerReferralReward(booking.clientId);
+    await referralsService.triggerReward(booking.clientId).catch((err) =>
+      logger.warn(`Referral reward trigger failed on complete for client ${booking.clientId}`, err),
+    );
 
     return { message: 'Réservation terminée' };
   },
@@ -566,7 +570,9 @@ export const bookingsService = {
       });
     });
 
-    await bookingsService._triggerReferralReward(booking.clientId);
+    await referralsService.triggerReward(booking.clientId).catch((err) =>
+      logger.warn(`Referral reward trigger failed on cash-received for client ${booking.clientId}`, err),
+    );
 
     return { message: 'Paiement cash enregistré, réservation terminée' };
   },
@@ -650,43 +656,5 @@ export const bookingsService = {
       notificationsService.notify({ type: 'interest_booking_received', recipientId: property.ownerId, data }),
       notificationsService.notify({ type: 'interest_submitted', recipientId: client.id, data }),
     ]);
-  },
-
-  async _triggerReferralReward(clientId: string) {
-    // Only fire on first completed booking by this client
-    const completedCount = await prisma.booking.count({
-      where: { clientId, status: 'completed' },
-    });
-    if (completedCount !== 1) return; // not the first
-
-    const referral = await prisma.referral.findFirst({
-      where: { refereeId: clientId, status: 'pending' },
-    });
-    if (!referral) return;
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: referral.referrerId },
-        data: { walletBalance: { increment: REFERRAL_REWARD_AMOUNT } },
-      });
-
-      await tx.transaction.create({
-        data: {
-          userId: referral.referrerId,
-          type: 'referral_reward',
-          amount: REFERRAL_REWARD_AMOUNT,
-          fee: 0,
-          netAmount: REFERRAL_REWARD_AMOUNT,
-          status: 'success',
-          completedAt: new Date(),
-          notes: `Récompense parrainage — filleul ${clientId}`,
-        },
-      });
-
-      await tx.referral.update({
-        where: { id: referral.id },
-        data: { status: 'rewarded', rewardDate: new Date() },
-      });
-    });
   },
 };

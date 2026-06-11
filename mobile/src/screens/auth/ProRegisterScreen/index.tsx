@@ -39,6 +39,7 @@ type FormData = {
   businessAddress: string;
   rccm: string;
   taxNumber: string;
+  referralCode: string;
 };
 
 // ── Données des options pro ────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ const PRO_OPTIONS: { value: ProType; emoji: string; label: string; description: 
 const INITIAL: FormData = {
   proType: null, acceptedTerms: false,
   firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '',
-  businessName: '', businessAddress: '', rccm: '', taxNumber: '',
+  businessName: '', businessAddress: '', rccm: '', taxNumber: '', referralCode: '',
 };
 
 type Props = AuthScreenProps<'ProRegister'>;
@@ -680,6 +681,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
       if (data.businessAddress.trim()) payload.businessAddress = data.businessAddress.trim();
       if (data.rccm.trim())            payload.rccm            = data.rccm.trim();
       if (data.taxNumber.trim())       payload.taxNumber       = data.taxNumber.trim();
+      if (data.referralCode.trim())    payload.referralCode    = data.referralCode.trim();
 
       const res = await authApi.register(payload);
       // Statistique anonyme d'inscription professionnelle
@@ -805,6 +807,26 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             accessibilityLabel="Numéro de contribuable"
             placeholderTextColor="#94A3B8"
             placeholder="Ex. : 1234567A"
+          />
+        </View>
+
+        {/* Champ Code de parrainage */}
+        <View style={step3Styles.field}>
+          <Text style={step3Styles.label}>
+            Code de parrainage
+            {'  '}<Text style={step3Styles.optional}>(optionnel)</Text>
+          </Text>
+          <TextInput
+            style={step3Styles.input}
+            value={data.referralCode}
+            onChangeText={v => onUpdate({ referralCode: v })}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+            accessibilityLabel="Code de parrainage"
+            placeholderTextColor="#94A3B8"
+            placeholder="Code de la personne qui vous a invité"
           />
         </View>
 

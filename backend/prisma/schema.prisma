@@ -249,6 +249,9 @@ model User {
   deactivatedUntil  DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
 
   // Portefeuille et parrainage
+  // walletBalance : conservé pour compatibilité ; la source de vérité est désormais
+  // la table `wallets` (modèle Wallet). Toute mutation passe par walletService, qui
+  // met à jour les deux dans la même transaction afin d'éviter toute divergence.
   walletBalance Int    @default(0) // FCFA — crédits clients
   referralCode  String @unique @default(cuid())
 
@@ -291,9 +294,30 @@ model User {
   Boost                 Boost[]
   foodOrders            FoodOrder[]          @relation("ClientFoodOrders")
   pushTokens            PushToken[]
+  wallet                Wallet?
 
   @@index([accountType, status])
   @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PORTEFEUILLE VIRTUEL — table `wallets`
+// Source de vérité du solde de crédits (récompenses de parrainage, remboursements,
+// déductions lors d'une réservation). Une ligne par utilisateur, créée à la volée.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Wallet {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  balance  Int    @default(0) // FCFA
+  currency String @default("XOF")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("wallets")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -771,7 +795,8 @@ model Referral {
   status          ReferralStatus @default(pending)
   inscriptionDate DateTime? // date d'inscription du filleul
   rewardDate      DateTime? // date de versement de la récompense
-  rewardAmount    Int            @default(2000) // FCFA (§5.14)
+  // Montant fixé au versement selon le type de filleul : client = 250, professionnel = 1000.
+  rewardAmount    Int            @default(0) // FCFA
 
   createdAt DateTime @default(now())
 

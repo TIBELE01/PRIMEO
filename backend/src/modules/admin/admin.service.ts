@@ -3,6 +3,7 @@ import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { subscriptionsService } from '../subscriptions/subscriptions.service';
 import { notificationsService } from '../notifications/notifications.service';
+import { referralsService } from '../referrals/referrals.service';
 import { geniusPayService } from '../payments/services/genius-pay.service';
 import { sendEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
@@ -573,6 +574,11 @@ export const adminService = {
         new: { verificationStatus: 'approved' },
       },
     });
+
+    // Filleul professionnel : récompense de parrainage à la validation du KYC
+    referralsService.triggerReward(userId).catch((err) =>
+      logger.warn(`Referral reward trigger failed on KYC approval for pro ${userId}`, err),
+    );
 
     // Notification in-app + e-mail
     notificationsService.notify({

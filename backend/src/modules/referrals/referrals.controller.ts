@@ -37,3 +37,12 @@ export async function listRewardHistory(req: Request, res: Response, next: NextF
     next(err);
   }
 }
+
+export async function applyReferralCode(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await referralsService.applyCode(req.user!.sub, req.body?.code);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

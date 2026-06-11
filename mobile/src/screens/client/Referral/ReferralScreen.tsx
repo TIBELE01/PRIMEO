@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView, View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert, Linking, Share, FlatList, Clipboard,
+  SafeAreaView, ActivityIndicator, Alert, Linking, Share, FlatList, Clipboard, TextInput,
 } from 'react-native';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { referralsApi } from '../../../services/api/endpoints/referrals';
@@ -10,6 +10,9 @@ import { ReferralHistoryItem } from '../../../components/referral/ReferralHistor
 interface ReferralCode {
   code: string;
   referralUrl: string;
+  hasReferrer?: boolean;
+  canApplyCode?: boolean;
+  rewards?: { client: number; professional: number };
 }
 
 interface ReferralStats {
@@ -45,6 +48,8 @@ export function ReferralScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('filleuls');
+  const [applyInput, setApplyInput] = useState('');
+  const [applying, setApplying] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,6 +118,32 @@ export function ReferralScreen({ navigation }: Props) {
     await Linking.openURL(url);
   };
 
+  const handleApplyCode = async () => {
+    const code = applyInput.trim();
+    if (!code) {
+      Alert.alert('Code requis', 'Veuillez saisir un code de parrainage.');
+      return;
+    }
+    setApplying(true);
+    try {
+      await referralsApi.applyCode(code);
+      Alert.alert('Code enregistré', 'Votre code de parrainage a bien été pris en compte. Merci !');
+      setApplyInput('');
+      await load(); // rafraîchit canApplyCode / stats
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string; message?: string } } };
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? 'Code de parrainage invalide ou déjà utilisé.';
+      Alert.alert('Échec', msg);
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // Montants de récompense (valeurs serveur, repli sur les montants par défaut)
+  const rewardClient = codeData?.rewards?.client ?? 250;
+  const rewardPro = codeData?.rewards?.professional ?? 1000;
+  const canApplyCode = codeData?.canApplyCode ?? false;
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -130,10 +161,18 @@ export function ReferralScreen({ navigation }: Props) {
           <Text style={styles.subtitle}>Invitez vos proches et gagnez des récompenses</Text>
         </View>
 
-        {/* Reward info card */}
+        {/* Reward info card — montants différenciés selon le type de filleul */}
         <View style={styles.rewardCard}>
-          <Text style={styles.rewardAmount}>2 000 FCFA</Text>
-          <Text style={styles.rewardLabel}>par filleul après sa première réservation</Text>
+          <Text style={styles.rewardAmount}>Jusqu'à {rewardPro.toLocaleString('fr-CI')} FCFA</Text>
+          <Text style={styles.rewardLabel}>par filleul parrainé</Text>
+          <View style={styles.rewardBreakdown}>
+            <Text style={styles.rewardBreakdownItem}>
+              {rewardClient.toLocaleString('fr-CI')} FCFA · filleul client (1ʳᵉ réservation confirmée)
+            </Text>
+            <Text style={styles.rewardBreakdownItem}>
+              {rewardPro.toLocaleString('fr-CI')} FCFA · filleul professionnel (KYC validé)
+            </Text>
+          </View>
         </View>
 
         {/* Code card */}
@@ -144,6 +183,39 @@ export function ReferralScreen({ navigation }: Props) {
               <Text style={styles.code}>{codeData.code}</Text>
               <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
                 <Text style={styles.copyBtnText}>{copied ? '✓ Copié' : 'Copier'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Ajout d'un code de parrainage après inscription — un seul ajout possible */}
+        {canApplyCode && (
+          <View style={styles.applyCard}>
+            <Text style={styles.applyTitle}>Vous avez été invité ?</Text>
+            <Text style={styles.applySubtitle}>
+              Saisissez le code de la personne qui vous a parrainé (une seule fois possible).
+            </Text>
+            <View style={styles.applyRow}>
+              <TextInput
+                style={styles.applyInput}
+                value={applyInput}
+                onChangeText={setApplyInput}
+                placeholder="Code de parrainage"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!applying}
+                accessibilityLabel="Saisir un code de parrainage"
+              />
+              <TouchableOpacity
+                style={[styles.applyBtn, applying && { opacity: 0.6 }]}
+                onPress={handleApplyCode}
+                disabled={applying}
+                accessibilityLabel="Valider le code de parrainage"
+              >
+                {applying
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.applyBtnText}>Valider</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -271,8 +343,27 @@ const styles = StyleSheet.create({
     borderRadius: 16, padding: 20, alignItems: 'center',
     borderWidth: 1.5, borderColor: '#A7F3D0',
   },
-  rewardAmount: { fontSize: 36, fontWeight: '900', color: '#1056E0' },
+  rewardAmount: { fontSize: 32, fontWeight: '900', color: '#1056E0' },
   rewardLabel: { fontSize: 14, color: '#065F46', marginTop: 4, textAlign: 'center' },
+  rewardBreakdown: { marginTop: 12, gap: 4, alignItems: 'center' },
+  rewardBreakdownItem: { fontSize: 12, color: '#047857', textAlign: 'center' },
+
+  applyCard: {
+    marginHorizontal: 16, marginBottom: 16, backgroundColor: '#F8FAFC',
+    borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  applyTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  applySubtitle: { fontSize: 12.5, color: '#6B7280', marginTop: 4, marginBottom: 12 },
+  applyRow: { flexDirection: 'row', gap: 8 },
+  applyInput: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#D1D5DB',
+    paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#111827',
+  },
+  applyBtn: {
+    backgroundColor: '#1056E0', borderRadius: 10, paddingHorizontal: 18,
+    alignItems: 'center', justifyContent: 'center', minWidth: 84,
+  },
+  applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   codeCard: {
     marginHorizontal: 16, marginBottom: 16, backgroundColor: '#fff',
     borderRadius: 14, padding: 18, elevation: 2,

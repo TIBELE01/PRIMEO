@@ -8,6 +8,7 @@ import { sendSms } from '../../../common/utils/sms';
 import { brevoConfig } from '../../../config/brevo.config';
 import { boostsService } from '../../boosts/boosts.service';
 import { subscriptionsService } from '../../subscriptions/subscriptions.service';
+import { referralsService } from '../../referrals/referrals.service';
 import { analyticsService } from '../../analytics/analytics.service';
 import { generateAndUploadBookingInvoice } from '../../../common/utils/invoice';
 
@@ -297,11 +298,15 @@ export async function processSuccessfulPayment(
   if (tx.bookingId) {
     const booking = await prisma.booking.findUnique({
       where: { id: tx.bookingId },
-      select: { propertyId: true, startDate: true, endDate: true },
+      select: { clientId: true, propertyId: true, startDate: true, endDate: true },
     });
     if (booking) {
       await blockAvailability(booking.propertyId, booking.startDate, booking.endDate).catch((err) =>
         logger.warn('Failed to block availability dates', err),
+      );
+      // Filleul client : récompense de parrainage à la première réservation confirmée
+      await referralsService.triggerReward(booking.clientId).catch((err) =>
+        logger.warn(`Referral reward trigger failed on payment confirm for client ${booking.clientId}`, err),
       );
     }
     await notifyBookingConfirmed(tx.bookingId).catch((err) =>
