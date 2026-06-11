@@ -59,9 +59,15 @@ async function minifyJS() {
 }
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
+/* ── Sitemap ─────────────────────────────────────────────────────────────── */
+function generateSitemap() {
+  require('./scripts/generate-sitemap.js'); // pure Node, regenerates sitemap.xml
+}
+
 (async () => {
   console.log('Building Primeo Vitrine…\n');
   try {
+    generateSitemap();
     minifyCSS();
     await minifyJS();
     console.log(`\nDone. Total saved: ${(totalSaved / 1024).toFixed(1)} KB`);
