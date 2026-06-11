@@ -2,6 +2,7 @@
 import cron from 'node-cron';
 import { prisma } from '../database/prisma.service';
 import { logger } from '../common/utils/logger';
+import { exportsService } from '../modules/exports/exports.service';
 
 export function startCleanupJob(): void {
   // Run daily at 2:00 AM
@@ -34,6 +35,10 @@ export function startCleanupJob(): void {
       if (cancelled.count > 0) {
         logger.warn(`Cleanup: ${cancelled.count} réservation(s) annulée(s) par le filet de sécurité 24h`);
       }
+
+      // Purge des exports de données dont le lien de téléchargement a expiré
+      const purgedExports = await exportsService.purgeExpired();
+      if (purgedExports > 0) logger.info(`Cleanup: ${purgedExports} export(s) expiré(s) purgé(s)`);
     } catch (err) {
       logger.error('Cleanup job failed', err);
     }

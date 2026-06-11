@@ -74,6 +74,7 @@ export type ResidenceStackParamList = {
   Subscriptions: undefined;
   Boosts: undefined;
   Analytics: undefined;
+  DataExports: undefined;
   ReceivedReviews: undefined;
   CollaboratorsAccess: undefined;
   Messages: undefined;
@@ -95,6 +96,7 @@ export type HotelStackParamList = {
   Subscriptions: undefined;
   Boosts: undefined;
   Analytics: undefined;
+  DataExports: undefined;
   ReceivedReviews: undefined;
   CollaboratorsAccess: undefined;
   Messages: undefined;
@@ -116,6 +118,7 @@ export type ImmobilierStackParamList = {
   Subscriptions: undefined;
   Boosts: undefined;
   Analytics: undefined;
+  DataExports: undefined;
   ReceivedReviews: undefined;
   CollaboratorsAccess: undefined;
   Messages: undefined;
@@ -139,6 +142,7 @@ export type RestaurantStackParamList = {
   TimeSlots: undefined;
   Promotions: undefined;
   Subscriptions: undefined;
+  DataExports: undefined;
   CollaboratorsAccess: undefined;
   Messages: undefined;
   Settings: undefined;

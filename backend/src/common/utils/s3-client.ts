@@ -49,14 +49,33 @@ export async function uploadToCloudinary(
   };
 }
 
-export async function deleteFromCloudinary(publicId: string): Promise<void> {
+// Construit une URL de livraison optimisée à la volée : conversion automatique
+// en WebP/AVIF selon le navigateur (f_auto), qualité auto (q_auto) et
+// redimensionnement (w_…). Insère la chaîne de transformation après /upload/.
+export function buildImageDeliveryUrl(
+  secureUrl: string,
+  opts: { width?: number } = {},
+): string {
+  if (!secureUrl.includes('/upload/')) return secureUrl;
+  // f_auto livre WebP/AVIF selon le navigateur, q_auto ajuste la compression
+  const parts = ['f_auto', 'q_auto'];
+  if (opts.width) parts.push(`w_${opts.width}`, 'c_limit');
+  return secureUrl.replace('/upload/', `/upload/${parts.join(',')}/`);
+}
+
+export async function deleteFromCloudinary(
+  publicId: string,
+  resourceType: CloudinaryResourceType = 'image',
+): Promise<void> {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
   if (!cloudName || !apiKey || !apiSecret) return;
 
+  // 'auto' n'est pas un type valide pour destroy → repli sur 'image'
+  const type = resourceType === 'auto' ? 'image' : resourceType;
   await axios.post(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/${type}/destroy`,
     { public_id: publicId },
     { auth: { username: apiKey, password: apiSecret } }
   );
-  logger.debug(`Cloudinary delete: ${publicId}`);
+  logger.debug(`Cloudinary delete (${type}): ${publicId}`);
 }

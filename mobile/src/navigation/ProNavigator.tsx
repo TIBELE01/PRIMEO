@@ -27,6 +27,7 @@ import RateClientScreen          from '../screens/pro/Bookings/RateClientScreen'
 import SubscriptionsScreen       from '../screens/pro/Subscriptions/SubscriptionsScreen';
 import BoostsScreen              from '../screens/pro/Boosts/BoostsScreen';
 import AnalyticsScreen           from '../screens/pro/Analytics/AnalyticsScreen';
+import { ExportsScreen }         from '../screens/pro/Exports/ExportsScreen';
 import ProReceivedReviewsScreen  from '../screens/pro/Reviews/ProReceivedReviewsScreen';
 import AccessManagementScreen    from '../screens/pro/Collaborators/AccessManagementScreen';
 import NotificationsScreen       from '../screens/pro/Notifications/NotificationsScreen';
@@ -157,6 +158,7 @@ function lodgingScreens(labels: {
     { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnements' },
     { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
     { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',     headerShown: false },
+    { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
     { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },
     { name: 'CollaboratorsAccess', component: AccessManagementScreen,    headerShown: false },
     { name: 'Notifications',       component: NotificationsScreen,       headerShown: false },
@@ -228,6 +230,7 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'BookingDetail',       component: BookingDetailScreen,       title: 'Détail réservation' },
   { name: 'RateClient',          component: RateClientScreen,          title: 'Évaluer le client' },
   { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',    headerShown: false },
+  { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
   { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnement' },
   { name: 'CollaboratorsAccess', component: AccessManagementScreen,    headerShown: false },
   { name: 'Notifications',       component: NotificationsScreen,       headerShown: false },

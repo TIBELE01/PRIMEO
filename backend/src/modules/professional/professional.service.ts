@@ -20,7 +20,9 @@ const KYC_DOCUMENT_FIELDS: Record<string, DocumentType> = {
 
 // Formats acceptés pour les pièces justificatives (image ou PDF)
 const ALLOWED_KYC_MIME = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_KYC_FILE_BYTES = 10 * 1024 * 1024; // 10 Mo
+// Plafonds différenciés : 5 Mo pour les images, 10 Mo pour les PDF
+const MAX_KYC_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_KYC_PDF_BYTES = 10 * 1024 * 1024;
 
 type UploadedFiles = Record<string, Express.Multer.File[]> | Express.Multer.File[] | undefined;
 
@@ -92,8 +94,13 @@ export const professionalService = {
         if (!ALLOWED_KYC_MIME.includes(file.mimetype)) {
           throw new HttpError(400, `Format de fichier non autorisé pour ${field} : ${file.mimetype}`);
         }
-        if (file.size > MAX_KYC_FILE_BYTES) {
-          throw new HttpError(400, `Le fichier ${file.originalname} dépasse la taille maximale de 10 Mo`);
+        const isPdf = file.mimetype === 'application/pdf';
+        const maxBytes = isPdf ? MAX_KYC_PDF_BYTES : MAX_KYC_IMAGE_BYTES;
+        if (file.size > maxBytes) {
+          throw new HttpError(
+            400,
+            `Le fichier ${file.originalname} dépasse la taille maximale de ${isPdf ? '10 Mo (PDF)' : '5 Mo (image)'}`,
+          );
         }
 
         // 'auto' permet de gérer indifféremment images et PDF

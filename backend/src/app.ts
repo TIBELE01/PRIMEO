@@ -46,6 +46,7 @@ import { collaboratorsRouter } from './modules/collaborators/collaborators.route
 import { websiteRouter } from './modules/website/website.router';
 import { foodOrdersRouter } from './modules/restaurant/food-orders.router';
 import { featureFlagsRouter } from './modules/feature-flags/feature-flags.router';
+import { exportsRouter } from './modules/exports/exports.router';
 
 export function createApp(): Application {
   const app = express();
@@ -126,6 +127,7 @@ export function createApp(): Application {
   app.use('/api/website', websiteRouter);
   app.use('/api/food-orders', foodOrdersRouter);
   app.use('/api/feature-flags', featureFlagsRouter);
+  app.use('/api/exports', exportsRouter);
 
   // Sentry error handler — must come AFTER all routes and BEFORE custom error handlers
   if (env.SENTRY_DSN) {

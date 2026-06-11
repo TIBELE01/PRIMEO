@@ -174,6 +174,11 @@ export default function ProSettingsScreen() {
           />
           <View style={s.divider} />
           <SettingsRow accentColor={theme.primary}
+            label="Exporter mes données" icon="download-outline"
+            onPress={() => navigation.navigate('DataExports')}
+          />
+          <View style={s.divider} />
+          <SettingsRow accentColor={theme.primary}
             label="Notifications" icon="notifications-outline"
             onPress={() => navigation.navigate('Notifications')}
           />
