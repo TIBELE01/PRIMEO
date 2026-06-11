@@ -20,23 +20,24 @@ jest.mock('../wallets/wallets.service', () => ({
   walletService: { credit: creditMock },
 }));
 
-const mockPrisma: any = {
+const mockPrisma = {
   referral: {
     findFirst: jest.fn(),
-    update: jest.fn(async () => ({})),
+    update: jest.fn(),
   },
   booking: {
-    count: jest.fn(async () => 0),
+    count: jest.fn(),
   },
   professionalProfile: {
-    findUnique: jest.fn(async () => null),
+    findUnique: jest.fn(),
   },
   transaction: {
-    create: jest.fn(async () => ({})),
+    create: jest.fn(),
   },
+  $transaction: jest.fn(),
 };
 // $transaction(fn) exécute le callback avec un client transactionnel = le mock lui-même
-mockPrisma.$transaction = jest.fn(async (fn: any) => fn(mockPrisma));
+mockPrisma.$transaction.mockImplementation((fn) => fn(mockPrisma));
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 import { referralsService } from './referrals.service';
