@@ -165,7 +165,22 @@ async function main() {
     await upsertMedia(`demo-media-villa-${p.sortOrder}`, villaId, p.url, MediaType.photo, p.isPrimary, p.sortOrder);
   }
   await upsertMedia('demo-media-villa-video', villaId, VIDEOS.residence, MediaType.video, false, 10);
-  console.log(`     ✓ id=${villaId} — ${PHOTOS.residence.length} photos + 🎬 vidéo`);
+
+  // Scènes 3D de démonstration — panoramas équirectangulaires publics (three.js examples)
+  const PANORAMAS = [
+    { id: 'demo-3d-villa-salon',   roomName: 'Salon',   url: 'https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg' },
+    { id: 'demo-3d-villa-exterieur', roomName: 'Extérieur', url: 'https://threejs.org/examples/textures/kandao3.jpg' },
+  ];
+  for (let i = 0; i < PANORAMAS.length; i++) {
+    const sc = PANORAMAS[i];
+    await prisma.property3dScene.upsert({
+      where: { id: sc.id },
+      update: { url: sc.url, roomName: sc.roomName },
+      create: { id: sc.id, propertyId: villaId, roomName: sc.roomName, url: sc.url, sortOrder: i },
+    });
+  }
+  await prisma.property.update({ where: { id: villaId }, data: { hasVirtualTour: true } });
+  console.log(`     ✓ id=${villaId} — ${PHOTOS.residence.length} photos + 🎬 vidéo + 🔭 ${PANORAMAS.length} scènes 3D`);
 
   // 2b. Hôtel
   console.log('  → Hôtel Le Plateau Boutique');

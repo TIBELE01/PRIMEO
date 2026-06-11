@@ -545,7 +545,7 @@ function StepEquipements({ data, onChange }: any) {
 
 function StepMedias({ data, onChange, subscriptionPlan }: any) {
   const images: { uri: string; name: string }[]     = data.images     ?? [];
-  const tourImages: { uri: string; name: string }[] = data.tourImages ?? [];
+  const tourImages: { uri: string; name: string; roomName?: string; existing?: boolean }[] = data.tourImages ?? [];
   const videoFiles: { uri: string; name: string }[] = data.videoFiles ?? [];
   const type: string = data.type ?? '';
 
@@ -567,10 +567,19 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
     const result = await DocumentPicker.getDocumentAsync({ type: 'image/*', multiple: true, copyToCacheDirectory: true });
     if (result.canceled) return;
     const assets = result.assets ?? [];
-    onChange('tourImages', [...tourImages, ...assets.map((a: any) => ({ uri: a.uri, name: a.name ?? 'tour360.jpg', file: a.file ?? undefined }))]);
+    // Max 10 photos 360° par bien (limite backend)
+    const room = (n: number) => `Pièce ${n}`;
+    const added = assets.slice(0, 10 - tourImages.length).map((a: any, idx: number) => ({
+      uri: a.uri, name: a.name ?? 'tour360.jpg', file: a.file ?? undefined,
+      roomName: room(tourImages.length + idx + 1),
+    }));
+    onChange('tourImages', [...tourImages, ...added]);
   };
   const removeTourImage = (i: number) => {
     const updated = [...tourImages]; updated.splice(i, 1); onChange('tourImages', updated);
+  };
+  const renameTourImage = (i: number, roomName: string) => {
+    const updated = [...tourImages]; updated[i] = { ...updated[i], roomName }; onChange('tourImages', updated);
   };
   const pickVideo = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'video/*', multiple: false, copyToCacheDirectory: true });
@@ -643,17 +652,27 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
           </Text>
           {isEntreprisePlan && (
             <>
-              <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages}>
-                <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length})</Text>
+              <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages} disabled={tourImages.length >= 10}>
+                <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length}/10)</Text>
               </TouchableOpacity>
               {tourImages.length > 0 && (
-                <View style={styles.imageGrid}>
-                  {tourImages.map((img, i) => (
-                    <View key={i} style={styles.imageThumb}>
-                      <Image source={{ uri: img.uri }} style={styles.imagePrev} />
-                      <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeTourImage(i)}>
-                        <Text style={styles.removeImgText}>✕</Text>
-                      </TouchableOpacity>
+                <View style={styles.tourSheet}>
+                  {tourImages.map((img: any, i) => (
+                    <View key={i} style={styles.tourCard}>
+                      <Image source={{ uri: img.uri }} style={styles.tourCardImg} />
+                      <View style={styles.tourCardBody}>
+                        <TextInput
+                          style={styles.tourCardInput}
+                          value={img.roomName ?? `Pièce ${i + 1}`}
+                          onChangeText={(v) => renameTourImage(i, v)}
+                          placeholder="Nom de la pièce (Salon, Chambre…)"
+                          placeholderTextColor="#9CA3AF"
+                          editable={!img.existing}
+                        />
+                        <TouchableOpacity onPress={() => removeTourImage(i)} hitSlop={8}>
+                          <Text style={styles.removeImgText}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
                       <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>360°</Text></View>
                     </View>
                   ))}
@@ -1189,9 +1208,13 @@ export default function AddPropertyScreen({ navigation, route }: any) {
           images: media
             .filter((m: any) => (m.mediaType ?? 'photo') !== 'virtual_tour_360')
             .map((m: any) => ({ uri: m.url, url: m.url, id: m.id, name: 'photo.jpg', existing: true })),
-          tourImages: media
-            .filter((m: any) => m.mediaType === 'virtual_tour_360')
-            .map((m: any) => ({ uri: m.url, url: m.url, id: m.id, name: 'tour.jpg', existing: true })),
+          // Scènes 3D : nouvelle table property_3d_scenes, repli sur les anciens
+          // médias virtual_tour_360 pour les biens créés avant la migration.
+          tourImages: (p.scenes3d?.length
+            ? p.scenes3d.map((s: any) => ({ uri: s.url, url: s.url, id: s.id, name: 'tour.jpg', roomName: s.roomName, existing: true }))
+            : media
+                .filter((m: any) => m.mediaType === 'virtual_tour_360')
+                .map((m: any) => ({ uri: m.url, url: m.url, id: m.id, name: 'tour.jpg', existing: true }))),
           checkInTime:    rules.checkInTime    ?? prev.checkInTime,
           checkOutTime:   rules.checkOutTime   ?? prev.checkOutTime,
           minStay:        rules.minStay        ?? prev.minStay,
@@ -1531,6 +1554,11 @@ const styles = StyleSheet.create({
   tourBtnText:      { color: '#1056E0', fontWeight: '600', fontSize: 13 },
   videoRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 8, padding: 10, marginTop: 6, borderWidth: 1, borderColor: '#E5E7EB' },
   videoName:        { flex: 1, fontSize: 12, color: '#374151', marginRight: 8 },
+  tourSheet:        { marginTop: 10, gap: 8 },
+  tourCard:         { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden' },
+  tourCardImg:      { width: '100%', height: 90 },
+  tourCardBody:     { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 8 },
+  tourCardInput:    { flex: 1, fontSize: 13, color: '#111827', paddingVertical: 4 },
   infoBox:          { backgroundColor: '#EFF4FF', borderRadius: 12, padding: 14, borderLeftWidth: 3, borderLeftColor: '#1056E0', marginBottom: 16 },
   infoBoxLocked:    { backgroundColor: '#F3F4F6', borderLeftColor: '#9CA3AF' },
   infoBoxTitle:     { fontSize: 14, fontWeight: '700', color: '#1E40AF', marginBottom: 4 },

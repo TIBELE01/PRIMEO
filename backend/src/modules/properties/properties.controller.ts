@@ -170,6 +170,60 @@ export async function uploadMediaFile(req: Request, res: Response, next: NextFun
   }
 }
 
+// ── Visite 3D : scènes panoramiques 360° ─────────────────────────────────────
+
+// Liste publique des scènes 3D d'une propriété (consommée par la fiche détail)
+export async function list3dScenes(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const scenes = await propertiesService.list3dScenes(req.params.id);
+    res.json(scenes);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Upload d'une photo panoramique équirectangulaire (JPEG/PNG, max 10 Mo).
+// Réservé à la formule Entreprise ; max 10 scènes par propriété.
+export async function upload3dScene(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: 'Aucun fichier reçu' }); return; }
+
+    const ALLOWED_360_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!ALLOWED_360_MIMES.includes(file.mimetype)) {
+      res.status(400).json({ error: 'Format non supporté. Utilisez une photo JPEG, PNG ou WebP équirectangulaire.' });
+      return;
+    }
+
+    // Gate abonnement : Entreprise uniquement
+    const { prisma } = await import('../../database/prisma.service');
+    const { PLAN_DETAILS } = await import('../../common/constants/subscription-plans');
+    const sub = await prisma.subscription.findUnique({ where: { userId: req.user!.sub } });
+    const plan = sub ? PLAN_DETAILS[sub.planType] : null;
+    if (!plan?.virtualTour) {
+      res.status(403).json({ error: 'La visite 3D est réservée à la formule Entreprise.' });
+      return;
+    }
+
+    const roomName = String(req.body?.roomName ?? '').trim() || 'Pièce';
+    const sortOrder = parseInt(req.body?.sortOrder ?? '0', 10);
+
+    const scene = await propertiesService.upload3dScene(req.params.id, req.user!.sub, file, { roomName, sortOrder });
+    res.status(201).json(scene);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function delete3dScene(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await propertiesService.delete3dScene(req.params.id, req.params.sceneId, req.user!.sub);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getPropertyStats(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const stats = await propertiesService.getStats(req.params.id, req.user!.sub);

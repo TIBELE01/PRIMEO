@@ -16,6 +16,9 @@ import {
   addMedia,
   deleteMedia,
   uploadMediaFile,
+  list3dScenes,
+  upload3dScene,
+  delete3dScene,
   suspendProperty,
   getPropertyStats,
   approveProperty,
@@ -25,6 +28,8 @@ import {
 
 // Multer : mémoire tampon (pas de disque), 100 Mo max (vidéos)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+// Multer dédié aux photos 360° : 10 Mo max après compression
+const upload360 = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
@@ -110,6 +115,11 @@ propertiesRouter.post(
 propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload.single('file'), uploadMediaFile);
 propertiesRouter.post('/:id/media', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, validate(AddMediaDto), addMedia);
 propertiesRouter.delete('/:id/media/:mediaId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, deleteMedia);
+
+// Visite 3D — scènes panoramiques 360° (lecture publique, écriture Entreprise)
+propertiesRouter.get('/:id/3d-scenes', parseId, list3dScenes);
+propertiesRouter.post('/:id/3d-scenes', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload360.single('file'), upload3dScene);
+propertiesRouter.delete('/:id/3d-scenes/:sceneId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, delete3dScene);
 
 // Owner submits draft for review
 propertiesRouter.post(

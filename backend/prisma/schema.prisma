@@ -490,6 +490,7 @@ model Property {
 
   // Relations
   media             PropertyMedia[]
+  scenes3d          Property3dScene[]
   availabilities    Availability[]
   bookings          Booking[]
   reviews           Review[]
@@ -522,6 +523,22 @@ model PropertyMedia {
 
   @@index([propertyId])
   @@map("property_media")
+}
+
+// §7.3 — Scènes de visite 3D : photos panoramiques équirectangulaires (360°)
+// Une scène = une pièce (Salon, Chambre…). Formule Entreprise uniquement.
+model Property3dScene {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomName   String // nom de la pièce affiché dans le viewer (Salon, Chambre…)
+  url        String // URL publique Supabase Storage
+  publicId   String? // chemin Supabase — requis pour supprimer du bucket
+  sortOrder  Int      @default(0)
+  uploadedAt DateTime @default(now())
+
+  @@index([propertyId])
+  @@map("property_3d_scenes")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -28,7 +28,25 @@ export function serializeProperty<T extends Record<string, unknown>>(property: T
     ...property,
     images: media,
     mainImageUrl: primary?.url ?? null,
+    virtualTour: buildVirtualTour(property),
   };
+}
+
+/**
+ * Construit l'objet virtualTour attendu par le mobile à partir des scènes 3D
+ * (table property_3d_scenes). Chaque scène devient un panorama nommé ; le viewer
+ * mobile (VirtualTourScreen) gère la navigation entre pièces.
+ */
+function buildVirtualTour(property: Record<string, unknown>): { available: boolean; panoramas: Array<{ id: string; roomName: string; imageUrl: string; hotspots: never[] }> } | undefined {
+  const scenes = (property as { scenes3d?: Array<{ id: string; roomName: string; url: string }> }).scenes3d;
+  if (!scenes) return undefined; // relation non chargée (listes) — le flag hasVirtualTour suffit
+  const panoramas = scenes.map((s) => ({
+    id: s.id,
+    roomName: s.roomName,
+    imageUrl: s.url,
+    hotspots: [] as never[],
+  }));
+  return { available: panoramas.length > 0, panoramas };
 }
 
 function serializeList<T extends Record<string, unknown>>(result: {
@@ -50,6 +68,7 @@ export const propertiesService = {
       include: {
         owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, subscription: { select: { planType: true } } } },
         media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
+        scenes3d: { orderBy: { sortOrder: 'asc' } },
         reviews: {
           where: { status: 'published' },
           take: 10,
@@ -395,6 +414,88 @@ export const propertiesService = {
       });
       logger.error('Échec enregistrement PropertyMedia — média retiré du stockage', dbError);
       throw new HttpError(500, 'Échec de l\'enregistrement de l\'image. Réessayez.');
+    }
+  },
+
+  // ── Visite 3D : scènes panoramiques 360° (formule Entreprise) ──────────────
+
+  async list3dScenes(propertyId: string) {
+    const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { id: true } });
+    if (!property) throw new HttpError(404, 'Propriété introuvable');
+    return prisma.property3dScene.findMany({
+      where: { propertyId },
+      orderBy: { sortOrder: 'asc' },
+    });
+  },
+
+  async upload3dScene(
+    propertyId: string,
+    userId: string,
+    file: Express.Multer.File,
+    opts: { roomName: string; sortOrder: number },
+  ) {
+    const property = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new HttpError(404, 'Propriété introuvable');
+    if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    const count = await prisma.property3dScene.count({ where: { propertyId } });
+    if (count >= 10) throw new HttpError(400, 'Limite de 10 photos 360° par propriété atteinte');
+
+    const { supabaseAdmin } = await import('../../config/supabase.config');
+    const ext = file.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${propertyId}/3d/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('property-media')
+      .upload(path, file.buffer, { contentType: file.mimetype, upsert: false });
+
+    if (uploadError) {
+      logger.error('Échec upload scène 3D Supabase Storage', uploadError);
+      throw new HttpError(502, 'Échec du stockage de la photo 360°. Réessayez.');
+    }
+
+    const { data: urlData } = supabaseAdmin.storage.from('property-media').getPublicUrl(path);
+
+    try {
+      const scene = await prisma.property3dScene.create({
+        data: { propertyId, roomName: opts.roomName, url: urlData.publicUrl, publicId: path, sortOrder: opts.sortOrder },
+      });
+      // Active le flag de visite 3D sur la propriété (idempotent)
+      if (!property.hasVirtualTour) {
+        await prisma.property.update({ where: { id: propertyId }, data: { hasVirtualTour: true } }).catch(() => {});
+      }
+      return scene;
+    } catch (dbError) {
+      await supabaseAdmin.storage.from('property-media').remove([path]).catch((removeErr) => {
+        logger.error('Échec suppression scène 3D orpheline après erreur DB', removeErr);
+      });
+      logger.error('Échec enregistrement Property3dScene — fichier retiré du stockage', dbError);
+      throw new HttpError(500, 'Échec de l\'enregistrement de la photo 360°. Réessayez.');
+    }
+  },
+
+  async delete3dScene(propertyId: string, sceneId: string, userId: string) {
+    const property = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new HttpError(404, 'Propriété introuvable');
+    if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    const scene = await prisma.property3dScene.findFirst({ where: { id: sceneId, propertyId } });
+    if (!scene) throw new HttpError(404, 'Scène 3D introuvable');
+
+    await prisma.property3dScene.delete({ where: { id: sceneId } });
+
+    // Nettoyage du fichier dans le bucket (best effort)
+    if (scene.publicId) {
+      const { supabaseAdmin } = await import('../../config/supabase.config');
+      await supabaseAdmin.storage.from('property-media').remove([scene.publicId]).catch((err) => {
+        logger.error('Échec suppression fichier scène 3D du bucket', err);
+      });
+    }
+
+    // Désactive le flag si plus aucune scène
+    const remaining = await prisma.property3dScene.count({ where: { propertyId } });
+    if (remaining === 0) {
+      await prisma.property.update({ where: { id: propertyId }, data: { hasVirtualTour: false } }).catch(() => {});
     }
   },
 
