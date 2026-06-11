@@ -16,13 +16,14 @@
  *
  * Architecture :
  *  • Sphère Three.js inversée (scale x=-1) avec texture équirectangulaire
- *    2:1 depuis Cloudinary via EquirectangularReflectionMapping.
+ *    2:1 optimisée via Supabase Image Transform (résolution adaptée à l'écran).
  *  • La caméra reste à l'origine ; yawRef/pitchRef sont mis à jour par le
  *    PanGesture et consommés dans useFrame (CameraController).
+ *  • FovController lit fovRef chaque frame et met à jour camera.fov (zoom pinch).
  *  • Les hotspots sont des mesh sphériques pulsants. Taps détectés par
- *    raycasting manuel dans useFrame via pendingTapRef (cross-renderer safe).
- *  • Texture chargée via useLoader + Suspense ; indicateur affiché via
- *    onLoadedRef callback (évite la synchronisation cross-renderer).
+ *    raycasting dans useFrame via pendingTapRef (cross-renderer safe).
+ *    Raycaster et Vector2 sont alloués une fois au niveau module (pas de GC/frame).
+ *  • Texture disposée à l'unmount pour libérer la VRAM entre les pièces.
  */
 
 import React, {
@@ -41,6 +42,8 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
+  Dimensions,
+  PixelRatio,
   type ViewStyle,
 } from 'react-native';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber/native';
@@ -59,6 +62,12 @@ import {
 } from 'react-native-gesture-handler';
 import type { ClientScreenProps } from '@navigation/types';
 import type { Panorama, PanoramaHotspot } from '@/types/property';
+import {
+  DEFAULT_FOV,
+  clampFov,
+  panoramaTargetWidth,
+  optimizePanoramaUrl,
+} from '../../../utils/panorama';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -68,6 +77,16 @@ const HOTSPOT_DISTANCE = 220;
 const SENSITIVITY = 0.003;
 const MAX_PITCH = Math.PI / 2 - 0.05; // clamp ~85° to avoid gimbal lock
 const TAP_SLOP = 8;                    // px movement threshold tap vs pan
+const DRAG_HINT_MS = 3000;            // ms before hint auto-dismisses
+
+// Module-level — allocated once, reused every frame (no per-frame GC pressure)
+const _raycaster = new Raycaster();
+const _tapVec = new Vector2();
+
+// Adaptive texture width — computed once at module load from physical screen pixels
+const _targetWidth = panoramaTargetWidth(
+  Dimensions.get('screen').width * PixelRatio.get(),
+);
 
 // ── CameraController ──────────────────────────────────────────────────────────
 // Reads yaw/pitch refs on every frame and updates camera lookAt.
@@ -92,10 +111,34 @@ function CameraController({ yawRef, pitchRef }: CameraControllerProps) {
   return null;
 }
 
+// ── FovController ─────────────────────────────────────────────────────────────
+// Syncs camera FOV from fovRef each frame for pinch-to-zoom.
+// Only calls updateProjectionMatrix when the value actually changed.
+
+interface FovControllerProps {
+  fovRef: MutableRefObject<number>;
+}
+
+function FovController({ fovRef }: FovControllerProps) {
+  const { camera } = useThree();
+  const prevFovRef = useRef(DEFAULT_FOV);
+
+  useFrame(() => {
+    const fov = fovRef.current;
+    if (prevFovRef.current !== fov) {
+      prevFovRef.current = fov;
+      (camera as any).fov = fov;
+      (camera as any).updateProjectionMatrix();
+    }
+  });
+  return null;
+}
+
 // ── PanoramaSphere ────────────────────────────────────────────────────────────
 // Loads the equirectangular texture (suspends until ready) and renders it
 // inside a reversed sphere (scale x=-1 flips face winding, BackSide redundant
 // but kept for clarity).
+// Disposes texture on unmount to free GPU VRAM when navigating between rooms.
 
 interface PanoramaSphereProps {
   url: string;
@@ -109,6 +152,7 @@ function PanoramaSphere({ url, onLoadedRef }: PanoramaSphereProps) {
     texture.mapping = EquirectangularReflectionMapping;
     texture.needsUpdate = true;
     onLoadedRef.current?.();
+    return () => { texture.dispose(); };
   }, [texture, onLoadedRef]);
 
   return (
@@ -165,6 +209,7 @@ function HotspotMesh({ hotspot, meshRegistryRef }: HotspotMeshProps) {
 // Runs inside Canvas. Each frame, checks if a pending tap coordinate was
 // written by the gesture handler (plain ref, cross-renderer safe).
 // If a hotspot mesh is hit, fires onHotspotTap (normal JS call on the JS thread).
+// Reuses module-level _raycaster and _tapVec — no per-frame allocations.
 
 interface TapRaycasterProps {
   pendingTapRef: MutableRefObject<{ x: number; y: number } | null>;
@@ -183,11 +228,11 @@ function TapRaycaster({ pendingTapRef, meshRegistryRef, onHotspotTap }: TapRayca
     const ndcX = (tap.x / size.width) * 2 - 1;
     const ndcY = -(tap.y / size.height) * 2 + 1;
 
-    const raycaster = new Raycaster();
-    raycaster.setFromCamera(new Vector2(ndcX, ndcY), camera);
+    _tapVec.set(ndcX, ndcY);
+    _raycaster.setFromCamera(_tapVec, camera);
 
     const meshes = Array.from(meshRegistryRef.current.values());
-    const hits = raycaster.intersectObjects(meshes);
+    const hits = _raycaster.intersectObjects(meshes);
     if (hits.length > 0) {
       const id = hits[0].object.userData.hotspotId as string | undefined;
       if (id) onHotspotTap(id);
@@ -213,12 +258,16 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     Math.min(Math.max(0, initialPanoramaIndex), Math.max(0, panoramas.length - 1)),
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [showDragHint, setShowDragHint] = useState(false);
 
   const currentPanorama = panoramas[currentIndex];
 
   // Camera angles — updated by gesture, consumed by CameraController in useFrame
   const yawRef = useRef(0);
   const pitchRef = useRef(0);
+  // FOV — updated by pinch gesture, consumed by FovController in useFrame
+  const fovRef = useRef(DEFAULT_FOV);
+  const fovStartRef = useRef(DEFAULT_FOV);
 
   // Cross-renderer communication refs (plain JS objects, visible to both renderers)
   const onLoadedRef = useRef<(() => void) | null>(null);
@@ -226,13 +275,27 @@ export function VirtualTourScreen({ navigation, route }: Props) {
   const meshRegistryRef = useRef<Map<string, Mesh>>(new Map());
 
   // Always point to the latest setter so the ref never becomes stale
-  onLoadedRef.current = () => setIsLoading(false);
+  onLoadedRef.current = () => {
+    setIsLoading(false);
+    setShowDragHint(true);
+  };
+
+  // Auto-dismiss drag hint after DRAG_HINT_MS or on first real drag
+  useEffect(() => {
+    if (!showDragHint) return;
+    const t = setTimeout(() => setShowDragHint(false), DRAG_HINT_MS);
+    return () => clearTimeout(t);
+  }, [showDragHint]);
+
+  // Adaptive panorama URL: Supabase Storage → render endpoint at screen-appropriate width
+  const optimizedUrl = optimizePanoramaUrl(currentPanorama?.imageUrl ?? '', _targetWidth);
 
   const navigateTo = useCallback((index: number) => {
     setCurrentIndex(index);
     setIsLoading(true);
     yawRef.current = 0;
     pitchRef.current = 0;
+    fovRef.current = DEFAULT_FOV;
   }, []);
 
   const handleHotspotTap = useCallback((hotspotId: string) => {
@@ -257,6 +320,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
         Math.abs(e.translationY) > TAP_SLOP
       ) {
         isTapRef.current = false;
+        setShowDragHint(false);
       }
       yawRef.current -= e.changeX * SENSITIVITY;
       pitchRef.current = Math.max(
@@ -270,6 +334,19 @@ export function VirtualTourScreen({ navigation, route }: Props) {
       }
     })
     .runOnJS(true);
+
+  // ── Pinch gesture (zoom) ─────────────────────────────────────────────────────
+  // e.scale is cumulative from 1.0 since gesture start.
+  // Larger scale = zooming in = smaller FOV.
+
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => { fovStartRef.current = fovRef.current; })
+    .onUpdate((e: any) => {
+      fovRef.current = clampFov(fovStartRef.current / e.scale);
+    })
+    .runOnJS(true);
+
+  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
   // Garde défensif : aucune donnée de panorama exploitable → écran de repli
   // au lieu d'un crash sur currentPanorama.roomName / .hotspots / .imageUrl.
@@ -324,16 +401,17 @@ export function VirtualTourScreen({ navigation, route }: Props) {
           {/* Three.js scene */}
           <Canvas
             style={StyleSheet.absoluteFillObject as ViewStyle}
-            camera={{ fov: 75, near: 0.1, far: 1100 }}
+            camera={{ fov: DEFAULT_FOV, near: 0.1, far: 1100 }}
             gl={{ antialias: true }}
           >
             <CameraController yawRef={yawRef} pitchRef={pitchRef} />
+            <FovController fovRef={fovRef} />
 
             {/* key forces remount (and texture reload) when panorama changes */}
             <Suspense fallback={null}>
               <PanoramaSphere
                 key={currentPanorama.id}
-                url={currentPanorama.imageUrl}
+                url={optimizedUrl}
                 onLoadedRef={onLoadedRef}
               />
             </Suspense>
@@ -353,8 +431,8 @@ export function VirtualTourScreen({ navigation, route }: Props) {
             />
           </Canvas>
 
-          {/* Transparent overlay captures all pan / tap gestures */}
-          <GestureDetector gesture={panGesture}>
+          {/* Transparent overlay captures all pan / pinch / tap gestures */}
+          <GestureDetector gesture={composedGesture}>
             <View style={[StyleSheet.absoluteFill, styles.gestureLayer]} />
           </GestureDetector>
 
@@ -366,8 +444,8 @@ export function VirtualTourScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          {/* Drag hint — shown once the panorama is loaded */}
-          {!isLoading && (
+          {/* Drag hint — shown after load, dismissed after DRAG_HINT_MS or first drag */}
+          {showDragHint && (
             <View style={styles.dragHint} pointerEvents="none">
               <Text style={styles.dragHintText}>Faites glisser pour explorer</Text>
             </View>
