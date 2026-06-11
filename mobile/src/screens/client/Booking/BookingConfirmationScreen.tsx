@@ -42,14 +42,21 @@ const POLL_INTERVAL_MS = 3000;
 // Sur native, on sonde plus longtemps car la WebView reste dans l'app.
 const MAX_POLLS = Platform.OS === 'web' ? 5 : 25;
 
-const fmt = (n: number) => n.toLocaleString('fr-CI') + ' FCFA';
+// Tous les champs numériques peuvent manquer selon la forme de la réponse API :
+// ne jamais appeler toLocaleString sur undefined (crash classique post-paiement).
+const fmt = (n: number | null | undefined) => (typeof n === 'number' ? n : 0).toLocaleString('fr-CI') + ' FCFA';
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('fr-CI', { day: 'numeric', month: 'short', year: 'numeric' });
+function fmtDate(d: string | null | undefined) {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function countNights(start: string, end: string) {
-  return Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000));
+function countNights(start: string | undefined, end: string | undefined) {
+  if (!start || !end) return 1;
+  const diff = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000);
+  return Number.isFinite(diff) ? Math.max(1, diff) : 1;
 }
 
 function openUrl(url: string) {
@@ -61,7 +68,8 @@ function openUrl(url: string) {
 }
 
 export function BookingConfirmationScreen({ route, navigation }: Props) {
-  const { bookingId } = route.params;
+  // Écran cible des retours de paiement (deep link possible) : params à sécuriser.
+  const { bookingId } = route.params ?? ({} as Partial<Props['route']['params']>);
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [phase, setPhase] = useState<Phase>('checking');
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
@@ -111,6 +119,13 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
       const res = await bookingsApi.getById(bookingId);
       const data = res?.data;
       const b: BookingDetail = data?.booking ?? data?.data?.booking ?? data?.data ?? data;
+      // Validation de forme : sans id, l'objet n'est pas une réservation
+      // (enveloppe {success:true} ou erreur déguisée) → le traiter comme absent
+      // évite les crashs "Cannot read property 'title' of undefined" en rendu.
+      if (!b || typeof b !== 'object' || !b.id) {
+        setError('Réponse inattendue du serveur.');
+        return null;
+      }
       setBooking(b);
       return b;
     } catch (e: any) {
@@ -180,7 +195,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     chatTimerRef.current = setTimeout(() => {
       navigation.navigate('Chat', {
         bookingId: booking.id,
-        recipientName: booking.property.title ?? booking.property.name ?? 'Le responsable',
+        recipientName: booking.property?.title ?? booking.property?.name ?? 'Le responsable',
       });
     }, 2500);
     return () => {
@@ -293,12 +308,13 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     );
   }
 
+  // booking.property peut manquer selon la forme de réponse — tout accès est optionnel
   const nights = countNights(booking.startDate, booking.endDate);
-  const imageUrl = (booking.property.images ?? booking.property.media ?? []).find(i => i.isPrimary)?.url
-    ?? (booking.property.images ?? booking.property.media ?? [])[0]?.url;
-  const ref = '#' + booking.id.slice(0, 8).toUpperCase();
+  const propertyMedia = booking.property?.images ?? booking.property?.media ?? [];
+  const imageUrl = propertyMedia.find(i => i?.isPrimary)?.url ?? propertyMedia[0]?.url;
+  const ref = '#' + String(booking.id ?? '').slice(0, 8).toUpperCase();
   const option = booking.paymentOption;
-  const isRestaurantBooking = booking.property.propertyType === 'restaurant';
+  const isRestaurantBooking = booking.property?.propertyType === 'restaurant';
   // Extraire l'heure depuis les demandes spéciales "Réservation de table à HH:MM"
   const reservationTime = isRestaurantBooking
     ? (booking.specialRequests?.match(/à (\d{2}:\d{2})/)?.[1] ?? null)
@@ -325,8 +341,8 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
                 <Text style={styles.imageFallbackText}>{isRestaurantBooking ? '🍽️' : '🏠'}</Text>
               </View>}
           <View style={styles.propertyInfo}>
-            <Text style={styles.propertyName} numberOfLines={2}>{booking.property.title ?? booking.property.name}</Text>
-            <Text style={styles.propertyCity}>📍 {booking.property.city}</Text>
+            <Text style={styles.propertyName} numberOfLines={2}>{booking.property?.title ?? booking.property?.name ?? 'Votre réservation'}</Text>
+            <Text style={styles.propertyCity}>📍 {booking.property?.city ?? '—'}</Text>
             {isRestaurantBooking ? (
               <>
                 <Text style={styles.bookingDates}>{fmtDate(booking.startDate)}</Text>
@@ -438,7 +454,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
               if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
               navigation.navigate('Chat', {
                 bookingId,
-                recipientName: booking.property.title ?? booking.property.name ?? 'Le responsable',
+                recipientName: booking.property?.title ?? booking.property?.name ?? 'Le responsable',
               });
             }}
           >

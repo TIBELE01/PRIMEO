@@ -14,7 +14,9 @@ import { useAuth } from '../../../hooks/useAuth';
 type Props = ClientScreenProps<'Chat'>;
 
 export function ChatScreen({ navigation, route }: Props) {
-  const { bookingId, recipientName } = route.params;
+  // Le chat est fréquemment ouvert depuis une notification push : les params
+  // peuvent manquer — ne jamais déstructurer route.params sans repli.
+  const { bookingId, recipientName } = route.params ?? ({} as Partial<Props['route']['params']>);
   const { user } = useAuth();
 
   const messages = useChatStore(s => s.messages[bookingId] ?? []);
@@ -32,49 +34,68 @@ export function ChatScreen({ navigation, route }: Props) {
 
   // Load history
   useEffect(() => {
+    if (!bookingId) { setLoading(false); return; }
+    let cancelled = false; // pas de setState après démontage
     (async () => {
       try {
         const res = await messagesApi.getConversation(bookingId);
         const hist: Message[] = res?.data?.data ?? res?.data ?? [];
-        setMessages(bookingId, hist);
+        if (cancelled) return;
+        setMessages(bookingId, Array.isArray(hist) ? hist : []);
         messagesApi.markAsRead(bookingId).catch(() => null);
         socketService.markRead(bookingId);
         markReadLocal(bookingId);
       } catch {
         // keep empty
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => { cancelled = true; };
   }, [bookingId]);
 
   // Socket subscription
+  // ⚠️ Le nettoyage doit être retourné par l'EFFET lui-même, pas par le
+  // callback .then() (React l'ignorerait) : sans cela, les écouteurs
+  // s'accumulaient à chaque ouverture du chat → messages dupliqués et
+  // setState sur composant démonté.
   useEffect(() => {
+    if (!bookingId) return;
+    let cancelled = false;
+    let cleanupListeners: (() => void) | null = null;
+
     socketService.connect().then(() => {
+      if (cancelled) return;
       socketService.joinRoom(bookingId);
       const socket = socketService.getSocket();
       if (!socket) return;
 
       const handleMessage = (msg: Message) => {
+        if (cancelled || !msg) return;
         addMessage(bookingId, msg);
         socketService.markRead(bookingId);
         markReadLocal(bookingId);
       };
       const handleTyping = ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
-        if (userId !== user?.id) setPeerTyping(isTyping);
+        if (!cancelled && userId !== user?.id) setPeerTyping(isTyping);
       };
-      const handleRead = () => markReadLocal(bookingId);
+      const handleRead = () => { if (!cancelled) markReadLocal(bookingId); };
 
       socket.on('receive_message', handleMessage);
       socket.on('typing', handleTyping);
       socket.on('messages_read', handleRead);
 
-      return () => {
+      cleanupListeners = () => {
         socket.off('receive_message', handleMessage);
         socket.off('typing', handleTyping);
         socket.off('messages_read', handleRead);
       };
     });
+
+    return () => {
+      cancelled = true;
+      cleanupListeners?.();
+    };
   }, [bookingId, user?.id]);
 
   const scrollToBottom = useCallback(() => {
@@ -146,13 +167,18 @@ export function ChatScreen({ navigation, route }: Props) {
     }
   };
 
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isMine = item.senderId === user?.id;
-    const isImageMsg = item.content.startsWith('[Image] ');
-    const imgUri = isImageMsg ? item.content.replace('[Image] ', '') : null;
+    // content peut être null (message supprimé / modéré côté serveur)
+    const content = item.content ?? '';
+    const isImageMsg = content.startsWith('[Image] ');
+    const imgUri = isImageMsg ? content.replace('[Image] ', '') : null;
 
     return (
       <TouchableOpacity
@@ -163,7 +189,7 @@ export function ChatScreen({ navigation, route }: Props) {
         <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
           {imgUri
             ? <Image source={{ uri: imgUri }} style={styles.msgImage} resizeMode="cover" />
-            : <Text style={[styles.msgText, isMine && styles.msgTextMine]}>{item.content}</Text>
+            : <Text style={[styles.msgText, isMine && styles.msgTextMine]}>{content}</Text>
           }
           <View style={styles.meta}>
             <Text style={[styles.time, isMine && styles.timeMine]}>{formatTime(item.createdAt)}</Text>
@@ -176,6 +202,24 @@ export function ChatScreen({ navigation, route }: Props) {
     );
   };
 
+  // Conversation inaccessible sans identifiant de réservation (notification
+  // malformée, deep link incomplet) : écran récupérable plutôt qu'un crash.
+  if (!bookingId) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centered}>
+          <Text style={{ fontSize: 40 }}>💬</Text>
+          <Text style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 32 }}>
+            Conversation introuvable. Ouvrez la discussion depuis votre réservation.
+          </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+            <Text style={{ color: '#1056E0', fontWeight: '700' }}>← Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
@@ -184,7 +228,7 @@ export function ChatScreen({ navigation, route }: Props) {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{recipientName}</Text>
+          <Text style={styles.headerName}>{recipientName ?? 'Discussion'}</Text>
           {peerTyping && <Text style={styles.typingLabel}>est en train d'écrire...</Text>}
         </View>
       </View>

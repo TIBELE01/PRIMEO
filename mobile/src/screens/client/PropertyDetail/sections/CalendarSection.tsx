@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { propertiesApi } from '@services/api/endpoints/properties';
+import { availabilitiesApi } from '@services/api/endpoints/availabilities';
 
 interface Props {
   propertyId: string;
@@ -25,14 +25,29 @@ export function CalendarSection({ propertyId, propertyType, onDatesSelected }: P
   const [checkOut, setCheckOut] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch unavailable dates from API
+  // Récupère les jours indisponibles (réservés ou bloqués) du mois affiché.
+  // Endpoint public : GET /availabilities/property/:id?year=YYYY&month=M
+  // Réponse : { days: { 'YYYY-MM-DD': { status: 'booked'|'blocked'|'available' } } }
   useEffect(() => {
+    let cancelled = false; // évite tout setState après démontage
     setLoading(true);
-    // Use properties API to get availability — endpoint: /properties/:id/availability?month=YYYY-MM
-    propertiesApi.getById(propertyId)
-      .then(() => setUnavailable([]))
-      .catch(() => setUnavailable([]))
-      .finally(() => setLoading(false));
+    availabilitiesApi.getCalendar(propertyId, year, month + 1)
+      .then(res => {
+        if (cancelled) return;
+        const days: Record<string, { status?: string }> =
+          res?.data?.days ?? res?.data?.data?.days ?? {};
+        const blocked = Object.entries(days)
+          .filter(([, v]) => v?.status === 'booked' || v?.status === 'blocked')
+          .map(([k]) => k);
+        setUnavailable(blocked);
+      })
+      .catch(() => {
+        // Erreur réseau : ne pas bloquer la sélection — le backend revalide
+        // la disponibilité à la création (409 si conflit).
+        if (!cancelled) setUnavailable([]);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [propertyId, year, month]);
 
   const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun
@@ -42,17 +57,32 @@ export function CalendarSection({ propertyId, propertyType, onDatesSelected }: P
   const prevMonth = () => { if (month === 0) { setYear(y => y - 1); setMonth(11); } else setMonth(m => m - 1); };
   const nextMonth = () => { if (month === 11) { setYear(y => y + 1); setMonth(0); } else setMonth(m => m + 1); };
 
+  // Une plage est réservable si aucune de ses nuits n'est indisponible
+  // (la nuit du départ n'est pas occupée — borne exclue).
+  const rangeIsFree = (start: string, end: string) =>
+    !unavailable.some(d => d >= start && d < end);
+
   const handleDayPress = (dayStr: string) => {
     if (unavailable.includes(dayStr)) return;
     if (dayStr < new Date().toISOString().split('T')[0]) return;
     if (!checkIn || (checkIn && checkOut)) {
       setCheckIn(dayStr); setCheckOut(null);
       onDatesSelected?.(null);
-    } else if (dayStr < checkIn) {
+    } else if (dayStr <= checkIn) {
+      // Date antérieure OU identique : redémarrer la sélection sur ce jour
+      // (interdit une plage de 0 nuit où départ = arrivée).
       setCheckIn(dayStr);
+      setCheckOut(null);
+      onDatesSelected?.(null);
+    } else if (!rangeIsFree(checkIn, dayStr)) {
+      // La plage enjambe une nuit déjà réservée : repartir de ce jour
+      // plutôt que d'envoyer une réservation vouée au 409.
+      setCheckIn(dayStr);
+      setCheckOut(null);
+      onDatesSelected?.(null);
     } else {
       setCheckOut(dayStr);
-      onDatesSelected?.({ checkIn: checkIn!, checkOut: dayStr });
+      onDatesSelected?.({ checkIn, checkOut: dayStr });
     }
   };
 

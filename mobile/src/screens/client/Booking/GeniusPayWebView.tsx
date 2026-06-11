@@ -118,7 +118,8 @@ function WebPaymentWaitingScreen({
 // ─── Écran principal ─────────────────────────────────────────────────────────
 
 export function GeniusPayWebViewScreen({ route, navigation }: Props) {
-  const { checkoutUrl, bookingId } = route.params;
+  // Écran de paiement : params à sécuriser (jamais de crash dans le tunnel d'argent)
+  const { checkoutUrl, bookingId } = route.params ?? ({} as Partial<Props['route']['params']>);
 
   const [loading, setLoading] = useState(true);
   const [screenState, setScreenState] = useState<ScreenState>('webview');
@@ -152,6 +153,25 @@ export function GeniusPayWebViewScreen({ route, navigation }: Props) {
     clearTimer();
     navigation.goBack();
   }, [navigation, clearTimer]);
+
+  // URL de paiement absente (params perdus) : état d'erreur récupérable —
+  // valable web ET natif, avant toute délégation.
+  if (!checkoutUrl) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.stateScreen}>
+          <Text style={styles.stateIcon}>⚠️</Text>
+          <Text style={styles.stateTitle}>Paiement indisponible</Text>
+          <Text style={styles.stateBody}>
+            Le lien de paiement est introuvable. Retournez à votre réservation pour relancer le paiement.
+          </Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.primaryBtnText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Sur le web, on délègue à la page d'attente (pas d'iframe)
   if (Platform.OS === 'web') {

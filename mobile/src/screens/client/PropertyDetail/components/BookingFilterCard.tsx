@@ -47,7 +47,13 @@ export function BookingFilterCard({
   const openCheckOut = () => setCalMode('checkout');
 
   const handleCalConfirm = (date: string) => {
-    if (calMode === 'checkin')  onCheckInChange(date);
+    if (calMode === 'checkin') {
+      onCheckInChange(date);
+      // Modifier l'arrivée après coup peut inverser la plage : si la nouvelle
+      // arrivée atteint ou dépasse le départ existant, on efface ce dernier
+      // pour forcer une nouvelle sélection cohérente (jamais départ <= arrivée).
+      if (checkOut && date >= checkOut) onCheckOutChange('');
+    }
     if (calMode === 'checkout') onCheckOutChange(date);
     setCalMode(null);
   };
@@ -179,11 +185,14 @@ export function BookingFilterCard({
           </View>
         </View>
 
-        {/* Recap nuits */}
+        {/* Recap nuits — garde anti-NaN si l'une des dates est mal formée */}
         {checkIn && checkOut && (
           <View style={[s.recap, { borderColor: color + '40' }]}>
             <Text style={[s.recapText, { color }]}>
-              {Math.max(1, Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000))} nuit(s) sélectionnée(s)
+              {(() => {
+                const diff = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000);
+                return Number.isFinite(diff) ? Math.max(1, diff) : 1;
+              })()} nuit(s) sélectionnée(s)
             </Text>
             <TouchableOpacity onPress={() => { onCheckInChange(''); onCheckOutChange(''); }}>
               <Text style={s.clearBtn}>Effacer</Text>

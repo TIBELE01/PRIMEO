@@ -202,7 +202,7 @@ function CancelModal({
 export function BookingDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<any>();
-  const { bookingId } = route.params as { bookingId: string };
+  const { bookingId } = (route.params ?? {}) as { bookingId?: string };
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -210,12 +210,23 @@ export function BookingDetailScreen() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const fetchBooking = useCallback(async () => {
+    if (!bookingId) {
+      setError('Réservation introuvable.');
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
       const res = await bookingsApi.getById(bookingId);
       const data = res?.data;
       const b: BookingDetail = data?.booking ?? data?.data?.booking ?? data?.data ?? data;
+      // Validation de forme : un objet sans id n'est pas une réservation —
+      // évite les crashs sur booking.property.* en rendu.
+      if (!b || typeof b !== 'object' || !b.id) {
+        setError('Réponse inattendue du serveur.');
+        return;
+      }
       setBooking(b);
     } catch (e: any) {
       setError(e?.response?.data?.message ?? 'Impossible de charger la réservation.');
@@ -249,15 +260,15 @@ export function BookingDetailScreen() {
   }
 
   const nights = countNights(booking.startDate, booking.endDate);
-  const imageUrl = booking.property.media?.find(m => m.isPrimary)?.url ?? booking.property.media?.[0]?.url;
+  const imageUrl = booking.property?.media?.find(m => m.isPrimary)?.url ?? booking.property?.media?.[0]?.url;
   const isConfirmedOrDone = booking.status === 'confirmed' || booking.status === 'completed';
   const isDone = booking.status === 'completed';
   const isCancelled = booking.status === 'cancelled_by_client' || booking.status === 'cancelled_by_professional';
   const canCancel = (booking.status === 'confirmed' || booking.status === 'pending_payment') && daysUntil(booking.startDate) > 0;
   const canReview = isDone && new Date() > new Date(booking.endDate);
   const hasCashBalance = booking.remainingCashAmount > 0 && !isDone && !isCancelled;
-  const ref = '#' + booking.id.slice(0, 8).toUpperCase();
-  const isRestaurant = booking.property.propertyType === 'restaurant';
+  const ref = '#' + String(booking.id ?? "").slice(0, 8).toUpperCase();
+  const isRestaurant = booking.property?.propertyType === 'restaurant';
   const reservationTime = isRestaurant
     ? (booking.specialRequests?.match(/à (\d{2}:\d{2})/)?.[1] ?? null)
     : null;
@@ -290,8 +301,8 @@ export function BookingDetailScreen() {
               {STATUS_LABELS[booking.status]}
             </Text>
           </View>
-          <Text style={styles.propertyName}>{booking.property.title}</Text>
-          <Text style={styles.city}>📍 {booking.property.city}</Text>
+          <Text style={styles.propertyName}>{booking.property?.title ?? "Votre réservation"}</Text>
+          <Text style={styles.city}>📍 {booking.property?.city ?? "—"}</Text>
           <Text style={styles.ref}>{ref}</Text>
         </View>
 
@@ -361,12 +372,12 @@ export function BookingDetailScreen() {
         </View>
 
         {/* Address — only when confirmed or completed */}
-        {isConfirmedOrDone && booking.property.street && (
+        {isConfirmedOrDone && booking.property?.street && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Adresse exacte</Text>
             <View style={styles.addressCard}>
               <Text style={styles.addressText}>
-                📍 {booking.property.street}, {booking.property.city}
+                📍 {booking.property?.street}, {booking.property?.city}
               </Text>
             </View>
           </View>
@@ -399,18 +410,18 @@ export function BookingDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{isRestaurant ? 'Contact du restaurant' : 'Coordonnées de l\'hôte'}</Text>
             <View style={styles.hostCard}>
-              {booking.property.owner.avatarUrl
-                ? <Image source={{ uri: booking.property.owner.avatarUrl }} style={styles.hostAvatar} />
+              {booking.property?.owner?.avatarUrl
+                ? <Image source={{ uri: booking.property?.owner?.avatarUrl }} style={styles.hostAvatar} />
                 : (
                   <View style={[styles.hostAvatar, styles.hostAvatarFallback]}>
                     <Text style={styles.hostInitial}>
-                      {(booking.property.owner.firstName?.[0] ?? '?').toUpperCase()}
+                      {(booking.property?.owner?.firstName?.[0] ?? '?').toUpperCase()}
                     </Text>
                   </View>
                 )}
               <View style={styles.hostInfo}>
                 <Text style={styles.hostName}>
-                  {booking.property.owner.firstName} {booking.property.owner.lastName}
+                  {booking.property?.owner?.firstName} {booking.property?.owner?.lastName}
                 </Text>
                 <Text style={styles.hostLabel}>{isRestaurant ? 'Responsable du restaurant' : 'Hôte de la propriété'}</Text>
               </View>
@@ -418,7 +429,7 @@ export function BookingDetailScreen() {
                 style={styles.messageBtn}
                 onPress={() => navigation.navigate('Chat', {
                   bookingId: booking.id,
-                  recipientName: `${booking.property.owner.firstName} ${booking.property.owner.lastName}`,
+                  recipientName: `${booking.property?.owner?.firstName} ${booking.property?.owner?.lastName}`,
                 })}
               >
                 <Text style={styles.messageBtnText}>💬 Message</Text>
@@ -441,7 +452,7 @@ export function BookingDetailScreen() {
         {isConfirmedOrDone && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Facture</Text>
-            <BookingInvoiceDownload bookingId={bookingId} />
+            <BookingInvoiceDownload bookingId={booking.id} />
           </View>
         )}
 
@@ -467,7 +478,7 @@ export function BookingDetailScreen() {
           {canReview && (
             <TouchableOpacity
               style={styles.reviewBtn}
-              onPress={() => navigation.navigate('WriteReview', { bookingId: booking.id, propertyId: booking.property.id })}
+              onPress={() => navigation.navigate('WriteReview', { bookingId: booking.id, propertyId: booking.property?.id ?? "" })}
             >
               <Text style={styles.reviewBtnIcon}>⭐</Text>
               <Text style={styles.reviewBtnText}>Laisser un avis</Text>

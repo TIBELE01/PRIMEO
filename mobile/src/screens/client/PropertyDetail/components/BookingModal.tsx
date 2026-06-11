@@ -59,7 +59,16 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
                     <Text style={styles.dateBtnText}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.dateValue}>{fmtDate(checkIn)}</Text>
-                  <TouchableOpacity style={styles.dateBtn} onPress={() => { const d = addDays(checkIn, 1); if (d < checkOut) setCheckIn(d); else setCheckIn(d); }}>
+                  <TouchableOpacity
+                    style={styles.dateBtn}
+                    onPress={() => {
+                      // L'arrivée ne doit jamais dépasser le départ : si elle le
+                      // rejoint, on décale le départ pour garder au moins 1 nuit.
+                      const d = addDays(checkIn, 1);
+                      setCheckIn(d);
+                      if (d >= checkOut) setCheckOut(addDays(d, 1));
+                    }}
+                  >
                     <Text style={styles.dateBtnText}>+</Text>
                   </TouchableOpacity>
                 </View>

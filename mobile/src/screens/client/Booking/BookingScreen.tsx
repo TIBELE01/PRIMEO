@@ -58,7 +58,10 @@ function isValidPhone(phone: string): boolean {
 }
 
 function formatDate(dateStr: string): string {
+  // Garde anti "NaN undefined" : new Date('') / new Date(undefined) → Invalid Date
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return '—';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
   const monthNames = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
   return `${d.getDate()} ${monthNames[d.getMonth()]}`;
 }
@@ -67,11 +70,14 @@ function countNights(checkIn: string, checkOut: string): number {
   const diff = Math.round(
     (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24),
   );
-  return diff > 0 ? diff : 1;
+  // NaN (date invalide) ou plage inversée → 1 nuit par défaut (jamais NaN dans l'UI)
+  return Number.isFinite(diff) && diff > 0 ? diff : 1;
 }
 
 export function BookingScreen({ navigation, route }: Props) {
   const { formatPrice, isIndicative, selectedCurrency, rateDate } = useCurrency();
+  // route.params peut être absent (deep link, restauration d'état) :
+  // ne jamais déstructurer sans repli sous peine de crash immédiat.
   const {
     propertyId,
     checkIn,
@@ -81,7 +87,7 @@ export function BookingScreen({ navigation, route }: Props) {
     pricePerNight: paramPricePerNight,
     mode = 'stay',
     reservationTime,
-  } = route.params;
+  } = route.params ?? ({} as Partial<ClientStackParamList['Booking']>);
 
   const isTable = mode === 'table';
   const isInterest = mode === 'interest';
@@ -131,6 +137,7 @@ export function BookingScreen({ navigation, route }: Props) {
   const ninetyPercent = totalAmount - tenPercent;
 
   const fetchData = useCallback(async () => {
+    if (!propertyId) { setIsFetching(false); return; } // params invalides — écran d'erreur affiché
     setIsFetching(true);
     try {
       const [propertyRes, profileRes] = await Promise.allSettled([
@@ -215,6 +222,13 @@ export function BookingScreen({ navigation, route }: Props) {
   };
 
   const handleConfirm = async () => {
+    // Garde-fou : plage de dates cohérente (un séjour exige départ > arrivée).
+    // Une plage inversée peut provenir d'un état amont incohérent — on bloque
+    // ici plutôt que d'envoyer une requête vouée à l'échec.
+    if (!isTable && !isInterest && (!checkIn || !checkOut || checkOut <= checkIn)) {
+      setError('Dates de séjour invalides. Retournez en arrière et sélectionnez vos dates.');
+      return;
+    }
     // Garde-fou : coordonnées valides avant toute création
     if (!validateContact()) {
       setStep(2);
@@ -295,6 +309,27 @@ export function BookingScreen({ navigation, route }: Props) {
       setIsLoading(false);
     }
   };
+
+  // Paramètres essentiels absents (deep link incomplet, restauration d'état…) :
+  // afficher un écran d'erreur récupérable plutôt que de crasher plus loin.
+  if (!propertyId || !checkIn) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centered}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+          <Text style={styles.loadingText}>
+            Informations de réservation manquantes.{'\n'}Veuillez relancer la réservation depuis la fiche du bien.
+          </Text>
+          <TouchableOpacity
+            style={[styles.nextBtn, { paddingHorizontal: 24, marginTop: 12 }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.nextBtnText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (isFetching) {
     return (

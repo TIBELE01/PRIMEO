@@ -12,6 +12,7 @@ import { useAuthStore } from '@store/authStore';
 import type { Property, PropertyType } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { safeJsonParse } from '@/utils/safeJson';
+import { isValidDateStr } from '@/utils/dates';
 import { useDebounce } from '@hooks/useDebounce';
 import { useOffline } from '@hooks/useOffline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -45,7 +46,9 @@ function DateModal({
   visible, title, value, onClose, onSelect,
 }: { visible: boolean; title: string; value: string; onClose: () => void; onSelect: (d: string) => void }) {
   const [draft, setDraft] = useState(value);
-  const isValid = /^\d{4}-\d{2}-\d{2}$/.test(draft);
+  // Validation sémantique (pas seulement le format) : rejette 2025-99-99,
+  // 2025-02-30… qui passaient la regex et partaient en 400 côté API.
+  const isValid = isValidDateStr(draft);
   useEffect(() => { if (visible) setDraft(value); }, [visible, value]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -463,8 +466,21 @@ export function SearchScreen() {
       />
 
       {/* Date modals */}
-      <DateModal visible={showCheckIn} title="Date d'arrivée" value={checkIn} onClose={() => setShowCheckIn(false)} onSelect={setCheckIn} />
-      <DateModal visible={showCheckOut} title="Date de départ" value={checkOut} onClose={() => setShowCheckOut(false)} onSelect={setCheckOut} />
+      {/* Cohérence de plage : une nouvelle arrivée >= départ efface le départ, et inversement */}
+      <DateModal
+        visible={showCheckIn}
+        title="Date d'arrivée"
+        value={checkIn}
+        onClose={() => setShowCheckIn(false)}
+        onSelect={(d) => { setCheckIn(d); if (checkOut && d >= checkOut) setCheckOut(''); }}
+      />
+      <DateModal
+        visible={showCheckOut}
+        title="Date de départ"
+        value={checkOut}
+        onClose={() => setShowCheckOut(false)}
+        onSelect={(d) => { setCheckOut(d); if (checkIn && d <= checkIn) setCheckIn(''); }}
+      />
     </SafeAreaView>
   );
 }
