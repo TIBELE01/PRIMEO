@@ -41,6 +41,9 @@ import {
   upsertConfig,
   // Audit logs
   listAuditLogs,
+  // Maintenance
+  getMaintenance,
+  setMaintenance,
   // Promo codes
   listPromoCodes,
   createPromoCode,
@@ -72,6 +75,7 @@ import {
   RequestModificationsDto,
   SuspendPropertyDto,
   UpsertConfigDto,
+  SetMaintenanceDto,
   CreatePromoCodeDto,
   UpdatePromoCodeDto,
 } from './dto/admin.dto';
@@ -135,6 +139,10 @@ adminRouter.patch('/config', validate(UpsertConfigDto), upsertConfig);
 
 // ── Audit logs ─────────────────────────────────────────────────────────────────
 adminRouter.get('/audit-logs', listAuditLogs);
+
+// ── Mode maintenance ───────────────────────────────────────────────────────────
+adminRouter.get('/maintenance', getMaintenance);
+adminRouter.put('/maintenance', validate(SetMaintenanceDto), setMaintenance);
 
 // ── Promo codes ────────────────────────────────────────────────────────────────
 adminRouter.get('/promo-codes', listPromoCodes);

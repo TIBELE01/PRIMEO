@@ -32,14 +32,76 @@ export const MARKET_REPORT_TYPES: Record<MarketReportType, { label: string; desc
 
 async function requireAdvancedPlan(userId: string): Promise<void> {
   const sub = await prisma.subscription.findUnique({ where: { userId } });
-  if (!sub || !['prestige', 'premium'].includes(sub.planType)) {
-    throw new HttpError(403, 'Les analytics avancés sont réservés aux plans Prestige et Premium');
+  if (!sub || !['business', 'entreprise'].includes(sub.planType)) {
+    throw new HttpError(403, 'Les analytics avancés sont réservés aux plans Business et Entreprise');
   }
 }
+
+// ── Événements applicatifs anonymisés ──────────────────────────────────────────
+
+// Liste blanche des événements acceptés — évite la pollution de la table par
+// des appels arbitraires (l'endpoint est public pour couvrir l'avant-connexion).
+export const TRACKED_EVENTS = [
+  'signup',
+  'login',
+  'search',
+  'property_view',
+  'booking_created',
+  'payment_success',
+  'interest_expressed',
+  'page_view',
+] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const analyticsService = {
+  // ── Événements applicatifs (anonymisés) ─────────────────────────────────────
+
+  // Ingestion par lot (max 20) — aucune donnée personnelle stockée :
+  // ni userId, ni IP ; seulement un identifiant de session aléatoire côté client.
+  async recordEvents(events: Array<{ name: string; platform?: string; role?: string; sessionId?: string; metadata?: Record<string, unknown> }>) {
+    const valid = events
+      .filter((e) => (TRACKED_EVENTS as readonly string[]).includes(e.name))
+      .slice(0, 20)
+      .map((e) => ({
+        name: e.name,
+        platform: e.platform?.slice(0, 20) ?? null,
+        role: e.role?.slice(0, 40) ?? null,
+        sessionId: e.sessionId?.slice(0, 64) ?? null,
+        metadata: (e.metadata ?? undefined) as never,
+      }));
+
+    if (!valid.length) return { recorded: 0 };
+
+    await prisma.appEvent.createMany({ data: valid });
+    return { recorded: valid.length };
+  },
+
+  // Synthèse admin : volume par événement et par jour sur la période demandée
+  async getEventsSummary(query: { days?: string }) {
+    const days = Math.min(parseInt(query.days ?? '30'), 365);
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const byEvent = await prisma.appEvent.groupBy({
+      by: ['name'],
+      where: { createdAt: { gte: since } },
+      _count: { _all: true },
+    });
+
+    const byDay = await prisma.$queryRaw<Array<{ day: Date; name: string; count: bigint }>>`
+      SELECT date_trunc('day', "createdAt") AS day, name, count(*) AS count
+      FROM app_events
+      WHERE "createdAt" >= ${since}
+      GROUP BY 1, 2
+      ORDER BY 1 DESC`;
+
+    return {
+      since: since.toISOString(),
+      totals: byEvent.map((e) => ({ name: e.name, count: e._count._all })),
+      daily: byDay.map((d) => ({ day: d.day.toISOString().slice(0, 10), name: d.name, count: Number(d.count) })),
+    };
+  },
+
   // ── Admin revenue ──────────────────────────────────────────────────────────
 
   async getRevenue(query: { from?: string; to?: string }) {

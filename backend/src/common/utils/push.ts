@@ -100,6 +100,41 @@ export async function sendViaOneSignal(
   return { invalidIds };
 }
 
+// Diffusion à TOUS les appareils abonnés (segment OneSignal par défaut) —
+// utilisée pour les annonces plateforme (ex : maintenance planifiée).
+export async function sendPushBroadcast(payload: PushPayload): Promise<boolean> {
+  if (!onesignalConfig.appId || !onesignalConfig.apiKey) {
+    logger.warn('OneSignal not configured — broadcast skipped');
+    return false;
+  }
+  try {
+    const resp = await axios.post<{ recipients?: number }>(
+      `${onesignalConfig.baseUrl}/notifications`,
+      {
+        app_id: onesignalConfig.appId,
+        included_segments: ['Subscribed Users'],
+        headings: payload.headings,
+        contents: payload.contents,
+        data: payload.data ?? {},
+        priority: 10,
+        android_channel_id: 'high_priority',
+      },
+      {
+        headers: {
+          Authorization: `Basic ${onesignalConfig.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    logger.info(`OneSignal broadcast sent — recipients=${resp.data?.recipients ?? '?'}`);
+    return true;
+  } catch (err: unknown) {
+    const msg = axios.isAxiosError(err) ? JSON.stringify(err.response?.data) : String(err);
+    logger.warn(`OneSignal broadcast failed: ${msg}`);
+    return false;
+  }
+}
+
 // ── Backward-compat wrapper ───────────────────────────────────────────────────
 
 // Legacy callers (food-orders, webhooks) use this signature. New code should call

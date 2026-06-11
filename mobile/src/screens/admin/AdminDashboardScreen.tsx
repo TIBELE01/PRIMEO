@@ -254,6 +254,12 @@ export default function AdminDashboardScreen() {
             color="#DC2626"
             onPress={() => navigation.navigate('AdminDisputes')}
           />
+          <ActionCard
+            label="Journal d'audit"
+            icon="document-text-outline"
+            color="#475569"
+            onPress={() => navigation.navigate('AdminAuditLogs')}
+          />
         </View>
 
         {/* Advanced analytics */}

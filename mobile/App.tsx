@@ -15,6 +15,9 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { AlertHost } from './src/components/ui/AlertHost';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store/authStore';
+import { useMaintenanceStore } from './src/store/maintenanceStore';
+import MaintenanceScreen from './src/screens/common/MaintenanceScreen';
+import AnalyticsConsentBanner from './src/components/common/AnalyticsConsentBanner';
 import { useCurrencyStore } from './src/store/currencyStore';
 import { currenciesApi } from './src/services/api/endpoints/currencies';
 import { syncQueue } from './src/services/offline/syncQueue';
@@ -109,6 +112,8 @@ function InnerApp() {
   const isAuthenticated = useAuthStore((s) => !!s.user);
   const setCurrency = useCurrencyStore(s => s.setCurrency);
   const setRates    = useCurrencyStore(s => s.setRates);
+  const maintenanceActive  = useMaintenanceStore((s) => s.active);
+  const refreshMaintenance = useMaintenanceStore((s) => s.refresh);
   const wasOffline  = useRef(false);
 
   // Push notification registration + listeners
@@ -120,6 +125,9 @@ function InnerApp() {
         SplashScreen.hideAsync().catch(() => null);
       }
     });
+    // Vérification du mode maintenance au démarrage (l'intercepteur API couvre
+    // ensuite toute bascule en cours de session via les réponses 503)
+    refreshMaintenance().catch(() => null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -184,12 +192,19 @@ function InnerApp() {
   // in or out.  Without this, React Navigation tries to reuse its internal
   // navigation state when swapping MainTabs ↔ PublicTabs, which causes the
   // navigator to appear frozen (the auth-state change is silently ignored).
+  // Mode maintenance : remplace toute l'application par l'écran dédié
+  if (maintenanceActive) {
+    return <MaintenanceScreen />;
+  }
+
   return (
     <NavigationContainer key={isAuthenticated ? 'main' : 'auth'} linking={linking}>
       <StatusBar style={(theme.colors.statusBar as string) === 'light-content' ? 'light' : 'dark'} />
       <RootNavigator />
       {/* Hôte global des modales d'alerte stylées (remplace les dialogues système) */}
       <AlertHost />
+      {/* Consentement analytics — affiché une seule fois, au premier lancement */}
+      <AnalyticsConsentBanner />
     </NavigationContainer>
   );
 }

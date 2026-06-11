@@ -436,3 +436,22 @@ export async function changeUserPlan(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+// ── Mode maintenance ────────────────────────────────────────────────────────
+
+export async function getMaintenance(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await adminService.getMaintenance());
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function setMaintenance(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await adminService.setMaintenance(req.body, req.user!.sub, req.ip);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

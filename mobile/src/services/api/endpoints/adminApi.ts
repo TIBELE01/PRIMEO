@@ -62,3 +62,18 @@ export const adminApi = {
   getPaymentFailures: (params?: { page?: number; limit?: number }) =>
     apiClient.get('/admin/subscriptions/payment-failures', { params }),
 };
+
+// Journal d'audit — consultation filtrée + export CSV (lecture seule)
+export const adminAuditApi = {
+  list: (params?: { action?: string; targetType?: string; userId?: string; from?: string; to?: string; page?: number; limit?: number }) =>
+    apiClient.get('/admin/audit-logs', { params }),
+  exportCsv: (params?: { action?: string; targetType?: string; from?: string; to?: string }) =>
+    apiClient.get('/admin/audit-logs', { params: { ...params, format: 'csv', limit: 200 }, responseType: 'text' as const }),
+};
+
+// Mode maintenance — consultation et bascule
+export const adminMaintenanceApi = {
+  get: () => apiClient.get('/admin/maintenance'),
+  set: (body: { enabled: boolean; message?: string; estimatedEnd?: string; notifyUsers?: boolean }) =>
+    apiClient.put('/admin/maintenance', body),
+};

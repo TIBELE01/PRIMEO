@@ -35,6 +35,7 @@ import { NetworkStatus } from '../../../components/common/NetworkStatus';
 import { favoritesApi } from '../../../services/api/endpoints/favorites';
 import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } from './detailContent';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
+import { trackEvent } from '../../../services/analytics';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -96,6 +97,11 @@ export function PropertyDetailScreen() {
   const theme = useMemo(() => themeColor(property?.type ?? 'apartment'), [property?.type]);
 
   // Charge le statut favori au montage si l'utilisateur est connecté
+  // Statistique anonyme de consultation de fiche (soumise au consentement)
+  React.useEffect(() => {
+    if (propertyId) trackEvent('property_view', { propertyId });
+  }, [propertyId]);
+
   React.useEffect(() => {
     if (!isAuthenticated || !propertyId) return;
     favoritesApi.list()

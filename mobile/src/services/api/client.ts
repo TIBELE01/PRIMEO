@@ -46,6 +46,16 @@ apiClient.interceptors.response.use(
   async (error: unknown) => {
     if (!axios.isAxiosError(error)) return Promise.reject(error);
 
+    // Mode maintenance : le backend renvoie 503 { error: 'maintenance', ... }
+    // → bascule l'app entière sur l'écran de maintenance (rendu dans App.tsx)
+    if (error.response?.status === 503 && (error.response.data as { error?: string })?.error === 'maintenance') {
+      const body = error.response.data as { message?: string; estimatedEnd?: string | null };
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      (require('../../store/maintenanceStore') as typeof import('../../store/maintenanceStore'))
+        .useMaintenanceStore.getState().activate(body.message ?? null, body.estimatedEnd ?? null);
+      return Promise.reject(error);
+    }
+
     const original = error.config as (typeof error.config & { _retry?: boolean }) | undefined;
     if (!original || error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);

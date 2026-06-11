@@ -67,3 +67,12 @@ export const ChangeUserPlanDto = z.object({
   plan: z.enum(['starter', 'business', 'entreprise']),
 });
 export type ChangeUserPlanInput = z.infer<typeof ChangeUserPlanDto>;
+
+// Bascule du mode maintenance — message et heure de retour estimée optionnels
+export const SetMaintenanceDto = z.object({
+  enabled: z.boolean(),
+  message: z.string().max(500).optional(),
+  estimatedEnd: z.string().datetime().optional(),
+  notifyUsers: z.boolean().default(false), // diffuse une notification push à tous les appareils
+});
+export type SetMaintenanceInput = z.infer<typeof SetMaintenanceDto>;

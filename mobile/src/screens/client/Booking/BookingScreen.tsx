@@ -22,6 +22,7 @@ import { usersApi } from '../../../services/api/endpoints/users';
 import { PaymentOptionsSelector } from './PaymentOptionsSelector';
 import { useCurrency } from '../../../hooks/useCurrency';
 import { generateUUID } from '../../../utils/uuid';
+import { trackEvent } from '../../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<ClientStackParamList, 'Booking'>;
@@ -258,6 +259,9 @@ export function BookingScreen({ navigation, route }: Props) {
       const payment = responseData?.payment ?? responseData?.data?.payment;
 
       if (!booking || !pricing) throw new Error('Réponse invalide du serveur.');
+
+      // Statistique anonyme : réservation créée ou intérêt exprimé
+      trackEvent(isInterest ? 'interest_expressed' : 'booking_created', undefined, 'client');
 
       if (payment?.checkoutUrl) {
         if (Platform.OS === 'web') {

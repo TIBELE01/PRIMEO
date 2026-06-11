@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!-- Page de maintenance du site vitrine — affichée quand l'API Primeo signale
+     que le mode maintenance est actif (redirection depuis main.js). La page
+     re-vérifie le statut toutes les 30 s et renvoie vers l'accueil dès la fin. -->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Primeo est en maintenance. Nous revenons très vite.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Maintenance en cours · Primeo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #f7f9fc 0%, #eef3fb 100%);
+      padding: 1.5rem;
+      text-align: center;
+      color: #16224d;
+    }
+    .box { max-width: 540px; width: 100%; }
+    .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: .04em; margin-bottom: 2.5rem; }
+    .logo span { color: #1056e0; }
+    .illustration {
+      width: 120px; height: 120px; margin: 0 auto 2rem; border-radius: 28px;
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 3rem;
+    }
+    h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: .9rem; }
+    p { color: #5a6478; line-height: 1.65; margin-bottom: 1rem; }
+    .eta {
+      display: none; /* affiché par JS si l'API fournit une heure de retour */
+      margin: 0 auto 1.5rem; padding: .55rem 1.1rem; border-radius: 999px;
+      background: #e8f0fe; color: #1056e0; font-weight: 600; font-size: .92rem;
+      width: fit-content;
+    }
+    .retry {
+      display: inline-block; margin-top: .8rem; padding: .85rem 2.4rem;
+      background: #1056e0; color: #fff; border: none; border-radius: 10px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; font-family: inherit;
+      transition: background .2s;
+    }
+    .retry:hover { background: #0c43b3; }
+    .hint { font-size: .85rem; color: #9aa3b5; margin-top: 1.4rem; }
+  </style>
+</head>
+<body>
+  <main class="box">
+    <div class="logo">PRIM<span>EO</span></div>
+    <div class="illustration" aria-hidden="true">🛠️</div>
+    <h1>Maintenance en cours</h1>
+    <p id="maintenance-message">
+      Primeo est en maintenance pour améliorer votre expérience.
+      Nous revenons très vite — merci de votre patience.
+    </p>
+    <div class="eta" id="maintenance-eta"></div>
+    <button class="retry" id="retry-btn" type="button">Réessayer</button>
+    <p class="hint">Cette page se met à jour automatiquement.</p>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+      var meta = document.querySelector('meta[name="api-url"]');
+      var API = (meta && meta.content ? meta.content : 'https://primeo-api-sszr.onrender.com').replace(/\/$/, '');
+
+      function check() {
+        fetch(API + '/api/maintenance', { cache: 'no-store' })
+          .then(function (r) { return r.json(); })
+          .then(function (s) {
+            if (!s.enabled) {
+              // Maintenance terminée → retour à la page d'origine ou à l'accueil
+              var back = new URLSearchParams(window.location.search).get('from') || '/';
+              window.location.replace(back);
+              return;
+            }
+            if (s.message) document.getElementById('maintenance-message').textContent = s.message;
+            if (s.estimatedEnd) {
+              var d = new Date(s.estimatedEnd);
+              if (!isNaN(d.getTime())) {
+                var el = document.getElementById('maintenance-eta');
+                el.textContent = 'Retour estimé : ' + d.toLocaleString('fr-FR', {
+                  weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+                });
+                el.style.display = 'block';
+              }
+            }
+          })
+          .catch(function () { /* API injoignable : on reste sur la page */ });
+      }
+
+      document.getElementById('retry-btn').addEventListener('click', check);
+      check();
+      setInterval(check, 30000);
+    })();
+  </script>
+</body>
+</html>

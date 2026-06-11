@@ -21,6 +21,7 @@ import { FilterSheet, type FilterValues } from './FilterSheet';
 import { SortSheet } from './SortSheet';
 import { SearchMapView } from './MapView';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
+import { trackEvent } from '../../../services/analytics';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -253,6 +254,8 @@ export function SearchScreen() {
         ...(filterValues.timeSlot && { timeSlot: filterValues.timeSlot }),
       };
       const res = await propertiesApi.search(params);
+      // Statistique anonyme de recherche (uniquement la première page)
+      if (p === 1) trackEvent('search');
       const data = (res.data as any)?.data;
       const items: Property[] = normalizeProperties(data?.properties ?? data ?? []);
       if (p === 1) {

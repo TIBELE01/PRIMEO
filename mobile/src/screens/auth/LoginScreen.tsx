@@ -12,6 +12,7 @@ import { authApi } from '../../services/api/endpoints/auth';
 import { signInWithGoogle } from '../../services/googleAuth';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
+import { trackEvent } from '../../services/analytics';
 
 type Props = AuthScreenProps<'Login'>;
 
@@ -48,6 +49,8 @@ export function LoginScreen({ navigation }: Props) {
 
       setTokens(data.accessToken as string, data.refreshToken as string);
       setUser(data.user);
+      // Statistique anonyme (rôle générique uniquement, soumis au consentement)
+      trackEvent('login', undefined, (data.user as { accountType?: string })?.accountType === 'client' ? 'client' : 'professional');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string; message?: string } } };
       const msg = e?.response?.data?.error ?? e?.response?.data?.message ?? 'Email ou mot de passe incorrect';

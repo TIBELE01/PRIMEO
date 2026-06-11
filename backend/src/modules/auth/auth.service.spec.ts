@@ -534,3 +534,155 @@ describe('authService.verifyTotp', () => {
       .rejects.toMatchObject({ statusCode: 400 });
   });
 });
+
+// ── googleAuth ────────────────────────────────────────────────────────────────
+
+// getUser n'existe pas dans le mock d'origine — ajouté dynamiquement ici
+const mockGetUser = jest.fn();
+(mockSupabaseAdmin.auth as Record<string, unknown>)['getUser'] = mockGetUser;
+
+const googleSbUser = {
+  id: 'supa-google-001',
+  email: 'client.google@gmail.com',
+  app_metadata: { provider: 'google', providers: ['google'], role: 'client' },
+  user_metadata: { full_name: 'Ama Google', avatar_url: 'https://lh3.example/p.jpg' },
+};
+
+describe('authService.googleAuth', () => {
+  beforeEach(() => {
+    resetMocks();
+    mockGetUser.mockResolvedValue({ data: { user: googleSbUser }, error: null });
+  });
+
+  it('rejette une session invalide (401)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'invalid' } });
+    await expect(authService.googleAuth({ accessToken: 'bad', refreshToken: 'r' }))
+      .rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  it('rejette une session ne provenant pas de Google (400)', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { ...googleSbUser, app_metadata: { provider: 'email', providers: ['email'] } } },
+      error: null,
+    });
+    await expect(authService.googleAuth({ accessToken: 't', refreshToken: 'r' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('crée un compte client au premier login Google', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(null); // ni par id, ni par email
+    mockPrisma.user.create.mockResolvedValue({
+      id: googleSbUser.id, email: googleSbUser.email, phone: null,
+      firstName: 'Ama', lastName: 'Google', accountType: 'client', status: 'active',
+    });
+
+    const result = await authService.googleAuth({ accessToken: 't', refreshToken: 'r' });
+
+    expect(result.isNewUser).toBe(true);
+    expect(result.user.role).toBe('client');
+    expect(mockPrisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ id: googleSbUser.id, accountType: 'client', phone: null }),
+    }));
+  });
+
+  it('connecte un client existant (même UUID Supabase)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: googleSbUser.id, email: googleSbUser.email, phone: null,
+      firstName: 'Ama', lastName: 'Google', accountType: 'client', status: 'active',
+      professionalProfile: null,
+    });
+
+    const result = await authService.googleAuth({ accessToken: 't', refreshToken: 'r' });
+
+    expect(result.isNewUser).toBe(false);
+    expect(mockPrisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('refuse Google pour un compte professionnel (403)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: googleSbUser.id, email: googleSbUser.email, phone: '+22501',
+      firstName: 'Pro', lastName: 'Immo', accountType: 'professional_immobilier', status: 'active',
+      professionalProfile: null,
+    });
+    await expect(authService.googleAuth({ accessToken: 't', refreshToken: 'r' }))
+      .rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it('refuse en cas de doublon email avec un autre UUID (409)', async () => {
+    // 1er findUnique (par id) → null ; 2e (par email) → compte existant
+    mockPrisma.user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'autre-uuid', email: googleSbUser.email });
+    await expect(authService.googleAuth({ accessToken: 't', refreshToken: 'r' }))
+      .rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it('refuse un compte suspendu (403)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: googleSbUser.id, email: googleSbUser.email, phone: null,
+      firstName: 'Ama', lastName: 'Google', accountType: 'client', status: 'suspended',
+      professionalProfile: null,
+    });
+    await expect(authService.googleAuth({ accessToken: 't', refreshToken: 'r' }))
+      .rejects.toMatchObject({ statusCode: 403 });
+  });
+});
+
+// ── forgotPassword / resetPassword ────────────────────────────────────────────
+
+const mockGenerateLink = jest.fn();
+(mockSupabaseAdmin.auth.admin as Record<string, unknown>)['generateLink'] = mockGenerateLink;
+
+describe('authService.forgotPassword', () => {
+  beforeEach(() => {
+    resetMocks();
+    (envMock as Record<string, unknown>)['FRONTEND_URL'] = 'https://app.primeo.ci';
+  });
+
+  it('reste silencieux quand l\'email est inconnu (anti-énumération)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(null);
+    await expect(authService.forgotPassword('inconnu@x.ci')).resolves.toBeUndefined();
+    expect(mockGenerateLink).not.toHaveBeenCalled();
+  });
+
+  it('génère un lien de récupération Supabase et envoie l\'email', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: 'u1', email: 'ama@x.ci', firstName: 'Ama', lastName: 'K',
+    });
+    mockGenerateLink.mockResolvedValue({
+      data: { properties: { action_link: 'https://supabase/recovery?token=abc' } },
+      error: null,
+    });
+
+    await authService.forgotPassword('ama@x.ci');
+
+    expect(mockGenerateLink).toHaveBeenCalledWith(expect.objectContaining({ type: 'recovery', email: 'ama@x.ci' }));
+    const { sendPasswordResetEmail } = jest.requireMock('../../common/utils/mailer') as { sendPasswordResetEmail: jest.Mock };
+    expect(sendPasswordResetEmail).toHaveBeenCalledWith(expect.objectContaining({
+      resetUrl: 'https://supabase/recovery?token=abc',
+    }));
+  });
+
+  it('lève 500 si Supabase ne génère pas de lien', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'ama@x.ci', firstName: 'A', lastName: 'K' });
+    mockGenerateLink.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    await expect(authService.forgotPassword('ama@x.ci')).rejects.toMatchObject({ statusCode: 500 });
+  });
+});
+
+describe('authService.resetPassword', () => {
+  beforeEach(resetMocks);
+
+  it('rejette un recovery token invalide (400)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'expired' } });
+    await expect(authService.resetPassword({ recoveryToken: 'bad', password: 'New#Pass123' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('met à jour le mot de passe via Supabase quand le token est valide', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await authService.resetPassword({ recoveryToken: 'good', password: 'New#Pass123' });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById)
+      .toHaveBeenCalledWith('supa-uid-001', { password: 'New#Pass123' });
+  });
+});

@@ -8,9 +8,9 @@ import { applyLogger } from './common/middleware/logger.middleware';
 import { applyRateLimit } from './common/middleware/rate-limit.middleware';
 import { applyRawBody } from './common/middleware/raw-body.middleware';
 import { applyRequestId } from './common/middleware/request-id.middleware';
+import { maintenanceGate, getMaintenanceState } from './common/middleware/maintenance.middleware';
 import { handleHttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
-import { maintenanceMode } from './common/middleware/maintenance.middleware';
 import { env } from './config/env.config';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config';
@@ -68,9 +68,6 @@ export function createApp(): Application {
   // Static assets (error pages, public files)
   app.use(express.static('public'));
 
-  // Maintenance mode — intercepts all API routes before they are registered
-  app.use(maintenanceMode);
-
   // Health check (no auth required)
   app.get('/', (_req: Request, res: Response) => {
     res.json({ success: true, message: 'Primeo API is running', environment: env.NODE_ENV });
@@ -79,6 +76,16 @@ export function createApp(): Application {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
   });
+
+  // Statut du mode maintenance — public, consommé par l'app mobile et la vitrine
+  app.get('/api/maintenance', async (_req: Request, res: Response) => {
+    const state = await getMaintenanceState();
+    res.json(state);
+  });
+
+  // Porte de maintenance : 503 sur toute l'API quand le mode est actif
+  // (routes exemptées : santé, maintenance, admin, docs, webhooks)
+  app.use(maintenanceGate);
 
   // Documentation OpenAPI interactive (Swagger UI) — sans authentification
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'Primeo API — Docs' }));

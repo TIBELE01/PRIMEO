@@ -6,6 +6,7 @@ import { Platform,
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
+import { trackEvent } from '../../../services/analytics';
 
 type Props = NativeStackScreenProps<ClientStackParamList, 'BookingConfirmation'>;
 
@@ -103,6 +104,8 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     if (b) setBooking(b);
     if (invUrl) setInvoiceUrl(invUrl);
     setPhase('success');
+    // Statistique anonyme de paiement réussi (aucun montant ni identité)
+    trackEvent('payment_success', undefined, 'client');
     animateCheck();
   }, [animateCheck, clearTimer]);
 

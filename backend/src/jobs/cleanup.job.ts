@@ -1,4 +1,4 @@
-// Cleanup cron job — removes expired OTPs and old audit logs
+// Cleanup cron job — archivage des logs d'audit et filets de sécurité
 import cron from 'node-cron';
 import { prisma } from '../database/prisma.service';
 import { logger } from '../common/utils/logger';
@@ -8,13 +8,13 @@ export function startCleanupJob(): void {
   cron.schedule('0 2 * * *', async () => {
     logger.info('Running cleanup job...');
     try {
-      // Remove audit logs older than 6 months
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      const deleted = await prisma.auditLog.deleteMany({
-        where: { createdAt: { lt: sixMonthsAgo } },
-      });
-      logger.info(`Cleanup: removed ${deleted.count} audit log entries`);
+      // Conformité : les logs d'audit ne sont JAMAIS supprimés avant 1 an.
+      // Au-delà, ils sont déplacés vers audit_logs_archive par la fonction DB
+      // archive_old_audit_logs() (seule autorisée à contourner l'immuabilité).
+      const archived = await prisma.$queryRaw<[{ archive_old_audit_logs: number }]>`
+        SELECT archive_old_audit_logs()`;
+      const count = archived[0]?.archive_old_audit_logs ?? 0;
+      if (count > 0) logger.info(`Cleanup: ${count} log(s) d'audit archivé(s) (> 1 an)`);
 
       // Filet de sécurité : annule les réservations pending_payment de plus de 24h
       // qui auraient échappé au job d'expiration horaire (pending-payment-expiry.job.ts)

@@ -13,6 +13,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
 import type { AuthScreenProps } from '../../../navigation/types';
 import type { RegistrationData } from './index';
+import { trackEvent } from '../../../services/analytics';
 
 type Props = {
   data: RegistrationData;
@@ -67,6 +68,8 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
         payload.referralCode = data.referralCode.trim();
       }
       const registerRes = await authApi.register(payload);
+      // Statistique anonyme d'inscription (type de compte générique uniquement)
+      trackEvent('signup', { type: isPro ? 'professional' : 'client' });
       const resData = registerRes.data as {
         message?: string;
         accessToken?: string;

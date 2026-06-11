@@ -832,6 +832,42 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Archive des logs d'audit (> 1 an) — alimentée par archive_old_audit_logs().
+// Immuable (trigger DB) ; pas de FK users : survit à la suppression des comptes.
+model AuditLogArchive {
+  id          String  @id
+  userId      String?
+  action      String
+  description String?
+  ipAddress   String?
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+
+  createdAt  DateTime
+  archivedAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs_archive")
+}
+
+// Événements analytics anonymisés (mobile + vitrine) — aucune donnée personnelle :
+// pas d'userId ni d'IP, seulement un identifiant de session aléatoire côté client.
+model AppEvent {
+  id        String  @id @default(cuid())
+  name      String // ex : signup, login, search, property_view, booking_created, payment_success
+  platform  String? // mobile | web
+  role      String? // client | professional | anonymous
+  sessionId String?
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@map("app_events")
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // §5.13 / §6.9 — FAVORIS ET LISTES
 // ─────────────────────────────────────────────────────────────────────────────

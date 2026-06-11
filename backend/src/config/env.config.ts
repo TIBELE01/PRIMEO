@@ -43,7 +43,8 @@ const envSchema = z.object({
   // OTP bypass — set to "true" to skip SMS/OTP check (testing only, never in real production)
   SKIP_OTP_VERIFICATION: z.string().transform(v => v === 'true').default('false'),
 
-  // Maintenance mode — set to "true" to return 503 + maintenance page for all API requests
+  // Mode maintenance — force le 503 sur toute l'API dès le démarrage (la bascule
+  // à chaud se fait via platform_config['maintenance_mode'], endpoint admin)
   MAINTENANCE_MODE: z.string().transform(v => v === 'true').default('false'),
 
   // Cookies

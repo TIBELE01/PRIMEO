@@ -14,6 +14,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
 import { isValidIvorianPhone, validatePassword, normalizeIvorianPhone } from '../auth.utils';
 import type { AuthScreenProps } from '../../../navigation/types';
+import { trackEvent } from '../../../services/analytics';
 
 // ── Constantes de couleurs premium ────────────────────────────────────────────
 
@@ -681,6 +682,8 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
       if (data.taxNumber.trim())       payload.taxNumber       = data.taxNumber.trim();
 
       const res = await authApi.register(payload);
+      // Statistique anonyme d'inscription professionnelle
+      trackEvent('signup', { type: 'professional' });
       const resData = res.data as {
         message?: string; accessToken?: string; refreshToken?: string;
         user?: Parameters<typeof setUser>[0];

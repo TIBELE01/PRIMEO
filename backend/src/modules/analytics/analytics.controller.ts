@@ -77,3 +77,22 @@ export async function purchaseMarketReport(req: Request, res: Response, next: Ne
     next(err);
   }
 }
+
+// ── Événements applicatifs anonymisés ────────────────────────────────────────
+
+export async function recordEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await analyticsService.recordEvents(req.body.events ?? []);
+    res.status(202).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getEventsSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await analyticsService.getEventsSummary(req.query as never));
+  } catch (err) {
+    next(err);
+  }
+}

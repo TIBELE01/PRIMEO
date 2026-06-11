@@ -9,6 +9,8 @@ import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { supabaseAdmin } from '../../config/supabase.config';
 import { syncSupabaseRole } from '../../common/utils/role-sync';
+import { getMaintenanceState, invalidateMaintenanceCache } from '../../common/middleware/maintenance.middleware';
+import { sendPushBroadcast } from '../../common/utils/push';
 import { AccountType } from '@prisma/client';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -1468,6 +1470,62 @@ export const adminService = {
 
     const total = await prisma.auditLog.count({ where: where as never });
     return { data: logs, total, page, limit, pages: Math.ceil(total / limit) };
+  },
+
+  // ── Mode maintenance ────────────────────────────────────────────────────────
+
+  async getMaintenance() {
+    return getMaintenanceState(true);
+  },
+
+  async setMaintenance(
+    input: { enabled: boolean; message?: string; estimatedEnd?: string; notifyUsers?: boolean },
+    adminId: string,
+    ipAddress?: string,
+  ) {
+    const previous = await getMaintenanceState(true);
+
+    const value = {
+      enabled: input.enabled,
+      message: input.message ?? null,
+      estimatedEnd: input.estimatedEnd ?? null,
+    };
+
+    await prisma.platformConfig.upsert({
+      where: { key: 'maintenance_mode' },
+      update: { value, updatedBy: adminId },
+      create: { key: 'maintenance_mode', value, updatedBy: adminId },
+    });
+    invalidateMaintenanceCache();
+
+    await createAudit({
+      adminId,
+      action: input.enabled ? 'maintenance.enable' : 'maintenance.disable',
+      targetType: 'platform',
+      targetId: 'maintenance_mode',
+      description: input.enabled
+        ? `Mode maintenance ACTIVÉ${input.estimatedEnd ? ` (retour estimé : ${input.estimatedEnd})` : ''}`
+        : 'Mode maintenance désactivé',
+      ipAddress,
+      metadata: { old: previous as unknown as Record<string, unknown>, new: value },
+    });
+
+    // Prévenir les utilisateurs en amont (push à tous les appareils abonnés)
+    if (input.notifyUsers) {
+      const eta = input.estimatedEnd
+        ? ` Retour estimé : ${new Date(input.estimatedEnd).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan' })}.`
+        : '';
+      const contents = input.enabled
+        ? { fr: `${input.message ?? 'Une maintenance est planifiée sur Primeo.'}${eta}`, en: `Primeo will undergo maintenance.${eta}` }
+        : { fr: 'Primeo est de nouveau disponible. Merci de votre patience !', en: 'Primeo is back online. Thank you for your patience!' };
+      sendPushBroadcast({
+        headings: { fr: input.enabled ? 'Maintenance planifiée' : 'Maintenance terminée', en: input.enabled ? 'Scheduled maintenance' : 'Maintenance complete' },
+        contents,
+        data: { type: 'maintenance', enabled: input.enabled },
+      }).catch((err) => logger.warn('Broadcast maintenance non envoyé', { error: (err as Error).message }));
+    }
+
+    return getMaintenanceState(true);
   },
 
   // ── Promo codes ────────────────────────────────────────────────────────────

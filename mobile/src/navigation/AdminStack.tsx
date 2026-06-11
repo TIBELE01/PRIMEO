@@ -6,6 +6,7 @@ import PropertiesModerationScreen   from '../screens/admin/PropertiesModerationS
 import UsersModerationScreen        from '../screens/admin/UsersModerationScreen';
 import AdminDisputesScreen          from '../screens/admin/AdminDisputesScreen';
 import AdminBookingsScreen          from '../screens/admin/AdminBookingsScreen';
+import AdminAuditLogsScreen         from '../screens/admin/AdminAuditLogsScreen';
 
 type AdminStackParamList = {
   AdminDashboard:        undefined;
@@ -13,6 +14,7 @@ type AdminStackParamList = {
   UsersModeration:       undefined;
   AdminDisputes:         undefined;
   AdminBookings:         undefined;
+  AdminAuditLogs:        undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -25,6 +27,7 @@ export function AdminStack() {
       <Stack.Screen name="UsersModeration"      component={UsersModerationScreen} />
       <Stack.Screen name="AdminDisputes"        component={AdminDisputesScreen} />
       <Stack.Screen name="AdminBookings"        component={AdminBookingsScreen} />
+      <Stack.Screen name="AdminAuditLogs"       component={AdminAuditLogsScreen} />
     </Stack.Navigator>
   );
 }
