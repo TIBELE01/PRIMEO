@@ -1,7 +1,24 @@
 // Application root — providers, session hydration, navigation container
 import 'react-native-gesture-handler';
 import './src/utils/webAlertPolyfill'; // Alert.alert → modale stylée (web + natif)
+import * as Sentry from '@sentry/react-native';
 import React, { useEffect, useRef, Component, ReactNode } from 'react';
+
+Sentry.init({
+  dsn: process.env['EXPO_PUBLIC_SENTRY_DSN'],
+  // Disable in dev to avoid polluting Sentry with local errors
+  enabled: !__DEV__ && !!process.env['EXPO_PUBLIC_SENTRY_DSN'],
+  environment: process.env['EXPO_PUBLIC_ENV'] ?? (__DEV__ ? 'development' : 'production'),
+  tracesSampleRate: 0.1,
+  beforeSend(event) {
+    // Strip auth tokens from captured request headers
+    if (event.request?.headers) {
+      delete (event.request.headers as Record<string, unknown>)['Authorization'];
+      delete (event.request.headers as Record<string, unknown>)['authorization'];
+    }
+    return event;
+  },
+});
 import { Platform, View, Text, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -211,7 +228,7 @@ function InnerApp() {
 
 // ── Root component ────────────────────────────────────────────────────────────
 
-export default function App() {
+function App() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -224,3 +241,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(App);

@@ -102,8 +102,14 @@ const envSchema = z.object({
   // Production origins: vitrine (primeo.ci), admin + all Render services (*.onrender.com)
   CORS_ORIGINS: z.string().default('http://localhost:3001,http://localhost:3000,http://localhost:5173,https://primeo.ci,https://www.primeo.ci,*.onrender.com,*.netlify.app,*.vercel.app'),
 
-  // Sentry (error tracking)
+  // Sentry (error tracking — backend)
   SENTRY_DSN: z.string().url().optional(),
+
+  // Logtail / Better Stack (centralised structured logs)
+  LOGTAIL_SOURCE_TOKEN: z.string().optional(),
+
+  // Slack (ops alerts — high error rate, service outage)
+  SLACK_WEBHOOK_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

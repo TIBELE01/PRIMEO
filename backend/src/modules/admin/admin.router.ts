@@ -58,6 +58,7 @@ import {
   upsertEmailTemplate,
 } from './admin.controller';
 import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-flags.controller';
+import { getMonitoringDashboard } from './monitoring.controller';
 import { changeUserPlan, getSubscriptionHistory, forceRecalculateBenefits, getPaymentFailures } from './admin.controller';
 import { ChangeUserPlanDto } from './dto/admin.dto';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
@@ -163,3 +164,6 @@ adminRouter.patch('/client-ratings/:id/restore', parseId, restoreClientRating);
 adminRouter.get('/feature-flags', getAllFlags);
 adminRouter.put('/feature-flags/:key', upsertFlag);
 adminRouter.delete('/feature-flags/:key', deleteFlag);
+
+// ── Monitoring dashboard ───────────────────────────────────────────────────────
+adminRouter.get('/monitoring', getMonitoringDashboard);

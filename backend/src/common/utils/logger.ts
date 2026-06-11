@@ -1,5 +1,6 @@
 // Winston logger — structured JSON in production, colorized in development
 import * as winston from 'winston';
+import { LogtailTransport } from './logtail.transport';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
@@ -14,14 +15,19 @@ const devFormat = combine(
 
 const prodFormat = combine(timestamp(), errors({ stack: true }), winston.format.json());
 
+const logtailToken = process.env.LOGTAIL_SOURCE_TOKEN;
+
 export const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: process.env.NODE_ENV === 'production' ? prodFormat : devFormat,
   transports: [
     new winston.transports.Console(),
     ...(process.env.NODE_ENV === 'production'
-      ? [new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-         new winston.transports.File({ filename: 'logs/combined.log' })]
+      ? [
+          new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+          new winston.transports.File({ filename: 'logs/combined.log' }),
+        ]
       : []),
+    ...(logtailToken ? [new LogtailTransport(logtailToken)] : []),
   ],
 });

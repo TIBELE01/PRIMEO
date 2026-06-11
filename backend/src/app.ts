@@ -11,6 +11,8 @@ import { applyRequestId } from './common/middleware/request-id.middleware';
 import { maintenanceGate, getMaintenanceState } from './common/middleware/maintenance.middleware';
 import { handleHttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
+import { errorAlertMiddleware } from './common/middleware/error-alert.middleware';
+import { healthRouter } from './modules/health/health.router';
 import { env } from './config/env.config';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config';
@@ -68,23 +70,24 @@ export function createApp(): Application {
   // Static assets (error pages, public files)
   app.use(express.static('public'));
 
-  // Health check (no auth required)
+  // Root liveness probe
   app.get('/', (_req: Request, res: Response) => {
     res.json({ success: true, message: 'Primeo API is running', environment: env.NODE_ENV });
   });
 
-  app.get('/api/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
-  });
+  // Health / readiness checks — no auth required
+  // GET /api/health       → fast liveness (used by load balancers)
+  // GET /api/health/ready → full readiness (DB, Redis, Genius Pay, Brevo)
+  app.use('/api/health', healthRouter);
 
-  // Statut du mode maintenance — public, consommé par l'app mobile et la vitrine
+  // Maintenance status — public, consumed by mobile app and vitrine
   app.get('/api/maintenance', async (_req: Request, res: Response) => {
     const state = await getMaintenanceState();
     res.json(state);
   });
 
-  // Porte de maintenance : 503 sur toute l'API quand le mode est actif
-  // (routes exemptées : santé, maintenance, admin, docs, webhooks)
+  // Maintenance gate: 503 on all API routes when mode is active
+  // (exempt: health, maintenance, admin, docs, webhooks)
   app.use(maintenanceGate);
 
   // Documentation OpenAPI interactive (Swagger UI) — sans authentification
@@ -128,6 +131,9 @@ export function createApp(): Application {
   if (env.SENTRY_DSN) {
     Sentry.setupExpressErrorHandler(app);
   }
+
+  // Error rate tracking + Slack alerts — after Sentry, before formatters
+  app.use(errorAlertMiddleware);
 
   // Custom error handlers (must be last)
   app.use(handlePrismaError);

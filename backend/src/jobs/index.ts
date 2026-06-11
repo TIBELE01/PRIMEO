@@ -8,6 +8,7 @@ import { startBoostResetJob } from './boost-reset.job';
 import { startAdminReportJob } from './admin-report.job';
 import { startCurrencyRatesJob } from './currency-rates.job';
 import { startReferralRewardsJob } from './referral-rewards.job';
+import { startMonitoringReportJob } from './monitoring-report.job';
 import { logger } from '../common/utils/logger';
 
 export function startAllJobs(): void {
@@ -21,5 +22,6 @@ export function startAllJobs(): void {
   startAdminReportJob();            // every Sunday 03:00 — weekly activity report
   startCurrencyRatesJob();          // every hour — refresh exchange rates cache
   startReferralRewardsJob();        // daily 06:00 — reconcile pending referral rewards
+  startMonitoringReportJob();       // daily 08:00 — monitoring health digest
   logger.info('All cron jobs started');
 }
