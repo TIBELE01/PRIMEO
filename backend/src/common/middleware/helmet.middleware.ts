@@ -14,6 +14,10 @@ export function applyHelmet(app: Application): void {
           connectSrc: ["'self'"],
         },
       },
+      // Les assets publics (/demo, factures, pages d'erreur) sont consommés par
+      // les frontends Primeo hébergés sur d'autres origines (mobile-web, vitrine).
+      // Le défaut "same-origin" bloquerait les <video>/<img> cross-origin.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
       hsts: {
         maxAge: 31536000, // 1 year
         includeSubDomains: true,
