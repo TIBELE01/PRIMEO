@@ -1,0 +1,68 @@
+{{!--
+  Source versionnée du template Brevo n°3 « bookingConfirmation »
+  (cf. src/config/brevo.config.ts). Les emails transactionnels sont envoyés
+  via l'API Brevo avec l'ID de template — ce fichier sert de référence pour
+  recréer/mettre à jour le template dans le dashboard Brevo.
+  Params injectés par notifications.service.ts : firstName, propertyTitle,
+  startDate, endDate, totalAmount, bookingId (cf. NotificationData).
+--}}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Réservation confirmée — PRIMEO</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F4F5F7;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F5F7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;border-radius:12px;overflow:hidden;">
+          <!-- En-tête -->
+          <tr>
+            <td style="background-color:#1056E0;padding:24px 32px;">
+              <span style="color:#FFFFFF;font-size:22px;font-weight:bold;letter-spacing:1px;">PRIMEO</span>
+            </td>
+          </tr>
+          <!-- Corps -->
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 8px;font-size:20px;color:#111827;">✅ Réservation confirmée !</h1>
+              <p style="margin:0 0 20px;font-size:14px;color:#374151;line-height:1.6;">
+                Bonjour {{ params.firstName }},<br />
+                Bonne nouvelle : votre réservation est confirmée. Voici le récapitulatif :
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;border-radius:10px;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <p style="margin:0 0 6px;font-size:15px;color:#111827;font-weight:bold;">{{ params.propertyTitle }}</p>
+                    <p style="margin:0 0 4px;font-size:13px;color:#6B7280;">📅 Du {{ params.startDate }} au {{ params.endDate }}</p>
+                    {{#if params.totalAmount}}
+                    <p style="margin:0 0 4px;font-size:13px;color:#6B7280;">💰 Montant total : {{ params.totalAmount }} FCFA</p>
+                    {{/if}}
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Référence : {{ params.bookingId }}</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:20px 0 0;font-size:13px;color:#374151;line-height:1.6;">
+                Retrouvez tous les détails et échangez avec votre hôte depuis la rubrique
+                « Mes réservations » de l'application PRIMEO.
+              </p>
+            </td>
+          </tr>
+          <!-- Pied -->
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #E5E7EB;">
+              <p style="margin:0;font-size:11px;color:#9CA3AF;line-height:1.5;">
+                PRIMEO — Plateforme de réservation d'hébergements, biens immobiliers et restaurants en Côte d'Ivoire.<br />
+                Cet email vous a été envoyé suite à une réservation effectuée sur PRIMEO.
+                Besoin d'aide ? Contactez-nous : support.primeo@gmail.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

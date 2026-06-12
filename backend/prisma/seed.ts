@@ -23,7 +23,6 @@ import {
   PromoDiscountType,
   MediaType,
 } from '@prisma/client';
-import { hashPassword } from '../src/common/utils/bcrypt';
 import { supabaseAdmin } from '../src/config/supabase.config';
 
 const prisma = new PrismaClient();
@@ -109,15 +108,13 @@ async function main() {
 
   // ── 1. UTILISATEURS ────────────────────────────────────────────────────────
 
-  // Admin
-  const adminHash = await hashPassword(ADMIN_PASSWORD);
+  // Admin — le mot de passe vit exclusivement dans Supabase Auth (ensureSupabaseUser)
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {},
     create: {
       email: ADMIN_EMAIL,
       phone: '+2250700000000',
-      passwordHash: adminHash,
       firstName: 'Super',
       lastName: 'Admin',
       accountType: AccountType.admin,
@@ -131,14 +128,12 @@ async function main() {
   console.log(`  ✓ Admin : ${admin.email}`);
 
   // Koffi Assi — client, cadre dynamique, 35 ans (§1.4)
-  const koffiHash = await hashPassword('Client1234!');
   const koffi = await prisma.user.upsert({
     where: { email: 'koffi.assi@gmail.com' },
     update: {},
     create: {
       email: 'koffi.assi@gmail.com',
       phone: '+2250707100001',
-      passwordHash: koffiHash,
       firstName: 'Koffi',
       lastName: 'Assi',
       accountType: AccountType.client,
@@ -153,14 +148,12 @@ async function main() {
   console.log(`  ✓ Client : ${koffi.email}`);
 
   // Amina Coulibaly — professional_hebergement, investisseuse (§1.4)
-  const aminaHash = await hashPassword('Pro1234!');
   const amina = await prisma.user.upsert({
     where: { email: 'amina.coulibaly@residences.ci' },
     update: {},
     create: {
       email: 'amina.coulibaly@residences.ci',
       phone: '+2250707100002',
-      passwordHash: aminaHash,
       firstName: 'Amina',
       lastName: 'Coulibaly',
       accountType: AccountType.professional_hebergement,
@@ -183,13 +176,14 @@ async function main() {
       },
       subscription: {
         create: {
-          planType: PlanType.prestige,
+          // Formule v2 « Business » (§3.3 : 9 000 FCFA, 10 biens, 0 % commission, 2 boosts)
+          planType: PlanType.business,
           startDate: daysAgo(60),
           nextBillingDate: daysFromNow(30),
           status: SubscriptionStatus.active,
           monthlyPrice: 9000,
-          includedPropertiesLimit: 15,
-          commissionRate: 5,
+          includedPropertiesLimit: 10,
+          commissionRate: 0,
           boostsFreeMonthly: 2,
           boostsFreeUsedThisMonth: 1,
           features: { analytics: true, virtualTour: false, priority: true },
@@ -204,19 +198,17 @@ async function main() {
   console.log(`  ✓ Pro hébergement : ${amina.email}`);
 
   // M. Koné Dramane — professional_hotel (hôtel 3 étoiles, §1.4)
-  const koneHash = await hashPassword('Pro1234!');
+  // (2FA géré côté Supabase Auth — plus de colonnes twoFactor* en base locale)
   const kone = await prisma.user.upsert({
     where: { email: 'dkone@hotel-plateau.ci' },
-    update: { accountType: AccountType.professional_hotel, twoFactorEnabled: false, twoFactorSecret: null },
+    update: { accountType: AccountType.professional_hotel },
     create: {
       email: 'dkone@hotel-plateau.ci',
       phone: '+2250707100003',
-      passwordHash: koneHash,
       firstName: 'Dramane',
       lastName: 'Koné',
       accountType: AccountType.professional_hotel,
       status: UserStatus.active,
-      twoFactorEnabled: false, // disabled for demo access
       professionalProfile: {
         create: {
           businessName: 'Hôtel Le Plateau',
@@ -236,14 +228,15 @@ async function main() {
       },
       subscription: {
         create: {
-          planType: PlanType.premium,
+          // Formule v2 « Entreprise » (§3.3 : 24 000 FCFA, 40 biens, 0 % commission, 7 boosts)
+          planType: PlanType.entreprise,
           startDate: daysAgo(120),
           nextBillingDate: daysFromNow(10),
           status: SubscriptionStatus.active,
           monthlyPrice: 24000,
-          includedPropertiesLimit: 9999,
+          includedPropertiesLimit: 40,
           commissionRate: 0,
-          boostsFreeMonthly: 10,
+          boostsFreeMonthly: 7,
           boostsFreeUsedThisMonth: 3,
           features: { analytics: true, virtualTour: true, priority: true, coManager: true },
         },
@@ -257,14 +250,12 @@ async function main() {
   console.log(`  ✓ Pro hôtel : ${kone.email}`);
 
   // Mme Bamba Fatoumata — restauratrice (§1.4)
-  const bambaHash = await hashPassword('Pro1234!');
   const bamba = await prisma.user.upsert({
     where: { email: 'f.bamba@restaurant-saveur.ci' },
     update: {},
     create: {
       email: 'f.bamba@restaurant-saveur.ci',
       phone: '+2250707100004',
-      passwordHash: bambaHash,
       firstName: 'Fatoumata',
       lastName: 'Bamba',
       accountType: AccountType.restaurateur,
@@ -286,14 +277,15 @@ async function main() {
       },
       subscription: {
         create: {
-          planType: PlanType.restaurant,
+          // Formule v2 « Starter » (ex-Restaurant → starter, cf. migration new_subscription_plans)
+          planType: PlanType.starter,
           startDate: daysAgo(45),
           nextBillingDate: daysFromNow(15),
           status: SubscriptionStatus.active,
-          monthlyPrice: 15000,
-          includedPropertiesLimit: 5,
+          monthlyPrice: 0,
+          includedPropertiesLimit: 3,
           commissionRate: 0,
-          boostsFreeMonthly: 5,
+          boostsFreeMonthly: 0,
           boostsFreeUsedThisMonth: 0,
           features: { menu: true, reservations: true, qrCode: true },
         },
@@ -307,14 +299,12 @@ async function main() {
   console.log(`  ✓ Restauratrice : ${bamba.email}`);
 
   // Mme Diallo Mariama — professional_immobilier
-  const dialloHash = await hashPassword('Pro1234!');
   const diallo = await prisma.user.upsert({
     where: { email: 'm.diallo@immo-abidjan.ci' },
     update: {},
     create: {
       email: 'm.diallo@immo-abidjan.ci',
       phone: '+2250707100005',
-      passwordHash: dialloHash,
       firstName: 'Mariama',
       lastName: 'Diallo',
       accountType: AccountType.professional_immobilier,
@@ -336,13 +326,14 @@ async function main() {
       },
       subscription: {
         create: {
-          planType: PlanType.essentiel,
+          // Formule v2 « Starter » (ex-Essentiel, 0 % de commission)
+          planType: PlanType.starter,
           startDate: daysAgo(20),
           nextBillingDate: daysFromNow(40),
           status: SubscriptionStatus.active,
           monthlyPrice: 0,
           includedPropertiesLimit: 3,
-          commissionRate: 9,
+          commissionRate: 0,
           boostsFreeMonthly: 0,
           boostsFreeUsedThisMonth: 0,
         },
@@ -885,7 +876,7 @@ async function main() {
         fee: 0,
         status: TransactionStatus.success,
         subscriptionId: aminaSub.id,
-        notes: 'Abonnement Prestige — renouvellement mensuel',
+        notes: 'Abonnement Business — renouvellement mensuel',
         initiatedAt: daysAgo(60),
         completedAt: daysAgo(60),
       },
@@ -1140,9 +1131,9 @@ async function main() {
     { key: 'grace_period_hours', value: 24 },
     { key: 'min_booking_nights', value: 1 },
     { key: 'cancellation_free_hours', value: 48 },
-    { key: 'commission_essentiel', value: 9 },
-    { key: 'commission_prestige', value: 5 },
-    { key: 'commission_premium', value: 0 },
+    { key: 'commission_starter', value: 0 },
+    { key: 'commission_business', value: 0 },
+    { key: 'commission_entreprise', value: 0 },
     { key: 'max_images_per_property', value: 20 },
     { key: 'otp_length', value: 6 },
     { key: 'otp_expiry_minutes', value: 10 },
@@ -1227,7 +1218,7 @@ async function main() {
   console.log(`Admin       : ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
   console.log('Client      : koffi.assi@gmail.com / Client1234!');
   console.log('Pro hébgt 1 : amina.coulibaly@residences.ci / Pro1234!');
-  console.log('Pro hôtel   : dkone@hotel-plateau.ci / Pro1234! (2FA activé)');
+  console.log('Pro hôtel   : dkone@hotel-plateau.ci / Pro1234!');
   console.log('Restaurateur: f.bamba@restaurant-saveur.ci / Pro1234!');
   console.log('Pro immo    : m.diallo@immo-abidjan.ci / Pro1234!');
   console.log('─────────────────────────────────────────────');

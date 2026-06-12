@@ -6,7 +6,7 @@
 //
 // Prérequis : DATABASE_URL dans .env pointant vers votre Supabase.
 import 'dotenv/config';
-import { PrismaClient, PropertyType, PropertyStatus, MediaType, PaymentOption, PlanType, SubscriptionStatus, AccountType, UserStatus, VerificationStatus } from '@prisma/client';
+import { PrismaClient, Prisma, PropertyType, PropertyStatus, MediaType, PaymentOption, PlanType, SubscriptionStatus, AccountType, UserStatus } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
@@ -72,22 +72,26 @@ async function ensureProUser(
     uid = found.id;
   }
 
+  // Mot de passe géré par Supabase Auth (créé ci-dessus) — aucun hash local
   await prisma.user.create({
     data: {
       id: uid,
       email,
-      passwordHash: 'demo-seed',
       firstName,
       lastName,
       phone: `+2250101${Math.floor(Math.random() * 90000 + 10000)}`,
       accountType,
       status: UserStatus.active,
-      kycStatus: VerificationStatus.approved,
       subscription: {
         create: {
+          // Formule v2 « Business » (§3.3 : 9 000 FCFA, 10 biens, 0 % commission)
           planType: PlanType.business,
           status: SubscriptionStatus.active,
-          startedAt: new Date(),
+          nextBillingDate: new Date(Date.now() + 30 * 86_400_000),
+          monthlyPrice: 9000,
+          includedPropertiesLimit: 10,
+          commissionRate: 0,
+          boostsFreeMonthly: 2,
         },
       },
     },
@@ -100,12 +104,12 @@ async function ensureProUser(
 async function upsertProperty(
   id: string,
   ownerId: string,
-  data: Parameters<typeof prisma.property.create>[0]['data'],
+  data: Omit<Prisma.PropertyUncheckedCreateInput, 'id' | 'ownerId'>,
 ): Promise<string> {
   const prop = await prisma.property.upsert({
     where: { id },
     update: { status: PropertyStatus.active },
-    create: { id, ownerId, ...data as any },
+    create: { id, ownerId, ...data },
   });
   return prop.id;
 }
