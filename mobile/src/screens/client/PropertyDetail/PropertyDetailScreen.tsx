@@ -81,10 +81,10 @@ const rtStyles = RNStyleSheet.create({
 // ── Dimensions de la carte média (carte surélevée, marges latérales) ──────────
 const SCREEN_W = Dimensions.get('window').width;
 const SCREEN_H = Dimensions.get('window').height;
-const MEDIA_CARD_MARGIN = 16;   // marge latérale de la carte
+const MEDIA_CARD_MARGIN = 0;    // bords latéraux collés aux extrémités de l'écran
 const MEDIA_CARD_PADDING = 6;   // espacement intérieur carte ↔ média
 const MEDIA_WIDTH = SCREEN_W - 2 * (MEDIA_CARD_MARGIN + MEDIA_CARD_PADDING);
-const MEDIA_HEIGHT = 248;
+const MEDIA_HEIGHT = 290;
 
 const DAYS_NEW = 30;
 const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 < DAYS_NEW;
@@ -707,8 +707,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 6,
     padding: MEDIA_CARD_PADDING,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: '#000',
+    borderRadius: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
