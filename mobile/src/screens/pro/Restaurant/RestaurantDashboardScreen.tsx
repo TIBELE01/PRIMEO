@@ -339,6 +339,10 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
                 <Ionicons name="star-outline" size={24} color={PRIMARY} />
                 <Text style={styles.quickLabel}>Avis reçus</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Payouts')}>
+                <Ionicons name="cash-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Reversements</Text>
+              </TouchableOpacity>
             </View>
           </View>
 

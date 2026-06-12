@@ -26,6 +26,7 @@ import BookingDetailScreen       from '../screens/pro/Bookings/BookingDetailScre
 import RateClientScreen          from '../screens/pro/Bookings/RateClientScreen';
 import SubscriptionsScreen       from '../screens/pro/Subscriptions/SubscriptionsScreen';
 import BoostsScreen              from '../screens/pro/Boosts/BoostsScreen';
+import PayoutsScreen             from '../screens/pro/Payouts/PayoutsScreen';
 import AnalyticsScreen           from '../screens/pro/Analytics/AnalyticsScreen';
 import { ExportsScreen }         from '../screens/pro/Exports/ExportsScreen';
 import ProReceivedReviewsScreen  from '../screens/pro/Reviews/ProReceivedReviewsScreen';
@@ -157,6 +158,7 @@ function lodgingScreens(labels: {
     { name: 'RateClient',          component: RateClientScreen,          title: 'Noter le client' },
     { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnements' },
     { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
+    { name: 'Payouts',             component: PayoutsScreen,             title: 'Reversements',     headerShown: false },
     { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',     headerShown: false },
     { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
     { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },

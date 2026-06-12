@@ -326,6 +326,7 @@ model User {
   pushTokens            PushToken[]
   wallet                Wallet?
   dataExports           DataExport[]
+  payouts               Payout[]             @relation("ProfessionalPayouts")
 
   @@index([accountType, status])
   @@map("users")
@@ -381,6 +382,40 @@ model Wallet {
   updatedAt DateTime @updatedAt
 
   @@map("wallets")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVERSEMENTS AUX PROFESSIONNELS — table `payouts`
+// Un reversement = le crédit automatique du portefeuille d'un professionnel pour
+// une réservation confirmée payée en ligne (options 100 % ou 10 %), du montant
+// net après déduction des frais Genius Pay. Une ligne par réservation
+// (bookingId unique) → idempotence garantie pour le cron quotidien.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum PayoutStatus {
+  completed
+  failed
+}
+
+model Payout {
+  id             String @id @default(cuid())
+  professionalId String
+  professional   User   @relation("ProfessionalPayouts", fields: [professionalId], references: [id], onDelete: Restrict)
+  bookingId      String @unique // une seule opération de reversement par réservation
+  booking        Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  grossAmount Int     // FCFA — montant payé en ligne (base du reversement)
+  feeAmount   Int     @default(0) // FCFA — frais Genius Pay déduits
+  netAmount   Int     // FCFA — montant réellement crédité au portefeuille
+  feePercent  Decimal @default(0) @db.Decimal(5, 2) // taux de frais appliqué (traçabilité)
+
+  status PayoutStatus @default(completed)
+  notes  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([professionalId, createdAt])
+  @@map("payouts")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -679,6 +714,7 @@ model Booking {
   review       Review?
   dispute      Dispute?
   clientRating ClientRating?
+  payout       Payout?
 
   @@index([clientId])
   @@index([propertyId, status])

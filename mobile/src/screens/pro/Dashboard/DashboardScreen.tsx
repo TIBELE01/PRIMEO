@@ -431,6 +431,10 @@ export default function DashboardScreen({ navigation }: any) {
                 <Ionicons name="card-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Abonnement</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Payouts')}>
+                <Ionicons name="cash-outline" size={24} color={theme.primary} />
+                <Text style={styles.quickLabel}>Reversements</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
