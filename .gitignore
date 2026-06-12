@@ -16,6 +16,9 @@ out/
 backend/.env
 admin/.env.local
 mobile/.env
+# render.yaml contient des secrets en clair → géré via le dashboard Render,
+# conservé localement uniquement (purgé de l'historique le 2026-06-12).
+render.yaml
 # Les fichiers templates sont committés intentionnellement :
 # .env.example, .env.test, .env.staging, .env.production
 
