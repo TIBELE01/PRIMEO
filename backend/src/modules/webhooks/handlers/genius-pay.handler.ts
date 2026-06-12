@@ -11,6 +11,7 @@ import { subscriptionsService } from '../../subscriptions/subscriptions.service'
 import { referralsService } from '../../referrals/referrals.service';
 import { analyticsService } from '../../analytics/analytics.service';
 import { generateAndUploadBookingInvoice } from '../../../common/utils/invoice';
+import { messagingService } from '../../messaging/messaging.service';
 
 // ── Génération de facture ─────────────────────────────────────────────────────
 
@@ -307,6 +308,15 @@ export async function processSuccessfulPayment(
       // Filleul client : récompense de parrainage à la première réservation confirmée
       await referralsService.triggerReward(booking.clientId).catch((err) =>
         logger.warn(`Referral reward trigger failed on payment confirm for client ${booking.clientId}`, err),
+      );
+      // Message automatique d'ouverture de la conversation après confirmation de paiement.
+      // Pour les réservations immédiates (restaurant/cash), ce message est créé à la création
+      // du booking. Pour les paiements en ligne, il est créé ici après validation du paiement.
+      const startStr = booking.startDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' });
+      const endStr = booking.endDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' });
+      const autoMsg = `Bonjour, ma réservation du ${startStr} au ${endStr} vient d'être confirmée. N'hésitez pas à me contacter si vous avez des questions.`;
+      void messagingService.saveMessage(tx.bookingId, booking.clientId, autoMsg).catch((err) =>
+        logger.warn(`Auto-message post-paiement échoué pour booking ${tx.bookingId}`, err),
       );
     }
     await notifyBookingConfirmed(tx.bookingId).catch((err) =>
