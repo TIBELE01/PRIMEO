@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity, StyleSheet,
   SafeAreaView, RefreshControl, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -192,7 +192,15 @@ export function MyBookingsScreen() {
     }
   }, [isOffline]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  // Rafraîchir à chaque retour sur l'onglet (les écrans des tabs restent montés :
+  // un simple useEffect au montage laisserait une liste périmée après une réservation).
+  const hasLoadedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      fetchAll(hasLoadedRef.current);
+      hasLoadedRef.current = true;
+    }, [fetchAll]),
+  );
 
   const tabData = bookings.filter(b => getTab(b) === activeTab);
 

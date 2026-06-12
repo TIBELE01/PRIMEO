@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { messagesApi } from '../../../services/api/endpoints/messages';
 import { socketService } from '../../../services/socket/socketService';
@@ -43,10 +44,16 @@ export function ConversationsScreen({ navigation }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-    socketService.connect();
-  }, [load]);
+  // Rafraîchir à chaque retour sur l'onglet : les écrans des tabs restent montés,
+  // sinon une discussion ouverte après une réservation n'apparaîtrait pas ici.
+  const hasLoadedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      load(hasLoadedRef.current);
+      hasLoadedRef.current = true;
+      socketService.connect();
+    }, [load]),
+  );
 
   // Re-sort when new messages arrive via socket
   useEffect(() => {

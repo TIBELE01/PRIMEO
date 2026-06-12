@@ -35,7 +35,7 @@ export type ClientStackParamList = {
   VirtualTour: { panoramas: Panorama[]; initialPanoramaIndex?: number; propertyName: string };
   Booking: { propertyId: string; checkIn: string; checkOut: string; guests?: number; propertyName?: string; pricePerNight?: number; mode?: 'stay' | 'table' | 'interest'; reservationTime?: string; interestMessage?: string };
   GeniusPayWebView: { checkoutUrl: string; bookingId: string; amountOnline: number; paymentOption: 'full_online' | 'ten_percent_online' };
-  BookingConfirmation: { bookingId: string };
+  BookingConfirmation: { bookingId: string; checkoutUrl?: string };
   MyBookings: undefined;
   BookingDetail: { bookingId: string };
   Conversations: undefined;

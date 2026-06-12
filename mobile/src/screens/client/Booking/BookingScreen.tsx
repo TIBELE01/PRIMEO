@@ -263,14 +263,21 @@ export function BookingScreen({ navigation, route }: Props) {
       // Statistique anonyme : réservation créée ou intérêt exprimé
       trackEvent(isInterest ? 'interest_expressed' : 'booking_created', undefined, 'client');
 
+      // La réservation est créée : on quitte le tunnel avec `replace` pour que
+      // « retour » ne ré-affiche jamais le formulaire (risque de double envoi → 409).
       if (payment?.checkoutUrl) {
         if (Platform.OS === 'web') {
           if (typeof window !== 'undefined') {
+            // Peut être bloqué par le navigateur (popup après un await) — l'écran
+            // de confirmation propose alors un bouton pour ouvrir la page de paiement.
             window.open(payment.checkoutUrl, '_blank', 'noopener,noreferrer');
           }
-          navigation.navigate('BookingConfirmation', { bookingId: booking.id });
+          navigation.replace('BookingConfirmation', {
+            bookingId: booking.id,
+            checkoutUrl: payment.checkoutUrl,
+          });
         } else {
-          navigation.navigate('GeniusPayWebView', {
+          navigation.replace('GeniusPayWebView', {
             checkoutUrl: payment.checkoutUrl,
             bookingId: booking.id,
             amountOnline: pricing.onlinePaidAmount,
@@ -278,18 +285,22 @@ export function BookingScreen({ navigation, route }: Props) {
           });
         }
       } else if (isInterest) {
-        // Intérêt immobilier : ouvrir directement la discussion avec le professionnel
-        navigation.replace('Chat', {
-          bookingId: booking.id,
-          recipientName: resolvedPropertyName || 'Le responsable',
+        // Intérêt immobilier : la route « Chat » vit dans l'onglet Messages, pas dans
+        // cette pile — retirer le tunnel puis basculer d'onglet vers la discussion.
+        navigation.popToTop();
+        (navigation as any).navigate('Messages', {
+          screen: 'Chat',
+          params: {
+            bookingId: booking.id,
+            recipientName: resolvedPropertyName || 'Le responsable',
+          },
         });
       } else {
-        // Confirmation immédiate : ouvrir directement la discussion avec le professionnel
-        navigation.navigate('Chat', {
-          bookingId: booking.id,
-          recipientName: resolvedPropertyName || 'Le responsable',
-        });
+        // Confirmation immédiate (restaurant / cash intégral) : écran de confirmation
+        // animé, qui ouvre ensuite automatiquement la discussion avec le responsable.
+        navigation.replace('BookingConfirmation', { bookingId: booking.id });
       }
+      return; // succès : l'écran est remplacé, garder le bouton désactivé
     } catch (e: any) {
       const status = e?.response?.status;
       if (status === 409) {
@@ -309,7 +320,6 @@ export function BookingScreen({ navigation, route }: Props) {
           'Une erreur est survenue. Veuillez réessayer.';
         setError(msg);
       }
-    } finally {
       setIsLoading(false);
     }
   };
