@@ -142,6 +142,13 @@ async function processSubscriptionRenewal(sub: {
       },
     });
 
+    // Notification immédiate de l'échec (email + push + SMS critique — cf. CHANNEL_CONFIG)
+    notificationsService.notify({
+      type: 'payment_failed',
+      recipientId: sub.userId,
+      data: { planName: plan.name },
+    }).catch((err) => logger.warn(`payment_failed notify failed (sub=${sub.id})`, err));
+
     // Count consecutive failures in the last GRACE_PERIOD_DAYS days
     const gracePeriodStart = new Date(Date.now() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
 

@@ -10,6 +10,7 @@ import { startCurrencyRatesJob } from './currency-rates.job';
 import { startReferralRewardsJob } from './referral-rewards.job';
 import { startMonitoringReportJob } from './monitoring-report.job';
 import { startPayoutsJob } from './payouts.job';
+import { startStayReminderJob } from './stay-reminder.job';
 import { logger } from '../common/utils/logger';
 
 export function startAllJobs(): void {
@@ -25,5 +26,6 @@ export function startAllJobs(): void {
   startReferralRewardsJob();        // daily 06:00 — reconcile pending referral rewards
   startMonitoringReportJob();       // daily 08:00 — monitoring health digest
   startPayoutsJob();                // daily 05:00 — reversements auto aux pros (net après frais GP)
+  startStayReminderJob();           // daily 09:00 — rappel J-1 au client (push + in-app)
   logger.info('All cron jobs started');
 }

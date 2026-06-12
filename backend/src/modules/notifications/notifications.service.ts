@@ -35,10 +35,21 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: 'Réservation confirmée',
         body: `Votre réservation à ${data['propertyTitle'] ?? 'votre hébergement'} (${data['startDate']} → ${data['endDate']}) est confirmée.`,
       };
-    case 'booking_cancelled':
+    case 'booking_cancelled': {
+      // Corps neutre : ce type est envoyé au client ET au professionnel
+      const by =
+        data['cancelledBy'] === 'client' ? ' par le client'
+        : data['cancelledBy'] === 'professional' ? ' par le responsable'
+        : '';
       return {
         title: 'Réservation annulée',
-        body: `Votre réservation à ${data['propertyTitle'] ?? 'votre hébergement'} a été annulée.`,
+        body: `La réservation à ${data['propertyTitle'] ?? 'votre hébergement'}${data['startDate'] ? ` (${data['startDate']})` : ''} a été annulée${by}.`,
+      };
+    }
+    case 'stay_reminder':
+      return {
+        title: '📅 Rappel — c\'est demain !',
+        body: `Votre réservation à ${data['propertyTitle'] ?? 'votre hébergement'} commence demain${data['startDate'] ? ` (${data['startDate']})` : ''}. Bon séjour !`,
       };
     case 'new_booking':
       return {

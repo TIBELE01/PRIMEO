@@ -27,9 +27,19 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   if (finalStatus !== 'granted') return null;
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
-  const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-  return tokenData.data;
+  // Le placeholder (UUID 00000000-…) n'est pas un vrai projet EAS : on l'ignore
+  // pour ne pas faire échouer getExpoPushTokenAsync tant que le vrai
+  // EAS_PROJECT_ID n'est pas renseigné.
+  const raw = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
+  const projectId = raw && !raw.startsWith('00000000') ? raw : undefined;
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    return tokenData.data;
+  } catch (err) {
+    // Projet EAS absent/invalide ou service push indisponible — l'app continue sans push.
+    console.warn('[push] Enregistrement du token impossible :', (err as Error)?.message);
+    return null;
+  }
 }
 
 export async function sendTokenToBackend(token: string): Promise<void> {

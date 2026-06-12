@@ -425,7 +425,7 @@ export const bookingsService = {
   async cancel(id: string, user: TokenPayload, input: CancelBookingInput) {
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { property: { select: { ownerId: true } } },
+      include: { property: { select: { ownerId: true, title: true } } },
     });
     if (!booking) throw new HttpError(404, 'Réservation introuvable');
 
@@ -480,6 +480,18 @@ export const bookingsService = {
         await walletService.credit(booking.clientId, refundAmount, tx);
       }
     });
+
+    // Notifier les DEUX parties de l'annulation (in-app + email + push — non bloquant)
+    const cancelData = {
+      bookingId: id,
+      propertyTitle: booking.property.title,
+      startDate: booking.startDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short', year: 'numeric' }),
+      cancelledBy,
+    };
+    void Promise.allSettled([
+      notificationsService.notify({ type: 'booking_cancelled', recipientId: booking.clientId, data: cancelData }),
+      notificationsService.notify({ type: 'booking_cancelled', recipientId: booking.property.ownerId, data: cancelData }),
+    ]).catch(() => { /* best-effort */ });
 
     return { message: 'Réservation annulée', refundAmount };
   },
