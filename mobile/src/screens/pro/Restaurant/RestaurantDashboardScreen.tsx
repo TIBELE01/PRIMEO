@@ -331,6 +331,14 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
                 <Ionicons name="bar-chart-outline" size={24} color={PRIMARY} />
                 <Text style={styles.quickLabel}>Statistiques</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Boosts')}>
+                <Ionicons name="flash-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Boosts</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ReceivedReviews')}>
+                <Ionicons name="star-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Avis reçus</Text>
+              </TouchableOpacity>
             </View>
           </View>
 

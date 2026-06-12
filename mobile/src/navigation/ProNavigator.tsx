@@ -230,6 +230,8 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'BookingDetail',       component: BookingDetailScreen,       title: 'Détail réservation' },
   { name: 'RateClient',          component: RateClientScreen,          title: 'Évaluer le client' },
   { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',    headerShown: false },
+  { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
+  { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },
   { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
   { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnement' },
   { name: 'CollaboratorsAccess', component: AccessManagementScreen,    headerShown: false },
