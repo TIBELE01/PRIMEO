@@ -1,10 +1,17 @@
+// ProSettingsScreen — profil / paramètres des comptes professionnels
+// (résidences, hôtels, immobilier, restaurants). Organisé en sections accordéon
+// (une seule ouverte à la fois) :
+//   Informations professionnelles · Mon compte · Avis et évaluations ·
+//   Soutien et aide · Notifications · Zone sensible.
+// Les fonctionnalités métier (annonces, réservations, abonnement, boosts,
+// exports) restent dans leurs propres onglets — elles ne sont plus dupliquées
+// ici. Seul l'écran de profil est concerné.
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView,
+  View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Alert, Modal, TextInput, ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
@@ -12,6 +19,12 @@ import { useProTheme } from '../../hooks/useProTheme';
 import { usersApi } from '../../services/api/endpoints/users';
 import { useAuthStore } from '../../store/authStore';
 import { socketService } from '../../services/socket/socketService';
+import {
+  ProfileAccordion,
+  ProfileActionRow,
+  ProfileInfoRow,
+  useSingleAccordion,
+} from '../../components/ui/ProfileAccordion';
 
 const ROLE_LABELS: Record<string, string> = {
   professional_hebergement: 'Professionnel — Résidence',
@@ -20,27 +33,17 @@ const ROLE_LABELS: Record<string, string> = {
   restaurateur:             'Professionnel — Restaurant',
 };
 
-type Row = { label: string; icon: string; onPress: () => void; danger?: boolean; value?: string };
-
-function SettingsRow({ label, icon, onPress, danger, value, accentColor }: Row & { accentColor: string }) {
-  return (
-    <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.75}>
-      <View style={[s.iconBox, { backgroundColor: danger ? '#FEF2F2' : accentColor + '18' }]}>
-        <Ionicons name={icon as any} size={18} color={danger ? '#DC2626' : accentColor} />
-      </View>
-      <Text style={[s.rowLabel, danger && s.rowDanger]}>{label}</Text>
-      {value ? <Text style={s.rowValue}>{value}</Text> : null}
-      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
-    </TouchableOpacity>
-  );
-}
-
 export default function ProSettingsScreen() {
   const navigation = useNavigation<any>();
   const { user, logout } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const theme = useProTheme();
+  const accent = theme.primary;
+
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Accordéon : seule « Informations professionnelles » est ouverte au montage.
+  const { openKey, toggle } = useSingleAccordion('infos-pro');
 
   // Modal de désactivation
   const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
@@ -52,6 +55,24 @@ export default function ProSettingsScreen() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const roleLabel = ROLE_LABELS[user?.role ?? ''] ?? 'Compte professionnel';
+  const pro = (user ?? {}) as typeof user & {
+    businessName?: string;
+    rccm?: string;
+    taxId?: string;
+    touristLicense?: string;
+    description?: string;
+  };
+
+  // Navigation défensive : certaines routes n'existent pas pour tous les rôles
+  // (ex. ReceivedReviews absent du stack restaurant). On évite ainsi un crash.
+  const safeNavigate = (route: string, fallbackMsg?: string) => {
+    const routeNames = (navigation.getState?.()?.routeNames as string[] | undefined) ?? [];
+    if (routeNames.includes(route)) {
+      navigation.navigate(route);
+    } else if (fallbackMsg) {
+      Alert.alert('Bientôt disponible', fallbackMsg);
+    }
+  };
 
   // Synchronisation du profil au montage (infos pro à jour)
   const loadProfile = useCallback(async () => {
@@ -110,14 +131,23 @@ export default function ProSettingsScreen() {
     }
   };
 
+  const openLegal = () => {
+    const routeNames = (navigation.getState?.()?.routeNames as string[] | undefined) ?? [];
+    if (routeNames.includes('LegalLinks')) {
+      navigation.navigate('LegalLinks');
+    } else {
+      Linking.openURL('https://legal.primeo.ci/cgu/').catch(() => null);
+    }
+  };
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Header band */}
-        <View style={[s.headerBand, { backgroundColor: theme.primary }]}>
+        <View style={[s.headerBand, { backgroundColor: accent }]}>
           <View style={s.avatar}>
-            <Text style={[s.avatarInitials, { color: theme.primary }]}>
+            <Text style={[s.avatarInitials, { color: accent }]}>
               {user ? `${user.firstName?.[0] ?? '?'}${user.lastName?.[0] ?? ''}`.toUpperCase() : '?'}
             </Text>
           </View>
@@ -130,127 +160,78 @@ export default function ProSettingsScreen() {
           </View>
         </View>
 
-        {/* Mon profil */}
-        <Text style={s.sectionTitle}>Mon profil</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Modifier mes informations" icon="person-outline"
-            onPress={() => navigation.navigate('EditProfile')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Changer le mot de passe" icon="key-outline"
-            onPress={() => navigation.navigate('ChangePassword')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Sécurité — 2FA" icon="shield-checkmark-outline"
+        {/* ── 1. Informations professionnelles (ouverte par défaut) ── */}
+        <ProfileAccordion
+          title="Informations professionnelles" icon="business-outline" color={accent}
+          open={openKey === 'infos-pro'} onToggle={() => toggle('infos-pro')}
+        >
+          <ProfileInfoRow icon="storefront-outline" label="Établissement" value={pro.businessName} color={accent} />
+          <ProfileInfoRow icon="mail-outline" label="Email" value={user?.email} color={accent} />
+          <ProfileInfoRow icon="call-outline" label="Téléphone" value={user?.phone} color={accent} />
+          <ProfileInfoRow icon="document-text-outline" label="RCCM" value={pro.rccm} color={accent} />
+          <ProfileInfoRow icon="receipt-outline" label="Numéro fiscal" value={pro.taxId} color={accent} />
+          <ProfileInfoRow icon="ribbon-outline" label="Licence" value={pro.touristLicense} color={accent} />
+          <ProfileInfoRow icon="information-circle-outline" label="Description" value={pro.description} color={accent} />
+          <ProfileActionRow icon="create-outline" label="Modifier mes informations" color={accent} last onPress={() => navigation.navigate('EditProfile')} />
+        </ProfileAccordion>
+
+        {/* ── 2. Mon compte ── */}
+        <ProfileAccordion
+          title="Mon compte" icon="settings-outline" color={accent}
+          open={openKey === 'compte'} onToggle={() => toggle('compte')}
+        >
+          <ProfileActionRow icon="key-outline" label="Changer le mot de passe" color={accent} onPress={() => navigation.navigate('ChangePassword')} />
+          <ProfileActionRow
+            icon="shield-checkmark-outline" label="Sécurité — 2FA" color={accent}
             value={user?.twoFactorEnabled ? 'Activée' : 'Désactivée'}
             onPress={() => navigation.navigate('TwoFactorSetup')}
           />
-        </View>
+          <ProfileActionRow
+            icon="people-outline" label="Gestion des collaborateurs" color={accent}
+            onPress={() => safeNavigate('CollaboratorsAccess', 'La gestion des co-gérants est réservée à la formule Entreprise.')}
+          />
+          <ProfileActionRow icon="pause-circle-outline" label="Désactiver mon compte" color={accent} last danger onPress={() => { setDeactivateDuration(null); setDeactivateModalVisible(true); }} />
+        </ProfileAccordion>
 
-        {/* Mon espace */}
-        <Text style={s.sectionTitle}>Mon espace</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Mes annonces" icon="business-outline"
-            onPress={() => navigation.navigate('PropertiesList')}
+        {/* ── 3. Avis et évaluations ── */}
+        <ProfileAccordion
+          title="Avis et évaluations" icon="star-outline" color={accent}
+          open={openKey === 'avis'} onToggle={() => toggle('avis')}
+        >
+          <ProfileActionRow
+            icon="star-half-outline" label="Avis reçus & réponses" color={accent} last
+            onPress={() => safeNavigate('ReceivedReviews', 'Les avis reçus seront bientôt disponibles ici.')}
           />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Réservations" icon="calendar-outline"
-            onPress={() => navigation.navigate('Bookings')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Abonnement & facturation" icon="card-outline"
-            onPress={() => navigation.navigate('Subscriptions')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Boosts & visibilité" icon="rocket-outline"
-            onPress={() => navigation.navigate('Boosts')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Exporter mes données" icon="download-outline"
-            onPress={() => navigation.navigate('DataExports')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Notifications" icon="notifications-outline"
-            onPress={() => navigation.navigate('Notifications')}
-          />
-        </View>
+        </ProfileAccordion>
 
-        {/* Équipe */}
-        <Text style={s.sectionTitle}>Équipe</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Co-gérants" icon="people-outline"
-            onPress={() => navigation.navigate('CollaboratorsAccess')}
-          />
-        </View>
+        {/* ── 4. Soutien et aide ── */}
+        <ProfileAccordion
+          title="Soutien et aide" icon="help-buoy-outline" color={accent}
+          open={openKey === 'support'} onToggle={() => toggle('support')}
+        >
+          <ProfileActionRow icon="chatbubbles-outline" label="Assistant Primeo" color={accent} onPress={() => navigation.navigate('SupportChatbot')} />
+          <ProfileActionRow icon="ticket-outline" label="Mes tickets de support" color={accent} onPress={() => navigation.navigate('SupportTickets')} />
+          <ProfileActionRow icon="document-text-outline" label="Documentation & infos légales" color={accent} last onPress={openLegal} />
+        </ProfileAccordion>
 
-        {/* Avis */}
-        <Text style={s.sectionTitle}>Réputation</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Avis reçus" icon="star-outline"
-            onPress={() => navigation.navigate('ReceivedReviews')}
-          />
-        </View>
+        {/* ── 5. Notifications ── */}
+        <ProfileAccordion
+          title="Notifications" icon="notifications-outline" color={accent}
+          open={openKey === 'notifications'} onToggle={() => toggle('notifications')}
+        >
+          <ProfileActionRow icon="options-outline" label="Préférences de notifications" color={accent} last onPress={() => navigation.navigate('Notifications')} />
+        </ProfileAccordion>
 
-        {/* Support & aide */}
-        <Text style={s.sectionTitle}>Support & aide</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Assistant Primeo" icon="chatbubbles-outline"
-            onPress={() => navigation.navigate('SupportChatbot')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Mes tickets de support" icon="ticket-outline"
-            onPress={() => navigation.navigate('SupportTickets')}
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Informations légales" icon="document-text-outline"
-            onPress={() => {
-              if (navigation.getState().routeNames?.includes('LegalLinks')) {
-                navigation.navigate('LegalLinks');
-              } else {
-                Linking.openURL('https://legal.primeo.ci/cgu/').catch(() => null);
-              }
-            }}
-          />
-        </View>
-
-        {/* Zone sensible */}
-        <Text style={[s.sectionTitle, { color: '#DC2626' }]}>Zone sensible</Text>
-        <View style={s.section}>
-          <SettingsRow accentColor={theme.primary}
-            label="Désactiver mon compte" icon="pause-circle-outline"
-            onPress={() => { setDeactivateDuration(null); setDeactivateModalVisible(true); }}
-            danger
-          />
-          <View style={s.divider} />
-          <SettingsRow accentColor={theme.primary}
-            label="Supprimer mon compte" icon="trash-outline"
-            onPress={() => { setDeleteStep(1); setDeletePassword(''); setDeleteModalVisible(true); }}
-            danger
-          />
-        </View>
+        {/* ── 6. Zone sensible ── */}
+        <ProfileAccordion
+          title="Zone sensible" icon="alert-circle-outline" color={accent} danger
+          open={openKey === 'sensible'} onToggle={() => toggle('sensible')}
+        >
+          <ProfileActionRow icon="trash-outline" label="Supprimer mon compte" color={accent} last danger onPress={() => { setDeleteStep(1); setDeletePassword(''); setDeleteModalVisible(true); }} />
+        </ProfileAccordion>
 
         {/* Déconnexion */}
-        <View style={[s.section, { marginTop: 8 }]}>
-          <SettingsRow accentColor={theme.primary}
-            label="Se déconnecter" icon="log-out-outline"
-            onPress={() => setShowLogoutModal(true)}
-            danger
-          />
-        </View>
+        <ProfileActionRow icon="log-out-outline" label="Se déconnecter" color={accent} danger last onPress={() => setShowLogoutModal(true)} />
 
         <Text style={s.version}>PRIMEO v1.0.0</Text>
       </ScrollView>
@@ -346,7 +327,7 @@ export default function ProSettingsScreen() {
 
 const s = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: '#F8FAFC' },
-  scroll: { paddingBottom: 40 },
+  scroll: { paddingBottom: 40, paddingTop: 4 },
 
   headerBand: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -361,19 +342,6 @@ const s = StyleSheet.create({
   profileEmail:    { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   roleBadge:       { alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.25)' },
   roleText:        { fontSize: 11, fontWeight: '600', color: '#fff' },
-
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginLeft: 20 },
-  section:      {
-    backgroundColor: '#fff', borderRadius: 16, marginBottom: 12, overflow: 'hidden', marginHorizontal: 16,
-    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  divider:      { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 14 },
-
-  row:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 14, gap: 12 },
-  iconBox:      { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  rowLabel:     { flex: 1, fontSize: 14, fontWeight: '500', color: '#0F1729' },
-  rowValue:     { fontSize: 13, color: '#94A3B8', marginRight: 4 },
-  rowDanger:    { color: '#DC2626' },
 
   version: { textAlign: 'center', fontSize: 11, color: '#CBD5E1', marginTop: 16, marginBottom: 8 },
 

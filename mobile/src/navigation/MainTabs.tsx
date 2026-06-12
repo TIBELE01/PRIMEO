@@ -159,6 +159,24 @@ function MessagesTabStack() {
   );
 }
 
+/** Favorites tab — liste des favoris + accès à la fiche détail et au tunnel de réservation */
+function FavoritesTabStack() {
+  const Stack = S();
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Favorites"               component={sc(FavoritesScreen)} />
+      <Stack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
+      <Stack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
+      <Stack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
+      <Stack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
+      <Stack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
+      <Stack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
+      <Stack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
+      <Stack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  );
+}
+
 /** Profile tab */
 function ProfileTabStack() {
   const Stack = S();
@@ -170,7 +188,6 @@ function ProfileTabStack() {
       <Stack.Screen name="TwoFactorSetup"   component={TwoFactorSetupScreen} options={{ headerShown: true, title: 'Authentification 2FA' }} />
       <Stack.Screen name="LegalLinks"       component={LegalLinksScreen} options={{ headerShown: true, title: 'Informations légales' }} />
       <Stack.Screen name="Referral"          component={sc(ReferralScreen)} />
-      <Stack.Screen name="Favorites"         component={sc(FavoritesScreen)} />
       <Stack.Screen name="MyReviews"         component={sc(MyReviewsScreen)} options={{ headerShown: true, title: 'Mes avis' }} />
       <Stack.Screen name="ReceivedRatings"   component={sc(ReceivedRatingsScreen)} options={{ headerShown: false }} />
       <Stack.Screen name="DisputeList"          component={sc(DisputeListScreen)} options={{ headerShown: false }} />
@@ -254,6 +271,15 @@ function ClientTabs() {
           tabBarAccessibilityLabel: 'Messages',
           tabBarIcon: ({ color, size, focused }) =>
             tabIcon(focused, 'chatbubbles', 'chatbubbles-outline')(color, size),
+        }}
+      />
+      <ClientTab.Screen
+        name="Favoris"
+        component={FavoritesTabStack}
+        options={{
+          tabBarAccessibilityLabel: 'Mes favoris',
+          tabBarIcon: ({ color, size, focused }) =>
+            tabIcon(focused, 'heart', 'heart-outline')(color, size),
         }}
       />
       <ClientTab.Screen

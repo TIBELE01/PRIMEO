@@ -1,7 +1,10 @@
-// ProfileScreen — écran principal du profil utilisateur client
-// Regroupe : infos perso/pro, préférences (thème, devise, notifications),
-// raccourcis (favoris, avis, litiges, parrainage, support) et gestion du
-// compte (modifier, mot de passe, 2FA, désactivation, suppression).
+// ProfileScreen — écran principal du profil utilisateur client.
+// Organisé en sections accordéon (une seule ouverte à la fois) :
+//   Informations · Mon compte · Avis et évaluations · Soutien et aide ·
+//   Notifications · Zone sensible.
+// Les sections « Apparence » et « Dispositif d'affichage / Devise » ont été
+// retirées (réintégrables ultérieurement). Les favoris vivent désormais dans la
+// barre d'onglets principale, plus dans le profil.
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -22,21 +25,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { usersApi } from '../../../services/api/endpoints/users';
 import { useAuthStore } from '../../../store/authStore';
-import { useTheme, type ThemeMode } from '../../../hooks/useTheme';
-import { useCurrencyStore } from '../../../store/currencyStore';
 import { socketService } from '../../../services/socket/socketService';
+import {
+  ProfileAccordion,
+  ProfileActionRow,
+  ProfileInfoRow,
+  useSingleAccordion,
+} from '../../../components/ui/ProfileAccordion';
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
-const CURRENCIES = ['FCFA', 'EUR', 'USD'];
-const CURRENCY_KEY = '@primeo_currency';
 const NOTIF_KEY = '@primeo_notif_prefs';
+const ACCENT = '#1056E0';
 
 type Props = ClientScreenProps<'Profile'>;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Retourne un libellé lisible selon le rôle */
 function roleBadgeLabel(role: string): string {
   const map: Record<string, string> = {
     client: 'Client',
@@ -49,54 +54,10 @@ function roleBadgeLabel(role: string): string {
   return map[role] ?? role;
 }
 
-/** Retourne la couleur du badge rôle */
 function roleBadgeColor(role: string): string {
   if (role === 'client') return '#1056E0';
   if (role === 'admin') return '#7C3AED';
   return '#0D9488';
-}
-
-/** Vérifie si le rôle est un compte professionnel */
-function isPro(role: string): boolean {
-  return role !== 'client' && role !== 'admin';
-}
-
-// ── Composants internes ───────────────────────────────────────────────────────
-
-function InfoRow({ icon, label, value }: { icon: string; label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoIcon}>{icon}</Text>
-      <View style={styles.infoContent}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
-      </View>
-    </View>
-  );
-}
-
-function ActionRow({
-  icon,
-  label,
-  value,
-  onPress,
-  danger = false,
-}: {
-  icon: string;
-  label: string;
-  value?: string;
-  onPress: () => void;
-  danger?: boolean;
-}) {
-  return (
-    <TouchableOpacity style={styles.actionRow} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.actionIcon}>{icon}</Text>
-      <Text style={[styles.actionLabel, danger && styles.textDanger]}>{label}</Text>
-      {value ? <Text style={styles.actionValue}>{value}</Text> : null}
-      <Text style={styles.actionArrow}>›</Text>
-    </TouchableOpacity>
-  );
 }
 
 // ── Écran principal ───────────────────────────────────────────────────────────
@@ -105,13 +66,13 @@ export function ProfileScreen({ navigation }: Props) {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
-  const { themeMode, setThemeMode } = useTheme();
-  const setCurrencyInStore = useCurrencyStore((s) => s.setCurrency);
 
   const [loading, setLoading] = useState(false);
 
-  // Préférences locales
-  const [currency, setCurrencyState] = useState('FCFA');
+  // Accordéon : seule « Informations » est ouverte au montage.
+  const { openKey, toggle } = useSingleAccordion('informations');
+
+  // Préférences de notification (persistées localement)
   const [notifBookings, setNotifBookings] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifPromos, setNotifPromos] = useState(false);
@@ -127,7 +88,6 @@ export function ProfileScreen({ navigation }: Props) {
 
   // Chargement des préférences persistées
   useEffect(() => {
-    AsyncStorage.getItem(CURRENCY_KEY).then((v) => { if (v) setCurrencyState(v); }).catch(() => null);
     AsyncStorage.getItem(NOTIF_KEY).then((raw) => {
       if (!raw) return;
       try {
@@ -159,12 +119,6 @@ export function ProfileScreen({ navigation }: Props) {
     loadProfile();
   }, [loadProfile]);
 
-  const saveCurrency = async (c: string) => {
-    setCurrencyState(c);
-    setCurrencyInStore(c);
-    await AsyncStorage.setItem(CURRENCY_KEY, c).catch(() => null);
-  };
-
   const saveNotifPref = async (key: string, value: boolean) => {
     const prefs = { bookings: notifBookings, messages: notifMessages, promos: notifPromos, [key]: value };
     await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(prefs)).catch(() => null);
@@ -173,30 +127,23 @@ export function ProfileScreen({ navigation }: Props) {
   if (!user) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color="#1056E0" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={ACCENT} style={{ marginTop: 60 }} />
       </SafeAreaView>
     );
   }
 
   const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || '—';
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '?';
-  const isProfessional = isPro(user.role);
-  const proUser = user as typeof user & {
-    businessName?: string;
-    rccm?: string;
-    taxId?: string;
-    description?: string;
+  const detailUser = user as typeof user & {
     dateOfBirth?: string;
     birthDate?: string;
     gender?: string;
   };
-
-  const themes: { mode: ThemeMode; label: string; emoji: string }[] = [
-    { mode: 'light', label: 'Clair', emoji: '☀️' },
-    { mode: 'dark', label: 'Sombre', emoji: '🌙' },
-    { mode: 'blue', label: 'Bleu', emoji: '💎' },
-    { mode: 'auto', label: 'Auto', emoji: '📱' },
-  ];
+  const genderLabel =
+    detailUser.gender === 'male' ? 'Homme'
+    : detailUser.gender === 'female' ? 'Femme'
+    : detailUser.gender === 'other' ? 'Autre'
+    : undefined;
 
   // ── Actions dangereuses ──────────────────────────────────────────────────
 
@@ -254,6 +201,19 @@ export function ProfileScreen({ navigation }: Props) {
     }
   };
 
+  // Export RGPD des données personnelles — traité par le support (pas de
+  // génération automatique côté client pour l'instant).
+  const handleDataExport = () => {
+    Alert.alert(
+      'Exporter mes données personnelles',
+      'Conformément au RGPD, vous pouvez demander une copie de vos données personnelles. La demande est traitée par notre équipe et le fichier vous est envoyé par email.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Contacter le support', onPress: () => navigation.navigate('SupportChatbot') },
+      ],
+    );
+  };
+
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Voulez-vous vraiment vous déconnecter ?', [
       { text: 'Annuler', style: 'cancel' },
@@ -277,7 +237,7 @@ export function ProfileScreen({ navigation }: Props) {
 
         {/* En-tête : avatar + nom + badge rôle */}
         <View style={styles.header}>
-          {loading && <ActivityIndicator color="#1056E0" style={styles.loadingIndicator} />}
+          {loading && <ActivityIndicator color={ACCENT} style={styles.loadingIndicator} />}
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
@@ -292,129 +252,72 @@ export function ProfileScreen({ navigation }: Props) {
               {roleBadgeLabel(user.role)}
             </Text>
           </View>
-          {/* Statut KYC pour les professionnels */}
-          {isProfessional && user.kycStatus && (
-            <View style={[styles.kycBadge, user.kycStatus === 'approved' ? styles.kycApproved : user.kycStatus === 'rejected' ? styles.kycRejected : styles.kycPending]}>
-              <Text style={styles.kycBadgeText}>
-                KYC :{' '}
-                {user.kycStatus === 'approved' ? '✓ Vérifié' : user.kycStatus === 'rejected' ? '✗ Rejeté' : '⏳ En attente'}
-              </Text>
-            </View>
-          )}
-          {!isProfessional && user.isVerified && (
+          {user.isVerified && (
             <View style={[styles.kycBadge, styles.kycApproved]}>
               <Text style={styles.kycBadgeText}>✓ Compte vérifié</Text>
             </View>
           )}
         </View>
 
-        {/* Section informations personnelles */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
-          <InfoRow icon="✉️" label="Email" value={user.email} />
-          <InfoRow icon="📞" label="Téléphone" value={user.phone} />
-          {(proUser.birthDate || proUser.dateOfBirth) && (
-            <InfoRow icon="🎂" label="Date de naissance" value={proUser.birthDate ?? proUser.dateOfBirth} />
-          )}
-          {proUser.gender && (
-            <InfoRow
-              icon="👤"
-              label="Genre"
-              value={
-                proUser.gender === 'male' ? 'Homme'
-                : proUser.gender === 'female' ? 'Femme'
-                : proUser.gender === 'other' ? 'Autre'
-                : 'Non précisé'
-              }
-            />
-          )}
-        </View>
+        {/* ── 1. Informations (ouverte par défaut) ── */}
+        <ProfileAccordion
+          title="Informations" icon="person-circle-outline" color={ACCENT}
+          open={openKey === 'informations'} onToggle={() => toggle('informations')}
+        >
+          <ProfileInfoRow icon="mail-outline" label="Email" value={user.email} color={ACCENT} />
+          <ProfileInfoRow icon="call-outline" label="Téléphone" value={user.phone} color={ACCENT} />
+          <ProfileInfoRow icon="gift-outline" label="Date de naissance" value={detailUser.birthDate ?? detailUser.dateOfBirth} color={ACCENT} />
+          <ProfileInfoRow icon="male-female-outline" label="Genre" value={genderLabel} color={ACCENT} />
+          <ProfileActionRow icon="create-outline" label="Modifier mes informations" color={ACCENT} last onPress={() => navigation.navigate('EditProfile')} />
+        </ProfileAccordion>
 
-        {/* Section informations professionnelles (si pro) */}
-        {isProfessional && (proUser.businessName || proUser.rccm || proUser.taxId || proUser.description) && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Informations professionnelles</Text>
-            <InfoRow icon="🏢" label="Nom de l'établissement" value={proUser.businessName} />
-            <InfoRow icon="📋" label="RCCM" value={proUser.rccm} />
-            <InfoRow icon="🔢" label="Numéro fiscal" value={proUser.taxId} />
-            <InfoRow icon="📝" label="Description" value={proUser.description} />
-          </View>
-        )}
-
-        {/* Mon compte */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Mon compte</Text>
-          <ActionRow icon="✏️" label="Modifier mon profil" onPress={() => navigation.navigate('EditProfile')} />
-          <ActionRow icon="🔑" label="Changer de mot de passe" onPress={() => navigation.navigate('ChangePassword')} />
-          <ActionRow
-            icon="🔒"
-            label="Authentification 2FA"
+        {/* ── 2. Mon compte ── */}
+        <ProfileAccordion
+          title="Mon compte" icon="settings-outline" color={ACCENT}
+          open={openKey === 'compte'} onToggle={() => toggle('compte')}
+        >
+          <ProfileActionRow icon="key-outline" label="Changer de mot de passe" color={ACCENT} onPress={() => navigation.navigate('ChangePassword')} />
+          <ProfileActionRow
+            icon="shield-checkmark-outline" label="Authentification 2FA" color={ACCENT}
             value={user.twoFactorEnabled ? 'Activée' : 'Désactivée'}
             onPress={() => navigation.navigate('TwoFactorSetup')}
           />
-        </View>
+          <ProfileActionRow icon="gift-outline" label="Parrainage" color={ACCENT} onPress={() => navigation.navigate('Referral')} />
+          <ProfileActionRow icon="pause-circle-outline" label="Désactiver mon compte" color={ACCENT} last danger onPress={handleDeactivate} />
+        </ProfileAccordion>
 
-        {/* Avis & évaluations */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Avis & évaluations</Text>
-          <ActionRow icon="⭐" label="Mes avis publiés" onPress={() => navigation.navigate('MyReviews')} />
-          <ActionRow icon="👤" label="Évaluations reçues" onPress={() => navigation.navigate('ReceivedRatings')} />
-          <ActionRow icon="⚖️" label="Mes litiges" onPress={() => navigation.navigate('DisputeList')} />
-          <ActionRow icon="❤️" label="Mes favoris" onPress={() => navigation.navigate('Favorites')} />
-          <ActionRow icon="🎁" label="Parrainage" onPress={() => navigation.navigate('Referral')} />
-        </View>
+        {/* ── 3. Avis et évaluations ── */}
+        <ProfileAccordion
+          title="Avis et évaluations" icon="star-outline" color={ACCENT}
+          open={openKey === 'avis'} onToggle={() => toggle('avis')}
+        >
+          <ProfileActionRow icon="chatbox-ellipses-outline" label="Mes avis publiés" color={ACCENT} onPress={() => navigation.navigate('MyReviews')} />
+          <ProfileActionRow icon="person-outline" label="Évaluations reçues" color={ACCENT} last onPress={() => navigation.navigate('ReceivedRatings')} />
+        </ProfileAccordion>
 
-        {/* Support & aide */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Support & aide</Text>
-          <ActionRow icon="💬" label="Assistant Primeo" onPress={() => navigation.navigate('SupportChatbot')} />
-          <ActionRow icon="🎫" label="Mes tickets de support" onPress={() => navigation.navigate('SupportTickets')} />
-          <ActionRow icon="📄" label="Informations légales" onPress={() => navigation.navigate('LegalLinks')} />
-        </View>
+        {/* ── 4. Soutien et aide ── */}
+        <ProfileAccordion
+          title="Soutien et aide" icon="help-buoy-outline" color={ACCENT}
+          open={openKey === 'support'} onToggle={() => toggle('support')}
+        >
+          <ProfileActionRow icon="chatbubbles-outline" label="Assistant Primeo" color={ACCENT} onPress={() => navigation.navigate('SupportChatbot')} />
+          <ProfileActionRow icon="ticket-outline" label="Mes tickets de support" color={ACCENT} onPress={() => navigation.navigate('SupportTickets')} />
+          <ProfileActionRow icon="warning-outline" label="Mes litiges" color={ACCENT} onPress={() => navigation.navigate('DisputeList')} />
+          <ProfileActionRow icon="document-text-outline" label="Centre d'aide & infos légales" color={ACCENT} last onPress={() => navigation.navigate('LegalLinks')} />
+        </ProfileAccordion>
 
-        {/* Apparence */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Apparence</Text>
-          <View style={styles.themeRow}>
-            {themes.map((t) => (
-              <TouchableOpacity
-                key={t.mode}
-                style={[styles.themeChip, themeMode === t.mode && styles.themeChipActive]}
-                onPress={() => setThemeMode(t.mode)}
-              >
-                <Text style={styles.themeEmoji}>{t.emoji}</Text>
-                <Text style={[styles.themeLabel, themeMode === t.mode && styles.themeLabelActive]}>{t.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Devise d'affichage */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Devise d'affichage</Text>
-          <View style={styles.currencyRow}>
-            {CURRENCIES.map((c) => (
-              <TouchableOpacity
-                key={c}
-                style={[styles.currencyChip, currency === c && styles.currencyChipActive]}
-                onPress={() => saveCurrency(c)}
-              >
-                <Text style={[styles.currencyLabel, currency === c && styles.currencyLabelActive]}>{c}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Notifications */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+        {/* ── 5. Notifications ── */}
+        <ProfileAccordion
+          title="Notifications" icon="notifications-outline" color={ACCENT}
+          open={openKey === 'notifications'} onToggle={() => toggle('notifications')}
+        >
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>Réservations</Text>
             <Switch
               value={notifBookings}
               onValueChange={(v) => { setNotifBookings(v); saveNotifPref('bookings', v); }}
               trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
-              thumbColor={notifBookings ? '#1056E0' : '#9CA3AF'}
+              thumbColor={notifBookings ? ACCENT : '#9CA3AF'}
             />
           </View>
           <View style={styles.switchRow}>
@@ -423,7 +326,7 @@ export function ProfileScreen({ navigation }: Props) {
               value={notifMessages}
               onValueChange={(v) => { setNotifMessages(v); saveNotifPref('messages', v); }}
               trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
-              thumbColor={notifMessages ? '#1056E0' : '#9CA3AF'}
+              thumbColor={notifMessages ? ACCENT : '#9CA3AF'}
             />
           </View>
           <View style={styles.switchRow}>
@@ -432,17 +335,19 @@ export function ProfileScreen({ navigation }: Props) {
               value={notifPromos}
               onValueChange={(v) => { setNotifPromos(v); saveNotifPref('promos', v); }}
               trackColor={{ false: '#E5E7EB', true: '#A7F3D0' }}
-              thumbColor={notifPromos ? '#1056E0' : '#9CA3AF'}
+              thumbColor={notifPromos ? ACCENT : '#9CA3AF'}
             />
           </View>
-        </View>
+        </ProfileAccordion>
 
-        {/* Zone sensible */}
-        <View style={[styles.card, styles.dangerCard]}>
-          <Text style={[styles.sectionTitle, styles.textDanger]}>Zone sensible</Text>
-          <ActionRow icon="⏸️" label="Désactiver mon compte" onPress={handleDeactivate} danger />
-          <ActionRow icon="🗑️" label="Supprimer mon compte" onPress={handleDeleteAccount} danger />
-        </View>
+        {/* ── 6. Zone sensible ── */}
+        <ProfileAccordion
+          title="Zone sensible" icon="alert-circle-outline" color={ACCENT} danger
+          open={openKey === 'sensible'} onToggle={() => toggle('sensible')}
+        >
+          <ProfileActionRow icon="download-outline" label="Exporter mes données personnelles" color={ACCENT} onPress={handleDataExport} />
+          <ProfileActionRow icon="trash-outline" label="Supprimer mon compte" color={ACCENT} last danger onPress={handleDeleteAccount} />
+        </ProfileAccordion>
 
         {/* Déconnexion */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
@@ -581,81 +486,9 @@ const styles = StyleSheet.create({
   roleBadgeText: { fontSize: 13, fontWeight: '700' },
   kycBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 4 },
   kycApproved: { backgroundColor: '#D1FAE5' },
-  kycRejected: { backgroundColor: '#FEE2E2' },
-  kycPending: { backgroundColor: '#FEF3C7' },
   kycBadgeText: { fontSize: 12, fontWeight: '700', color: '#374151' },
 
-  // Cartes
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 14,
-    paddingTop: 4,
-    paddingBottom: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  dangerCard: { borderWidth: 1, borderColor: '#FEE2E2' },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#9CA3AF',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-
-  // Ligne info (lecture seule)
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F4F6FB',
-  },
-  infoIcon: { fontSize: 18, marginRight: 12, marginTop: 1 },
-  infoContent: { flex: 1 },
-  infoLabel: { fontSize: 12, color: '#9CA3AF', marginBottom: 2 },
-  infoValue: { fontSize: 15, color: '#111827', fontWeight: '500' },
-
-  // Ligne action
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#F4F6FB',
-  },
-  actionIcon: { fontSize: 18, marginRight: 12 },
-  actionLabel: { flex: 1, fontSize: 15, color: '#111827', fontWeight: '500' },
-  actionValue: { fontSize: 14, color: '#6B7280', marginRight: 6 },
-  actionArrow: { fontSize: 20, color: '#D1D5DB' },
-  textDanger: { color: '#EF4444' },
-
-  // Apparence (thème)
-  themeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12 },
-  themeChip: { flex: 1, minWidth: 70, alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E5E7EB', gap: 4 },
-  themeChipActive: { borderColor: '#1056E0', backgroundColor: '#EFF6FF' },
-  themeEmoji: { fontSize: 20 },
-  themeLabel: { fontSize: 12, color: '#6B7280', fontWeight: '600' },
-  themeLabelActive: { color: '#1056E0' },
-
-  // Devise
-  currencyRow: { flexDirection: 'row', gap: 10, padding: 12 },
-  currencyChip: { flex: 1, alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E5E7EB' },
-  currencyChipActive: { borderColor: '#1056E0', backgroundColor: '#EFF6FF' },
-  currencyLabel: { fontSize: 14, color: '#6B7280', fontWeight: '700' },
-  currencyLabelActive: { color: '#1056E0' },
-
-  // Notifications
+  // Notifications (switches)
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F4F6FB' },
   switchLabel: { fontSize: 15, color: '#111827', fontWeight: '500' },
 
