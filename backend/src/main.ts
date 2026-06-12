@@ -6,10 +6,15 @@ import { createApp } from './app';
 import { initSocketServer } from './modules/messaging/socket.server';
 import { startAllJobs } from './jobs';
 import { logger } from './common/utils/logger';
-import { env } from './config/env.config';
+import { env, reportEnvReadiness } from './config/env.config';
 import { validateSmtpConnection } from './common/utils/mailer';
 
 async function bootstrap(): Promise<void> {
+  // Audit de configuration : signale les intégrations tierces incomplètes sans
+  // bloquer le démarrage (les variables critiques DB/Supabase sont déjà validées
+  // — et bloquantes — dans env.config.ts).
+  reportEnvReadiness();
+
   const app = createApp();
   const server = http.createServer(app);
 

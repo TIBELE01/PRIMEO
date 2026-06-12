@@ -140,4 +140,62 @@ if (env.NODE_ENV === 'production' && env.SKIP_OTP_VERIFICATION) {
 // Derived: parsed Cloudinary credentials from CLOUDINARY_URL
 export const cloudinaryParsed = parseCloudinaryUrl(env.CLOUDINARY_URL);
 
+// ─── Audit de configuration au démarrage ──────────────────────────────────────
+// Les variables CRITIQUES (DATABASE_URL + Supabase Auth) sont déjà requises par
+// le schéma zod ci-dessus : leur absence interrompt le démarrage (process.exit
+// plus haut). Les intégrations tierces sont OPTIONNELLES — leur absence ne bloque
+// pas le démarrage (les services concernés se dégradent proprement : mailer/push/
+// sms renvoient null + log d'avertissement), mais elle est signalée explicitement
+// ici pour la visibilité opérationnelle (ex. déploiement Render sans clé Brevo).
+interface IntegrationGroup {
+  name: string;
+  vars: string[];
+}
+
+const OPTIONAL_INTEGRATIONS: IntegrationGroup[] = [
+  { name: 'Genius Pay — paiements en ligne',    vars: ['GENIUS_PAY_API_KEY', 'GENIUS_PAY_SECRET_API_KEY', 'GENIUS_PAY_API_URL'] },
+  { name: 'Genius Pay — vérification webhook',  vars: ['GENIUS_PAY_WEBHOOK_SECRET'] },
+  { name: 'Brevo — emails transactionnels',     vars: ['BREVO_SMTP_HOST', 'BREVO_SMTP_USER', 'BREVO_SMTP_PASS'] },
+  { name: 'OneSignal — notifications push',     vars: ['ONESIGNAL_APP_ID', 'ONESIGNAL_REST_API_KEY'] },
+  { name: 'Orange — SMS / OTP',                 vars: ['ORANGE_CLIENT_ID', 'ORANGE_CLIENT_SECRET', 'ORANGE_SENDER'] },
+  { name: 'Cloudinary — stockage médias',       vars: ['CLOUDINARY_URL'] },
+  { name: 'Geoapify — géolocalisation',         vars: ['GEOAPIFY_API_KEY'] },
+  { name: 'Upstash Redis — cache / rate-limit', vars: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'] },
+];
+
+/**
+ * Signale au démarrage les intégrations tierces dont la configuration est
+ * incomplète. N'INTERROMPT JAMAIS le démarrage : la fonctionnalité concernée est
+ * simplement désactivée/dégradée. À appeler une fois au bootstrap (main.ts).
+ */
+export function reportEnvReadiness(): void {
+  const incomplete: string[] = [];
+  for (const group of OPTIONAL_INTEGRATIONS) {
+    const missing = group.vars.filter((v) => {
+      const val = process.env[v];
+      return val === undefined || val.trim() === '';
+    });
+    if (missing.length > 0) {
+      incomplete.push(`  • ${group.name} — variable(s) manquante(s) : ${missing.join(', ')}`);
+    }
+  }
+
+  if (incomplete.length === 0) {
+    // eslint-disable-next-line no-console
+    console.info('[CONFIG] Toutes les intégrations tierces sont configurées.');
+    return;
+  }
+
+  const body =
+    '[CONFIG] Intégrations tierces incomplètes — démarrage NON bloqué, fonctionnalité dégradée :\n' +
+    incomplete.join('\n');
+
+  // En production, on remonte au niveau erreur (visible dans Sentry/Logtail) sans
+  // pour autant arrêter le service ; en dev/staging, simple avertissement.
+  // eslint-disable-next-line no-console
+  if (env.NODE_ENV === 'production') console.error(body);
+  // eslint-disable-next-line no-console
+  else console.warn(body);
+}
+
 export type Env = typeof env;
