@@ -5,7 +5,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, StatusBar, ActivityIndicator, Share, Alert,
-  ImageBackground,
+  ImageBackground, Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -78,14 +78,68 @@ const rtStyles = RNStyleSheet.create({
   unit:   { fontSize: 11, fontWeight: '400', color: '#6B7280' },
 });
 
+// ── Dimensions de la carte média (carte surélevée, marges latérales) ──────────
+const SCREEN_W = Dimensions.get('window').width;
+const SCREEN_H = Dimensions.get('window').height;
+const MEDIA_CARD_MARGIN = 16;   // marge latérale de la carte
+const MEDIA_CARD_PADDING = 6;   // espacement intérieur carte ↔ média
+const MEDIA_WIDTH = SCREEN_W - 2 * (MEDIA_CARD_MARGIN + MEDIA_CARD_PADDING);
+const MEDIA_HEIGHT = 248;
+
 const DAYS_NEW = 30;
 const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 < DAYS_NEW;
 
-function VideoPlayerCard({ uri, hero }: { uri: string; hero?: boolean }) {
-  const player = useVideoPlayer(uri, p => { p.loop = false; });
+// Lecteur vidéo de la carte média : démarre automatiquement (muet) quand la carte
+// est visible à l'écran, se met en pause dès qu'elle en sort. Bouton mute/unmute.
+function MediaVideoPlayer({ uri, isVisible }: { uri: string; isVisible: boolean }) {
+  const player = useVideoPlayer(uri, (p: { loop: boolean; muted: boolean }) => {
+    p.loop = true;     // boucle : la vidéo tourne tant que la carte reste visible
+    p.muted = true;    // son coupé par défaut (bonne pratique autoplay)
+  });
+  const [muted, setMuted] = React.useState(true);
+
+  // Play/pause piloté par la visibilité de la carte (économie de ressources)
+  React.useEffect(() => {
+    if (!player) return;
+    try {
+      if (isVisible) player.play();
+      else player.pause();
+    } catch {
+      // player éventuellement libéré pendant une transition de navigation
+    }
+  }, [isVisible, player]);
+
+  const toggleMute = () => {
+    setMuted((prev) => {
+      const next = !prev;
+      try { player.muted = next; } catch { /* no-op */ }
+      return next;
+    });
+  };
+
   return (
-    <View style={[styles.videoCard, hero && styles.videoCardHero]}>
-      <VideoView player={player} style={hero ? styles.videoViewHero : styles.videoView} allowsFullscreen nativeControls contentFit="contain" />
+    <View style={styles.mediaVideoWrap}>
+      <VideoView
+        player={player}
+        style={styles.mediaVideoView}
+        nativeControls={false}
+        contentFit="cover"
+        accessibilityLabel="Vidéo de présentation du bien"
+      />
+      {/* Badge « Vidéo » discret */}
+      <View style={styles.mediaVideoBadge}>
+        <Text style={styles.mediaVideoBadgeText}>▶ Vidéo</Text>
+      </View>
+      {/* Bouton mute/unmute */}
+      <TouchableOpacity
+        style={styles.mediaMuteBtn}
+        onPress={toggleMute}
+        accessibilityRole="button"
+        accessibilityLabel={muted ? 'Activer le son' : 'Couper le son'}
+        hitSlop={8}
+      >
+        <Text style={styles.mediaMuteIcon}>{muted ? '🔇' : '🔊'}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -104,6 +158,21 @@ export function PropertyDetailScreen() {
   const [selectedDates, setSelectedDates] = useState<{ checkIn: string; checkOut: string } | null>(null);
   const [isFav, setIsFav] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  // Visibilité de la carte média à l'écran → pilote l'autoplay/pause de la vidéo
+  const [mediaVisible, setMediaVisible] = useState(true);
+  const mediaLayout = React.useRef({ y: 0, h: MEDIA_HEIGHT });
+  const onMediaLayout = useCallback((e: { nativeEvent: { layout: { y: number; height: number } } }) => {
+    mediaLayout.current = { y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height };
+  }, []);
+  const onScrollMedia = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    const scrollY = e.nativeEvent.contentOffset.y;
+    const { y, h } = mediaLayout.current;
+    const top = y - scrollY;
+    const bottom = top + h;
+    // Considérée visible si une portion notable de la carte est dans le viewport
+    const visible = bottom > SCREEN_H * 0.18 && top < SCREEN_H * 0.82;
+    setMediaVisible((prev) => (prev === visible ? prev : visible));
+  }, []);
 
   const isAuthenticated = !!useAuthStore(s => s.accessToken);
   const kind = property ? kindOf(property.type) : 'hebergement';
@@ -292,34 +361,45 @@ export function PropertyDetailScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScrollMedia}
+        scrollEventThrottle={16}
+      >
 
-        {/* ── Zone média unique : photos OU vidéo OU visite 3D ── */}
-        {mediaKind === 'video' && videoMedia.length > 0 ? (
-          <View style={styles.heroMedia}>
-            <VideoPlayerCard uri={videoMedia[0].url} hero />
+        {/* ── Carte média unique (surélevée) : photos OU vidéo OU visite 3D ── */}
+        <View style={styles.mediaCardOuter} onLayout={onMediaLayout}>
+          <View style={styles.mediaCardInner}>
+            {mediaKind === 'video' && videoMedia.length > 0 ? (
+              <MediaVideoPlayer uri={videoMedia[0].url} isVisible={mediaVisible} />
+            ) : mediaKind === 'threed' && tourPanoramas.length > 0 ? (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate('VirtualTour', { panoramas: tourPanoramas, propertyName: property.name })}
+                accessibilityRole="button"
+                accessibilityLabel="Faire une visite virtuelle 3D"
+              >
+                {/* Aperçu statique (1ʳᵉ pièce) — le viewer 3D ne s'ouvre qu'au clic */}
+                <ImageBackground source={{ uri: tourPanoramas[0].imageUrl }} style={styles.mediaTour} resizeMode="cover">
+                  <View style={styles.mediaTourScrim} />
+                  <View style={styles.mediaTourBadge}>
+                    <Text style={styles.mediaTourBadgeText}>🥽 Visite 3D · {tourPanoramas.length} pièce{tourPanoramas.length > 1 ? 's' : ''}</Text>
+                  </View>
+                  <View style={styles.mediaTourCenter}>
+                    <View style={styles.mediaTourCta}>
+                      <Text style={styles.mediaTourCtaIcon}>🥽</Text>
+                      <Text style={styles.mediaTourCtaText}>Faire une visite virtuelle</Text>
+                    </View>
+                  </View>
+                </ImageBackground>
+              </TouchableOpacity>
+            ) : (
+              <ImageGallery images={images} width={MEDIA_WIDTH} height={MEDIA_HEIGHT} />
+            )}
           </View>
-        ) : mediaKind === 'threed' && tourPanoramas.length > 0 ? (
-          <TouchableOpacity
-            style={styles.heroMedia}
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('VirtualTour', { panoramas: tourPanoramas, propertyName: property.name })}
-            accessibilityRole="button"
-            accessibilityLabel="Lancer la visite virtuelle 3D"
-          >
-            <ImageBackground source={{ uri: tourPanoramas[0].imageUrl }} style={styles.heroTour} resizeMode="cover">
-              <View style={styles.heroTourOverlay}>
-                <Text style={styles.heroTourIcon}>🔭</Text>
-                <Text style={styles.heroTourTitle}>Visite virtuelle 3D</Text>
-                <Text style={styles.heroTourSub}>
-                  {tourPanoramas.length} pièce{tourPanoramas.length > 1 ? 's' : ''} à explorer · Touchez pour démarrer
-                </Text>
-              </View>
-            </ImageBackground>
-          </TouchableOpacity>
-        ) : (
-          <ImageGallery images={images} />
-        )}
+        </View>
 
         {/* Badges */}
         <View style={styles.badges}>
@@ -620,20 +700,61 @@ const styles = StyleSheet.create({
   orderBtnText: { fontSize: 13, fontWeight: '700' },
 
   vtWrap: { paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
-  heroMedia: { width: '100%', backgroundColor: '#000' },
-  videoCardHero: { borderRadius: 0 },
-  videoViewHero: { width: '100%', height: 280 },
-  heroTour: { width: '100%', height: 280, justifyContent: 'flex-end' },
-  heroTourOverlay: {
-    backgroundColor: 'rgba(11, 18, 32, 0.55)', alignItems: 'center',
-    paddingVertical: 22, paddingHorizontal: 16, gap: 4,
+  // ── Carte média surélevée ──────────────────────────────────────────────────
+  // Conteneur extérieur : porte l'ombre (pas d'overflow:hidden pour ne pas la couper)
+  mediaCardOuter: {
+    marginHorizontal: MEDIA_CARD_MARGIN,
+    marginTop: 14,
+    marginBottom: 6,
+    padding: MEDIA_CARD_PADDING,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 12,
   },
-  heroTourIcon: { fontSize: 30 },
-  heroTourTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  heroTourSub: { color: '#D1D5DB', fontSize: 13 },
-  videoSection: { paddingHorizontal: 16, paddingBottom: 8, gap: 12 },
-  videoCard: { borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
-  videoView: { width: '100%', height: 210 },
+  // Conteneur intérieur : rogne le média (carrousel/vidéo/3D) aux coins arrondis
+  mediaCardInner: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#0B1220',
+  },
+  // Vidéo
+  mediaVideoWrap: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, backgroundColor: '#000' },
+  mediaVideoView: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT },
+  mediaVideoBadge: {
+    position: 'absolute', top: 10, left: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
+    paddingHorizontal: 9, paddingVertical: 4,
+  },
+  mediaVideoBadgeText: { color: '#fff', fontSize: 11.5, fontWeight: '700' },
+  mediaMuteBtn: {
+    position: 'absolute', bottom: 10, right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 18,
+    width: 36, height: 36, alignItems: 'center', justifyContent: 'center',
+  },
+  mediaMuteIcon: { fontSize: 16 },
+  // Visite 3D — aperçu statique + CTA
+  mediaTour: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, justifyContent: 'center' },
+  mediaTourScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(11,18,32,0.35)' },
+  mediaTourBadge: {
+    position: 'absolute', top: 10, left: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
+    paddingHorizontal: 9, paddingVertical: 4,
+  },
+  mediaTourBadgeText: { color: '#fff', fontSize: 11.5, fontWeight: '700' },
+  mediaTourCenter: { alignItems: 'center', justifyContent: 'center' },
+  mediaTourCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#1056E0', borderRadius: 999,
+    paddingHorizontal: 20, paddingVertical: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 6,
+  },
+  mediaTourCtaIcon: { fontSize: 18 },
+  mediaTourCtaText: { color: '#fff', fontSize: 15, fontWeight: '800' },
 
   // Sticky bottom bar
   stickyBar: {

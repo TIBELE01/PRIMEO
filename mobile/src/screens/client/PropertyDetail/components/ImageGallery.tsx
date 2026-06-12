@@ -4,11 +4,13 @@ import { PropertyImageGallery } from '../../../../components/property/PropertyIm
 
 interface ImageGalleryProps {
   images: string[];
+  width?: number;
+  height?: number;
 }
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
-  const handlePress = (index: number) => {
+export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, width, height }) => {
+  const handlePress = (_index: number) => {
     // TODO: open fullscreen modal viewer
   };
-  return <PropertyImageGallery images={images} onImagePress={handlePress} />;
+  return <PropertyImageGallery images={images} onImagePress={handlePress} width={width} height={height} />;
 };
