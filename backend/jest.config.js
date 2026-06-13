@@ -49,11 +49,33 @@ module.exports = {
     './src/modules/webhooks/webhooks.service.ts': {
       statements: 50, branches: 30, functions: 40, lines: 50,
     },
-    './src/modules/subscriptions/subscriptions.service.ts': {
-      statements: 35, branches: 25, functions: 20, lines: 38,
-    },
     './src/modules/auth/auth.service.ts': {
       statements: 55, branches: 50, functions: 40, lines: 55,
+    },
+
+    // ── Core business ≥ 70 % — verrouillé en CI (marges sous le niveau atteint) ──
+    // Métrique-phare = statements/lines (≥ 72-95 %). Branches/functions fixées
+    // sous le niveau atteint (secondaires, plus difficiles à saturer).
+    './src/modules/bookings/bookings.service.ts': {
+      statements: 75, branches: 50, functions: 58, lines: 78,
+    },
+    './src/modules/subscriptions/subscriptions.service.ts': {
+      statements: 80, branches: 45, functions: 60, lines: 85,
+    },
+    './src/modules/boosts/boosts.service.ts': {
+      statements: 85, branches: 55, functions: 75, lines: 88,
+    },
+    './src/modules/referrals/referrals.service.ts': {
+      statements: 88, branches: 65, functions: 68, lines: 90,
+    },
+    './src/modules/notifications/notifications.service.ts': {
+      statements: 80, branches: 55, functions: 68, lines: 82,
+    },
+    './src/modules/wallets/wallets.service.ts': {
+      statements: 95, branches: 80, functions: 100, lines: 95,
+    },
+    './src/modules/webhooks/handlers/genius-pay.handler.ts': {
+      statements: 72, branches: 45, functions: 38, lines: 72,
     },
   },
 };
