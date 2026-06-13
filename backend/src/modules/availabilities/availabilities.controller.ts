@@ -42,3 +42,33 @@ export async function exportIcal(req: Request, res: Response, next: NextFunction
     next(err);
   }
 }
+
+// ── Import iCal externe (Airbnb / Booking) ──────────────────────────────────
+
+export async function listIcalFeeds(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json({ data: await availabilitiesService.listIcalFeeds(req.params.propertyId, req.user!.sub) });
+  } catch (err) { next(err); }
+}
+
+export async function addIcalFeed(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const feed = await availabilitiesService.addIcalFeed(req.params.propertyId, req.user!.sub, req.body);
+    res.status(201).json({ data: feed });
+  } catch (err) { next(err); }
+}
+
+export async function removeIcalFeed(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await availabilitiesService.removeIcalFeed(req.params.propertyId, req.params.feedId, req.user!.sub);
+    res.status(204).send();
+  } catch (err) { next(err); }
+}
+
+export async function syncIcalFeeds(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await availabilitiesService.listIcalFeeds(req.params.propertyId, req.user!.sub); // assert owner
+    const result = await availabilitiesService.syncProperty(req.params.propertyId);
+    res.json({ data: result });
+  } catch (err) { next(err); }
+}

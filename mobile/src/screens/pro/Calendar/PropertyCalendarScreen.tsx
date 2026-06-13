@@ -260,9 +260,14 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Calendrier</Text>
-        <TouchableOpacity onPress={handleExportIcal} style={styles.icalBtn}>
-          <Text style={styles.icalBtnText}>Export iCal</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => navigation.navigate('IcalFeeds', { propertyId })} style={styles.icalBtn}>
+            <Text style={styles.icalBtnText}>Import iCal</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleExportIcal} style={styles.icalBtn}>
+            <Text style={styles.icalBtnText}>Export iCal</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* View mode toggle */}
@@ -376,6 +381,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  headerActions: { flexDirection: 'row', gap: 8 },
   icalBtn: { backgroundColor: '#EFF6FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE' },
   icalBtnText: { fontSize: 12, color: '#1D4ED8', fontWeight: '700' },
   viewToggleRow: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },

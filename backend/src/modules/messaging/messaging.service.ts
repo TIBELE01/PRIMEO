@@ -2,7 +2,75 @@
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 
+// Réponses rapides génériques — affichées aux clients (non éditables).
+const GENERIC_CLIENT_TEMPLATES = [
+  { label: 'Heures d\'arrivée ?', content: 'Bonjour, quelles sont les heures d\'arrivée et de départ ?' },
+  { label: 'Toujours dispo ?', content: 'Bonjour, ce logement est-il toujours disponible pour mes dates ?' },
+  { label: 'Demander la facture', content: 'Bonjour, puis-je avoir une facture pour ma réservation ?' },
+  { label: 'Comment s\'y rendre ?', content: 'Bonjour, pouvez-vous m\'indiquer comment me rendre sur place ?' },
+  { label: 'Merci', content: 'Merci beaucoup pour votre réponse !' },
+];
+
+// Modèles par défaut proposés au pro tant qu'il n'a rien créé.
+const DEFAULT_PRO_TEMPLATES = [
+  { label: 'Bienvenue', content: 'Bonjour et merci pour votre réservation ! Je reste à votre disposition pour toute question.' },
+  { label: 'Check-in', content: 'Bonjour, l\'arrivée se fait à partir de 14h et le départ avant 11h. Souhaitez-vous un autre horaire ?' },
+  { label: 'Itinéraire', content: 'Voici les instructions pour vous rendre sur place : ' },
+  { label: 'Facture envoyée', content: 'Votre facture est disponible dans l\'application, rubrique « Mes réservations ».' },
+  { label: 'Bon séjour', content: 'Tout est prêt pour votre arrivée. Excellent séjour à vous !' },
+];
+
+const isPro = (role: string) =>
+  ['professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'].includes(role);
+
 export const messagingService = {
+  // ── Réponses rapides ─────────────────────────────────────────────────────────
+
+  async listTemplates(userId: string, role: string) {
+    if (!isPro(role)) {
+      return GENERIC_CLIENT_TEMPLATES.map((t, i) => ({ id: `generic-${i}`, ...t, editable: false }));
+    }
+    const custom = await prisma.messageTemplate.findMany({
+      where: { userId },
+      orderBy: { sortOrder: 'asc' },
+    });
+    if (custom.length > 0) {
+      return custom.map((t) => ({ id: t.id, label: t.label, content: t.content, editable: true }));
+    }
+    // Aucun modèle perso → suggestions par défaut (non persistées)
+    return DEFAULT_PRO_TEMPLATES.map((t, i) => ({ id: `default-${i}`, ...t, editable: false }));
+  },
+
+  async createTemplate(userId: string, role: string, input: { label: string; content: string }) {
+    if (!isPro(role)) throw new HttpError(403, 'Réservé aux comptes professionnels');
+    const label = input.label?.trim();
+    const content = input.content?.trim();
+    if (!label || !content) throw new HttpError(400, 'Libellé et message requis');
+    const count = await prisma.messageTemplate.count({ where: { userId } });
+    if (count >= 30) throw new HttpError(400, 'Limite de 30 modèles atteinte');
+    return prisma.messageTemplate.create({ data: { userId, label, content, sortOrder: count } });
+  },
+
+  async updateTemplate(userId: string, id: string, input: { label?: string; content?: string; sortOrder?: number }) {
+    const tpl = await prisma.messageTemplate.findFirst({ where: { id, userId } });
+    if (!tpl) throw new HttpError(404, 'Modèle introuvable');
+    return prisma.messageTemplate.update({
+      where: { id },
+      data: {
+        ...(input.label !== undefined ? { label: input.label.trim() } : {}),
+        ...(input.content !== undefined ? { content: input.content.trim() } : {}),
+        ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
+      },
+    });
+  },
+
+  async deleteTemplate(userId: string, id: string) {
+    const tpl = await prisma.messageTemplate.findFirst({ where: { id, userId } });
+    if (!tpl) throw new HttpError(404, 'Modèle introuvable');
+    await prisma.messageTemplate.delete({ where: { id } });
+    return { removed: true };
+  },
+
   // Returns true if userId is allowed to participate in the booking conversation
   async isAuthorized(bookingId: string, userId: string, role: string): Promise<boolean> {
     if (role === 'admin') return true;

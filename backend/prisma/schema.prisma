@@ -113,6 +113,7 @@ enum AvailabilityStatus {
   available
   booked
   manually_blocked
+  external_blocked // bloqué via un calendrier iCal externe (Airbnb/Booking)
 }
 
 // §3.6 — Statut de réservation
@@ -327,6 +328,7 @@ model User {
   wallet                Wallet?
   dataExports           DataExport[]
   payouts               Payout[]             @relation("ProfessionalPayouts")
+  messageTemplates      MessageTemplate[]
 
   @@index([accountType, status])
   @@map("users")
@@ -600,6 +602,7 @@ model Property {
   media             PropertyMedia[]
   scenes3d          Property3dScene[]
   availabilities    Availability[]
+  icalFeeds         PropertyIcalFeed[]
   bookings          Booking[]
   reviews           Review[]
   favorites         Favorite[]
@@ -673,6 +676,23 @@ model Availability {
   @@unique([propertyId, date])
   @@index([propertyId, date])
   @@map("availabilities")
+}
+
+// Flux iCal externe (Airbnb, Booking…) synchronisé périodiquement : les dates des
+// VEVENT deviennent des `external_blocked` dans availabilities (jamais les
+// réservations internes ni les blocages manuels).
+model PropertyIcalFeed {
+  id           String    @id @default(cuid())
+  propertyId   String
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url          String
+  source       String    @default("autre") // airbnb | booking | autre
+  lastSyncedAt DateTime?
+  lastError    String?
+  createdAt    DateTime  @default(now())
+
+  @@index([propertyId])
+  @@map("property_ical_feeds")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -800,6 +820,21 @@ model Message {
   @@index([bookingId, sentAt])
   @@index([disputeId])
   @@map("messages")
+}
+
+// Réponses rapides personnalisables (messagerie). Les pros gèrent leurs propres
+// modèles ; les clients reçoivent une liste générique (constantes, hors base).
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String   // libellé court affiché sur la puce
+  content   String   // texte inséré dans le message
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, sortOrder])
+  @@map("message_templates")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

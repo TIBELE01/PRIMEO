@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet,
   KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator,
-  Alert, Image,
+  Alert, Image, ScrollView, Modal,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
@@ -28,6 +28,18 @@ export function ChatScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
+
+  // Réponses rapides (templates) : génériques pour les clients, CRUD pour les pros.
+  type QuickTemplate = { id: string; label: string; content: string; editable: boolean };
+  const [templates, setTemplates] = useState<QuickTemplate[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const canEditTemplates = templates.some(t => t.editable) ||
+    (user?.role && user.role !== 'client' && user.role !== 'admin');
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editing, setEditing] = useState<QuickTemplate | null>(null);
+  const [draftLabel, setDraftLabel] = useState('');
+  const [draftContent, setDraftContent] = useState('');
+  const [savingTpl, setSavingTpl] = useState(false);
   const listRef = useRef<FlatList>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingActive = useRef(false);
@@ -53,6 +65,77 @@ export function ChatScreen({ navigation, route }: Props) {
     })();
     return () => { cancelled = true; };
   }, [bookingId]);
+
+  // Charge les réponses rapides (une fois) — l'API renvoie les modèles
+  // génériques (clients) ou les modèles du pro / suggestions par défaut.
+  const loadTemplates = useCallback(async () => {
+    try {
+      const res = await messagesApi.listTemplates();
+      const list: QuickTemplate[] = res?.data?.data ?? res?.data ?? [];
+      setTemplates(Array.isArray(list) ? list : []);
+    } catch {
+      setTemplates([]);
+    }
+  }, []);
+
+  useEffect(() => { loadTemplates(); }, [loadTemplates]);
+
+  const handlePickTemplate = (tpl: QuickTemplate) => {
+    setText(prev => (prev.trim() ? `${prev.trim()} ${tpl.content}` : tpl.content));
+    setShowTemplates(false);
+  };
+
+  const openEditor = (tpl: QuickTemplate | null) => {
+    setEditing(tpl);
+    setDraftLabel(tpl?.label ?? '');
+    setDraftContent(tpl?.content ?? '');
+    setEditorVisible(true);
+  };
+
+  const closeEditor = () => {
+    setEditorVisible(false);
+    setEditing(null);
+    setDraftLabel('');
+    setDraftContent('');
+  };
+
+  const handleSaveTemplate = async () => {
+    const label = draftLabel.trim();
+    const content = draftContent.trim();
+    if (!label || !content || savingTpl) return;
+    setSavingTpl(true);
+    try {
+      if (editing && editing.editable) {
+        await messagesApi.updateTemplate(editing.id, { label, content });
+      } else {
+        await messagesApi.createTemplate(label, content);
+      }
+      await loadTemplates();
+      closeEditor();
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'enregistrer ce modèle pour le moment.');
+    } finally {
+      setSavingTpl(false);
+    }
+  };
+
+  const handleDeleteTemplate = (tpl: QuickTemplate) => {
+    if (!tpl.editable) return;
+    Alert.alert('Supprimer ce modèle ?', tpl.label, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer', style: 'destructive',
+        onPress: async () => {
+          try {
+            await messagesApi.deleteTemplate(tpl.id);
+            await loadTemplates();
+          } catch {
+            Alert.alert('Erreur', 'Suppression impossible pour le moment.');
+          }
+        },
+      },
+    ]);
+  };
 
   // Socket subscription
   // ⚠️ Le nettoyage doit être retourné par l'EFFET lui-même, pas par le
@@ -265,10 +348,41 @@ export function ChatScreen({ navigation, route }: Props) {
           </View>
         )}
 
+        {/* Réponses rapides (chips) */}
+        {showTemplates && (
+          <View style={styles.tplBar}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tplRow}>
+              {templates.map(tpl => (
+                <TouchableOpacity
+                  key={tpl.id}
+                  style={styles.tplChip}
+                  onPress={() => handlePickTemplate(tpl)}
+                  onLongPress={() => handleDeleteTemplate(tpl)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.tplChipText} numberOfLines={1}>{tpl.label}</Text>
+                </TouchableOpacity>
+              ))}
+              {canEditTemplates && (
+                <TouchableOpacity style={styles.tplAddChip} onPress={() => openEditor(null)} activeOpacity={0.7}>
+                  <Text style={styles.tplAddChipText}>＋ Ajouter</Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Input bar */}
         <View style={styles.inputBar}>
           <TouchableOpacity style={styles.iconBtn} onPress={handleImagePick}>
             <Text style={styles.iconBtnText}>📎</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => setShowTemplates(v => !v)}
+            disabled={templates.length === 0 && !canEditTemplates}
+          >
+            <Text style={[styles.iconBtnText, showTemplates && styles.iconBtnActive]}>⚡</Text>
           </TouchableOpacity>
           <TextInput
             style={styles.input}
@@ -288,6 +402,46 @@ export function ChatScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Éditeur de modèle (pro) — création / modification */}
+      <Modal visible={editorVisible} transparent animationType="slide" onRequestClose={closeEditor}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{editing ? 'Modifier le modèle' : 'Nouveau modèle'}</Text>
+            <Text style={styles.modalLabel}>Libellé (bouton)</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={draftLabel}
+              onChangeText={setDraftLabel}
+              placeholder="Ex : Heure d'arrivée"
+              placeholderTextColor="#9CA3AF"
+              maxLength={60}
+            />
+            <Text style={styles.modalLabel}>Message</Text>
+            <TextInput
+              style={[styles.modalInput, styles.modalTextarea]}
+              value={draftContent}
+              onChangeText={setDraftContent}
+              placeholder="Texte qui sera inséré dans le message..."
+              placeholderTextColor="#9CA3AF"
+              multiline
+              maxLength={1000}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={closeEditor}>
+                <Text style={styles.modalCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSave, (!draftLabel.trim() || !draftContent.trim()) && styles.modalSaveDisabled]}
+                onPress={handleSaveTemplate}
+                disabled={!draftLabel.trim() || !draftContent.trim() || savingTpl}
+              >
+                <Text style={styles.modalSaveText}>{savingTpl ? '...' : 'Enregistrer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -330,6 +484,34 @@ const styles = StyleSheet.create({
   },
   iconBtn: { padding: 8 },
   iconBtnText: { fontSize: 20 },
+  iconBtnActive: { opacity: 1, transform: [{ scale: 1.15 }] },
+  tplBar: { borderTopWidth: 1, borderTopColor: '#F3F4F6', backgroundColor: '#fff', paddingVertical: 8 },
+  tplRow: { paddingHorizontal: 10, gap: 8, alignItems: 'center' },
+  tplChip: {
+    backgroundColor: '#EFF4FE', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 8,
+    maxWidth: 220, borderWidth: 1, borderColor: '#DCE7FB',
+  },
+  tplChipText: { color: '#1056E0', fontSize: 13, fontWeight: '600' },
+  tplAddChip: {
+    backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: '#1056E0', borderStyle: 'dashed',
+  },
+  tplAddChipText: { color: '#1056E0', fontSize: 13, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  modalLabel: { fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6, marginTop: 8 },
+  modalInput: {
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: 15, color: '#111827', backgroundColor: '#FAFAFA',
+  },
+  modalTextarea: { minHeight: 80, textAlignVertical: 'top' },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 20 },
+  modalCancel: { paddingHorizontal: 18, paddingVertical: 12 },
+  modalCancelText: { color: '#6B7280', fontSize: 15, fontWeight: '600' },
+  modalSave: { backgroundColor: '#1056E0', borderRadius: 12, paddingHorizontal: 22, paddingVertical: 12 },
+  modalSaveDisabled: { backgroundColor: '#9CB8EE' },
+  modalSaveText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   input: {
     flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 22,
     paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#111827',

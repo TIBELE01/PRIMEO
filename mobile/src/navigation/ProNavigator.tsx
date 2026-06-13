@@ -22,6 +22,7 @@ import AddPropertyScreen          from '../screens/pro/Properties/AddPropertyScr
 import PropertyManagementScreen   from '../screens/pro/Properties/PropertyManagementScreen';
 import Scene3dEditorScreen        from '../screens/pro/Properties/Scene3dEditorScreen';
 import PropertyCalendarScreen     from '../screens/pro/Calendar/PropertyCalendarScreen';
+import IcalFeedsScreen            from '../screens/pro/Calendar/IcalFeedsScreen';
 import BookingsScreen            from '../screens/pro/Bookings/BookingsScreen';
 import BookingDetailScreen       from '../screens/pro/Bookings/BookingDetailScreen';
 import RateClientScreen          from '../screens/pro/Bookings/RateClientScreen';
@@ -156,6 +157,7 @@ function lodgingScreens(labels: {
     { name: 'Scene3dEditor',        component: Scene3dEditorScreen,         title: 'Visite 3D', headerShown: false },
     { name: 'EditProperty',         component: AddPropertyScreen,           title: labels.editProperty },
     { name: 'PropertyCalendar',     component: PropertyCalendarScreen,      title: 'Calendrier' },
+    { name: 'IcalFeeds',            component: IcalFeedsScreen,             title: 'Import iCal', headerShown: false },
     { name: 'Bookings',            component: BookingsScreen,            title: labels.bookings,    headerShown: false },
     { name: 'BookingDetail',       component: BookingDetailScreen,       title: labels.bookingDetail },
     { name: 'RateClient',          component: RateClientScreen,          title: 'Noter le client' },
@@ -228,6 +230,7 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'EditProperty',        component: AddPropertyScreen,         title: 'Modifier mon restaurant' },
   { name: 'PropertyManagement',  component: PropertyManagementScreen,  title: 'Mon établissement' },
   { name: 'Scene3dEditor',       component: Scene3dEditorScreen,       title: 'Visite 3D', headerShown: false },
+  { name: 'IcalFeeds',           component: IcalFeedsScreen,           title: 'Import iCal', headerShown: false },
   { name: 'MenuManagement',      component: MenuManagementScreen,      title: 'Menu',            headerShown: false },
   { name: 'AddMenuItem',         component: MenuManagementScreen,      title: 'Ajouter un plat' },
   { name: 'SpecialMenus',        component: SpecialMenusScreen,        title: 'Menus spéciaux',  headerShown: false },

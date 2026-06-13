@@ -9,4 +9,13 @@ export const availabilitiesApi = {
     apiClient.post(`/availabilities/property/${propertyId}`, data),
   exportIcal: (propertyId: string) =>
     apiClient.get(`/availabilities/property/${propertyId}/ical`, { responseType: 'text' }),
+  // Import iCal externe (Airbnb / Booking)
+  listIcalFeeds: (propertyId: string) =>
+    apiClient.get(`/availabilities/property/${propertyId}/ical-feeds`),
+  addIcalFeed: (propertyId: string, url: string, source: string) =>
+    apiClient.post(`/availabilities/property/${propertyId}/ical-feeds`, { url, source }),
+  removeIcalFeed: (propertyId: string, feedId: string) =>
+    apiClient.delete(`/availabilities/property/${propertyId}/ical-feeds/${feedId}`),
+  syncIcalFeeds: (propertyId: string) =>
+    apiClient.post(`/availabilities/property/${propertyId}/ical-feeds/sync`),
 };

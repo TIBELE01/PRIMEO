@@ -1,6 +1,6 @@
 // Availabilities routes — calendar management for properties
 import { Router } from 'express';
-import { getAvailability, setAvailability, blockDates, exportIcal } from './availabilities.controller';
+import { getAvailability, setAvailability, blockDates, exportIcal, listIcalFeeds, addIcalFeed, removeIcalFeed, syncIcalFeeds } from './availabilities.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
@@ -30,3 +30,13 @@ availabilitiesRouter.post(
   validate(BlockDatesDto),
   blockDates
 );
+
+// Import iCal externe (Airbnb / Booking) — flux par bien
+const proGuard = [
+  authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'),
+  requireKycApproved,
+];
+availabilitiesRouter.get('/property/:propertyId/ical-feeds', ...proGuard, listIcalFeeds);
+availabilitiesRouter.post('/property/:propertyId/ical-feeds', ...proGuard, addIcalFeed);
+availabilitiesRouter.delete('/property/:propertyId/ical-feeds/:feedId', ...proGuard, removeIcalFeed);
+availabilitiesRouter.post('/property/:propertyId/ical-feeds/sync', ...proGuard, syncIcalFeeds);
