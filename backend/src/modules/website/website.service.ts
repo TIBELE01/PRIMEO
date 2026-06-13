@@ -10,7 +10,7 @@ function createHttpError(status: number, msg: string) { return new HttpError(sta
 // ── Defaults (fallback si base vide) ──────────────────────────────────────────
 
 const DEFAULT_HERO = {
-  title: "Primeo, la plateforme de confiance pour vos réservations d'hébergement, de services immobiliers et de restauration en Côte d'Ivoire",
+  title: "Primeo, la plateforme de confiance pour vos réservations d'hébergement, de services immobiliers et de restauration",
   subtitle: "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens sans commission.",
   buttonText: "Télécharger l'application",
   buttonUrl: '#',
