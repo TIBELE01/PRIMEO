@@ -33,6 +33,7 @@ export type NotificationType =
   | 'otp_code'                          // always sent via SMS — bypasses prefs
   | 'referral_reward'                   // referrer earns wallet credit when referee completes first booking
   | 'boost_activated'                   // property boost (free or paid) successfully activated
+  | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
   | 'stay_reminder';                    // rappel J-1 au client avant le début du séjour / de la réservation
 
 export interface NotificationPreferences {
@@ -90,6 +91,7 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   otp_code:                           { email: false, push: false, pushPriority: 'normal', sms: true,  smsCritical: true  },
   referral_reward:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_activated:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  boost_expiry_reminder:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   stay_reminder:                      { email: false, push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
 };
 

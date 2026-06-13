@@ -22,6 +22,7 @@ export const brevoConfig = {
     kycApproved: 6,
     kycRejected: 7,
     subscriptionRenewal: 8,
+    boostExpiryReminder: 8,
     otpCode: 9,
     passwordReset: 10,
     referralReward: 11,

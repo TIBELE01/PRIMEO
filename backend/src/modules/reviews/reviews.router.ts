@@ -1,5 +1,6 @@
 // Reviews routes — client reviews on completed bookings
 import { Router } from 'express';
+import multer from 'multer';
 import {
   createReview,
   updateReview,
@@ -7,7 +8,11 @@ import {
   getPropertyReviews,
   listMyReviews,
   replyToReview,
+  uploadReviewMedia,
+  deleteReviewMedia,
 } from './reviews.controller';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
@@ -38,3 +43,7 @@ reviewsRouter.post(
   validate(ReviewReplyDto),
   replyToReview,
 );
+
+// Client: upload/delete review photos (max 3)
+reviewsRouter.post('/:id/media', parseId, upload.single('file'), uploadReviewMedia);
+reviewsRouter.delete('/:id/media/:mediaId', parseId, deleteReviewMedia);

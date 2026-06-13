@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import type { ReviewsSummary, Review, ReviewCriteria } from '@/types/property';
 import { num } from '@/utils/normalizeProperty';
 
@@ -41,6 +41,13 @@ function ReviewCard({ review }: { review: Review }) {
         </View>
       </View>
       <Text style={styles.reviewText}>{review.comment}</Text>
+      {review.media && review.media.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaRow} contentContainerStyle={{ gap: 8 }}>
+          {review.media.map((m: { id: string; url: string }) => (
+            <Image key={m.id} source={{ uri: m.url }} style={styles.mediaThumb} resizeMode="cover" />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -131,4 +138,6 @@ const styles = StyleSheet.create({
   reviewText: { fontSize: 13, color: '#374151', lineHeight: 20 },
   showMore: { marginTop: 12, paddingVertical: 10, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, alignItems: 'center' },
   showMoreText: { color: '#374151', fontSize: 13, fontWeight: '600' },
+  mediaRow: { marginTop: 10 },
+  mediaThumb: { width: 80, height: 80, borderRadius: 8 },
 });

@@ -191,6 +191,11 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: '🎉 Récompense de parrainage',
         body: `Votre filleul ${String(data['refereeName'] ?? '')} a effectué sa première réservation. ${(data['rewardAmount'] as number | undefined)?.toLocaleString('fr-CI') ?? '2 000'} FCFA ont été ajoutés à votre portefeuille.`,
       };
+    case 'boost_expiry_reminder':
+      return {
+        title: '⚡ Votre boost expire demain',
+        body: `Le boost de votre annonce "${String(data['propertyTitle'] ?? '')}" expire dans moins de 24h. Renouvelez-le pour maintenir votre visibilité.`,
+      };
     default:
       return { title: '', body: '' };
   }
@@ -248,6 +253,7 @@ async function dispatchEmail(
     subscription_reactivated:   t.subscriptionRenewal,
     subscription_grace_warning: t.subscriptionRenewal,
     referral_reward:        t.referralReward,
+    boost_expiry_reminder:  t.boostExpiryReminder,
   };
 
   const templateId = templateMap[type];

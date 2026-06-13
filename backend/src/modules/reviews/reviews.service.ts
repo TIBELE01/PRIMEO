@@ -3,6 +3,7 @@ import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
+import { mediaService } from '../media/media.service';
 import { CreateReviewInput, UpdateReviewInput } from './dto/review.dto';
 
 const EDIT_WINDOW_DAYS = 7;
@@ -131,6 +132,7 @@ export const reviewsService = {
         where: { propertyId, status: 'published' },
         include: {
           author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+          media: true,
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -169,6 +171,30 @@ export const reviewsService = {
       page,
       limit,
     };
+  },
+
+  async uploadMedia(reviewId: string, authorId: string, file: Express.Multer.File) {
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new HttpError(404, 'Avis introuvable');
+    if (review.authorId !== authorId) throw new HttpError(403, 'Vous n\'êtes pas l\'auteur de cet avis');
+
+    const count = await prisma.reviewMedia.count({ where: { reviewId } });
+    if (count >= 3) throw new HttpError(400, 'Maximum 3 photos par avis');
+
+    const result = await mediaService.upload(file, 'reviews');
+    return prisma.reviewMedia.create({ data: { reviewId, url: result.optimizedUrl } });
+  },
+
+  async deleteMedia(mediaId: string, authorId: string) {
+    const media = await prisma.reviewMedia.findUnique({
+      where: { id: mediaId },
+      include: { review: { select: { authorId: true } } },
+    });
+    if (!media) throw new HttpError(404, 'Média introuvable');
+    if (media.review.authorId !== authorId) throw new HttpError(403, 'Vous n\'êtes pas l\'auteur de cet avis');
+
+    await prisma.reviewMedia.delete({ where: { id: mediaId } });
+    return { removed: true };
   },
 
   async addOwnerReply(reviewId: string, userId: string, reply: string) {

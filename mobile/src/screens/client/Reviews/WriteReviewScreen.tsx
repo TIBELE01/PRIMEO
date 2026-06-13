@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator,
+  SafeAreaView, Alert, ActivityIndicator, Image,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
 
 type Props = ClientScreenProps<'WriteReview'>;
+
+interface PhotoAsset { uri: string; name: string; type: string; }
 
 const CRITERIA: { key: string; label: string; icon: string }[] = [
   { key: 'cleanlinessRating',     label: 'Propreté',                 icon: '🧹' },
@@ -36,7 +38,7 @@ function avgCriteria(ratings: Record<string, number>): number {
 }
 
 export function WriteReviewScreen({ navigation, route }: Props) {
-  const { bookingId, propertyId } = route.params ?? ({} as Partial<Props['route']['params']>);
+  const { bookingId } = route.params ?? ({} as Partial<Props['route']['params']>);
 
   const [globalRating, setGlobalRating] = useState(0);
   const [criteria, setCriteria] = useState<Record<string, number>>({
@@ -47,20 +49,25 @@ export function WriteReviewScreen({ navigation, route }: Props) {
     valueRating: 0,
   });
   const [comment, setComment] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<PhotoAsset[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const effectiveRating = globalRating || avgCriteria(criteria);
 
   const handlePickPhotos = async () => {
+    if (photos.length >= 3) return;
     const result = await DocumentPicker.getDocumentAsync({
       type: 'image/*',
       multiple: true,
-      copyToCacheDirectory: false,
+      copyToCacheDirectory: true,
     });
     if (!result.canceled) {
-      const names = result.assets.map(a => a.name ?? a.uri.split('/').pop() ?? 'photo');
-      setPhotos(prev => [...prev, ...names].slice(0, 5));
+      const assets: PhotoAsset[] = result.assets.map(a => ({
+        uri: a.uri,
+        name: a.name ?? a.uri.split('/').pop() ?? 'photo.jpg',
+        type: a.mimeType ?? 'image/jpeg',
+      }));
+      setPhotos(prev => [...prev, ...assets].slice(0, 3));
     }
   };
 
@@ -85,7 +92,15 @@ export function WriteReviewScreen({ navigation, route }: Props) {
         if (criteria[c.key] > 0) payload[c.key] = criteria[c.key];
       });
 
-      await reviewsApi.create(payload);
+      const res = await reviewsApi.create(payload);
+      const review = res?.data?.data ?? res?.data ?? {};
+
+      // Upload photos to the newly created review (best-effort)
+      if (review.id && photos.length > 0) {
+        for (const photo of photos) {
+          await reviewsApi.uploadMedia(review.id, photo).catch(() => null);
+        }
+      }
 
       Alert.alert(
         'Avis soumis ✓',
@@ -162,18 +177,20 @@ export function WriteReviewScreen({ navigation, route }: Props) {
 
         {/* Photos */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos ({photos.length}/5)</Text>
-          <TouchableOpacity style={styles.photoPickBtn} onPress={handlePickPhotos} disabled={photos.length >= 5}>
+          <Text style={styles.sectionTitle}>Photos ({photos.length}/3)</Text>
+          <TouchableOpacity style={styles.photoPickBtn} onPress={handlePickPhotos} disabled={photos.length >= 3}>
             <Text style={styles.photoPickIcon}>📷</Text>
-            <Text style={styles.photoPickText}>Ajouter des photos</Text>
+            <Text style={styles.photoPickText}>
+              {photos.length >= 3 ? 'Limite de 3 photos atteinte' : 'Ajouter des photos'}
+            </Text>
           </TouchableOpacity>
           {photos.length > 0 && (
-            <View style={styles.photoList}>
-              {photos.map((name, i) => (
-                <View key={i} style={styles.photoChip}>
-                  <Text style={styles.photoChipText} numberOfLines={1}>{name}</Text>
-                  <TouchableOpacity onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}>
-                    <Text style={styles.photoRemove}>✕</Text>
+            <View style={styles.photoRow}>
+              {photos.map((p, i) => (
+                <View key={i} style={styles.photoThumb}>
+                  <Image source={{ uri: p.uri }} style={styles.photoImg} resizeMode="cover" />
+                  <TouchableOpacity style={styles.photoRemoveBtn} onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}>
+                    <Text style={styles.photoRemoveText}>✕</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -236,10 +253,11 @@ const styles = StyleSheet.create({
   },
   photoPickIcon: { fontSize: 20 },
   photoPickText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
-  photoList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  photoChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, maxWidth: 160 },
-  photoChipText: { flex: 1, fontSize: 12, color: '#374151' },
-  photoRemove: { fontSize: 12, color: '#9CA3AF', fontWeight: '700' },
+  photoRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  photoThumb: { width: 90, height: 90, borderRadius: 10, overflow: 'hidden' },
+  photoImg: { width: '100%', height: '100%' },
+  photoRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  photoRemoveText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   notice: { flexDirection: 'row', gap: 10, backgroundColor: '#EFF6FF', borderRadius: 12, padding: 14, marginBottom: 20, alignItems: 'flex-start' },
   noticeIcon: { fontSize: 18 },
   noticeText: { flex: 1, fontSize: 13, color: '#1D4ED8', lineHeight: 19 },

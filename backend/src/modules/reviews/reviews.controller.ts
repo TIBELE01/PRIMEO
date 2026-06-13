@@ -55,3 +55,22 @@ export async function replyToReview(req: Request, res: Response, next: NextFunct
     next(err);
   }
 }
+
+export async function uploadReviewMedia(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.file) { res.status(400).json({ message: 'Aucun fichier' }); return; }
+    const result = await reviewsService.uploadMedia(req.params['id']!, req.user!.sub, req.file);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteReviewMedia(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await reviewsService.deleteMedia(req.params['mediaId']!, req.user!.sub);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

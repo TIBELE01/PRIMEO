@@ -13,6 +13,7 @@ export const cloudinaryConfig = {
     reports: 'primeo/reports',
     exports: 'primeo/exports',
     website: 'primeo/website',
+    reviews: 'primeo/reviews',
   },
   maxFileSizeBytes: 10 * 1024 * 1024, // 10 MB (plafond global multer)
   // Plafonds différenciés par type de fichier (§2 — uploads sécurisés)

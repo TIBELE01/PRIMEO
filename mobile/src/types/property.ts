@@ -23,9 +23,11 @@ export interface ReviewCriteria {
   cleanliness?: number; location?: number; value?: number;
   service?: number; communication?: number;
 }
+export interface ReviewMedia { id: string; url: string; }
 export interface Review {
   id: string; authorName: string; authorAvatarUrl?: string;
   rating: number; criteria?: ReviewCriteria; comment: string; createdAt: string;
+  media?: ReviewMedia[];
 }
 export interface ReviewsSummary {
   average: number; total: number; criteria?: ReviewCriteria; items: Review[];
