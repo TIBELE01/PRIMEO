@@ -27,6 +27,7 @@ import RateClientScreen          from '../screens/pro/Bookings/RateClientScreen'
 import SubscriptionsScreen       from '../screens/pro/Subscriptions/SubscriptionsScreen';
 import BoostsScreen              from '../screens/pro/Boosts/BoostsScreen';
 import PayoutsScreen             from '../screens/pro/Payouts/PayoutsScreen';
+import ExtraSlotsScreen          from '../screens/pro/Subscriptions/ExtraSlotsScreen';
 import AnalyticsScreen           from '../screens/pro/Analytics/AnalyticsScreen';
 import { ExportsScreen }         from '../screens/pro/Exports/ExportsScreen';
 import ProReceivedReviewsScreen  from '../screens/pro/Reviews/ProReceivedReviewsScreen';
@@ -157,6 +158,7 @@ function lodgingScreens(labels: {
     { name: 'BookingDetail',       component: BookingDetailScreen,       title: labels.bookingDetail },
     { name: 'RateClient',          component: RateClientScreen,          title: 'Noter le client' },
     { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnements' },
+    { name: 'ExtraSlots',          component: ExtraSlotsScreen,          title: 'Publications suppl.', headerShown: false },
     { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
     { name: 'Payouts',             component: PayoutsScreen,             title: 'Reversements',     headerShown: false },
     { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',     headerShown: false },
@@ -236,6 +238,7 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },
   { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
   { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnement' },
+  { name: 'ExtraSlots',          component: ExtraSlotsScreen,          title: 'Publications suppl.', headerShown: false },
   { name: 'CollaboratorsAccess', component: AccessManagementScreen,    headerShown: false },
   { name: 'Notifications',       component: NotificationsScreen,       headerShown: false },
   { name: 'Conversations',       component: sc(ConversationsScreen),   title: 'Messages',        headerShown: false },

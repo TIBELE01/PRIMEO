@@ -435,6 +435,10 @@ export default function DashboardScreen({ navigation }: any) {
                 <Ionicons name="cash-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Reversements</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ExtraSlots')}>
+                <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
+                <Text style={styles.quickLabel}>Publications +</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

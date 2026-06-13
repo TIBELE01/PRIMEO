@@ -114,8 +114,9 @@ export const propertiesService = {
     const user = await prisma.user.findUnique({ where: { id: ownerId }, select: { accountType: true } });
     const sub  = await prisma.subscription.findUnique({ where: { userId: ownerId } });
     if (sub) {
-      const { getPublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
-      const limit  = getPublicationLimit(sub.planType, user?.accountType ?? '');
+      const { effectivePublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
+      // Limite = formule + publications supplémentaires achetées (500 FCFA/mois)
+      const limit  = effectivePublicationLimit(sub.planType, user?.accountType ?? '', sub.extraPublicationSlots ?? 0);
       // Compte les publications actives (hors archives et rejets)
       const active = await prisma.property.count({
         where: {
@@ -125,7 +126,7 @@ export const propertiesService = {
       });
       if (active >= limit) {
         const label = publicationLabel(user?.accountType ?? '');
-        throw new HttpError(403, `Limite de ${limit} ${label}(s) atteinte pour votre formule ${sub.planType}. Passez à une formule supérieure pour en ajouter davantage.`);
+        throw new HttpError(403, `Limite de ${limit} ${label}(s) atteinte. Achetez des publications supplémentaires (500 FCFA/mois) ou passez à une formule supérieure.`);
       }
     }
 

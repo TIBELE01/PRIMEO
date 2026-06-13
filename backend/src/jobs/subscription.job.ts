@@ -27,6 +27,7 @@ async function processSubscriptionRenewal(sub: {
   monthlyPrice: number;
   nextBillingDate: Date;
   features: unknown;
+  extraPublicationSlots: number;
   user: { email: string; firstName: string; lastName: string; phone?: string | null };
 }): Promise<void> {
   // Apply pending plan change if any
@@ -48,22 +49,44 @@ async function processSubscriptionRenewal(sub: {
   const plan = PLAN_DETAILS[activePlanType];
   if (!plan) return;
 
-  // Starter est gratuit — on avance simplement la date de facturation
-  if (plan.monthlyPrice === 0) {
+  // Publications supplémentaires : applique les résiliations programmées à
+  // l'échéance, puis facture les slots restants (500 FCFA/slot/mois) en plus
+  // du prix de la formule.
+  const EXTRA_SLOT_FCFA = 500;
+  const pendingSlotRemoval = Number(features['pendingSlotRemoval'] ?? 0);
+  const newSlots = Math.max(0, (sub.extraPublicationSlots ?? 0) - pendingSlotRemoval);
+  const slotsCost = newSlots * EXTRA_SLOT_FCFA;
+  const chargeAmount = plan.monthlyPrice + slotsCost;
+
+  // Applique les changements de slots à l'échéance (retire les résiliés, ne les
+  // refacture pas) — fusionne avec les features à jour en base.
+  const applySlotChanges = async () => {
+    const fresh = await prisma.subscription.findUnique({ where: { id: sub.id }, select: { features: true } });
+    const f = ((fresh?.features as Record<string, unknown> | null) ?? {});
+    delete f['pendingSlotRemoval'];
+    await prisma.subscription.update({
+      where: { id: sub.id },
+      data: { extraPublicationSlots: newSlots, features: f as never },
+    });
+  };
+
+  // Rien à facturer (Starter sans slot) — on avance la date et on applique les slots.
+  if (chargeAmount === 0) {
     await prisma.subscription.update({
       where: { id: sub.id },
       data: { nextBillingDate: addOneMonth(sub.nextBillingDate) },
     });
+    await applySlotChanges();
     return;
   }
 
   // Attempt direct charge via Genius Pay
   const charge = await geniusPayService.chargeRecurring({
     subscriptionId: sub.id,
-    amount: plan.monthlyPrice,
+    amount: chargeAmount,
     customerEmail: sub.user.email,
     customerPhone: sub.user.phone ?? undefined,
-    description: `Abonnement Primeo ${plan.name}`,
+    description: `Abonnement Primeo ${plan.name}${newSlots > 0 ? ` + ${newSlots} publication(s) suppl.` : ''}`,
   });
 
   if (charge.success) {
@@ -75,13 +98,13 @@ async function processSubscriptionRenewal(sub: {
         userId: sub.userId,
         subscriptionId: sub.id,
         type: 'subscription_payment',
-        amount: plan.monthlyPrice,
+        amount: chargeAmount,
         fee: 0,
-        netAmount: plan.monthlyPrice,
+        netAmount: chargeAmount,
         status: 'success',
         geniusPayTransactionId: charge.reference || null,
         completedAt: new Date(),
-        notes: `Renouvellement ${plan.name} — ${sub.nextBillingDate.toLocaleDateString('fr-CI')}`,
+        notes: `Renouvellement ${plan.name}${newSlots > 0 ? ` + ${newSlots} publ. suppl.` : ''} — ${sub.nextBillingDate.toLocaleDateString('fr-CI')}`,
       },
     });
 
@@ -89,6 +112,8 @@ async function processSubscriptionRenewal(sub: {
       where: { id: sub.id },
       data: { nextBillingDate: newBillingDate, status: 'active' },
     });
+    // Applique les résiliations de slots programmées (retrait à l'échéance)
+    await applySlotChanges();
 
     // Generate PDF invoice and upload to Cloudinary
     let invoiceUrl: string | undefined;
@@ -100,8 +125,8 @@ async function processSubscriptionRenewal(sub: {
         periodEnd: newBillingDate,
         customerName: `${sub.user.firstName} ${sub.user.lastName}`,
         customerEmail: sub.user.email,
-        planName: plan.name,
-        amount: plan.monthlyPrice,
+        planName: newSlots > 0 ? `${plan.name} + ${newSlots} publ. suppl.` : plan.name,
+        amount: chargeAmount,
         isPaid: true,
       });
 
@@ -119,8 +144,8 @@ async function processSubscriptionRenewal(sub: {
       brevoConfig.templates.subscriptionRenewal,
       {
         firstName: sub.user.firstName,
-        planName: plan.name,
-        amount: plan.monthlyPrice.toLocaleString('fr-CI') + ' FCFA',
+        planName: newSlots > 0 ? `${plan.name} + ${newSlots} publ. suppl.` : plan.name,
+        amount: chargeAmount.toLocaleString('fr-CI') + ' FCFA',
         nextBillingDate: newBillingDate.toLocaleDateString('fr-CI'),
         invoiceUrl: invoiceUrl ?? '',
       },
@@ -134,9 +159,9 @@ async function processSubscriptionRenewal(sub: {
         userId: sub.userId,
         subscriptionId: sub.id,
         type: 'subscription_payment',
-        amount: plan.monthlyPrice,
+        amount: chargeAmount,
         fee: 0,
-        netAmount: plan.monthlyPrice,
+        netAmount: chargeAmount,
         status: 'failed',
         notes: `Échec renouvellement: ${charge.error ?? 'unknown'}`,
       },

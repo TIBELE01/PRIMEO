@@ -1,7 +1,7 @@
 // Subscriptions service — activation, montées en gamme, renouvellements, historique factures
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { PLAN_DETAILS, getPublicationLimit } from '../../common/constants/subscription-plans';
+import { PLAN_DETAILS, getPublicationLimit, EXTRA_PUBLICATION_SLOT_FCFA } from '../../common/constants/subscription-plans';
 import { UpgradePlanInput } from './dto/subscription.dto';
 import { geniusPayService } from '../payments/services/genius-pay.service';
 import { notificationsService } from '../notifications/notifications.service';
@@ -389,6 +389,137 @@ export const subscriptionsService = {
       prisma.transaction.count({ where }),
     ]);
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
+  },
+
+  // ── Publications supplémentaires (500 FCFA / slot / mois) ─────────────────────
+
+  // Synthèse des slots : limite de base, slots actifs, limite effective, coût,
+  // et résiliations programmées pour la prochaine échéance.
+  async getSlotsInfo(userId: string) {
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    if (!sub) throw new HttpError(404, 'Aucun abonnement actif');
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { accountType: true } });
+    const baseLimit = getPublicationLimit(sub.planType, user?.accountType ?? '');
+    const extraSlots = sub.extraPublicationSlots ?? 0;
+    const features = (sub.features as Record<string, unknown> | null) ?? {};
+    const pendingRemoval = Number(features['pendingSlotRemoval'] ?? 0);
+    return {
+      baseLimit,
+      extraSlots,
+      effectiveLimit: baseLimit + extraSlots,
+      pricePerSlotFcfa: EXTRA_PUBLICATION_SLOT_FCFA,
+      monthlySlotsCostFcfa: extraSlots * EXTRA_PUBLICATION_SLOT_FCFA,
+      pendingRemoval,
+      nextBillingDate: sub.nextBillingDate,
+    };
+  },
+
+  // Achat de N slots : paiement Genius Pay AU PRORATA du mois en cours, puis
+  // renouvellement tacite mensuel (cf. cron). Les slots sont activés à la
+  // validation du paiement (webhook → activatePurchasedSlots).
+  async purchaseSlots(userId: string, quantity: number) {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+      throw new HttpError(400, 'Quantité de publications supplémentaires invalide (1 à 100).');
+    }
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    if (!sub) throw new HttpError(404, 'Aucun abonnement actif');
+    if (sub.status === 'cancelled') throw new HttpError(400, 'Abonnement annulé — contactez le support');
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true, phone: true },
+    });
+    if (!user) throw new HttpError(404, 'Utilisateur introuvable');
+    if (!user.phone) throw new HttpError(400, 'Ajoutez un numéro de téléphone à votre profil pour régler vos publications supplémentaires.');
+
+    // Prorata du mois en cours (jours restants, aujourd'hui inclus)
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysRemaining = daysInMonth - now.getDate() + 1;
+    const fullMonth = quantity * EXTRA_PUBLICATION_SLOT_FCFA;
+    const proratedAmount = Math.max(1, Math.round(fullMonth * daysRemaining / daysInMonth));
+
+    const tx = await prisma.transaction.create({
+      data: {
+        userId,
+        subscriptionId: sub.id,
+        type: 'subscription_payment',
+        amount: proratedAmount,
+        fee: 0,
+        netAmount: proratedAmount,
+        status: 'initiated',
+        notes: `extra_slots:${quantity}`, // marqueur routé par le webhook
+      },
+    });
+
+    const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
+      amount: proratedAmount,
+      bookingId: tx.id,
+      customerEmail: user.email,
+      customerPhone: user.phone ?? undefined,
+      customerName: `${user.firstName} ${user.lastName}`.trim(),
+      returnUrl: `${env.FRONTEND_URL ?? env.BACKEND_URL}/subscriptions?slotsTx=${tx.id}`,
+    });
+
+    await prisma.transaction.update({
+      where: { id: tx.id },
+      data: { geniusPayTransactionId: reference, checkoutUrl },
+    });
+
+    return {
+      requiresPayment: true,
+      checkoutUrl,
+      transactionId: tx.id,
+      quantity,
+      proratedAmount,
+      fullMonthAmount: fullMonth,
+      message: `Réglez ${proratedAmount.toLocaleString('fr-CI')} FCFA (prorata du mois) pour activer ${quantity} publication(s) supplémentaire(s).`,
+    };
+  },
+
+  // Webhook : active les slots achetés après validation du paiement Genius Pay.
+  // Idempotent via le court-circuit "tx déjà success" du handler.
+  async activatePurchasedSlots(transactionId: string): Promise<void> {
+    const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
+    if (!tx || tx.type !== 'subscription_payment' || !tx.subscriptionId) return;
+    const match = /^extra_slots:(\d+)$/.exec(tx.notes ?? '');
+    if (!match) return;
+    const quantity = parseInt(match[1], 10);
+    if (!quantity) return;
+
+    await prisma.subscription.update({
+      where: { id: tx.subscriptionId },
+      data: { extraPublicationSlots: { increment: quantity } },
+    });
+    logger.info(`Slots activés : +${quantity} (sub=${tx.subscriptionId}, tx=${transactionId})`);
+  },
+
+  // Résiliation de N slots — effet à la prochaine échéance (ils restent utilisables
+  // jusqu'au renouvellement, où ils sont retirés et non refacturés).
+  async cancelSlots(userId: string, quantity: number) {
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      throw new HttpError(400, 'Quantité invalide.');
+    }
+    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    if (!sub) throw new HttpError(404, 'Aucun abonnement actif');
+    const active = sub.extraPublicationSlots ?? 0;
+    if (active === 0) throw new HttpError(400, 'Aucune publication supplémentaire à résilier.');
+
+    const features = (sub.features as Record<string, unknown> | null) ?? {};
+    const currentPending = Number(features['pendingSlotRemoval'] ?? 0);
+    const pendingRemoval = Math.min(active, currentPending + quantity);
+
+    await prisma.subscription.update({
+      where: { id: sub.id },
+      data: { features: { ...features, pendingSlotRemoval: pendingRemoval } as never },
+    });
+
+    return {
+      scheduled: true,
+      pendingRemoval,
+      effectiveDate: sub.nextBillingDate,
+      message: `${pendingRemoval} publication(s) supplémentaire(s) seront retirées le ${sub.nextBillingDate.toLocaleDateString('fr-CI')}.`,
+    };
   },
 
   // Liste les formules disponibles avec les capacités par type de compte

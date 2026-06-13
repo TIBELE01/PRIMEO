@@ -1,6 +1,6 @@
 // Subscriptions routes — plan management for professional accounts
 import { Router } from 'express';
-import { getMySubscription, upgradePlan, cancelSubscription, listPlans, listInvoices } from './subscriptions.controller';
+import { getMySubscription, upgradePlan, cancelSubscription, listPlans, listInvoices, getSlots, purchaseSlots, cancelSlots } from './subscriptions.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
@@ -20,3 +20,8 @@ subscriptionsRouter.get('/me', getMySubscription);
 subscriptionsRouter.get('/invoices', listInvoices);
 subscriptionsRouter.post('/upgrade', validate(UpgradePlanDto), upgradePlan);
 subscriptionsRouter.post('/cancel', cancelSubscription);
+
+// Publications supplémentaires (500 FCFA/slot/mois)
+subscriptionsRouter.get('/slots', getSlots);
+subscriptionsRouter.post('/slots/purchase', purchaseSlots);
+subscriptionsRouter.post('/slots/cancel', cancelSlots);

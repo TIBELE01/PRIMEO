@@ -332,12 +332,20 @@ export async function processSuccessfulPayment(
   }
 
   if (tx.type === 'subscription_payment') {
-    // Changement de formule payant initié depuis l'espace pro : on applique le plan
-    // une fois le paiement validé (les renouvellements automatiques sont gérés par le cron).
-    await subscriptionsService.applyPaidPlanChange(tx.id).catch((err) =>
-      logger.warn('Failed to apply paid plan change', err),
-    );
-    logger.info(`Subscription plan change applied: txId=${tx.id}`);
+    if ((tx.notes ?? '').startsWith('extra_slots:')) {
+      // Achat de publications supplémentaires (500 FCFA/slot/mois) — activer les slots.
+      await subscriptionsService.activatePurchasedSlots(tx.id).catch((err) =>
+        logger.warn('Failed to activate purchased slots', err),
+      );
+      logger.info(`Extra publication slots activated: txId=${tx.id}`);
+    } else {
+      // Changement de formule payant initié depuis l'espace pro : on applique le plan
+      // une fois le paiement validé (les renouvellements automatiques sont gérés par le cron).
+      await subscriptionsService.applyPaidPlanChange(tx.id).catch((err) =>
+        logger.warn('Failed to apply paid plan change', err),
+      );
+      logger.info(`Subscription plan change applied: txId=${tx.id}`);
+    }
   }
 
   if (tx.type === 'market_report_purchase') {

@@ -163,3 +163,15 @@ export function publicationLabel(accountType: string): string {
 
 export const PAID_BOOST_COST_FCFA = 2_000;
 export const PAID_BOOST_DURATION_DAYS = 3;
+
+// Publication supplémentaire au-delà de la limite de la formule : 500 FCFA/mois.
+export const EXTRA_PUBLICATION_SLOT_FCFA = 500;
+
+// Limite effective = limite de la formule + slots supplémentaires achetés.
+export function effectivePublicationLimit(
+  planType: string,
+  accountType: string,
+  extraSlots = 0,
+): number {
+  return getPublicationLimit(planType, accountType) + Math.max(0, extraSlots);
+}

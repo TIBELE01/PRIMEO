@@ -56,3 +56,31 @@ export async function listInvoices(req: Request, res: Response, next: NextFuncti
     next(err);
   }
 }
+
+// ── Publications supplémentaires ────────────────────────────────────────────
+
+export async function getSlots(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json({ data: await subscriptionsService.getSlotsInfo(req.user!.sub) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function purchaseSlots(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const quantity = Number(req.body?.quantity ?? 1);
+    res.json({ data: await subscriptionsService.purchaseSlots(req.user!.sub, quantity) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function cancelSlots(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const quantity = Number(req.body?.quantity ?? 1);
+    res.json({ data: await subscriptionsService.cancelSlots(req.user!.sub, quantity) });
+  } catch (err) {
+    next(err);
+  }
+}
