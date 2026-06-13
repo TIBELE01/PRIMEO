@@ -643,6 +643,10 @@ model Property3dScene {
   url        String // URL publique Supabase Storage
   publicId   String? // chemin Supabase — requis pour supprimer du bucket
   sortOrder  Int      @default(0)
+  // Hotspots de navigation inter-pièces :
+  // [{ id, targetSceneId, label, theta, phi }] — theta/phi en radians (direction
+  // dans la sphère), targetSceneId = id d'une autre scène du même bien.
+  hotspots   Json?
   uploadedAt DateTime @default(now())
 
   @@index([propertyId])

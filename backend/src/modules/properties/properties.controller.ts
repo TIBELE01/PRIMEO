@@ -240,6 +240,24 @@ export async function delete3dScene(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function updateScene3d(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const scene = await propertiesService.updateScene3d(req.params.id, req.params.sceneId, req.user!.sub, req.body);
+    res.json({ data: scene });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function duplicateProperty(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const property = await propertiesService.duplicate(req.params.id, req.user!.sub);
+    res.status(201).json({ data: property });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getPropertyStats(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const stats = await propertiesService.getStats(req.params.id, req.user!.sub);

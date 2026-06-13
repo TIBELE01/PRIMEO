@@ -19,7 +19,9 @@ import {
   setMediaType,
   list3dScenes,
   upload3dScene,
+  updateScene3d,
   delete3dScene,
+  duplicateProperty,
   suspendProperty,
   getPropertyStats,
   approveProperty,
@@ -122,7 +124,11 @@ propertiesRouter.delete('/:id/media/:mediaId', authenticate, authorize(...PROFES
 // Visite 3D — scènes panoramiques 360° (lecture publique, écriture Entreprise)
 propertiesRouter.get('/:id/3d-scenes', parseId, list3dScenes);
 propertiesRouter.post('/:id/3d-scenes', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload360.single('file'), upload3dScene);
+propertiesRouter.patch('/:id/3d-scenes/:sceneId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, updateScene3d);
 propertiesRouter.delete('/:id/3d-scenes/:sceneId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, delete3dScene);
+
+// Duplication d'annonce (brouillon)
+propertiesRouter.post('/:id/duplicate', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, duplicateProperty);
 
 // Owner submits draft for review
 propertiesRouter.post(

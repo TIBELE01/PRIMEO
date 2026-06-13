@@ -8,8 +8,16 @@ export const propertiesApi = {
   create: (data: Record<string, unknown>) => apiClient.post('/properties', data),
   update: (id: string, data: Record<string, unknown>) => apiClient.patch(`/properties/${id}`, data),
   delete: (id: string) => apiClient.delete(`/properties/${id}`),
+  duplicate: (id: string) => apiClient.post(`/properties/${id}/duplicate`),
   publish: (id: string) => apiClient.post(`/properties/${id}/publish`),
   suspend: (id: string) => apiClient.post(`/properties/${id}/suspend`),
+
+  // Scènes 3D : nom de pièce + hotspots de navigation inter-pièces
+  list3dScenes: (id: string) => apiClient.get(`/properties/${id}/3d-scenes`),
+  updateScene3d: (id: string, sceneId: string, data: {
+    roomName?: string;
+    hotspots?: Array<{ id?: string; targetSceneId: string; label?: string; theta: number; phi: number }>;
+  }) => apiClient.patch(`/properties/${id}/3d-scenes/${sceneId}`, data),
   getStats: (id: string) => apiClient.get(`/properties/${id}/stats`),
 
   // Immobilier : exprimer son intérêt pour un bien (notifie le responsable)

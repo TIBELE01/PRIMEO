@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity, StyleSheet,
-  SafeAreaView, RefreshControl, ActivityIndicator,
+  SafeAreaView, RefreshControl, ActivityIndicator, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
@@ -20,7 +20,7 @@ function BoostTimer({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-function PropertyRow({ property, onPress, onCalendar }: { property: any; onPress: () => void; onCalendar: () => void }) {
+function PropertyRow({ property, onPress, onCalendar, onDuplicate }: { property: any; onPress: () => void; onCalendar: () => void; onDuplicate: () => void }) {
   const status = statusStyle(property.status);
   const imageUrl = property.mainImageUrl ?? property.media?.[0]?.url ?? property.images?.[0]?.url;
 
@@ -45,9 +45,14 @@ function PropertyRow({ property, onPress, onCalendar }: { property: any; onPress
           <Text style={styles.price}>{property.pricePerNight.toLocaleString('fr-CI')} FCFA/nuit</Text>
         )}
       </View>
-      <TouchableOpacity style={styles.calBtn} onPress={onCalendar}>
-        <Text style={styles.calIcon}>📅</Text>
-      </TouchableOpacity>
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.actBtn} onPress={onDuplicate} accessibilityLabel="Dupliquer l'annonce">
+          <Text style={styles.actIcon}>⧉</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actBtn} onPress={onCalendar} accessibilityLabel="Calendrier">
+          <Text style={styles.actIcon}>📅</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -76,6 +81,29 @@ export default function PropertiesListScreen({ navigation }: any) {
   // Reload on every focus so a newly created/edited property appears immediately.
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const handleDuplicate = useCallback((id: string, name: string) => {
+    Alert.alert(
+      'Dupliquer l\'annonce',
+      `Créer une copie de « ${name} » en brouillon ? Vous pourrez la modifier avant publication.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Dupliquer',
+          onPress: async () => {
+            try {
+              const res = await propertiesApi.duplicate(id);
+              const copy = res.data?.data ?? res.data;
+              await load(true);
+              if (copy?.id) navigation.navigate('PropertyManagement', { propertyId: copy.id });
+            } catch (e: any) {
+              Alert.alert('Erreur', e?.response?.data?.error ?? 'Duplication impossible.');
+            }
+          },
+        },
+      ],
+    );
+  }, [load, navigation]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -95,6 +123,7 @@ export default function PropertiesListScreen({ navigation }: any) {
             property={item}
             onPress={() => navigation.navigate('PropertyManagement', { propertyId: item.id })}
             onCalendar={() => navigation.navigate('PropertyCalendar', { propertyId: item.id })}
+            onDuplicate={() => handleDuplicate(item.id, item.name ?? item.title)}
           />
         )}
         ListHeaderComponent={
@@ -134,8 +163,9 @@ const styles = StyleSheet.create({
   boostBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   boostText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
   price: { fontSize: 13, fontWeight: '700', color: '#1056E0', marginTop: 2 },
-  calBtn: { paddingHorizontal: 12, justifyContent: 'center', alignItems: 'center' },
-  calIcon: { fontSize: 22 },
+  actions: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, gap: 10 },
+  actBtn: { width: 38, height: 38, borderRadius: 10, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
+  actIcon: { fontSize: 18 },
   empty: { alignItems: 'center', marginTop: 60, gap: 8 },
   emptyIcon: { fontSize: 56 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },

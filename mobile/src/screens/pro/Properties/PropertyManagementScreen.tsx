@@ -211,6 +211,21 @@ export default function PropertyManagementScreen({ navigation, route }: any) {
           <Text style={styles.actionArrow}>›</Text>
         </TouchableOpacity>
 
+        {(property?.mediaType === 'threed' || property?.hasVirtualTour) && (
+          <TouchableOpacity
+            style={[styles.actionBtn, { borderColor: theme.primary }]}
+            onPress={() => navigation.navigate('Scene3dEditor', { propertyId })}
+            disabled={isBusy}
+          >
+            <Text style={styles.actionIcon}>🥽</Text>
+            <View style={styles.actionTextBlock}>
+              <Text style={[styles.actionLabel, { color: theme.primary }]}>Visite 3D & navigation</Text>
+              <Text style={styles.actionDesc}>Renommer les pièces, ajouter des liens entre elles</Text>
+            </View>
+            <Text style={styles.actionArrow}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {canPublish && (
           <TouchableOpacity
             style={[styles.actionBtn, { borderColor: '#059669' }]}

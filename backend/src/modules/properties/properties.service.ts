@@ -41,15 +41,27 @@ export function serializeProperty<T extends Record<string, unknown>>(property: T
  * (table property_3d_scenes). Chaque scène devient un panorama nommé ; le viewer
  * mobile (VirtualTourScreen) gère la navigation entre pièces.
  */
-function buildVirtualTour(property: Record<string, unknown>): { available: boolean; panoramas: Array<{ id: string; roomName: string; imageUrl: string; hotspots: never[] }> } | undefined {
-  const scenes = (property as { scenes3d?: Array<{ id: string; roomName: string; url: string }> }).scenes3d;
+interface PanoramaHotspot { id: string; targetPanoramaId: string; label: string; theta: number; phi: number }
+
+function buildVirtualTour(property: Record<string, unknown>): { available: boolean; panoramas: Array<{ id: string; roomName: string; imageUrl: string; hotspots: PanoramaHotspot[] }> } | undefined {
+  const scenes = (property as { scenes3d?: Array<{ id: string; roomName: string; url: string; hotspots?: unknown }> }).scenes3d;
   if (!scenes) return undefined; // relation non chargée (listes) — le flag hasVirtualTour suffit
-  const panoramas = scenes.map((s) => ({
-    id: s.id,
-    roomName: s.roomName,
-    imageUrl: s.url,
-    hotspots: [] as never[],
-  }));
+  const validIds = new Set(scenes.map((s) => s.id));
+  const panoramas = scenes.map((s) => {
+    const raw = Array.isArray(s.hotspots) ? (s.hotspots as Array<Record<string, unknown>>) : [];
+    const hotspots: PanoramaHotspot[] = raw
+      // mappe { targetSceneId } → { targetPanoramaId } (panorama.id == scene.id) et
+      // écarte les hotspots dont la cible n'existe plus.
+      .map((h) => ({
+        id: String(h['id'] ?? `${s.id}-${h['targetSceneId']}`),
+        targetPanoramaId: String(h['targetSceneId'] ?? h['targetPanoramaId'] ?? ''),
+        label: String(h['label'] ?? ''),
+        theta: Number(h['theta'] ?? 0),
+        phi: Number(h['phi'] ?? Math.PI / 2),
+      }))
+      .filter((h) => h.targetPanoramaId && validIds.has(h.targetPanoramaId));
+    return { id: s.id, roomName: s.roomName, imageUrl: s.url, hotspots };
+  });
   return { available: panoramas.length > 0, panoramas };
 }
 
@@ -180,6 +192,86 @@ export const propertiesService = {
         roomTypes: input.roomTypes as Prisma.InputJsonValue | undefined,
         status: 'pending', // en attente de validation admin
       },
+    });
+  },
+
+  // Duplique une annonce existante en BROUILLON (mêmes valeurs, médias et scènes
+  // 3D). Vérifie la propriété et la limite de publications. Le pro peut ensuite
+  // l'éditer/publier.
+  async duplicate(id: string, userId: string) {
+    const source = await prisma.property.findUnique({
+      where: { id },
+      include: { media: true, scenes3d: true },
+    });
+    if (!source) throw new HttpError(404, 'Propriété introuvable');
+
+    const requester = await prisma.user.findUnique({ where: { id: userId }, select: { accountType: true } });
+    if (source.ownerId !== userId && requester?.accountType !== 'admin') {
+      throw new HttpError(403, 'Accès non autorisé');
+    }
+
+    // Limite de publications (formule + slots achetés) — un brouillon compte.
+    const sub = await prisma.subscription.findUnique({ where: { userId: source.ownerId } });
+    if (sub) {
+      const { effectivePublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
+      const owner = await prisma.user.findUnique({ where: { id: source.ownerId }, select: { accountType: true } });
+      const limit = effectivePublicationLimit(sub.planType, owner?.accountType ?? '', sub.extraPublicationSlots ?? 0);
+      const active = await prisma.property.count({
+        where: { ownerId: source.ownerId, status: { in: ['draft', 'pending', 'active', 'suspended'] } },
+      });
+      if (active >= limit) {
+        const label = publicationLabel(owner?.accountType ?? '');
+        throw new HttpError(403, `Limite de ${limit} ${label}(s) atteinte. Achetez des publications supplémentaires (500 FCFA/mois) ou passez à une formule supérieure avant de dupliquer.`);
+      }
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const copy = await tx.property.create({
+        data: {
+          ownerId:      source.ownerId,
+          propertyType: source.propertyType,
+          title:        `${source.title} (copie)`,
+          description:  source.description,
+          rooms: source.rooms, bedrooms: source.bedrooms, beds: source.beds, bathrooms: source.bathrooms,
+          surface: source.surface, capacity: source.capacity,
+          pricePerNight: source.pricePerNight, pricePerMonth: source.pricePerMonth, priceSale: source.priceSale,
+          cuisineType: source.cuisineType,
+          openingHours: (source.openingHours ?? undefined) as Prisma.InputJsonValue | undefined,
+          availableFrom: source.availableFrom,
+          street: source.street, city: source.city, latitude: source.latitude, longitude: source.longitude,
+          amenities: source.amenities, paymentOptions: source.paymentOptions,
+          rules: (source.rules ?? undefined) as Prisma.InputJsonValue | undefined,
+          floor: source.floor, yearBuilt: source.yearBuilt, availabilityDate: source.availabilityDate,
+          diagnostics: (source.diagnostics ?? undefined) as Prisma.InputJsonValue | undefined,
+          roomTypes: (source.roomTypes ?? undefined) as Prisma.InputJsonValue | undefined,
+          hasVirtualTour: source.hasVirtualTour,
+          mediaType: source.mediaType,
+          status: 'draft', // brouillon — le pro édite puis publie
+        },
+      });
+
+      // Copie des médias (mêmes URLs — partage du stockage pour un brouillon)
+      if (source.media.length > 0) {
+        await tx.propertyMedia.createMany({
+          data: source.media.map((m) => ({
+            propertyId: copy.id, url: m.url, publicId: m.publicId,
+            mediaType: m.mediaType, isPrimary: m.isPrimary, sortOrder: m.sortOrder,
+          })),
+        });
+      }
+
+      // Copie des scènes 3D (URLs + hotspots)
+      if (source.scenes3d.length > 0) {
+        await tx.property3dScene.createMany({
+          data: source.scenes3d.map((sc) => ({
+            propertyId: copy.id, roomName: sc.roomName, url: sc.url, publicId: sc.publicId,
+            sortOrder: sc.sortOrder,
+            hotspots: (sc as { hotspots?: unknown }).hotspots as Prisma.InputJsonValue | undefined,
+          })),
+        });
+      }
+
+      return copy;
     });
   },
 
@@ -560,6 +652,49 @@ export const propertiesService = {
       logger.error('Échec enregistrement Property3dScene — fichier retiré du stockage', dbError);
       throw new HttpError(500, 'Échec de l\'enregistrement de la photo 360°. Réessayez.');
     }
+  },
+
+  // Met à jour une scène 3D : nom de pièce et/ou hotspots de navigation.
+  // Valide que chaque targetSceneId référence une scène existante du même bien
+  // (et pas la scène elle-même).
+  async updateScene3d(
+    propertyId: string,
+    sceneId: string,
+    userId: string,
+    input: { roomName?: string; hotspots?: Array<{ id?: string; targetSceneId: string; label?: string; theta: number; phi: number }> },
+  ) {
+    const property = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new HttpError(404, 'Propriété introuvable');
+    if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
+
+    const scene = await prisma.property3dScene.findFirst({ where: { id: sceneId, propertyId } });
+    if (!scene) throw new HttpError(404, 'Scène 3D introuvable');
+
+    const data: { roomName?: string; hotspots?: Prisma.InputJsonValue } = {};
+    if (input.roomName !== undefined) data.roomName = input.roomName;
+
+    if (input.hotspots !== undefined) {
+      const scenes = await prisma.property3dScene.findMany({ where: { propertyId }, select: { id: true } });
+      const validIds = new Set(scenes.map((s) => s.id));
+      const normalized = input.hotspots.map((h, i) => {
+        if (!validIds.has(h.targetSceneId)) {
+          throw new HttpError(400, `Hotspot ${i + 1} : la pièce cible n'existe pas.`);
+        }
+        if (h.targetSceneId === sceneId) {
+          throw new HttpError(400, `Hotspot ${i + 1} : une pièce ne peut pas pointer vers elle-même.`);
+        }
+        return {
+          id: h.id ?? `${sceneId}-${h.targetSceneId}-${i}`,
+          targetSceneId: h.targetSceneId,
+          label: h.label ?? '',
+          theta: Number(h.theta) || 0,
+          phi: Number.isFinite(h.phi) ? Number(h.phi) : Math.PI / 2,
+        };
+      });
+      data.hotspots = normalized as unknown as Prisma.InputJsonValue;
+    }
+
+    return prisma.property3dScene.update({ where: { id: sceneId }, data });
   },
 
   async delete3dScene(propertyId: string, sceneId: string, userId: string) {
