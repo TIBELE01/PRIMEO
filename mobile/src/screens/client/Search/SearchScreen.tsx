@@ -300,6 +300,7 @@ export function SearchScreen() {
         <View style={s.inputRow}>
           <Text style={s.inputIcon}>📍</Text>
           <TextInput
+            testID="search-bar"
             style={s.input}
             value={destination}
             onChangeText={t => { setDestination(t); setShowSuggestions(true); }}
@@ -422,11 +423,13 @@ export function SearchScreen() {
         <SearchMapView properties={results} onMarkerPress={goProperty} />
       ) : (
         <FlatList
+          testID="search-results"
           data={results}
           keyExtractor={p => p.id}
           contentContainerStyle={s.list}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <PropertyCard
+              testID={`property-card-${index}`}
               property={item}
               onPress={() => goProperty(item.id)}
               style={s.listCard}

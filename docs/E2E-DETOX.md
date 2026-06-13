@@ -45,24 +45,27 @@ Workflow `.github/workflows/ci-mobile.yml`, job **`e2e-detox-android`** :
 
 À stabiliser avant de le rendre bloquant : voir « testID requis » ci‑dessous.
 
-## testID requis par `complete-flow.test.js`
+## testID implémentés (utilisés par `complete-flow.test.js`)
 
-Le scénario privilégie les `testID` (stables) avec repli sur le texte FR visible.
-Pour une exécution fiable, ajouter ces `testID` aux écrans concernés (certains
-existent déjà) :
+Les `testID` ci-dessous ont été **ajoutés aux écrans** pour rendre le parcours
+déterministe. Le scénario garde des replis sur le texte FR via `tapFirst([...])`.
 
-| testID | Écran |
+| testID | Écran / fichier |
 |---|---|
-| `tab-Connexion`, `tab-Accueil`, `tab-Rechercher` | navigateurs à onglets |
-| `go-register`, `register-firstName/lastName/email/phone/password`, `register-submit` | inscription |
-| `search-bar`, `search-results`, `property-card-0` | recherche |
-| `property-detail-screen`, `cta-reserve` | fiche détail |
-| `payment-option-ten_percent_online`, `booking-confirm` | tunnel de réservation |
-| `booking-confirmation-screen` | confirmation |
+| _(onglets)_ | ciblés par **libellé** (`by.label('Connexion'/'Accueil'/'Rechercher')`) — `tabBarButtonTestID` non typé en bottom-tabs v6 |
+| `go-register` | `screens/auth/WelcomeScreen.tsx` |
+| `register-firstName/lastName/email/phone` | `RegisterScreen/Step2PersonalInfo.tsx` (helper `field`) |
+| `register-password`, `register-confirmPassword`, `register-next` | `RegisterScreen/Step2PersonalInfo.tsx` |
+| `register-accept-terms`, `register-submit` | `RegisterScreen/Step5Validation.tsx` |
+| `search-bar`, `search-results`, `property-card-<index>` | `screens/client/Search/SearchScreen.tsx` (+ `Home/PropertyCard.tsx`) |
+| `property-detail-screen`, `cta-reserve` | `screens/client/PropertyDetail/PropertyDetailScreen.tsx` |
+| `payment-option-<full_online\|ten_percent_online\|zero_online>` | `components/booking/PaymentOptionCard.tsx` |
+| `booking-confirm` | `screens/client/Booking/BookingScreen.tsx` |
+| `booking-confirmation-screen` | `screens/client/Booking/BookingConfirmationScreen.tsx` |
 
-Les `tapFirst([...])` du scénario tolèrent l'absence de certains `testID` en
-retombant sur les libellés (`Réserver`, `10% en ligne`, `Confirmer`,
-`Réservation confirmée`…), mais l'ajout des `testID` rend le test déterministe.
+> Flux d'inscription **client** (role=client) : `Step2 PersonalInfo` →
+> `register-next` → `Step5 Validation` → `register-accept-terms` →
+> `register-submit`. (Les étapes pro KYC sont ignorées pour un client.)
 
 ## Limites connues
 

@@ -11,6 +11,7 @@ interface Props {
   onSelect: () => void;
   isRecommended?: boolean;
   currency?: string;
+  testID?: string;
 }
 
 const OPTION_ICONS: Record<Props['option'], string> = {
@@ -24,7 +25,7 @@ function formatFCFA(n: number, currency = 'FCFA'): string {
 }
 
 export const PaymentOptionCard: React.FC<Props> = ({
-  option, label, description, amount, cashAmount, selected, onSelect, isRecommended = false, currency = 'FCFA',
+  option, label, description, amount, cashAmount, selected, onSelect, isRecommended = false, currency = 'FCFA', testID,
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const nd = Platform.OS !== 'web';
@@ -34,6 +35,7 @@ export const PaymentOptionCard: React.FC<Props> = ({
     <View>
       <Animated.View style={[styles.cardWrap, { transform: [{ scale }] }]}>
         <TouchableOpacity
+          testID={testID}
           style={[styles.card, selected && styles.cardSelected]}
           onPress={onSelect}
           onPressIn={() => Animated.spring(scale, { toValue: 0.98, speed: 50, bounciness: 2, useNativeDriver: nd }).start()}

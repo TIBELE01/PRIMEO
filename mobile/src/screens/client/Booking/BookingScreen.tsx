@@ -940,6 +940,7 @@ export function BookingScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
+            testID="booking-confirm"
             style={[styles.confirmBtn, isLoading && styles.confirmBtnDisabled]}
             onPress={handleConfirm}
             disabled={isLoading}

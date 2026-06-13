@@ -68,6 +68,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
       <View style={s.field}>
         <Text style={s.label}>{label}</Text>
         <TextInput
+          testID={`register-${key}`}
           style={[s.input, err ? s.inputError : null]}
           value={data[key] as string}
           onChangeText={(v) => onUpdate({ [key]: v } as Partial<RegistrationData>)}
@@ -131,6 +132,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
             <Text style={s.label}>Mot de passe</Text>
             <View style={s.pwRow}>
               <TextInput
+                testID="register-password"
                 style={[s.input, { flex: 1 }, touched.password && errors.password ? s.inputError : null]}
                 value={data.password}
                 onChangeText={(v) => onUpdate({ password: v })}
@@ -156,6 +158,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
           <View style={s.field}>
             <Text style={s.label}>Confirmer le mot de passe</Text>
             <TextInput
+              testID="register-confirmPassword"
               style={[s.input, touched.confirmPassword && errors.confirmPassword ? s.inputError : null]}
               value={data.confirmPassword}
               onChangeText={(v) => onUpdate({ confirmPassword: v })}
@@ -188,7 +191,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
         </View>
 
         <View style={s.actions}>
-          <TouchableOpacity style={s.nextBtn} onPress={handleNext} accessibilityRole="button">
+          <TouchableOpacity testID="register-next" style={s.nextBtn} onPress={handleNext} accessibilityRole="button">
             <Text style={s.nextBtnText}>Continuer</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onBack} accessibilityRole="button">

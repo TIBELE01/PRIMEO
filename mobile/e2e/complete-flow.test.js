@@ -31,23 +31,30 @@ describe('Parcours client complet', () => {
   });
 
   it('2. inscrit un nouveau client', async () => {
-    // Accès à l'onglet/bouton Connexion puis bascule vers l'inscription
-    await tapFirst([by.id('tab-Connexion'), by.text('Connexion'), by.text('Se connecter')]);
+    // Accès à l'onglet Connexion → écran Welcome → « Créer un compte » (role=client)
+    // Les onglets sont ciblés par leur libellé (pas de testID typé en v6).
+    await tapFirst([by.label('Connexion'), by.text('Connexion'), by.text('Se connecter')]);
     await tapFirst([by.id('go-register'), by.text('Créer un compte'), by.text("S'inscrire")]);
 
+    // Étape « Informations personnelles » (Step2) — flux client : Step2 → Validation
     await element(by.id('register-firstName')).typeText('Koffi');
     await element(by.id('register-lastName')).typeText('E2E');
     await element(by.id('register-email')).typeText(uniqueEmail);
     await element(by.id('register-phone')).typeText('0700000010');
     await element(by.id('register-password')).typeText('Client1234!');
-    await tapFirst([by.id('register-submit'), by.text("S'inscrire"), by.text('Créer mon compte')]);
+    await element(by.id('register-confirmPassword')).typeText('Client1234!');
+    await tapFirst([by.id('register-next'), by.text('Continuer')]);
+
+    // Étape « Validation » (Step5) : accepter les CGU puis créer le compte
+    await tapFirst([by.id('register-accept-terms'), by.text(/J'accepte/)]);
+    await tapFirst([by.id('register-submit'), by.text('Créer mon compte')]);
 
     // Client : pas d'OTP requis → arrivée sur l'app authentifiée (onglet Accueil)
-    await waitFor(element(by.id('tab-Accueil'))).toBeVisible().withTimeout(15000);
+    await waitFor(element(by.label('Accueil'))).toBeVisible().withTimeout(15000);
   });
 
   it('3. recherche un bien', async () => {
-    await tapFirst([by.id('tab-Rechercher'), by.text('Rechercher')]);
+    await tapFirst([by.label('Rechercher'), by.text('Rechercher')]);
     await element(by.id('search-bar')).tap();
     await element(by.id('search-bar')).typeText('Abidjan\n');
     await waitFor(element(by.id('search-results'))).toBeVisible().withTimeout(10000);

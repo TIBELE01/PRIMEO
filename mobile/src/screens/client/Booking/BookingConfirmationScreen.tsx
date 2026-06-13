@@ -359,7 +359,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     : null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} testID="booking-confirmation-screen">
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Coche animée */}

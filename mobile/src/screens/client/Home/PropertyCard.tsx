@@ -14,9 +14,10 @@ interface Props {
   style?: object;
   onFavorite?: () => void;
   isFavorite?: boolean;
+  testID?: string;
 }
 
-export function PropertyCard({ property, onPress, style, onFavorite, isFavorite = false }: Props) {
+export function PropertyCard({ property, onPress, style, onFavorite, isFavorite = false, testID }: Props) {
   const images = property.images ?? [];
   const mainImage = images.find(i => i.isPrimary)?.url ?? images[0]?.url;
   const showNew = isNewProp(property.createdAt);
@@ -37,7 +38,7 @@ export function PropertyCard({ property, onPress, style, onFavorite, isFavorite 
   const priceLabel = property.pricePerNight != null ? `${price} / nuit` : price;
 
   return (
-    <Animated.View style={[styles.card, style, { transform: [{ scale }] }]}>
+    <Animated.View testID={testID} style={[styles.card, style, { transform: [{ scale }] }]}>
       <TouchableOpacity onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} activeOpacity={1}>
 
         {/* ── Image section ── */}

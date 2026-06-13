@@ -180,6 +180,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
 
         {/* CGU checkbox */}
         <TouchableOpacity
+          testID="register-accept-terms"
           style={s.cguRow}
           onPress={() => setAccepted((v) => !v)}
           accessibilityRole="checkbox"
@@ -210,6 +211,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
 
         <View style={s.actions}>
           <TouchableOpacity
+            testID="register-submit"
             style={[s.submitBtn, (!accepted || loading) && s.btnDisabled]}
             onPress={handleSubmit}
             disabled={!accepted || loading}

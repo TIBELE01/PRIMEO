@@ -335,7 +335,7 @@ export function PropertyDetailScreen() {
     : 'Profil de l\'hôte';
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} testID="property-detail-screen">
       <StatusBar barStyle="dark-content" />
       <NetworkStatus />
       {isFromCache && (
@@ -600,7 +600,7 @@ export function PropertyDetailScreen() {
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity style={[styles.stickyCta, { backgroundColor: theme.color }]} onPress={handleAction} activeOpacity={0.88}>
+          <TouchableOpacity testID="cta-reserve" style={[styles.stickyCta, { backgroundColor: theme.color }]} onPress={handleAction} activeOpacity={0.88}>
             <Text style={styles.stickyCtaText}>{actionLabel(property.type)}</Text>
           </TouchableOpacity>
         )}

@@ -52,6 +52,7 @@ export const PaymentOptionsSelector: React.FC<Props> = ({ totalAmount, onSelect,
       {options.map(opt => (
         <PaymentOptionCard
           key={opt.option}
+          testID={`payment-option-${opt.option}`}
           {...opt}
           selected={selected === opt.option}
           onSelect={() => onSelect(opt.option)}

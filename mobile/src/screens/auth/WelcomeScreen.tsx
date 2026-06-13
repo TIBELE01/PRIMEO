@@ -76,6 +76,7 @@ export function WelcomeScreen({ navigation }: Props) {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="go-register"
               style={s.outlineBtn}
               onPress={() => navigation.navigate('Register', { role: 'client' })}
               accessibilityRole="button"
