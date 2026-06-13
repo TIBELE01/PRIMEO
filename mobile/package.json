@@ -16,7 +16,10 @@
     "build:staging": "eas build --profile staging",
     "build:prod": "eas build --profile production",
     "lint": "eslint src --ext .ts,.tsx",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "e2e:prebuild": "expo prebuild --platform android --no-install",
+    "e2e:build:android": "detox build --configuration android.emu.debug",
+    "e2e:test:android": "detox test --configuration android.emu.debug --cleanup"
   },
   "dependencies": {
     "@expo/metro-runtime": "^4.0.1",
@@ -66,6 +69,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "detox": "^20.27.0",
     "@react-native/jest-preset": "^0.85.3",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.3.3",
