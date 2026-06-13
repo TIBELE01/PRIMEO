@@ -2,8 +2,9 @@
  * generate-sitemap.js — Build sitemap.xml from the actual page tree.
  *
  * Pure Node (no deps). Scans every directory containing an index.html, the
- * documentation guides, and the blog articles in data/blog.json, then emits a
- * sitemap with per-section <priority>/<changefreq>. Run via build.js or:
+ * documentation guides, and the blog articles via la base (API publique
+ * /api/website/blog/posts), then emits a sitemap with per-section
+ * <priority>/<changefreq>. Run via build.js or:
  *   node scripts/generate-sitemap.js
  */
 'use strict';
@@ -48,7 +49,7 @@ function urlEntry(loc, { priority, changefreq }, lastmod = TODAY) {
   </url>`;
 }
 
-function build() {
+async function build() {
   const entries = [];
 
   // Homepage
@@ -73,18 +74,27 @@ function build() {
     }
   }
 
-  // Blog articles from seed data (also surfaced via the live API)
+  // Blog articles — source de vérité : table blog_posts (via l'API publique).
+  // Échec réseau au build → on saute simplement les URLs d'articles.
   try {
-    const blog = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'blog.json'), 'utf8'));
-    for (const post of blog.posts || []) {
-      if (!post.slug) continue;
+    const apiBase = (process.env.PRIMEO_API_URL || 'https://primeo-api-sszr.onrender.com').replace(/\/$/, '');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(`${apiBase}/api/website/blog/posts?limit=100`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    const json = await res.json();
+    // Tolère { data: { posts } }, { posts }, { data: [...] } ou [...]
+    const payload = json && json.data !== undefined ? json.data : json;
+    const posts = Array.isArray(payload) ? payload : (payload && payload.posts) || [];
+    for (const post of posts) {
+      if (!post || !post.slug) continue;
       const lastmod = (post.publishedAt || TODAY).slice(0, 10);
       entries.push(
         urlEntry(`${BASE}/blog/article.html?slug=${encodeURIComponent(post.slug)}`, { priority: '0.6', changefreq: 'monthly' }, lastmod),
       );
     }
   } catch {
-    /* no blog data — skip */
+    /* API blog indisponible au build — articles couverts au prochain build */
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -97,5 +107,7 @@ ${entries.join('\n')}
   console.log(`  ✓ sitemap.xml — ${entries.length} URLs`);
 }
 
-build();
+if (require.main === module) {
+  build().catch((err) => { console.error('sitemap build failed:', err); process.exit(1); });
+}
 module.exports = { build };

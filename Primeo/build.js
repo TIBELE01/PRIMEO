@@ -60,14 +60,15 @@ async function minifyJS() {
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 /* ── Sitemap ─────────────────────────────────────────────────────────────── */
-function generateSitemap() {
-  require('./scripts/generate-sitemap.js'); // pure Node, regenerates sitemap.xml
+async function generateSitemap() {
+  // build() est async : récupère les articles de blog via l'API publique.
+  await require('./scripts/generate-sitemap.js').build();
 }
 
 (async () => {
   console.log('Building Primeo Vitrine…\n');
   try {
-    generateSitemap();
+    await generateSitemap();
     minifyCSS();
     await minifyJS();
     console.log(`\nDone. Total saved: ${(totalSaved / 1024).toFixed(1)} KB`);
