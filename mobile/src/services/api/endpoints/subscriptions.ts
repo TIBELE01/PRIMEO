@@ -11,4 +11,5 @@ export const subscriptionsApi = {
   getSlots: () => apiClient.get('/subscriptions/slots'),
   purchaseSlots: (quantity: number) => apiClient.post('/subscriptions/slots/purchase', { quantity }),
   cancelSlots: (quantity: number) => apiClient.post('/subscriptions/slots/cancel', { quantity }),
+  getSlotTransaction: (txId: string) => apiClient.get(`/subscriptions/slots/transaction/${txId}`),
 };

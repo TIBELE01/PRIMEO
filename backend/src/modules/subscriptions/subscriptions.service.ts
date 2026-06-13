@@ -494,6 +494,14 @@ export const subscriptionsService = {
     logger.info(`Slots activés : +${quantity} (sub=${tx.subscriptionId}, tx=${transactionId})`);
   },
 
+  // Statut d'une transaction d'achat de slots — pour polling côté mobile.
+  async getSlotTransactionStatus(transactionId: string, userId: string) {
+    const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
+    if (!tx || tx.userId !== userId) throw new HttpError(404, 'Transaction introuvable');
+    if (!/^extra_slots:/.test(tx.notes ?? '')) throw new HttpError(400, 'Transaction non éligible');
+    return { status: tx.status, transactionId: tx.id };
+  },
+
   // Résiliation de N slots — effet à la prochaine échéance (ils restent utilisables
   // jusqu'au renouvellement, où ils sont retirés et non refacturés).
   async cancelSlots(userId: string, quantity: number) {

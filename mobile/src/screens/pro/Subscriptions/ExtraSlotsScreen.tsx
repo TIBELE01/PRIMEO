@@ -29,6 +29,8 @@ export default function ExtraSlotsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [qty, setQty] = useState(1);
+  const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -42,6 +44,35 @@ export default function ExtraSlotsScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const startPolling = (txId: string) => {
+    setAwaitingPayment(true);
+    let attempts = 0;
+    const MAX = 40; // 40 × 3s = 2 min
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await subscriptionsApi.getSlotTransaction(txId);
+        const status = res.data?.data?.status ?? res.data?.status;
+        if (status === 'success') {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setAwaitingPayment(false);
+          await load(true);
+          Alert.alert('Activé', 'Vos publications supplémentaires sont maintenant actives.');
+          return;
+        }
+        if (status === 'failed' || attempts >= MAX) {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setAwaitingPayment(false);
+          if (status === 'failed') Alert.alert('Paiement échoué', 'Le paiement a été refusé. Réessayez.');
+        }
+      } catch { /* réseau — réessai prochain tick */ }
+    }, 3000);
+  };
 
   const openCheckout = (url: string) => {
     if (Platform.OS === 'web') {
@@ -66,11 +97,12 @@ export default function ExtraSlotsScreen() {
               const data = res.data?.data ?? res.data;
               if (data?.checkoutUrl) {
                 openCheckout(data.checkoutUrl);
-                Alert.alert('Paiement en cours', 'Finalisez le paiement Genius Pay. Vos publications seront activées dès validation.');
+                startPolling(data.transactionId);
+                Alert.alert('Paiement en cours', 'Finalisez le paiement Genius Pay. Vos publications seront activées automatiquement dès validation.');
               } else {
+                await load(true);
                 Alert.alert('Succès', 'Publications activées.');
               }
-              await load(true);
             } catch (e: any) {
               Alert.alert('Erreur', e?.response?.data?.error ?? 'Achat impossible. Réessayez.');
             } finally {
@@ -110,6 +142,21 @@ export default function ExtraSlotsScreen() {
 
   if (loading) {
     return <SafeAreaView style={s.safe}><View style={s.center}><ActivityIndicator size="large" color="#1056E0" /></View></SafeAreaView>;
+  }
+
+  if (awaitingPayment) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.center}>
+          <ActivityIndicator size="large" color="#1056E0" />
+          <Text style={s.awaitingText}>En attente de confirmation Genius Pay…</Text>
+          <Text style={s.awaitingNote}>Revenez ici une fois le paiement finalisé.</Text>
+          <TouchableOpacity style={s.awaitingCancel} onPress={() => { if (pollRef.current) clearInterval(pollRef.current); setAwaitingPayment(false); }}>
+            <Text style={s.awaitingCancelText}>Annuler la vérification</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -194,4 +241,8 @@ const s = StyleSheet.create({
   cancelBtnText: { color: '#DC2626', fontSize: 14, fontWeight: '700' },
   btnDisabled: { opacity: 0.5 },
   note: { fontSize: 12, color: '#9CA3AF', lineHeight: 18, paddingHorizontal: 4 },
+  awaitingText: { fontSize: 16, fontWeight: '700', color: '#111827', marginTop: 20, textAlign: 'center' },
+  awaitingNote: { fontSize: 13, color: '#6B7280', marginTop: 6, textAlign: 'center', paddingHorizontal: 32 },
+  awaitingCancel: { marginTop: 28, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E5E7EB' },
+  awaitingCancelText: { fontSize: 14, color: '#6B7280', fontWeight: '600' },
 });

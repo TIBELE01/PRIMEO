@@ -76,6 +76,15 @@ export async function purchaseSlots(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function getSlotTransactionStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await subscriptionsService.getSlotTransactionStatus(req.params.txId!, req.user!.sub);
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function cancelSlots(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const quantity = Number(req.body?.quantity ?? 1);
