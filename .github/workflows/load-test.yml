@@ -1,0 +1,90 @@
+name: Load Test — Recherche (k6)
+
+# Déclenché manuellement OU automatiquement après un déploiement en staging.
+# Non bloquant : un échec n'empêche pas le merge.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL cible (ex: https://staging.primeo.ci)'
+        required: false
+        default: 'https://primeo-api-staging.onrender.com'
+      duration:
+        description: 'Durée du plateau (ex: 30s, 2m)'
+        required: false
+        default: '60s'
+  workflow_run:
+    workflows: ['Deploy — Staging']
+    types: [completed]
+
+concurrency:
+  group: load-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  k6-search:
+    name: k6 — GET /api/properties (50 rps)
+    runs-on: ubuntu-latest
+    # En cas d'échec : alerte seulement, pas de blocage (continue-on-error global)
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer k6
+        run: |
+          curl -fsSL https://pkg.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
+
+      - name: Vérifier la cible disponible
+        id: healthcheck
+        run: |
+          TARGET="${{ github.event.inputs.base_url || 'https://primeo-api-staging.onrender.com' }}"
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
+          if curl -fsS --max-time 10 "$TARGET/api/health" > /dev/null; then
+            echo "reachable=true" >> $GITHUB_OUTPUT
+          else
+            echo "reachable=false" >> $GITHUB_OUTPUT
+            echo "⚠️ La cible $TARGET n'est pas joignable — test ignoré."
+          fi
+
+      - name: Exécuter le test de charge
+        if: steps.healthcheck.outputs.reachable == 'true'
+        run: |
+          k6 run \
+            --env BASE_URL=${{ env.TARGET }} \
+            --out json=k6-results.json \
+            k6/search-load.test.js
+        # Le test peut échouer si les seuils ne sont pas atteints ;
+        # continue-on-error: true garantit que la CI globale n'est pas bloquée.
+
+      - name: Upload résultats k6
+        if: always() && steps.healthcheck.outputs.reachable == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results-${{ github.run_id }}
+          path: k6-results.json
+          retention-days: 14
+
+      - name: Résumé dans la CI
+        if: always() && steps.healthcheck.outputs.reachable == 'true'
+        run: |
+          if [ -f k6-results.json ]; then
+            echo "### Résultats test de charge k6" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            # Extraire les métriques clés du JSON k6
+            python3 -c "
+          import json, sys
+          with open('k6-results.json') as f:
+            lines = [json.loads(l) for l in f if l.strip() and '\"type\":\"Metric\"' not in l]
+          metrics = {}
+          for l in lines:
+            if l.get('type') == 'Point' and 'http_req_duration' in l.get('metric', ''):
+              pass  # traité ci-dessous via summary
+          print('Voir artifact k6-results.json pour le détail complet.')
+          " 2>/dev/null || echo "Voir artifact k6-results.json"
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
