@@ -215,16 +215,29 @@ export async function sendBookingConfirmationEmail(opts: {
   startDate: string;
   endDate: string;
   totalAmount: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  guests?: number;
+  reservationTime?: string;
+  mode?: 'stay' | 'table';
   invoiceUrl?: string;
 }): Promise<void> {
+  // Les montants sont transmis en valeur numérique : le template les formate
+  // (et masque les lignes nulles). On n'inclut payé/solde que s'ils sont > 0.
+  const money = (n?: number) => (typeof n === 'number' && n > 0 ? n : undefined);
   await sendTemplateEmail(opts.to, brevoConfig.templates.bookingConfirmation, {
     firstName: opts.firstName,
     bookingId: opts.bookingId,
     propertyTitle: opts.propertyTitle,
     startDate: opts.startDate,
     endDate: opts.endDate,
-    totalAmount: opts.totalAmount.toLocaleString('fr-CI') + ' FCFA',
-    bookingUrl: `https://primeo.ci/bookings/${opts.bookingId}`,
+    totalAmount: opts.totalAmount,
+    ...(money(opts.amountPaid) !== undefined ? { amountPaid: opts.amountPaid } : {}),
+    ...(money(opts.balanceDue) !== undefined ? { balanceDue: opts.balanceDue } : {}),
+    ...(opts.guests ? { guests: opts.guests } : {}),
+    ...(opts.reservationTime ? { reservationTime: opts.reservationTime } : {}),
+    ...(opts.mode === 'table' ? { mode: 'table' } : {}),
+    bookingUrl: `${env.FRONTEND_URL ?? 'https://primeo.ci'}/bookings/${opts.bookingId}`,
     invoiceUrl: opts.invoiceUrl ?? '',
   });
 }

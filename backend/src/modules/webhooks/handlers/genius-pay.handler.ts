@@ -6,6 +6,7 @@ import { sendBookingConfirmationEmail, sendTemplateEmail } from '../../../common
 import { sendPushNotification } from '../../../common/utils/push';
 import { sendSms } from '../../../common/utils/sms';
 import { brevoConfig } from '../../../config/brevo.config';
+import { env } from '../../../config/env.config';
 import { boostsService } from '../../boosts/boosts.service';
 import { subscriptionsService } from '../../subscriptions/subscriptions.service';
 import { referralsService } from '../../referrals/referrals.service';
@@ -137,7 +138,7 @@ async function notifyBookingConfirmed(bookingId: string): Promise<void> {
     })
     .catch((err) => logger.warn('In-app notification (owner) failed', err));
 
-  // Email to client
+  // Email to client — récapitulatif complet (total, déjà payé, solde, voyageurs)
   await sendBookingConfirmationEmail({
     to: [{ email: booking.client.email, name: clientName }],
     firstName: booking.client.firstName,
@@ -146,13 +147,16 @@ async function notifyBookingConfirmed(bookingId: string): Promise<void> {
     startDate: startStr,
     endDate: endStr,
     totalAmount: booking.totalAmount,
+    amountPaid: booking.onlinePaidAmount,
+    balanceDue: booking.remainingCashAmount,
+    guests: booking.guests,
     invoiceUrl,
   }).catch((err) => logger.warn('Booking confirmation email to client failed', err));
 
-  // Email to professional (new booking alert)
+  // Email to professional (nouvelle réservation reçue — template pro dédié)
   await sendTemplateEmail(
     [{ email: booking.property.owner.email, name: ownerName }],
-    brevoConfig.templates.bookingConfirmation,
+    brevoConfig.templates.bookingConfirmationPro,
     {
       firstName: ownerName,
       bookingId,
@@ -160,8 +164,9 @@ async function notifyBookingConfirmed(bookingId: string): Promise<void> {
       clientName,
       startDate: startStr,
       endDate: endStr,
-      totalAmount: booking.totalAmount.toLocaleString('fr-CI') + ' FCFA',
-      bookingUrl: `https://primeo.ci/professional/bookings/${bookingId}`,
+      totalAmount: booking.totalAmount,
+      guests: booking.guests,
+      bookingUrl: `${env.FRONTEND_URL ?? 'https://primeo.ci'}/professional/bookings/${bookingId}`,
     },
   ).catch((err) => logger.warn('Booking notification email to professional failed', err));
 

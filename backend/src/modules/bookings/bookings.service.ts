@@ -166,7 +166,14 @@ export const bookingsService = {
     // Réservation confirmée à la création (restaurant ou cash intégral) :
     // notifier le responsable et le client, pré-générer la facture, et ouvrir la discussion.
     if (initialStatus === 'confirmed') {
-      void bookingsService._notifyBookingCreatedConfirmed(booking.id, property, client, startDate, endDate).catch(
+      void bookingsService._notifyBookingCreatedConfirmed(booking.id, property, client, startDate, endDate, {
+        totalAmount: booking.totalAmount,
+        amountPaid: booking.onlinePaidAmount,
+        balanceDue: booking.remainingCashAmount,
+        guests: booking.guests,
+        reservationTime: input.reservationTime,
+        mode: isRestaurant ? 'table' : 'stay',
+      }).catch(
         (err) => logger.warn(`Notification réservation confirmée échouée pour ${booking.id}`, err),
       );
       void ensureBookingInvoice(booking.id).catch(
@@ -597,14 +604,32 @@ export const bookingsService = {
     client: { id: string; firstName: string; lastName: string },
     startDate: Date,
     endDate: Date,
+    extra?: {
+      totalAmount?: number;
+      amountPaid?: number;
+      balanceDue?: number;
+      guests?: number;
+      reservationTime?: string;
+      mode?: 'stay' | 'table' | 'interest';
+    },
   ) {
     const fmt = (d: Date) => d.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short', year: 'numeric' });
+    // On ne transmet les montants que lorsqu'ils sont significatifs (> 0) afin
+    // que le template n'affiche pas de lignes « 0 FCFA » inutiles.
+    const money = (n?: number) => (typeof n === 'number' && n > 0 ? n : undefined);
     const data = {
       bookingId,
       propertyTitle: property.title,
       startDate: fmt(startDate),
       endDate: fmt(endDate),
       senderName: `${client.firstName} ${client.lastName}`.trim(),
+      clientName: `${client.firstName} ${client.lastName}`.trim(),
+      ...(extra?.guests ? { guests: extra.guests } : {}),
+      ...(money(extra?.totalAmount) !== undefined ? { totalAmount: extra!.totalAmount } : {}),
+      ...(money(extra?.amountPaid) !== undefined ? { amountPaid: extra!.amountPaid } : {}),
+      ...(money(extra?.balanceDue) !== undefined ? { balanceDue: extra!.balanceDue } : {}),
+      ...(extra?.reservationTime ? { reservationTime: extra.reservationTime } : {}),
+      ...(extra?.mode === 'table' ? { mode: 'table' } : {}),
     };
     await Promise.allSettled([
       notificationsService.notify({ type: 'new_booking', recipientId: property.ownerId, data }),

@@ -22,29 +22,24 @@ function accentColor(accent: Accent): string {
   }
 }
 
-function accentGradient(accent: Accent): string {
-  switch (accent) {
-    case 'success': return G.success;
-    case 'danger': return G.danger;
-    case 'secondary': return G.secondary;
-    default: return G.primary;
-  }
-}
+// ─── En-tête (logo + bandeau bleu officiel + liseré vert) ──────────────────────
+// L'en-tête est toujours bleu (couleur officielle Primeo), quel que soit le type
+// d'email, pour une identité de marque cohérente. Un fin liseré vert apporte une
+// touche de design.
 
-// ─── En-tête (logo + bandeau dégradé) ──────────────────────────────────────────
-
-function renderHeader(accent: Accent): string {
+function renderHeader(_accent: Accent): string {
   const logo = EMAIL_LOGO_URL
     ? `<img src="${EMAIL_LOGO_URL}" alt="Primeo" width="150" style="display:block;margin:0 auto;border:0;height:auto;max-width:150px;" />`
     : `<span style="font-family:'Trebuchet MS',Arial,sans-serif;font-size:32px;font-weight:800;color:#ffffff;letter-spacing:3px;">PRIMEO</span>`;
 
   return `
   <tr>
-    <td style="background:${accentColor(accent)};background-image:${accentGradient(accent)};padding:36px 40px;text-align:center;">
+    <td class="primeo-header" style="background:${C.primary};background-image:${G.primary};padding:36px 40px;text-align:center;">
       ${logo}
-      <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:13px;font-family:Arial,sans-serif;letter-spacing:0.5px;">${COMPANY.tagline}</p>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;font-family:Arial,sans-serif;letter-spacing:0.5px;">${COMPANY.tagline}</p>
     </td>
-  </tr>`;
+  </tr>
+  <tr><td style="height:4px;background:${C.success};background-image:${G.success};font-size:0;line-height:0;">&nbsp;</td></tr>`;
 }
 
 // ─── Pied de page (réseaux sociaux + liens légaux) ─────────────────────────────
@@ -103,16 +98,39 @@ export function renderEmail({ title, body, accent = 'primary', preheader }: Layo
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
   <title>${title}</title>
+  <style>
+    /* Animations — prises en charge par les clients modernes (Apple Mail, iOS
+       Mail, certains webmails). Ignorées sans dommage ailleurs : aucun effet de
+       régression, le rendu statique reste impeccable. Le JavaScript étant
+       supprimé par tous les clients email, l'animation passe par du CSS pur. */
+    @keyframes primeoFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes primeoPop { 0% { opacity: 0; transform: scale(0.96); } 60% { transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes primeoSheen { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes primeoPulse { 0%,100% { box-shadow: 0 4px 12px rgba(255,102,0,0.30); } 50% { box-shadow: 0 6px 22px rgba(255,102,0,0.55); } }
+    .primeo-card { animation: primeoFadeUp 0.7s ease-out both; }
+    .primeo-header { animation: primeoPop 0.6s ease-out both; }
+    .primeo-info { animation: primeoFadeUp 0.8s ease-out 0.1s both; }
+    .primeo-btn { animation: primeoPulse 2.4s ease-in-out 0.6s infinite; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .primeo-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 26px rgba(255,102,0,0.55) !important; }
+    a[class="primeo-link"]:hover { text-decoration: underline !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .primeo-card, .primeo-header, .primeo-info, .primeo-btn { animation: none !important; }
+    }
+    @media only screen and (max-width: 620px) {
+      .primeo-card { width: 100% !important; border-radius: 0 !important; }
+      .primeo-pad { padding: 28px 22px !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background-color:${C.bodyBg};-webkit-text-size-adjust:100%;">
   ${preheaderBlock}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.bodyBg};">
     <tr>
       <td align="center" style="padding:32px 12px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:${C.cardBg};border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(11,27,58,0.10);">
+        <table role="presentation" class="primeo-card" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:${C.cardBg};border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(11,27,58,0.10);">
           ${renderHeader(accent)}
           <tr>
-            <td style="padding:40px 40px 32px;font-family:Arial,Helvetica,sans-serif;">
+            <td class="primeo-pad" style="padding:40px 40px 32px;font-family:Arial,Helvetica,sans-serif;">
               ${body}
             </td>
           </tr>
@@ -132,9 +150,9 @@ export function renderEmail({ title, body, accent = 'primary', preheader }: Layo
 
 // ─── Composants de contenu ─────────────────────────────────────────────────────
 
-/** Titre principal de l'email (avec emoji optionnel intégré dans le texte). */
-export function heading(text: string, accent: Accent = 'primary'): string {
-  return `<h1 style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:24px;line-height:1.3;font-weight:800;color:${accentColor(accent)};">${text}</h1>`;
+/** Titre principal de l'email — toujours en bleu officiel (cohérence de marque). */
+export function heading(text: string, _accent: Accent = 'primary'): string {
+  return `<h1 style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:24px;line-height:1.3;font-weight:800;color:${C.primary};">${text}</h1>`;
 }
 
 /** Salutation personnalisée « Bonjour Prénom, ». */
@@ -148,12 +166,12 @@ export function paragraph(html: string): string {
   return `<p style="margin:0 0 18px;font-family:Arial,sans-serif;font-size:15px;line-height:1.65;color:${C.text};">${html}</p>`;
 }
 
-/** Bouton d'action principal. */
-export function button(url: string, label: string, accent: Accent = 'primary'): string {
+/** Bouton d'action principal — toujours orange (couleur d'action Primeo). */
+export function button(url: string, label: string, _accent: Accent = 'secondary'): string {
   return `
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 24px;">
     <tr>
-      <td align="center" style="border-radius:12px;background:${accentColor(accent)};background-image:${accentGradient(accent)};box-shadow:0 4px 12px rgba(0,85,255,0.25);">
+      <td class="primeo-btn" align="center" style="border-radius:12px;background:${C.secondary};background-image:${G.secondary};box-shadow:0 4px 12px rgba(255,102,0,0.30);">
         <a href="${url}" target="_blank" style="display:inline-block;padding:15px 38px;font-family:Arial,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">${label}</a>
       </td>
     </tr>
@@ -184,7 +202,7 @@ export function infoCard(rows: InfoRow[], opts: { title?: string } = {}): string
       const isLast = i === arr.length - 1;
       const border = isLast ? '' : `border-bottom:1px solid ${C.border};`;
       const valueStyle = r.highlight
-        ? `font-size:17px;font-weight:800;color:${C.primary};`
+        ? `font-size:18px;font-weight:800;color:${C.success};`
         : `font-size:15px;font-weight:600;color:${C.heading};`;
       return `
         <tr>
@@ -195,7 +213,7 @@ export function infoCard(rows: InfoRow[], opts: { title?: string } = {}): string
     .join('');
 
   return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.panelBg};border:1px solid ${C.border};border-radius:12px;margin:0 0 24px;">
+  <table role="presentation" class="primeo-info" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.panelBg};border:1px solid ${C.border};border-left:4px solid ${C.primary};border-radius:12px;margin:0 0 24px;">
     <tr><td style="padding:18px 22px;">
       ${titleHtml}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${body}</table>
