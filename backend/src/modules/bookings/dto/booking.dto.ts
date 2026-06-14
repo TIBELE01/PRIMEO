@@ -43,6 +43,9 @@ export type CancelBookingInput = z.infer<typeof CancelBookingDto>;
 export const ListBookingsQueryDto = z.object({
   status: z.enum(BOOKING_STATUSES).optional(),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(20),
+  // L'app mobile charge la liste complète des réservations en une page (limit=100)
+  // puis les répartit par onglet côté client : le plafond doit donc l'accepter,
+  // sinon la requête est rejetée (400) et l'onglet « Réservations » reste vide.
+  limit: z.coerce.number().int().positive().max(100).default(20),
 });
 export type ListBookingsQueryInput = z.infer<typeof ListBookingsQueryDto>;

@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import type { Property } from '@/types/property';
 import { PaymentOptionsSelector } from '../../Booking/PaymentOptionsSelector';
+import { todayStr, addDaysStr, countNights, formatShortDateFR } from '../../../../utils/dates';
 
 interface Props {
   visible: boolean;
@@ -12,20 +13,16 @@ interface Props {
   onConfirm: (checkIn: string, checkOut: string, guests: number) => void;
 }
 
-const today = () => new Date().toISOString().split('T')[0];
-const addDays = (d: string, n: number) => {
-  const dt = new Date(d);
-  dt.setDate(dt.getDate() + n);
-  return dt.toISOString().split('T')[0];
-};
-const nightsBetween = (a: string, b: string) =>
-  Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000));
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' });
+// Dates manipulées via les utilitaires sûrs (YYYY-MM-DD) : addDaysStr/countNights
+// ne jettent jamais (pas de RangeError "Invalid time value" qui crashait l'app).
+const addDays = (d: string, n: number) => addDaysStr(d, n) ?? d;
+const nightsBetween = (a: string, b: string) => countNights(a, b);
+const fmtDate = (d: string) => formatShortDateFR(d);
 const fmt = (n: number) => n.toLocaleString('fr-CI');
 
 export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
-  const [checkIn, setCheckIn] = useState(today());
-  const [checkOut, setCheckOut] = useState(addDays(today(), 3));
+  const [checkIn, setCheckIn] = useState(todayStr());
+  const [checkOut, setCheckOut] = useState(addDays(todayStr(), 3));
   const [guests, setGuests] = useState(1);
   const [paymentOption, setPaymentOption] = useState<'full_online' | 'ten_percent_online' | 'zero_online'>('ten_percent_online');
 
@@ -55,7 +52,7 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
               <View style={styles.dateItem}>
                 <Text style={styles.dateLabel}>Arrivée</Text>
                 <View style={styles.dateControls}>
-                  <TouchableOpacity style={styles.dateBtn} onPress={() => { const d = addDays(checkIn, -1); if (d >= today()) setCheckIn(d); }}>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => { const d = addDays(checkIn, -1); if (d >= todayStr()) setCheckIn(d); }}>
                     <Text style={styles.dateBtnText}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.dateValue}>{fmtDate(checkIn)}</Text>

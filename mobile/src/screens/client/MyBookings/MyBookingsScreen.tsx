@@ -15,7 +15,7 @@ import { NetworkStatus } from '../../../components/common/NetworkStatus';
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
 type BookingStatus =
-  | 'pending_payment' | 'confirmed'
+  | 'interest_expressed' | 'pending_payment' | 'confirmed'
   | 'cancelled_by_client' | 'cancelled_by_professional'
   | 'completed';
 
@@ -50,6 +50,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ];
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
+  interest_expressed: 'Intérêt exprimé',
   pending_payment: 'En attente de paiement',
   confirmed: 'Confirmée',
   cancelled_by_client: 'Annulée',
@@ -58,12 +59,17 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 };
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
+  interest_expressed: '#0891B2',
   pending_payment: '#D97706',
   confirmed: '#1056E0',
   cancelled_by_client: '#DC2626',
   cancelled_by_professional: '#7C3AED',
   completed: '#0284C7',
 };
+
+// Repli si l'API renvoie un statut inconnu (jamais de couleur "undefined20").
+const FALLBACK_STATUS_LABEL = 'Réservation';
+const FALLBACK_STATUS_COLOR = '#6B7280';
 
 const fmt = (n: number) => n.toLocaleString('fr-CI') + ' FCFA';
 const BOOKINGS_CACHE_KEY = '@primeo_upcoming_bookings';
@@ -117,9 +123,9 @@ function BookingCard({ booking, onPress }: { booking: BookingItem; onPress: () =
             </Text>
           )}
           <View style={styles.statusRow}>
-            <View style={[styles.badge, { backgroundColor: STATUS_COLORS[booking.status] + '20' }]}>
-              <Text style={[styles.badgeText, { color: STATUS_COLORS[booking.status] }]}>
-                {STATUS_LABELS[booking.status]}
+            <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[booking.status] ?? FALLBACK_STATUS_COLOR) + '20' }]}>
+              <Text style={[styles.badgeText, { color: STATUS_COLORS[booking.status] ?? FALLBACK_STATUS_COLOR }]}>
+                {STATUS_LABELS[booking.status] ?? FALLBACK_STATUS_LABEL}
               </Text>
             </View>
           </View>
@@ -175,8 +181,16 @@ export function MyBookingsScreen() {
     setIsFromCache(false);
     try {
       const res = await bookingsApi.getMyBookings({ limit: 100, page: 1 });
-      const raw = res?.data?.data ?? res?.data ?? [];
-      const list: BookingItem[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+      // Le backend renvoie { data: [...], total, page, ... }. On reste tolérant
+      // aux autres formes possibles (tableau direct, { bookings: [...] }).
+      const body = res?.data;
+      const list: BookingItem[] = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+          ? body.data
+          : Array.isArray(body?.bookings)
+            ? body.bookings
+            : [];
       setBookings(list);
       AsyncStorage.setItem(BOOKINGS_CACHE_KEY, JSON.stringify(list)).catch(() => null);
     } catch {
