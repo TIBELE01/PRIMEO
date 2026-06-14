@@ -5,7 +5,7 @@ import { subscriptionsService } from '../subscriptions/subscriptions.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { referralsService } from '../referrals/referrals.service';
 import { geniusPayService } from '../payments/services/genius-pay.service';
-import { sendEmail } from '../../common/utils/mailer';
+import { sendEmail, sendTestEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { supabaseAdmin } from '../../config/supabase.config';
@@ -1645,6 +1645,33 @@ export const adminService = {
       ...(r.value as Record<string, unknown>),
       updatedAt: r.updatedAt.toISOString(),
     }));
+  },
+
+  async sendTestEmailTemplate(
+    adminId: string,
+    templateId: number,
+    to?: string,
+    params?: Record<string, unknown>,
+  ) {
+    if (!Number.isFinite(templateId) || templateId <= 0) {
+      throw new HttpError(400, 'templateId invalide');
+    }
+    let recipient = to;
+    if (!recipient) {
+      const admin = await prisma.user.findUnique({ where: { id: adminId }, select: { email: true } });
+      recipient = admin?.email;
+    }
+    if (!recipient) throw new HttpError(400, 'Aucun destinataire — précisez "to" ou vérifiez votre email');
+
+    await sendTestEmail({ to: [{ email: recipient }], templateId, params });
+    await createAudit({
+      adminId,
+      action: 'admin.email_template.test',
+      targetType: 'email',
+      targetId: String(templateId),
+      description: `Email de test (template ${templateId}) envoyé à ${recipient}`,
+    });
+    return { message: `Email de test envoyé à ${recipient}`, templateId };
   },
 
   async upsertEmailTemplate(

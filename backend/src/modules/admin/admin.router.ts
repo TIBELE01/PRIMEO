@@ -56,6 +56,7 @@ import {
   // Email templates
   listEmailTemplates,
   upsertEmailTemplate,
+  sendTestEmailTemplate,
 } from './admin.controller';
 import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-flags.controller';
 import { getMonitoringDashboard } from './monitoring.controller';
@@ -153,6 +154,7 @@ adminRouter.delete('/promo-codes/:id', parseId, deletePromoCode);
 
 // ── Email templates ────────────────────────────────────────────────────────────
 adminRouter.get('/email-templates', listEmailTemplates);
+adminRouter.post('/email-templates/test', sendTestEmailTemplate);
 adminRouter.put('/email-templates/:name', upsertEmailTemplate);
 
 // ── Client ratings moderation ──────────────────────────────────────────────────

@@ -12,6 +12,7 @@ export type NotificationType =
   | 'new_message'
   | 'review_received'
   | 'review_published'
+  | 'review_reply'                      // le professionnel a répondu à l'avis du client
   | 'dispute_opened'
   | 'dispute_resolved'
   | 'kyc_approved'
@@ -67,9 +68,10 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   interest_submitted:             { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   payment_failed:           { email: true,  push: true,  pushPriority: 'high',   sms: true,  smsCritical: true  },
   payment_success:          { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
-  new_message:              { email: false, push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  new_message:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   review_received:          { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
-  review_published:         { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
+  review_published:         { email: false, push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
+  review_reply:             { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   dispute_opened:           { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   dispute_resolved:         { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   kyc_approved:             { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
@@ -92,7 +94,7 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   referral_reward:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_activated:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_expiry_reminder:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
-  stay_reminder:                      { email: false, push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  stay_reminder:                      { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
 };
 
 export interface NotifyParams {

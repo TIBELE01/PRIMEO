@@ -399,6 +399,23 @@ export async function upsertEmailTemplate(req: Request, res: Response, next: Nex
   }
 }
 
+// Envoi d'un email de test pour prévisualiser le rendu d'un template.
+// Body : { templateId: number, to?: string, params?: object }
+// Destinataire par défaut : l'email de l'admin connecté.
+export async function sendTestEmailTemplate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await adminService.sendTestEmailTemplate(
+      req.user!.sub,
+      Number(req.body?.templateId),
+      typeof req.body?.to === 'string' ? req.body.to : undefined,
+      typeof req.body?.params === 'object' && req.body?.params !== null ? req.body.params : undefined,
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── Client ratings moderation ──────────────────────────────────────────────────
 
 export async function listReportedClientRatings(req: Request, res: Response, next: NextFunction): Promise<void> {

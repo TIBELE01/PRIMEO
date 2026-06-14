@@ -217,9 +217,21 @@ export const reviewsService = {
     if (review.property.ownerId !== userId) throw new HttpError(403, 'Vous n\'êtes pas le propriétaire de cette annonce');
     if (review.status !== 'published') throw new HttpError(400, 'Impossible de répondre à un avis non publié');
 
-    return prisma.review.update({
+    const updated = await prisma.review.update({
       where: { id: reviewId },
       data: { responseFromProfessional: reply },
     });
+
+    // Notifie l'auteur de l'avis que le professionnel a répondu.
+    notificationsService.notify({
+      type: 'review_reply',
+      recipientId: review.authorId,
+      data: {
+        propertyTitle: review.property.title,
+        replyText: reply,
+      },
+    }).catch((err) => logger.warn('Notify review_reply failed', err));
+
+    return updated;
   },
 };

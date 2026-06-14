@@ -96,6 +96,11 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: 'Avis publié',
         body: `Votre avis sur ${data['propertyTitle'] ?? 'la propriété'} est maintenant visible.`,
       };
+    case 'review_reply':
+      return {
+        title: 'Réponse à votre avis',
+        body: `Le responsable de ${data['propertyTitle'] ?? 'la propriété'} a répondu à l'avis que vous avez laissé.`,
+      };
     case 'dispute_opened':
       return {
         title: 'Litige ouvert',
@@ -235,13 +240,16 @@ async function dispatchEmail(
   const templateMap: Partial<Record<NotificationType, number>> = {
     booking_confirmed:      t.bookingConfirmation,
     booking_cancelled:      t.bookingCancellation,
-    new_booking:            t.bookingConfirmation,
-    property_interest:              t.bookingConfirmation,
-    interest_booking_received:      t.bookingConfirmation,
-    interest_submitted:             t.bookingConfirmation,
+    new_booking:            t.bookingConfirmationPro,
+    property_interest:              t.interestPro,
+    interest_booking_received:      t.interestPro,
+    interest_submitted:             t.interestClient,
     payment_failed:         t.subscriptionRenewal,
     payment_success:        t.paymentReceipt,
-    review_received:        t.bookingConfirmation,
+    new_message:            t.newMessage,
+    stay_reminder:          t.stayReminder,
+    review_received:        t.reviewReceived,
+    review_reply:           t.reviewReply,
     dispute_opened:         t.bookingCancellation,
     dispute_resolved:       t.bookingConfirmation,
     kyc_approved:           t.kycApproved,
@@ -253,6 +261,7 @@ async function dispatchEmail(
     subscription_reactivated:   t.subscriptionRenewal,
     subscription_grace_warning: t.subscriptionRenewal,
     referral_reward:        t.referralReward,
+    boost_activated:        t.boostActivated,
     boost_expiry_reminder:  t.boostExpiryReminder,
   };
 

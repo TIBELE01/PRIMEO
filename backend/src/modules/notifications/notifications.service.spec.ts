@@ -8,7 +8,15 @@ jest.mock('../../common/utils/mailer', () => ({ sendTemplateEmail: jest.fn(async
 jest.mock('../../common/utils/push', () => ({ registerExpoTokenWithOneSignal: jest.fn(async () => 'player-1') }));
 jest.mock('../../common/utils/sms', () => ({ sendSms: jest.fn(async () => undefined) }));
 jest.mock('../../config/brevo.config', () => ({
-  brevoConfig: { templates: { bookingConfirmation: 3, bookingCancellation: 4, paymentReceipt: 5, subscriptionRenewal: 8, kycApproved: 6, kycRejected: 7, referralReward: 11 } },
+  brevoConfig: {
+    templates: {
+      welcomeClient: 1, welcomeProfessional: 2, bookingConfirmation: 3, bookingCancellation: 4,
+      paymentReceipt: 5, kycApproved: 6, kycRejected: 7, subscriptionRenewal: 8, otpCode: 9,
+      passwordReset: 10, referralReward: 11, bookingConfirmationPro: 12, interestClient: 13,
+      interestPro: 14, newMessage: 15, stayReminder: 16, reviewReceived: 17, reviewReply: 18,
+      boostActivated: 19, boostExpiryReminder: 20,
+    },
+  },
 }));
 jest.mock('./providers/push.provider', () => ({ pushProvider: { sendToUser: jest.fn(async () => undefined) } }));
 
@@ -66,14 +74,14 @@ describe('notificationsService.notify — email + push pour les réservations', 
     expect(pushProvider.sendToUser).toHaveBeenCalledWith('owner-2', 'interest_booking_received', expect.any(String), expect.any(String), expect.any(Object), expect.any(String));
   });
 
-  it('stay_reminder (rappel J-1) : push envoyé, pas d\'email (CHANNEL_CONFIG)', async () => {
+  it('stay_reminder (rappel J-1) : push ET email envoyés (CHANNEL_CONFIG)', async () => {
     await notificationsService.notify({
       type: 'stay_reminder', recipientId: 'client-1',
       data: { bookingId: 'bk-9', propertyTitle: 'Villa', startDate: '13 juin' },
     });
     await flush();
     expect(pushProvider.sendToUser).toHaveBeenCalledWith('client-1', 'stay_reminder', expect.any(String), expect.stringContaining('demain'), expect.any(Object), 'high');
-    expect(sendTemplateEmail).not.toHaveBeenCalled();
+    expect(sendTemplateEmail).toHaveBeenCalled();
   });
 
   it('respecte les préférences : push désactivé → pas de push, email conservé', async () => {
