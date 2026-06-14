@@ -13,4 +13,5 @@ export const favoritesApi = {
   addItemToList: (listId: string, propertyId: string) => apiClient.post(`/favorites/lists/${listId}/items`, { propertyId }),
   removeItemFromList: (listId: string, propertyId: string) => apiClient.delete(`/favorites/lists/${listId}/items/${propertyId}`),
   syncList: (listId: string, propertyIds: string[]) => apiClient.put(`/favorites/lists/${listId}/sync`, { propertyIds }),
+  listItems: (listId: string) => apiClient.get(`/favorites/lists/${listId}/items`),
 };

@@ -14,6 +14,7 @@ import {
 } from './analytics.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
+import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
 import { z } from 'zod';
 
@@ -41,13 +42,13 @@ analyticsRouter.post('/events', validate(RecordEventsDto), recordEvents);
 
 analyticsRouter.use(authenticate);
 
-// ── Professional analytics ──────────────────────────────────────────────────
-analyticsRouter.get('/properties', getPropertyStats);
-analyticsRouter.get('/bookings', getBookingStats);
-analyticsRouter.get('/occupancy', getOccupancyRate);
+// ── Professional analytics (KYC requis) ────────────────────────────────────
+analyticsRouter.get('/properties', requireKycApproved, getPropertyStats);
+analyticsRouter.get('/bookings', requireKycApproved, getBookingStats);
+analyticsRouter.get('/occupancy', requireKycApproved, getOccupancyRate);
 
 // Detailed stats — plans Business/Entreprise uniquement (contrôlé dans le service)
-analyticsRouter.get('/detailed', getDetailedStats);
+analyticsRouter.get('/detailed', requireKycApproved, getDetailedStats);
 
 // Market reports
 analyticsRouter.get('/market-reports/types', getMarketReportTypes);

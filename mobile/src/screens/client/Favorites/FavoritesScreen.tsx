@@ -40,16 +40,48 @@ export function FavoritesScreen({ navigation }: Props) {
   const [newListName, setNewListName] = useState('');
   const [addToListProperty, setAddToListProperty] = useState<string | null>(null);
 
-  const loadLists = async () => {
+  // ── Server-side list management ────────────────────────────────────────────
+
+  const loadListsFromServer = async () => {
     try {
-      const raw = await AsyncStorage.getItem(LISTS_KEY);
-      if (raw) setLists(JSON.parse(raw));
-    } catch { /* ignore */ }
+      const listsRes = await favoritesApi.listLists();
+      const serverLists: Array<{ id: string; name: string }> = listsRes?.data?.data ?? listsRes?.data ?? [];
+      // Fetch propertyIds for each list (needed for active-list filtering)
+      const withItems: NamedList[] = await Promise.all(
+        serverLists.map(async (l) => {
+          try {
+            const itemsRes = await favoritesApi.listItems(l.id);
+            const items: Array<{ propertyId: string }> = itemsRes?.data?.data ?? itemsRes?.data ?? [];
+            return { id: l.id, name: l.name, propertyIds: items.map((i) => i.propertyId) };
+          } catch {
+            return { id: l.id, name: l.name, propertyIds: [] };
+          }
+        }),
+      );
+      setLists(withItems);
+    } catch { /* keep stale */ }
   };
 
-  const saveLists = async (updated: NamedList[]) => {
-    setLists(updated);
-    await AsyncStorage.setItem(LISTS_KEY, JSON.stringify(updated));
+  // Migration one-shot : si des listes existent en AsyncStorage, les pousser sur le serveur.
+  const migrateLocalLists = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(LISTS_KEY);
+      if (!raw) return;
+      const localLists: NamedList[] = JSON.parse(raw);
+      if (!localLists.length) { await AsyncStorage.removeItem(LISTS_KEY); return; }
+
+      for (const local of localLists) {
+        try {
+          const res = await favoritesApi.createList(local.name);
+          const created = res?.data?.data ?? res?.data;
+          if (created?.id && local.propertyIds.length > 0) {
+            await favoritesApi.syncList(created.id, local.propertyIds);
+          }
+        } catch { /* ignorer les listes qui échouent */ }
+      }
+      await AsyncStorage.removeItem(LISTS_KEY);
+      await loadListsFromServer();
+    } catch { /* migration silencieuse */ }
   };
 
   const load = useCallback(async (silent = false) => {
@@ -66,7 +98,9 @@ export function FavoritesScreen({ navigation }: Props) {
 
   useEffect(() => {
     load();
-    loadLists();
+    // Migration puis chargement depuis le serveur
+    migrateLocalLists().then(() => loadListsFromServer());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   const handleRemove = async (propertyId: string) => {
@@ -80,8 +114,8 @@ export function FavoritesScreen({ navigation }: Props) {
             try {
               await favoritesApi.remove(propertyId);
               setFavorites(prev => prev.filter(f => f.property.id !== propertyId));
-              const updatedLists = lists.map(l => ({ ...l, propertyIds: l.propertyIds.filter(id => id !== propertyId) }));
-              await saveLists(updatedLists);
+              // Mettre à jour l'état local (pas besoin de ré-appeler le serveur)
+              setLists(prev => prev.map(l => ({ ...l, propertyIds: l.propertyIds.filter(id => id !== propertyId) })));
             } catch {
               Alert.alert('Erreur', 'Impossible de retirer le favori.');
             }
@@ -94,23 +128,38 @@ export function FavoritesScreen({ navigation }: Props) {
   const handleCreateList = async () => {
     const name = newListName.trim();
     if (!name) return;
-    const newList: NamedList = { id: Date.now().toString(), name, propertyIds: [] };
-    const updated = [...lists, newList];
-    await saveLists(updated);
+    try {
+      const res = await favoritesApi.createList(name);
+      const created = res?.data?.data ?? res?.data;
+      if (created?.id) {
+        setLists(prev => [...prev, { id: created.id, name, propertyIds: [] }]);
+      }
+    } catch {
+      Alert.alert('Erreur', 'Impossible de créer la liste.');
+    }
     setNewListName('');
     setShowNewListModal(false);
   };
 
   const handleAddToList = async (listId: string) => {
     if (!addToListProperty) return;
-    const updated = lists.map(l =>
-      l.id === listId && !l.propertyIds.includes(addToListProperty)
-        ? { ...l, propertyIds: [...l.propertyIds, addToListProperty] }
-        : l,
-    );
-    await saveLists(updated);
-    setAddToListProperty(null);
-    Alert.alert('Ajouté', 'Propriété ajoutée à la liste.');
+    // Déduplication locale : ne pas ajouter si déjà présent
+    const list = lists.find(l => l.id === listId);
+    if (list?.propertyIds.includes(addToListProperty)) {
+      setAddToListProperty(null);
+      Alert.alert('Déjà dans la liste', 'Cette propriété est déjà dans cette liste.');
+      return;
+    }
+    try {
+      await favoritesApi.addItemToList(listId, addToListProperty);
+      setLists(prev =>
+        prev.map(l => l.id === listId ? { ...l, propertyIds: [...l.propertyIds, addToListProperty] } : l),
+      );
+      setAddToListProperty(null);
+      Alert.alert('Ajouté', 'Propriété ajoutée à la liste.');
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'ajouter à la liste.');
+    }
   };
 
   const handleShareList = async (list: NamedList) => {
