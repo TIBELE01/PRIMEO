@@ -3,16 +3,12 @@ import { env } from './env.config';
 
 export const brevoConfig = {
   apiKey: env.BREVO_API_KEY,
-  senderEmail: 'noreply@primeo.ci',
+  senderEmail: 'support.primeo@gmail.com',
   senderName: 'PRIMEO',
   baseUrl: 'https://api.brevo.com/v3',
-  smtp: {
-    host: env.BREVO_SMTP_HOST ?? 'smtp-relay.brevo.com',
-    port: env.BREVO_SMTP_PORT ?? 587,
-    user: env.BREVO_SMTP_USER,
-    pass: env.BREVO_SMTP_PASS,
-  },
-  // Template IDs (configured in Brevo dashboard)
+  // Template IDs — identifiants internes utilisés pour sélectionner le bon HTML local.
+  // Les templates sont rendus côté serveur (renderLocalTemplate) et envoyés via l'API
+  // Brevo en HTML brut : aucun template à créer dans le dashboard Brevo.
   templates: {
     welcomeClient: 1,
     welcomeProfessional: 2,
