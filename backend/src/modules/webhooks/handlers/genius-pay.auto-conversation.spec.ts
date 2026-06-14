@@ -2,6 +2,7 @@
 // (réservation résidence/hôtel en full_online ou ten_percent_online), la
 // conversation doit s'ouvrir automatiquement (message auto) et les deux parties
 // recevoir email (Brevo) + push (OneSignal).
+jest.mock('../../../config/env.config', () => ({ env: { FRONTEND_URL: 'http://app.test' } }));
 jest.mock('../../../common/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));

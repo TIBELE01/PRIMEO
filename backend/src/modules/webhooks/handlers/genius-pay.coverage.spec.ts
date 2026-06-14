@@ -1,5 +1,6 @@
 // Couverture étendue du handler Genius Pay : facture, paiement échoué,
 // remboursement, et aiguillage des événements webhook.
+jest.mock('../../../config/env.config', () => ({ env: { FRONTEND_URL: 'http://app.test' } }));
 jest.mock('../../../common/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 jest.mock('../../../common/utils/mailer', () => ({ sendBookingConfirmationEmail: jest.fn(async () => undefined), sendTemplateEmail: jest.fn(async () => undefined) }));
 jest.mock('../../../common/utils/push', () => ({ sendPushNotification: jest.fn(async () => undefined) }));
