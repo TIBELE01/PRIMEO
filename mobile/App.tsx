@@ -50,27 +50,59 @@ const linking = {
   prefixes: ['primeo://', WEB_ORIGIN],
   config: {
     screens: {
-      ResetPassword: {
-        path: 'reset-password',
-        parse: {
-          // Token is extracted from the URL fragment in getStateFromPath below
-          recoveryToken: (_: string) => '',
+      PublicTabs: {
+        screens: {
+          Connexion: {
+            screens: {
+              ResetPassword: {
+                path: 'reset-password',
+                parse: {
+                  // Token is extracted from the URL fragment in getStateFromPath below
+                  recoveryToken: (_: string) => '',
+                },
+              },
+            },
+          },
         },
       },
     },
   },
   getStateFromPath(path: string, options?: object) {
     // Supabase appends tokens in fragment or query-string:
-    //   /reset-password#access_token=xxx&type=recovery
-    //   /reset-password?access_token=xxx&type=recovery
-    const [pathPart, remainder] = path.split(/[#?]/);
-    const params = new URLSearchParams(remainder ?? '');
+    //   /reset-password#access_token=xxx&type=recovery  (native deep link / web initial URL)
+    //   /reset-password?access_token=xxx&type=recovery  (query-string variant)
+    // On web, React Navigation strips the hash before calling this function in some
+    // scenarios, so also read window.location.hash directly as a fallback.
+    const webHash =
+      typeof window !== 'undefined' ? (window.location.hash ?? '').replace(/^#/, '') : '';
+    const [pathPart, fragmentOrQuery] = path.split(/[#?]/);
+    const params = new URLSearchParams(fragmentOrQuery || webHash);
     const accessToken = params.get('access_token');
     const type = params.get('type');
 
     if (pathPart.replace(/^\//, '') === 'reset-password' && accessToken && type === 'recovery') {
+      // ResetPassword lives deep in the tree:
+      // RootStack → PublicTabs (tab index 2: Connexion) → ConnexionStack → ResetPassword
+      // The state must mirror this hierarchy or React Navigation falls back to home.
       return {
-        routes: [{ name: 'ResetPassword', params: { recoveryToken: accessToken } }],
+        routes: [
+          {
+            name: 'PublicTabs',
+            state: {
+              index: 2,
+              routes: [
+                { name: 'Accueil' },
+                { name: 'Recherche' },
+                {
+                  name: 'Connexion',
+                  state: {
+                    routes: [{ name: 'ResetPassword', params: { recoveryToken: accessToken } }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
       };
     }
 
