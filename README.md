@@ -117,3 +117,51 @@ primeo/
 3. Vérifier le linting : `pnpm lint`
 4. Ouvrir une Pull Request vers `develop`
 5. La PR est déployée automatiquement sur staging après merge
+
+---
+
+## Configuration de production
+
+### Variables d'environnement — Backend
+
+Copier `backend/.env.example` en `backend/.env` et renseigner toutes les clés.
+
+| Catégorie | Variables clés | Obligatoire |
+|---|---|---|
+| Serveur | `NODE_ENV`, `PORT`, `PUBLIC_URL`, `BACKEND_URL` | ✅ |
+| Base de données | `DATABASE_URL`, `DIRECT_URL` (migrations) | ✅ |
+| Supabase Auth | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | ✅ |
+| Paiements | `GENIUS_PAY_API_KEY`, `GENIUS_PAY_SECRET_API_KEY`, `GENIUS_PAY_WEBHOOK_SECRET` | ✅ prod |
+| Email | `BREVO_API_KEY`, `BREVO_SMTP_*` | ✅ prod |
+| Push | `ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY` | ✅ prod |
+| SMS OTP | `ORANGE_CLIENT_ID`, `ORANGE_CLIENT_SECRET` | ✅ prod |
+| Médias | `CLOUDINARY_URL` | ✅ prod |
+| Monitoring | `SENTRY_DSN`, `SLACK_WEBHOOK_URL` | Recommandé |
+| Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Recommandé |
+
+> **Sécurité** : ne jamais committer `.env` — il est dans `.gitignore`. Injecter les secrets via les variables d'environnement Render ou votre CI.
+
+### Variables d'environnement — Mobile
+
+Copier `mobile/.env.example` en `mobile/.env`.
+
+| Variable | Description | Obligatoire |
+|---|---|---|
+| `EXPO_PUBLIC_SUPABASE_URL` | URL du projet Supabase | ✅ |
+| `EXPO_PUBLIC_API_URL` | URL du backend (ex: `https://api.primeo.ci`) | ✅ |
+| `EXPO_PUBLIC_ONESIGNAL_APP_ID` | App ID OneSignal pour les notifications push | ✅ prod |
+| `EAS_PROJECT_ID` | ID de projet Expo (requis pour les builds EAS) | ✅ builds |
+| `EXPO_PUBLIC_SENTRY_DSN` | DSN Sentry React Native (optionnel, désactivé si vide) | Recommandé |
+
+### Healthchecks
+
+| Endpoint | Usage |
+|---|---|
+| `GET /api/health` | Liveness — répond instantanément (charge balancers) |
+| `GET /api/health/ready` | Readiness — vérifie DB, Redis, Genius Pay, Brevo (utilisé par Render) |
+
+### Alertes & monitoring
+
+- **Sentry** : capturer les erreurs backend et mobile → voir `docs/deployment/sentry-alerts.md`
+- **Slack** : alertes Ops automatiques si ≥ 10 erreurs/minute (`SLACK_WEBHOOK_URL`)
+- **Webhooks** : les échecs sur `/api/webhooks/*` sont automatiquement remontés dans Sentry

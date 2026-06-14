@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
+import * as Sentry from '@sentry/node';
 import { env } from '../../config/env.config';
 import { logger } from '../utils/logger';
 
@@ -71,12 +72,33 @@ export function errorAlertMiddleware(
   while (errorTimestamps.length > 0 && errorTimestamps[0]! < cutoff) errorTimestamps.shift();
 
   if (errorTimestamps.length >= RATE_THRESHOLD) {
-    sendSlackAlert(
+    const alertText =
       `🚨 *Primeo API — Taux d'erreur élevé*\n` +
-        `*${errorTimestamps.length} erreurs* en 1 minute\n` +
-        `Dernière : \`${err.message}\` · \`${req.method} ${req.path}\`\n` +
-        `Env : ${env.NODE_ENV} · ${new Date().toISOString()}`,
-    ).catch(() => null);
+      `*${errorTimestamps.length} erreurs* en 1 minute\n` +
+      `Dernière : \`${err.message}\` · \`${req.method} ${req.path}\`\n` +
+      `Env : ${env.NODE_ENV} · ${new Date().toISOString()}`;
+
+    sendSlackAlert(alertText).catch(() => null);
+
+    // Forward high-error-rate event to Sentry as a warning
+    if (env.SENTRY_DSN) {
+      Sentry.captureMessage(
+        `High error rate: ${errorTimestamps.length} errors/min on ${req.method} ${req.path}`,
+        {
+          level: 'warning',
+          tags: { alert_type: 'high_error_rate', endpoint: req.path },
+          extra: { errorsPerMinute: errorTimestamps.length, lastError: err.message },
+        },
+      );
+    }
+  }
+
+  // Capture webhook failures as Sentry errors with a dedicated tag
+  if (req.path.includes('/webhooks/') && env.SENTRY_DSN) {
+    Sentry.captureException(err, {
+      tags: { alert_type: 'webhook_failure', webhook_path: req.path },
+      extra: { method: req.method, body: req.body },
+    });
   }
 
   next(err);

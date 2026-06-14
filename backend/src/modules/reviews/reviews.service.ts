@@ -141,7 +141,18 @@ export const reviewsService = {
       prisma.review.count({ where: { propertyId, status: 'published' } }),
     ]);
 
-    return { reviews, total, page, limit, pages: Math.ceil(total / limit) };
+    return {
+      reviews: reviews.map((r) => ({
+        ...r,
+        // Mobile compatibility: map Prisma field names to API field names
+        reviewer: r.author,
+        reply: r.responseFromProfessional ?? null,
+      })),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   },
 
   async listMine(authorId: string, query: { page?: string }) {
