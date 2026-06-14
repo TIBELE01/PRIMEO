@@ -59,7 +59,7 @@ function btn(url: string, label: string, color = '#1E3A5F'): string {
 
 // ─── Templates HTML locaux ────────────────────────────────────────────────────
 
-function renderLocalTemplate(templateId: number, params: Record<string, unknown>): { subject: string; html: string } {
+export function renderLocalTemplate(templateId: number, params: Record<string, unknown>): { subject: string; html: string } {
   const p = (key: string, fallback = '') => String(params[key] ?? fallback);
 
   switch (templateId) {
@@ -199,6 +199,20 @@ function renderLocalTemplate(templateId: number, params: Record<string, unknown>
             <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1E3A5F;">${p('otp')}</span>
           </div>
           <p style="font-size:13px;color:#888;margin:0;">Ce code est valable 5 minutes. Ne le communiquez à personne.</p>`),
+      };
+    }
+
+    case 10: { // passwordReset (utilisé surtout via sendPasswordResetEmail ; ce cas garantit un rendu non générique si appelé par ID)
+      const resetUrl = p('resetUrl', 'https://primeo.ci');
+      return {
+        subject: 'Réinitialisation de votre mot de passe Primeo',
+        html: wrapHtml('Réinitialisation de mot de passe',
+          `<p style="font-size:16px;color:#333;margin:0 0 16px;">Bonjour <strong>${p('firstName')}</strong>,</p>
+          <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 24px;">
+            Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en créer un nouveau.
+          </p>
+          ${btn(resetUrl, 'Réinitialiser mon mot de passe', '#F97316')}
+          <p style="font-size:13px;color:#888;margin:0;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`),
       };
     }
 

@@ -10,7 +10,7 @@ import {
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
-async function recoverPendingTransactions(): Promise<void> {
+export async function recoverPendingTransactions(): Promise<void> {
   const threshold = new Date(Date.now() - TEN_MINUTES_MS);
 
   const stuckTransactions = await prisma.transaction.findMany({

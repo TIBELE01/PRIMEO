@@ -111,6 +111,37 @@ export const propertiesService = {
     return serializeProperty({ ...(property as Record<string, unknown>), badgeType });
   },
 
+  /**
+   * Vérifie que le propriétaire n'a pas atteint sa limite de publications avant
+   * d'occuper un nouveau slot (création, duplication, réactivation d'une annonce
+   * archivée/rejetée). Lève une 403 explicite proposant l'achat d'un slot ou la
+   * montée en formule. Les annonces déjà comptées (draft/pending/active/suspended)
+   * n'ont pas besoin de cette vérification : elles occupent déjà leur slot.
+   *
+   * @param actionSuffix complément de message (ex: " avant de dupliquer")
+   */
+  async _assertPublicationLimit(ownerId: string, actionSuffix = ''): Promise<void> {
+    const sub = await prisma.subscription.findUnique({ where: { userId: ownerId } });
+    if (!sub) return; // pas d'abonnement → aucune limite appliquée
+
+    const { effectivePublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
+    const owner = await prisma.user.findUnique({ where: { id: ownerId }, select: { accountType: true } });
+    const limit = effectivePublicationLimit(sub.planType, owner?.accountType ?? '', sub.extraPublicationSlots ?? 0);
+
+    // Compte les publications qui occupent un slot (hors archives et rejets)
+    const active = await prisma.property.count({
+      where: { ownerId, status: { in: ['draft', 'pending', 'active', 'suspended'] } },
+    });
+
+    if (active >= limit) {
+      const label = publicationLabel(owner?.accountType ?? '');
+      throw new HttpError(
+        403,
+        `Limite de ${limit} ${label}(s) atteinte. Achetez des publications supplémentaires (500 FCFA/mois) ou passez à une formule supérieure${actionSuffix}.`,
+      );
+    }
+  },
+
   async create(ownerId: string, input: CreatePropertyInput) {
     // Ensure a professional profile exists — auto-create with pending KYC if missing.
     let profile = await prisma.professionalProfile.findUnique({ where: { userId: ownerId } });
@@ -123,24 +154,7 @@ export const propertiesService = {
     }
 
     // Vérification de la limite de publications selon la formule d'abonnement
-    const user = await prisma.user.findUnique({ where: { id: ownerId }, select: { accountType: true } });
-    const sub  = await prisma.subscription.findUnique({ where: { userId: ownerId } });
-    if (sub) {
-      const { effectivePublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
-      // Limite = formule + publications supplémentaires achetées (500 FCFA/mois)
-      const limit  = effectivePublicationLimit(sub.planType, user?.accountType ?? '', sub.extraPublicationSlots ?? 0);
-      // Compte les publications actives (hors archives et rejets)
-      const active = await prisma.property.count({
-        where: {
-          ownerId,
-          status: { in: ['draft', 'pending', 'active', 'suspended'] },
-        },
-      });
-      if (active >= limit) {
-        const label = publicationLabel(user?.accountType ?? '');
-        throw new HttpError(403, `Limite de ${limit} ${label}(s) atteinte. Achetez des publications supplémentaires (500 FCFA/mois) ou passez à une formule supérieure.`);
-      }
-    }
+    await propertiesService._assertPublicationLimit(ownerId);
 
     // Geocode if coordinates not provided
     let { latitude, longitude } = input;
@@ -211,19 +225,7 @@ export const propertiesService = {
     }
 
     // Limite de publications (formule + slots achetés) — un brouillon compte.
-    const sub = await prisma.subscription.findUnique({ where: { userId: source.ownerId } });
-    if (sub) {
-      const { effectivePublicationLimit, publicationLabel } = await import('../../common/constants/subscription-plans');
-      const owner = await prisma.user.findUnique({ where: { id: source.ownerId }, select: { accountType: true } });
-      const limit = effectivePublicationLimit(sub.planType, owner?.accountType ?? '', sub.extraPublicationSlots ?? 0);
-      const active = await prisma.property.count({
-        where: { ownerId: source.ownerId, status: { in: ['draft', 'pending', 'active', 'suspended'] } },
-      });
-      if (active >= limit) {
-        const label = publicationLabel(owner?.accountType ?? '');
-        throw new HttpError(403, `Limite de ${limit} ${label}(s) atteinte. Achetez des publications supplémentaires (500 FCFA/mois) ou passez à une formule supérieure avant de dupliquer.`);
-      }
-    }
+    await propertiesService._assertPublicationLimit(source.ownerId, ' avant de dupliquer');
 
     return prisma.$transaction(async (tx) => {
       const copy = await tx.property.create({
@@ -353,10 +355,16 @@ export const propertiesService = {
     const property = await prisma.property.findUnique({ where: { id } });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.ownerId !== userId) throw new HttpError(403, 'Accès non autorisé');
-    // Autorise la soumission depuis brouillon, rejeté ou suspendu
-    const allowedStatuses = ['draft', 'rejected', 'suspended'];
+    // Autorise la soumission depuis brouillon, rejeté, suspendu ou archivé.
+    const allowedStatuses = ['draft', 'rejected', 'suspended', 'archived'];
     if (!allowedStatuses.includes(property.status)) {
       throw new HttpError(400, 'Cette annonce ne peut pas être soumise à validation dans son état actuel');
+    }
+    // Réactiver une annonce archivée ou rejetée occupe un nouveau slot (ces statuts
+    // ne sont pas comptés). On vérifie donc la limite de publications avant d'occuper
+    // le slot — message explicite proposant l'achat d'un slot ou la montée en formule.
+    if (property.status === 'archived' || property.status === 'rejected') {
+      await propertiesService._assertPublicationLimit(property.ownerId, ' avant de réactiver cette annonce');
     }
     return prisma.property.update({ where: { id }, data: { status: 'pending' } });
   },
