@@ -1,52 +1,71 @@
-// PayoutsScreen — historique des reversements (wallet pro). Crédit automatique
-// du net (après frais Genius Pay) des réservations confirmées payées en ligne.
+// PayoutsScreen — portefeuille virtuel professionnel : solde, reversements,
+// récompenses de parrainage et autres crédits.
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { payoutsApi } from '../../../services/api/endpoints/payouts';
+import { walletApi } from '../../../services/api/endpoints/wallet';
 
-interface PayoutItem {
+type TxType = 'payout_to_professional' | 'referral_reward' | 'refund';
+
+interface WalletTx {
   id: string;
-  grossAmount: number;
-  feeAmount: number;
-  netAmount: number;
-  feePercent: string | number;
-  status: string;
-  createdAt: string;
-  booking?: { id: string; startDate: string; endDate: string; property?: { title?: string } };
+  type: TxType;
+  amount: number;
+  fee: number;
+  notes: string | null;
+  date: string | null;
+  booking: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    propertyTitle: string | null;
+  } | null;
 }
 
-interface Summary {
-  totalPaidOut: number;
-  payoutsCount: number;
-  pendingNet: number;
-  pendingCount: number;
-  feePercent: number;
+interface WalletData {
+  balance: number;
+  currency: string;
+  transactions: WalletTx[];
 }
 
 const fmt = (n: number) => `${(n ?? 0).toLocaleString('fr-FR')} FCFA`;
-const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+const fmtDate = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+function txLabel(type: TxType): string {
+  if (type === 'payout_to_professional') return 'Reversement réservation';
+  if (type === 'referral_reward') return 'Récompense parrainage';
+  if (type === 'refund') return 'Remboursement';
+  return 'Crédit';
+}
+
+function txIcon(type: TxType): string {
+  if (type === 'payout_to_professional') return 'arrow-down-circle';
+  if (type === 'referral_reward') return 'gift';
+  if (type === 'refund') return 'refresh-circle';
+  return 'cash';
+}
+
+function txColor(type: TxType): string {
+  if (type === 'referral_reward') return '#7C3AED';
+  if (type === 'refund') return '#D97706';
+  return '#16A34A';
+}
 
 export default function PayoutsScreen() {
-  const [items, setItems] = useState<PayoutItem[]>([]);
-  const [summary, setSummary] = useState<Summary | null>(null);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [listRes, sumRes] = await Promise.allSettled([payoutsApi.list(1, 50), payoutsApi.getSummary()]);
-      if (listRes.status === 'fulfilled') {
-        const d = listRes.value.data?.data ?? listRes.value.data;
-        setItems(Array.isArray(d) ? d : []);
-      }
-      if (sumRes.status === 'fulfilled') {
-        setSummary(sumRes.value.data?.data ?? sumRes.value.data ?? null);
-      }
+      const res = await walletApi.getMyWallet();
+      const data: WalletData = res.data?.data ?? res.data ?? null;
+      setWallet(data);
     } catch { /* garde l'état précédent */ } finally {
       setLoading(false);
       setRefreshing(false);
@@ -63,52 +82,84 @@ export default function PayoutsScreen() {
     );
   }
 
+  const payouts = wallet?.transactions.filter(t => t.type === 'payout_to_professional') ?? [];
+  const referrals = wallet?.transactions.filter(t => t.type === 'referral_reward') ?? [];
+
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
-        <Text style={s.title}>Mes reversements</Text>
-        <Text style={s.subtitle}>Crédités automatiquement sur votre portefeuille</Text>
+        <Text style={s.title}>Portefeuille</Text>
+        <Text style={s.subtitle}>Solde, reversements et crédits de parrainage</Text>
       </View>
 
-      {summary && (
-        <View style={s.summaryRow}>
-          <View style={[s.card, { marginRight: 6 }]}>
-            <Text style={s.cardLabel}>Total reversé</Text>
-            <Text style={s.cardValue}>{fmt(summary.totalPaidOut)}</Text>
-            <Text style={s.cardHint}>{summary.payoutsCount} opération{summary.payoutsCount > 1 ? 's' : ''}</Text>
+      {/* Balance card */}
+      <View style={s.balanceCard}>
+        <Text style={s.balanceLabel}>Solde disponible</Text>
+        <Text style={s.balanceValue}>{fmt(wallet?.balance ?? 0)}</Text>
+        <View style={s.balanceStatsRow}>
+          <View style={s.balanceStat}>
+            <Ionicons name="arrow-down-circle" size={14} color="#16A34A" />
+            <Text style={s.balanceStatText}>
+              {payouts.length} reversement{payouts.length !== 1 ? 's' : ''}
+            </Text>
           </View>
-          <View style={[s.card, { marginLeft: 6 }]}>
-            <Text style={s.cardLabel}>En attente</Text>
-            <Text style={[s.cardValue, { color: '#D97706' }]}>{fmt(summary.pendingNet)}</Text>
-            <Text style={s.cardHint}>{summary.pendingCount} réservation{summary.pendingCount > 1 ? 's' : ''}</Text>
+          <View style={[s.balanceStat, { marginLeft: 16 }]}>
+            <Ionicons name="gift" size={14} color="#7C3AED" />
+            <Text style={s.balanceStatText}>
+              {referrals.length} parrainage{referrals.length !== 1 ? 's' : ''}
+            </Text>
           </View>
         </View>
-      )}
+      </View>
 
       <FlatList
-        data={items}
+        data={wallet?.transactions ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={items.length === 0 ? s.emptyWrap : { padding: 16 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#1056E0" />}
+        contentContainerStyle={(wallet?.transactions.length ?? 0) === 0 ? s.emptyWrap : { padding: 16 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(true); }}
+            tintColor="#1056E0"
+          />
+        }
+        ListHeaderComponent={
+          (wallet?.transactions.length ?? 0) > 0
+            ? <Text style={s.listHeader}>Historique des transactions</Text>
+            : null
+        }
         ListEmptyComponent={
           <View style={s.empty}>
-            <Ionicons name="cash-outline" size={44} color="#9CA3AF" />
-            <Text style={s.emptyTitle}>Aucun reversement pour le moment</Text>
+            <Ionicons name="wallet-outline" size={44} color="#9CA3AF" />
+            <Text style={s.emptyTitle}>Aucune transaction pour le moment</Text>
             <Text style={s.emptyMsg}>
-              Les paiements en ligne de vos réservations confirmées sont reversés automatiquement chaque jour.
+              Les reversements de réservations et les récompenses de parrainage apparaîtront ici.
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <View style={s.row}>
-            <View style={s.rowIcon}><Ionicons name="arrow-down-circle" size={22} color="#16A34A" /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowTitle} numberOfLines={1}>{item.booking?.property?.title ?? 'Réservation'}</Text>
-              <Text style={s.rowSub}>{fmtDate(item.createdAt)} · brut {fmt(item.grossAmount)}{item.feeAmount > 0 ? ` · frais ${fmt(item.feeAmount)}` : ''}</Text>
+        renderItem={({ item }) => {
+          const color = txColor(item.type);
+          const icon = txIcon(item.type);
+          const label = item.booking?.propertyTitle
+            ? `${item.booking.propertyTitle}`
+            : txLabel(item.type);
+          const sub = item.booking
+            ? `${fmtDate(item.booking.startDate)}${item.fee > 0 ? ` · frais ${fmt(item.fee)}` : ''}`
+            : fmtDate(item.date);
+          return (
+            <View style={s.row}>
+              <View style={[s.rowIcon, { backgroundColor: `${color}18` }]}>
+                <Ionicons name={icon as any} size={20} color={color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.rowTitle} numberOfLines={1}>{label}</Text>
+                <Text style={s.rowType}>{txLabel(item.type)}</Text>
+                {!!sub && <Text style={s.rowSub}>{sub}</Text>}
+              </View>
+              <Text style={[s.rowNet, { color }]}>+{fmt(item.amount)}</Text>
             </View>
-            <Text style={s.rowNet}>+{fmt(item.netAmount)}</Text>
-          </View>
-        )}
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -120,16 +171,30 @@ const s = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   title: { fontSize: 24, fontWeight: '800', color: '#111827' },
   subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  summaryRow: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 8 },
-  card: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
-  cardLabel: { fontSize: 12, color: '#6B7280' },
-  cardValue: { fontSize: 18, fontWeight: '800', color: '#16A34A', marginTop: 4 },
-  cardHint: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, gap: 10 },
-  rowIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center' },
+  balanceCard: {
+    marginHorizontal: 16, marginBottom: 8,
+    backgroundColor: '#1056E0', borderRadius: 18,
+    padding: 20,
+    shadowColor: '#1056E0', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  balanceLabel: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 6 },
+  balanceValue: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
+  balanceStatsRow: { flexDirection: 'row', marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' },
+  balanceStat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  balanceStatText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+  listHeader: { fontSize: 12, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 },
+  row: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 14, padding: 14, marginBottom: 8, gap: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  rowIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowTitle: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  rowSub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  rowNet: { fontSize: 15, fontWeight: '800', color: '#16A34A' },
+  rowType: { fontSize: 11, color: '#6B7280', marginTop: 1 },
+  rowSub: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+  rowNet: { fontSize: 15, fontWeight: '800' },
   emptyWrap: { flexGrow: 1, justifyContent: 'center' },
   empty: { alignItems: 'center', padding: 40, gap: 10 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },
