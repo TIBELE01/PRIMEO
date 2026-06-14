@@ -42,29 +42,29 @@ import { apiClient } from './src/services/api/client';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 // Deep-link mapping
-// Supabase password-reset redirects to primeo://reset-password#access_token=xxx&type=recovery
-// React Navigation strips the fragment, so we parse it manually in the transformer.
+// Supabase password-reset redirects to:
+//   - native : primeo://reset-password#access_token=xxx&type=recovery
+//   - web    : https://primeo-mobile-web-xt9o.onrender.com/reset-password#access_token=xxx&type=recovery
+const WEB_ORIGIN = 'https://primeo-mobile-web-xt9o.onrender.com';
 const linking = {
-  prefixes: ['primeo://'],
+  prefixes: ['primeo://', WEB_ORIGIN],
   config: {
     screens: {
       ResetPassword: {
         path: 'reset-password',
         parse: {
-          recoveryToken: (_: string) => {
-            // The real token lives in the URL fragment (?access_token= or #access_token=).
-            // React Navigation gives us the path-level params here, but the fragment
-            // is handled by the getStateFromPath transformer below.
-            return '';
-          },
+          // Token is extracted from the URL fragment in getStateFromPath below
+          recoveryToken: (_: string) => '',
         },
       },
     },
   },
   getStateFromPath(path: string, options?: object) {
-    // Supabase appends tokens in the fragment: reset-password#access_token=xxx&type=recovery
-    const [pathPart, fragment] = path.split('#');
-    const params = new URLSearchParams(fragment ?? '');
+    // Supabase appends tokens in fragment or query-string:
+    //   /reset-password#access_token=xxx&type=recovery
+    //   /reset-password?access_token=xxx&type=recovery
+    const [pathPart, remainder] = path.split(/[#?]/);
+    const params = new URLSearchParams(remainder ?? '');
     const accessToken = params.get('access_token');
     const type = params.get('type');
 
