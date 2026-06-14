@@ -1,5 +1,6 @@
-// Client email — transport SMTP Brevo (nodemailer) avec templates HTML locaux
-import nodemailer from 'nodemailer';
+// Client email — API transactionnelle Brevo v3 (HTTP) avec templates HTML locaux.
+// N'utilise pas SMTP : la clé API (BREVO_API_KEY) suffit, aucun credential SMTP requis.
+import axios from 'axios';
 import { brevoConfig } from '../../config/brevo.config';
 import { env } from '../../config/env.config';
 import { logger } from './logger';
@@ -16,22 +17,6 @@ interface SendEmailOptions {
   htmlContent?: string;
   templateId?: number;
   params?: Record<string, unknown>;
-}
-
-// ─── SMTP transporter ─────────────────────────────────────────────────────────
-
-let _transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (_transporter) return _transporter;
-  if (!brevoConfig.smtp.user || !brevoConfig.smtp.pass) return null;
-  _transporter = nodemailer.createTransport({
-    host: brevoConfig.smtp.host,
-    port: Number(brevoConfig.smtp.port),
-    secure: false, // STARTTLS sur le port 587
-    auth: { user: brevoConfig.smtp.user, pass: brevoConfig.smtp.pass },
-  });
-  return _transporter;
 }
 
 // ─── Helpers HTML ─────────────────────────────────────────────────────────────
@@ -244,17 +229,42 @@ function renderLocalTemplate(templateId: number, params: Record<string, unknown>
   }
 }
 
-// ─── Client bas niveau ────────────────────────────────────────────────────────
+// ─── Envoi via l'API transactionnelle Brevo v3 ────────────────────────────────
 
-export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  const transporter = getTransporter();
-
-  if (!transporter) {
-    logger.warn('SMTP Brevo non configuré (BREVO_SMTP_USER / BREVO_SMTP_PASS manquants) — email ignoré');
+async function sendViaBrevoApi(
+  to: EmailRecipient[],
+  subject: string,
+  htmlContent: string,
+): Promise<void> {
+  const apiKey = brevoConfig.apiKey;
+  if (!apiKey) {
+    logger.warn('BREVO_API_KEY absent — email ignoré');
     return;
   }
 
-  // Résolution du contenu HTML et du sujet
+  await axios.post(
+    `${brevoConfig.baseUrl}/smtp/email`,
+    {
+      sender: { email: brevoConfig.senderEmail, name: brevoConfig.senderName },
+      to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
+      subject,
+      htmlContent,
+    },
+    {
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+      timeout: 10_000,
+    },
+  );
+}
+
+// ─── Client bas niveau ────────────────────────────────────────────────────────
+
+export async function sendEmail(options: SendEmailOptions): Promise<void> {
+  if (!brevoConfig.apiKey) {
+    logger.warn('BREVO_API_KEY absent — email ignoré');
+    return;
+  }
+
   let htmlContent = options.htmlContent ?? '';
   let subject = options.subject;
 
@@ -301,29 +311,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     }
 
     try {
-      const toAddr = recipient.name
-        ? `"${recipient.name.replace(/"/g, '')}" <${recipient.email}>`
-        : recipient.email;
-
-      const info = await transporter.sendMail({
-        from: `"${brevoConfig.senderName}" <${brevoConfig.senderEmail}>`,
-        to: toAddr,
-        subject: finalSubject,
-        html: htmlContent,
-      });
-
-      const messageId: string | null = (info as { messageId?: string }).messageId ?? null;
-      if (logId && messageId) {
-        await prisma.emailLog.update({
-          where: { id: logId },
-          data: { messageId },
-        }).catch((err) => logger.warn('emailLog : échec mise à jour messageId', err));
-      }
-
-      logger.debug(`Email envoyé à ${recipient.email}${messageId ? ` [${messageId}]` : ''}`);
+      await sendViaBrevoApi([recipient], finalSubject, htmlContent);
+      logger.debug(`Email Brevo envoyé à ${recipient.email}`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      logger.error(`Échec envoi email à ${recipient.email}`, err);
+      logger.error(`Échec envoi email Brevo à ${recipient.email}`, err);
 
       if (logId) {
         await prisma.emailLog.update({
@@ -348,16 +340,18 @@ export async function sendTemplateEmail(
 // ─── Validation au démarrage ──────────────────────────────────────────────────
 
 export async function validateSmtpConnection(): Promise<void> {
-  const transporter = getTransporter();
-  if (!transporter) {
-    logger.warn('Brevo SMTP : credentials absents — envois désactivés');
+  if (!brevoConfig.apiKey) {
+    logger.warn('Brevo : BREVO_API_KEY absent — envois email désactivés');
     return;
   }
   try {
-    await transporter.verify();
-    logger.info('Brevo SMTP : connexion vérifiée ✓');
+    await axios.get(`${brevoConfig.baseUrl}/account`, {
+      headers: { 'api-key': brevoConfig.apiKey },
+      timeout: 5_000,
+    });
+    logger.info('Brevo API : connexion vérifiée ✓');
   } catch (err) {
-    logger.error('Brevo SMTP : échec de connexion au démarrage', err);
+    logger.error('Brevo API : échec de connexion au démarrage', err);
   }
 }
 
