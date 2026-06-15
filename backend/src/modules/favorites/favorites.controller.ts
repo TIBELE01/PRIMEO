@@ -65,6 +65,20 @@ export async function listFavoriteListItems(req: Request, res: Response, next: N
   try { res.json({ data: await favoritesService.listItemsInList(req.params.listId!, req.user!.sub) }); } catch (err) { next(err); }
 }
 
+export async function renameFavoriteList(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const list = await favoritesService.renameList(req.params.listId!, req.user!.sub, req.body.name ?? '');
+    res.json({ data: list });
+  } catch (err) { next(err); }
+}
+
+export async function bulkSyncFavorites(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await favoritesService.bulkSyncFavorites(req.user!.sub, req.body.propertyIds ?? []);
+    res.json({ data: result });
+  } catch (err) { next(err); }
+}
+
 export async function bulkSyncFavoriteList(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const result = await favoritesService.bulkSyncList(req.params.listId!, req.body.propertyIds ?? [], req.user!.sub);

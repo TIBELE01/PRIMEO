@@ -87,6 +87,25 @@ export const favoritesService = {
     });
   },
 
+  async renameList(listId: string, userId: string, name: string) {
+    const trimmed = name?.trim();
+    if (!trimmed || trimmed.length > 100) throw new HttpError(400, 'Nom de liste invalide (1-100 caractères)');
+    const list = await prisma.favoriteList.findFirst({ where: { id: listId, userId } });
+    if (!list) throw new HttpError(404, 'Liste introuvable');
+    return prisma.favoriteList.update({ where: { id: listId }, data: { name: trimmed } });
+  },
+
+  // Migration AsyncStorage → serveur : upsert groupé des favoris simples.
+  // Ajoute les propertyIds manquants ; les doublons sont ignorés (skipDuplicates).
+  async bulkSyncFavorites(userId: string, propertyIds: string[]) {
+    if (!Array.isArray(propertyIds) || propertyIds.length === 0) return { synced: 0 };
+    await prisma.favorite.createMany({
+      data: propertyIds.map((propertyId) => ({ userId, propertyId })),
+      skipDuplicates: true,
+    });
+    return { synced: propertyIds.length };
+  },
+
   async bulkSyncList(listId: string, propertyIds: string[], userId: string) {
     // Used for migration: replace all items in a list with a given array of propertyIds.
     const list = await prisma.favoriteList.findFirst({ where: { id: listId, userId } });

@@ -11,11 +11,13 @@ const mockPrisma: Record<string, any> = {
     create: jest.fn(),
     findUnique: jest.fn(),
     delete: jest.fn(),
+    createMany: jest.fn(async () => ({})),
   },
   favoriteList: {
     findMany: jest.fn(async () => []),
     count: jest.fn(async () => 0),
     create: jest.fn(async (a: any) => ({ id: 'l1', ...a.data })),
+    update: jest.fn(async (a: any) => ({ id: 'l1', ...a.data })),
     findFirst: jest.fn(),
     delete: jest.fn(async () => ({})),
   },
@@ -73,6 +75,39 @@ describe('addItemToList / removeItemFromList', () => {
     mockPrisma.favoriteListItem.findUnique.mockResolvedValue({ id: 'i1' });
     const res = await favoritesService.removeItemFromList('l1', 'p1', 'u1');
     expect(res).toEqual({ removed: true });
+  });
+});
+
+describe('renameList', () => {
+  it('renames a list owned by the user', async () => {
+    mockPrisma.favoriteList.findFirst.mockResolvedValue({ id: 'l1', userId: 'u1', name: 'Ancien nom' });
+    const res = await favoritesService.renameList('l1', 'u1', 'Nouveau nom');
+    expect(mockPrisma.favoriteList.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'l1' }, data: { name: 'Nouveau nom' } }),
+    );
+    expect(res).toMatchObject({ id: 'l1' });
+  });
+  it('rejects empty name (400)', async () => {
+    await expect(favoritesService.renameList('l1', 'u1', '  ')).rejects.toMatchObject({ statusCode: 400 });
+  });
+  it('404 if list not found or not owned', async () => {
+    mockPrisma.favoriteList.findFirst.mockResolvedValue(null);
+    await expect(favoritesService.renameList('l1', 'u1', 'Nom')).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe('bulkSyncFavorites', () => {
+  it('upserts multiple favorites without duplicates', async () => {
+    const res = await favoritesService.bulkSyncFavorites('u1', ['p1', 'p2', 'p3']);
+    expect(mockPrisma.favorite.createMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skipDuplicates: true }),
+    );
+    expect(res).toEqual({ synced: 3 });
+  });
+  it('returns synced 0 for empty array', async () => {
+    const res = await favoritesService.bulkSyncFavorites('u1', []);
+    expect(mockPrisma.favorite.createMany).not.toHaveBeenCalled();
+    expect(res).toEqual({ synced: 0 });
   });
 });
 
