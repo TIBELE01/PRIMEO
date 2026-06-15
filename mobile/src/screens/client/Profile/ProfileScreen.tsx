@@ -350,7 +350,8 @@ export function ProfileScreen({ navigation }: Props) {
         </ProfileAccordion>
 
         {/* Déconnexion */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}
+          accessibilityRole="button" accessibilityLabel="Se déconnecter">
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
 
@@ -372,6 +373,9 @@ export function ProfileScreen({ navigation }: Props) {
                   key={dur}
                   style={[styles.durationBtn, deactivateDuration === dur && styles.durationBtnActive]}
                   onPress={() => setDeactivateDuration(dur)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={labels[dur]}
+                  accessibilityState={{ selected: deactivateDuration === dur }}
                 >
                   <Text style={[styles.durationLabel, deactivateDuration === dur && styles.durationLabelActive]}>
                     {labels[dur]}
@@ -380,13 +384,17 @@ export function ProfileScreen({ navigation }: Props) {
               );
             })}
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setDeactivateModalVisible(false)}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setDeactivateModalVisible(false)}
+                accessibilityRole="button" accessibilityLabel="Annuler">
                 <Text style={styles.modalCancelText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirm, styles.btnDanger]}
                 onPress={confirmDeactivate}
                 disabled={actionLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Confirmer la désactivation"
+                accessibilityState={{ disabled: actionLoading, busy: actionLoading }}
               >
                 {actionLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.modalConfirmText}>Confirmer</Text>}
               </TouchableOpacity>

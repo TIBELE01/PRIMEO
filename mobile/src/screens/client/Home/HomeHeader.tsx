@@ -104,11 +104,14 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           <Text style={s.subtitle}>Découvrez les meilleures propriétés</Text>
         </View>
         {loginButton ? (
-          <TouchableOpacity style={s.loginBtn} onPress={loginButton.onPress} activeOpacity={0.85}>
+          <TouchableOpacity style={s.loginBtn} onPress={loginButton.onPress} activeOpacity={0.85}
+            accessibilityRole="button" accessibilityLabel={loginButton.label}>
             <Text style={s.loginBtnTxt}>{loginButton.label}</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={s.notifBtn} onPress={onNotificationsPress} activeOpacity={0.75}>
+          <TouchableOpacity style={s.notifBtn} onPress={onNotificationsPress} activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={unreadCount ? `Notifications — ${unreadCount} non lue${unreadCount > 1 ? 's' : ''}` : 'Notifications'}>
             <Text style={s.bell}>🔔</Text>
             {!!unreadCount && (
               <View style={s.badge}><Text style={s.badgeTxt}>{unreadCount > 9 ? '9+' : unreadCount}</Text></View>
@@ -139,25 +142,29 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
 
       {/* ── 4 cartes en grille 2×2 ── */}
       <View style={s.cardGrid}>
-        <TouchableOpacity style={s.card} onPress={onPressResidence} activeOpacity={0.85}>
+        <TouchableOpacity style={s.card} onPress={onPressResidence} activeOpacity={0.85}
+          accessibilityRole="button" accessibilityLabel="Résidences — Villas, appartements meublés">
           <Text style={s.cardIcon}>🏘️</Text>
           <Text style={s.cardTitle}>Résidences</Text>
           <Text style={s.cardDesc}>Villas, apparts meublés.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[s.card, s.cardB]} onPress={onPressHotel} activeOpacity={0.85}>
+        <TouchableOpacity style={[s.card, s.cardB]} onPress={onPressHotel} activeOpacity={0.85}
+          accessibilityRole="button" accessibilityLabel="Hôtels — Chambres et suites">
           <Text style={s.cardIcon}>🏨</Text>
           <Text style={s.cardTitle}>Hôtels</Text>
           <Text style={s.cardDesc}>Chambres et suites.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[s.card, s.cardC]} onPress={onPressImmobilier} activeOpacity={0.85}>
+        <TouchableOpacity style={[s.card, s.cardC]} onPress={onPressImmobilier} activeOpacity={0.85}
+          accessibilityRole="button" accessibilityLabel="Immobilier — Achat et location">
           <Text style={s.cardIcon}>🏢</Text>
           <Text style={s.cardTitle}>Immobilier</Text>
           <Text style={s.cardDesc}>Achat et location.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[s.card, s.cardD]} onPress={onPressRestaurant} activeOpacity={0.85}>
+        <TouchableOpacity style={[s.card, s.cardD]} onPress={onPressRestaurant} activeOpacity={0.85}
+          accessibilityRole="button" accessibilityLabel="Restaurants — Gastronomie ivoirienne">
           <Text style={s.cardIcon}>🍽️</Text>
           <Text style={s.cardTitle}>Restaurants</Text>
           <Text style={s.cardDesc}>Gastronomie CI.</Text>

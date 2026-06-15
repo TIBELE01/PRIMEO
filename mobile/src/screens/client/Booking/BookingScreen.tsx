@@ -364,6 +364,8 @@ export function BookingScreen({ navigation, route }: Props) {
           onPress={handleBack}
           style={styles.backBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Retour"
         >
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
@@ -484,14 +486,18 @@ export function BookingScreen({ navigation, route }: Props) {
                   style={[styles.counterBtn, guests <= 1 && styles.counterBtnDisabled]}
                   onPress={() => setGuests(g => Math.max(1, g - 1))}
                   disabled={guests <= 1}
+                  accessibilityRole="button"
+                  accessibilityLabel="Diminuer le nombre de couverts"
                 >
                   <Text style={[styles.counterBtnText, guests <= 1 && styles.counterBtnTextDisabled]}>−</Text>
                 </TouchableOpacity>
-                <Text style={styles.counterValue}>{guests}</Text>
+                <Text style={styles.counterValue} accessibilityLabel={`${guests} couvert${guests > 1 ? 's' : ''}`}>{guests}</Text>
                 <TouchableOpacity
                   style={[styles.counterBtn, guests >= maxGuests && styles.counterBtnDisabled]}
                   onPress={() => setGuests(g => Math.min(maxGuests, g + 1))}
                   disabled={guests >= maxGuests}
+                  accessibilityRole="button"
+                  accessibilityLabel="Augmenter le nombre de couverts"
                 >
                   <Text style={[styles.counterBtnText, guests >= maxGuests && styles.counterBtnTextDisabled]}>+</Text>
                 </TouchableOpacity>
@@ -545,14 +551,18 @@ export function BookingScreen({ navigation, route }: Props) {
                   style={[styles.counterBtn, guests <= 1 && styles.counterBtnDisabled]}
                   onPress={() => setGuests(g => Math.max(1, g - 1))}
                   disabled={guests <= 1}
+                  accessibilityRole="button"
+                  accessibilityLabel="Diminuer le nombre de voyageurs"
                 >
                   <Text style={[styles.counterBtnText, guests <= 1 && styles.counterBtnTextDisabled]}>−</Text>
                 </TouchableOpacity>
-                <Text style={styles.counterValue}>{guests}</Text>
+                <Text style={styles.counterValue} accessibilityLabel={`${guests} voyageur${guests > 1 ? 's' : ''}`}>{guests}</Text>
                 <TouchableOpacity
                   style={[styles.counterBtn, guests >= maxGuests && styles.counterBtnDisabled]}
                   onPress={() => setGuests(g => Math.min(maxGuests, g + 1))}
                   disabled={guests >= maxGuests}
+                  accessibilityRole="button"
+                  accessibilityLabel="Augmenter le nombre de voyageurs"
                 >
                   <Text style={[styles.counterBtnText, guests >= maxGuests && styles.counterBtnTextDisabled]}>+</Text>
                 </TouchableOpacity>
@@ -581,6 +591,7 @@ export function BookingScreen({ navigation, route }: Props) {
                 value={contactFirstName}
                 onChangeText={setContactFirstName}
                 autoCapitalize="words"
+                accessibilityLabel="Prénom"
               />
 
               <Text style={styles.fieldLabel}>Nom *</Text>
@@ -591,6 +602,7 @@ export function BookingScreen({ navigation, route }: Props) {
                 value={contactLastName}
                 onChangeText={setContactLastName}
                 autoCapitalize="words"
+                accessibilityLabel="Nom de famille"
               />
 
               <Text style={styles.fieldLabel}>Téléphone *</Text>
@@ -601,6 +613,7 @@ export function BookingScreen({ navigation, route }: Props) {
                 value={contactPhone}
                 onChangeText={setContactPhone}
                 keyboardType="phone-pad"
+                accessibilityLabel="Numéro de téléphone"
               />
               <Text style={styles.fieldHint}>
                 {isTable
@@ -619,6 +632,7 @@ export function BookingScreen({ navigation, route }: Props) {
                 onChangeText={setContactEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                accessibilityLabel="Adresse e-mail"
               />
               <Text style={styles.fieldHint}>Votre confirmation et votre facture y seront envoyées.</Text>
             </View>
@@ -935,7 +949,8 @@ export function BookingScreen({ navigation, route }: Props) {
       {/* Boutons de navigation */}
       <View style={styles.footer}>
         {step < LAST_STEP ? (
-          <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}
+            accessibilityRole="button" accessibilityLabel={`Étape suivante — ${STEPS[step]?.label ?? ''}`}>
             <Text style={styles.nextBtnText}>Suivant →</Text>
           </TouchableOpacity>
         ) : (
@@ -945,6 +960,9 @@ export function BookingScreen({ navigation, route }: Props) {
             onPress={handleConfirm}
             disabled={isLoading}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={isInterest ? 'Envoyer ma demande' : 'Confirmer la réservation'}
+            accessibilityState={{ disabled: isLoading, busy: isLoading }}
           >
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />

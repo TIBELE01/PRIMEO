@@ -69,7 +69,8 @@ function SectionTitle({ text, onSeeAll }: { text: string; onSeeAll?: () => void 
     <View style={s.secTitleBox}>
       <Text style={s.secTitleText}>{text.toUpperCase()}</Text>
       {onSeeAll && (
-        <TouchableOpacity onPress={onSeeAll} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity onPress={onSeeAll} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button" accessibilityLabel={`Voir tout — ${text}`}>
           <Text style={s.seeAll}>Voir tout →</Text>
         </TouchableOpacity>
       )}
@@ -85,7 +86,8 @@ function FaqItem({ item }: { item: typeof FAQ_ITEMS[number] }) {
   const [open, setOpen] = useState(false);
   return (
     <View style={s.faqItem}>
-      <TouchableOpacity style={s.faqQ} onPress={() => setOpen(o => !o)} activeOpacity={0.8}>
+      <TouchableOpacity style={s.faqQ} onPress={() => setOpen(o => !o)} activeOpacity={0.8}
+        accessibilityRole="button" accessibilityLabel={item.q} accessibilityState={{ expanded: open }}>
         <Text style={s.faqQText}>{item.q}</Text>
         <View style={[s.faqIconBox, open && s.faqIconBoxOpen]}>
           <Text style={[s.faqChevron, open && s.faqChevronOpen]}>{open ? '▲' : '▼'}</Text>
@@ -351,8 +353,10 @@ export function HomeScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                accessibilityLabel="Adresse e-mail pour la newsletter"
               />
-              <TouchableOpacity style={s.newsletterBtn} onPress={() => { if (email.includes('@')) setSent(true); }}>
+              <TouchableOpacity style={s.newsletterBtn} onPress={() => { if (email.includes('@')) setSent(true); }}
+                accessibilityRole="button" accessibilityLabel="S'inscrire à la newsletter">
                 <Text style={s.newsletterBtnText}>S'inscrire</Text>
               </TouchableOpacity>
             </View>
