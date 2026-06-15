@@ -11,6 +11,7 @@ import {
   markNoShow,
   getPaymentStatus,
   getBookingInvoice,
+  updateBookingDates,
 } from './bookings.controller';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
@@ -18,7 +19,7 @@ import { requireKycApproved } from '../professional/middlewares/professional.mid
 import { validate } from '../../common/validators/validation.middleware';
 import { parseId } from '../../common/validators/parse-id.middleware';
 import { idempotency } from '../../common/middleware/idempotency.middleware';
-import { CreateBookingDto, CancelBookingDto, ListBookingsQueryDto } from './dto/booking.dto';
+import { CreateBookingDto, CancelBookingDto, ListBookingsQueryDto, UpdateBookingDatesDto } from './dto/booking.dto';
 
 export const bookingsRouter = Router();
 
@@ -32,6 +33,7 @@ bookingsRouter.get('/:id/payment-status', parseId, getPaymentStatus);
 bookingsRouter.get('/:id/invoice', parseId, getBookingInvoice);
 bookingsRouter.post('/', idempotency, validate(CreateBookingDto), createBooking);
 bookingsRouter.post('/:id/cancel', parseId, validate(CancelBookingDto), cancelBooking);
+bookingsRouter.patch('/:id/dates', parseId, validate(UpdateBookingDatesDto), updateBookingDates);
 
 // Professional actions
 bookingsRouter.post(

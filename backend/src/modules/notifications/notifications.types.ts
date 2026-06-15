@@ -35,7 +35,8 @@ export type NotificationType =
   | 'referral_reward'                   // referrer earns wallet credit when referee completes first booking
   | 'boost_activated'                   // property boost (free or paid) successfully activated
   | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
-  | 'stay_reminder';                    // rappel J-1 au client avant le début du séjour / de la réservation
+  | 'stay_reminder'                    // rappel J-1 au client avant le début du séjour / de la réservation
+  | 'booking_dates_updated';           // client a modifié les dates d'une réservation confirmée
 
 export interface NotificationPreferences {
   email: boolean;
@@ -95,6 +96,7 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   boost_activated:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_expiry_reminder:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   stay_reminder:                      { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  booking_dates_updated:              { email: false, push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
 };
 
 export interface NotifyParams {

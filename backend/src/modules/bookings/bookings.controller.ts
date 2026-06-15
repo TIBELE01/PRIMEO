@@ -92,3 +92,12 @@ export async function getBookingInvoice(req: Request, res: Response, next: NextF
     next(err);
   }
 }
+
+export async function updateBookingDates(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await bookingsService.updateDates(req.params.id, req.user!.sub, req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

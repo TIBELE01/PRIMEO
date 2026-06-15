@@ -24,11 +24,14 @@ export const bookingRepository = {
   // Seules les réservations confirmées ou terminées bloquent les dates.
   // Les réservations en attente de paiement (pending_payment) ne doivent pas bloquer
   // pour éviter que des créneaux restent bloqués après un abandon de paiement.
-  findOverlapping: (propertyId: string, startDate: Date, endDate: Date) =>
+  // excludeBookingId : utilisé lors d'une modification de dates pour ne pas rejeter
+  // la réservation en cours elle-même.
+  findOverlapping: (propertyId: string, startDate: Date, endDate: Date, excludeBookingId?: string) =>
     prisma.booking.findMany({
       where: {
         propertyId,
         status: { in: ['confirmed', 'completed'] },
+        ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
         OR: [
           { startDate: { lte: endDate }, endDate: { gte: startDate } },
         ],

@@ -34,7 +34,7 @@ describe('notify — contenus in-app par type', () => {
     'subscription_suspended', 'subscription_upgraded', 'subscription_downgraded', 'subscription_reactivated',
     'subscription_grace_warning', 'account_suspended', 'property_approved', 'property_rejected',
     'property_modifications_requested', 'property_suspended', 'ticket_status_changed', 'ticket_comment_added',
-    'otp_code', 'referral_reward', 'stay_reminder',
+    'otp_code', 'referral_reward', 'stay_reminder', 'booking_dates_updated',
   ];
   it.each(types)('persiste une notification in-app non vide pour %s', async (type) => {
     await notificationsService.notify({

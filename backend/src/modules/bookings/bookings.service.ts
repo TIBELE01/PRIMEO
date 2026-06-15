@@ -2,8 +2,9 @@
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { TokenPayload } from '../../common/middleware/jwt-auth.middleware';
-import { CreateBookingInput, CancelBookingInput, ListBookingsQueryInput } from './dto/booking.dto';
+import { CreateBookingInput, CancelBookingInput, ListBookingsQueryInput, UpdateBookingDatesInput } from './dto/booking.dto';
 import { availabilityService } from './services/availability.service';
+import { bookingRepository } from '../../database/repositories/booking.repository';
 import { pricingService } from './services/pricing.service';
 import { cancellationService } from './services/cancellation.service';
 import { geniusPayService } from '../payments/services/genius-pay.service';
@@ -501,6 +502,91 @@ export const bookingsService = {
     ]).catch(() => { /* best-effort */ });
 
     return { message: 'Réservation annulée', refundAmount };
+  },
+
+  async updateDates(id: string, clientId: string, input: UpdateBookingDatesInput) {
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { property: { select: { ownerId: true, propertyType: true, title: true } } },
+    });
+    if (!booking) throw new HttpError(404, 'Réservation introuvable');
+    if (booking.clientId !== clientId) throw new HttpError(403, 'Accès non autorisé');
+    if (booking.status !== 'confirmed') {
+      throw new HttpError(400, 'Seules les réservations confirmées peuvent avoir leurs dates modifiées');
+    }
+
+    const { propertyType } = booking.property;
+    if (propertyType === 'restaurant' || propertyType.startsWith('immobilier')) {
+      throw new HttpError(400, 'La modification des dates n\'est pas disponible pour ce type de propriété');
+    }
+
+    const newStart = new Date(input.startDate);
+    const newEnd = new Date(input.endDate);
+    const oldStart = booking.startDate;
+    const oldEnd = booking.endDate;
+
+    if (newStart.getTime() === oldStart.getTime() && newEnd.getTime() === oldEnd.getTime()) {
+      return { message: 'Dates inchangées', booking };
+    }
+
+    // Vérifier l'absence de chevauchement avec d'autres réservations (hors réservation courante)
+    const overlapping = await bookingRepository.findOverlapping(booking.propertyId, newStart, newEnd, id);
+    if (overlapping.length > 0) throw new HttpError(409, 'Ces dates ne sont pas disponibles');
+
+    // Vérifier les blocages manuels et externes dans le calendrier (les slots « booked »
+    // appartiennent à cette réservation et seront réassignés dans la transaction).
+    const cur = new Date(newStart);
+    while (cur < newEnd) {
+      const avail = await prisma.availability.findUnique({
+        where: { propertyId_date: { propertyId: booking.propertyId, date: new Date(cur) } },
+      });
+      if (avail?.status === 'manually_blocked') {
+        throw new HttpError(409, `La date ${cur.toISOString().split('T')[0]} est bloquée manuellement`);
+      }
+      if (avail?.status === 'external_blocked') {
+        throw new HttpError(409, `La date ${cur.toISOString().split('T')[0]} est bloquée par une réservation externe`);
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({ where: { id }, data: { startDate: newStart, endDate: newEnd } });
+
+      // Libérer les anciennes disponibilités « booked »
+      const d = new Date(oldStart);
+      while (d < oldEnd) {
+        await tx.availability.deleteMany({
+          where: { propertyId: booking.propertyId, date: new Date(d), status: 'booked' },
+        });
+        d.setDate(d.getDate() + 1);
+      }
+
+      // Marquer les nouvelles dates comme réservées
+      const c = new Date(newStart);
+      while (c < newEnd) {
+        await tx.availability.upsert({
+          where: { propertyId_date: { propertyId: booking.propertyId, date: new Date(c) } },
+          create: { propertyId: booking.propertyId, date: new Date(c), status: 'booked' },
+          update: { status: 'booked' },
+        });
+        c.setDate(c.getDate() + 1);
+      }
+    });
+
+    const fmt = (d: Date) => d.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short', year: 'numeric' });
+    void notificationsService.notify({
+      type: 'booking_dates_updated',
+      recipientId: booking.property.ownerId,
+      data: {
+        bookingId: id,
+        propertyTitle: booking.property.title,
+        newStartDate: fmt(newStart),
+        newEndDate: fmt(newEnd),
+      },
+    }).catch((err) => logger.warn(`Notification modification dates échouée pour ${id}`, err));
+
+    const updated = await prisma.booking.findUnique({ where: { id } });
+    return { message: 'Dates mises à jour', booking: updated };
   },
 
   async confirm(id: string, professionalId: string) {

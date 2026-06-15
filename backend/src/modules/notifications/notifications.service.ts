@@ -201,6 +201,11 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: '⚡ Votre boost expire demain',
         body: `Le boost de votre annonce "${String(data['propertyTitle'] ?? '')}" expire dans moins de 24h. Renouvelez-le pour maintenir votre visibilité.`,
       };
+    case 'booking_dates_updated':
+      return {
+        title: 'Dates de réservation modifiées',
+        body: `Les dates de la réservation pour « ${data['propertyTitle'] ?? 'votre bien'} » ont été modifiées : du ${String(data['newStartDate'] ?? data['startDate'] ?? '?')} au ${String(data['newEndDate'] ?? data['endDate'] ?? '?')}.`,
+      };
     default:
       return { title: '', body: '' };
   }
