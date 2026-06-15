@@ -225,6 +225,10 @@ export const usersService = {
       } as any,
     });
 
+    // Purge explicite des tokens push : la ligne user étant anonymisée (et non
+    // supprimée), le cascade FK ne se déclenche pas → nettoyage manuel.
+    await prisma.pushToken.deleteMany({ where: { userId: id } }).catch(() => null);
+
     await writeAudit(id, 'user.account_deleted', { reason: input.reason });
 
     // Supprimer de Supabase Auth (fire-and-forget)

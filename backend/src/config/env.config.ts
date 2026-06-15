@@ -39,6 +39,9 @@ const envSchema = z.object({
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().optional(),
   ALLOW_DEV_ADMIN_SEED: z.string().transform(v => v === 'true').default('false'),
+  // Destinataires des rapports admin (emails séparés par des virgules).
+  // À défaut, on retombe sur ADMIN_EMAIL.
+  ADMIN_EMAILS: z.string().optional(),
 
   // OTP bypass — set to "true" to skip SMS/OTP check (testing only, never in real production)
   SKIP_OTP_VERIFICATION: z.string().transform(v => v === 'true').default('false'),

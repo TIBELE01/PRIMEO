@@ -30,6 +30,9 @@ const mockPrisma = {
   auditLog: {
     create: jest.fn(async () => ({})),
   },
+  pushToken: {
+    deleteMany: jest.fn(async () => ({ count: 0 })),
+  },
   $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));

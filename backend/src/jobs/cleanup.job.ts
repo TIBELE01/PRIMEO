@@ -39,6 +39,14 @@ export function startCleanupJob(): void {
       // Purge des exports de données dont le lien de téléchargement a expiré
       const purgedExports = await exportsService.purgeExpired();
       if (purgedExports > 0) logger.info(`Cleanup: ${purgedExports} export(s) expiré(s) purgé(s)`);
+
+      // Purge des tokens push obsolètes : désactivés (isActive=false) et non
+      // rafraîchis depuis > 60 jours (l'app ré-enregistre un token à chaque login).
+      const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      const purgedTokens = await prisma.pushToken.deleteMany({
+        where: { isActive: false, updatedAt: { lt: sixtyDaysAgo } },
+      });
+      if (purgedTokens.count > 0) logger.info(`Cleanup: ${purgedTokens.count} token(s) push obsolète(s) purgé(s)`);
     } catch (err) {
       logger.error('Cleanup job failed', err);
     }

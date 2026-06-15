@@ -108,6 +108,6 @@ export const webhooksService = {
     const event = payload['event'] as string | undefined;
     logger.info(`OneSignal webhook — event=${event ?? 'unknown'} ip=${ip ?? 'unknown'}`);
 
-    handleOneSignalEvent(payload as unknown as OneSignalEvent);
+    await handleOneSignalEvent(payload as unknown as OneSignalEvent);
   },
 };

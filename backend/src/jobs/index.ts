@@ -6,6 +6,7 @@ import { startSubscriptionJob } from './subscription.job';
 import { startBoostExpirationJob } from './boost-expiration.job';
 import { startBoostResetJob } from './boost-reset.job';
 import { startAdminReportJob } from './admin-report.job';
+import { startDailyReportJob } from './daily-report.job';
 import { startCurrencyRatesJob } from './currency-rates.job';
 import { startReferralRewardsJob } from './referral-rewards.job';
 import { startMonitoringReportJob } from './monitoring-report.job';
@@ -24,6 +25,7 @@ export function startAllJobs(): void {
   startBoostExpirationJob();        // every hour — deactivate expired boosts
   startBoostResetJob();             // 1st of month 04:00 — reset free boost counters
   startAdminReportJob();            // every Sunday 03:00 — weekly activity report
+  startDailyReportJob();            // daily 07:00 — résumé business de la veille (admins)
   startCurrencyRatesJob();          // every hour — refresh exchange rates cache
   startReferralRewardsJob();        // daily 06:00 — reconcile pending referral rewards
   startMonitoringReportJob();       // daily 08:00 — monitoring health digest
