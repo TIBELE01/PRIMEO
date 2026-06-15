@@ -16,6 +16,9 @@ jest.mock('../../common/utils/s3-client', () => ({
 }));
 
 const mockPrisma = {
+  user: {
+    findUnique: jest.fn(async () => ({ id: 'user-1', email: 'u@test.ci' })),
+  },
   professionalProfile: {
     findUnique: jest.fn(),
     create: jest.fn(),
@@ -29,15 +32,21 @@ jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 // supabase.config valide les variables d'environnement au chargement (process.exit) —
 // indispensable de le mocker, le service l'importe pour le TOTP en user_metadata.
-jest.mock('../../config/supabase.config', () => ({
-  supabaseAdmin: {
-    auth: {
-      admin: {
-        getUserById: jest.fn(async () => ({ data: { user: { id: 'user-1', user_metadata: {} } }, error: null })),
-        updateUserById: jest.fn(async () => ({ error: null })),
-      },
+const mockSupabaseAdmin = {
+  auth: {
+    admin: {
+      getUserById: jest.fn(async () => ({ data: { user: { id: 'user-1', user_metadata: {} } }, error: null })),
+      updateUserById: jest.fn(async () => ({ error: null })),
     },
   },
+};
+jest.mock('../../config/supabase.config', () => ({ supabaseAdmin: mockSupabaseAdmin }));
+
+jest.mock('../../common/utils/totp', () => ({
+  generateTotpSecret: jest.fn(() => 'JBSWY3DPEHPK3PXP'),
+  generateTotpUri: jest.fn(() => 'otpauth://totp/Primeo:u@test.ci?secret=JBSWY3DPEHPK3PXP'),
+  generateQrCode: jest.fn(async () => 'data:image/png;base64,abc123'),
+  verifyTotp: jest.fn(() => true),
 }));
 
 import { professionalService } from './professional.service';
@@ -103,5 +112,131 @@ describe('professionalService.submitKyc', () => {
     const result = await professionalService.submitKyc('user-1', baseInput, {});
     expect(mockUpload).not.toHaveBeenCalled();
     expect(result.uploaded).toHaveLength(0);
+  });
+
+  it('rejette un fichier image dépassant 5 Mo', async () => {
+    const files = { id_card: [fakeFile('big.jpg', 'image/jpeg', 6 * 1024 * 1024)] };
+    await expect(professionalService.submitKyc('user-1', baseInput, files)).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
+// ── getKycStatus() ────────────────────────────────────────────────────────────
+
+describe('professionalService.getKycStatus', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('retourne le statut et les documents du profil', async () => {
+    const profile = {
+      verificationStatus: 'approved',
+      verifiedAt: new Date(),
+      verificationNotes: null,
+      businessName: 'Hôtel Savane',
+      rccm: 'CI-ABJ-123',
+      taxId: 'TX-9',
+      touristLicense: null,
+      documents: [{ id: 'd1', type: 'id_card', url: 'https://cdn.test/doc.jpg', uploadedAt: new Date(), rejectedReason: null }],
+    };
+    mockPrisma.professionalProfile.findUnique.mockResolvedValueOnce(profile);
+
+    const result = await professionalService.getKycStatus('user-1');
+
+    expect(result.verificationStatus).toBe('approved');
+    expect(result.documents).toHaveLength(1);
+  });
+
+  it('throws 404 when no profile found', async () => {
+    mockPrisma.professionalProfile.findUnique.mockResolvedValueOnce(null);
+    await expect(professionalService.getKycStatus('user-missing')).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+// ── setupTotp() ───────────────────────────────────────────────────────────────
+
+describe('professionalService.setupTotp', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('generates a TOTP secret and QR code, stores secret in Supabase user_metadata', async () => {
+    const { generateTotpSecret, generateQrCode } = jest.requireMock('../../common/utils/totp') as Record<string, jest.Mock>;
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ id: 'user-1', email: 'u@test.ci' });
+
+    const result = await professionalService.setupTotp('user-1');
+
+    expect(result.secret).toBe('JBSWY3DPEHPK3PXP');
+    expect(result.qrCode).toBe('data:image/png;base64,abc123');
+    expect(generateTotpSecret).toHaveBeenCalled();
+    expect(generateQrCode).toHaveBeenCalled();
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
+      user_metadata: { twoFactorSecret: 'JBSWY3DPEHPK3PXP', twoFactorEnabled: false },
+    });
+  });
+
+  it('throws 404 when user not found in DB', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockPrisma.user.findUnique.mockResolvedValueOnce(null as any);
+    await expect(professionalService.setupTotp('ghost')).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+// ── confirmTotp() ─────────────────────────────────────────────────────────────
+
+describe('professionalService.confirmTotp', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('enables 2FA in Supabase user_metadata when code is valid', async () => {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET', twoFactorEnabled: false } } },
+      error: null,
+    });
+
+    await professionalService.confirmTotp('user-1', '123456');
+
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
+      user_metadata: { twoFactorSecret: 'SECRET', twoFactorEnabled: true },
+    });
+  });
+
+  it('throws 400 when TOTP setup has not been started (no secret)', async () => {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: 'user-1', user_metadata: {} } },
+      error: null,
+    });
+    await expect(professionalService.confirmTotp('user-1', '123456')).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when TOTP code is invalid', async () => {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET' } } },
+      error: null,
+    });
+    const { verifyTotp } = jest.requireMock('../../common/utils/totp') as { verifyTotp: jest.Mock };
+    verifyTotp.mockReturnValueOnce(false);
+
+    await expect(professionalService.confirmTotp('user-1', '000000')).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when Supabase user not found', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({ data: { user: null }, error: { message: 'not found' } } as any);
+    await expect(professionalService.confirmTotp('ghost', '123456')).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+// ── disableTotp() ─────────────────────────────────────────────────────────────
+
+describe('professionalService.disableTotp', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('clears twoFactorEnabled and twoFactorSecret in Supabase', async () => {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: 'user-1', user_metadata: { twoFactorEnabled: true, twoFactorSecret: 'SEC', otherField: 'x' } } },
+      error: null,
+    });
+
+    await professionalService.disableTotp('user-1');
+
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
+      user_metadata: { otherField: 'x', twoFactorEnabled: false, twoFactorSecret: null },
+    });
   });
 });

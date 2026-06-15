@@ -533,6 +533,124 @@ describe('authService.verifyTotp', () => {
     await expect(authService.verifyTotp({ userId: 'u-not-found', token: '123456' }))
       .rejects.toMatchObject({ statusCode: 400 });
   });
+
+  it('returns tokens and user with kycStatus on valid TOTP code', async () => {
+    const proUser = {
+      ...prismaUser,
+      accountType: AccountType.professional_hebergement,
+      professionalProfile: { verificationStatus: 'approved', verificationNotes: null },
+    };
+
+    // Pré-charger la session TOTP en Redis (refresh token chiffré)
+    const { encryptSecret } = jest.requireActual<typeof import('../../common/utils/secret-crypto')>(
+      '../../common/utils/secret-crypto',
+    );
+    redisStore.set(
+      `totp_pending:${prismaUser.id}`,
+      encryptSecret(JSON.stringify({ supabaseRefreshToken: 'totp-refresh-token' })),
+    );
+
+    // Le TOTP est valide (mock retourne true par défaut après resetMocks)
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: prismaUser.id, user_metadata: { twoFactorSecret: 'JBSWY3DPEHPK3PXP' } } },
+      error: null,
+    });
+    mockSupabaseAuth.auth.refreshSession.mockResolvedValueOnce({
+      data: { session: { access_token: 'new-access', refresh_token: 'new-refresh' } },
+      error: null,
+    });
+    mockPrisma.user.findUnique.mockResolvedValueOnce(proUser);
+
+    const result = await authService.verifyTotp({ userId: prismaUser.id, token: '123456' });
+
+    expect(result.accessToken).toBe('new-access');
+    expect(result.refreshToken).toBe('new-refresh');
+    expect(result.user.kycStatus).toBe('approved');
+    // La session TOTP en attente doit être supprimée de Redis
+    expect(redisStore.has(`totp_pending:${prismaUser.id}`)).toBe(false);
+  });
+
+  it('throws 401 when TOTP code is invalid', async () => {
+    const { verifyTotp: mockVerify } = jest.requireMock('../../common/utils/totp') as { verifyTotp: jest.Mock };
+    mockVerify.mockReturnValueOnce(false);
+
+    const { encryptSecret } = jest.requireActual<typeof import('../../common/utils/secret-crypto')>(
+      '../../common/utils/secret-crypto',
+    );
+    redisStore.set(
+      `totp_pending:${prismaUser.id}`,
+      encryptSecret(JSON.stringify({ supabaseRefreshToken: 'r' })),
+    );
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: prismaUser.id, user_metadata: { twoFactorSecret: 'SECRET' } } },
+      error: null,
+    });
+
+    await expect(authService.verifyTotp({ userId: prismaUser.id, token: '000000' }))
+      .rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  it('throws 400 when Supabase user has no TOTP secret configured', async () => {
+    const { encryptSecret } = jest.requireActual<typeof import('../../common/utils/secret-crypto')>(
+      '../../common/utils/secret-crypto',
+    );
+    redisStore.set(
+      `totp_pending:${prismaUser.id}`,
+      encryptSecret(JSON.stringify({ supabaseRefreshToken: 'r' })),
+    );
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
+      data: { user: { id: prismaUser.id, user_metadata: {} } }, // no secret
+      error: null,
+    });
+
+    await expect(authService.verifyTotp({ userId: prismaUser.id, token: '123456' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
+// ── refreshToken() ─────────────────────────────────────────────────────────────
+
+describe('authService.refreshToken', () => {
+  beforeEach(resetMocks);
+
+  it('returns new tokens and user profile on valid refresh token', async () => {
+    mockSupabaseAuth.auth.refreshSession.mockResolvedValueOnce({
+      data: { session: { access_token: 'new-acc', refresh_token: 'new-ref', user: { id: prismaUser.id } } },
+      error: null,
+    });
+    mockPrisma.user.findUnique.mockResolvedValueOnce(prismaUser);
+
+    const result = await authService.refreshToken('valid-refresh');
+
+    expect(result.accessToken).toBe('new-acc');
+    expect(result.refreshToken).toBe('new-ref');
+    expect(result.user?.email).toBe(prismaUser.email);
+  });
+
+  it('throws 401 when Supabase rejects the refresh token', async () => {
+    mockSupabaseAuth.auth.refreshSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: 'Invalid refresh token' },
+    });
+
+    await expect(authService.refreshToken('bad-token')).rejects.toMatchObject({ statusCode: 401 });
+  });
+});
+
+// ── logout() ──────────────────────────────────────────────────────────────────
+
+describe('authService.logout', () => {
+  beforeEach(resetMocks);
+
+  it('calls Supabase signOut with the provided access token', async () => {
+    await authService.logout(prismaUser.id, 'access-token-xyz');
+    expect(mockSupabaseAdmin.auth.admin.signOut).toHaveBeenCalledWith('access-token-xyz');
+  });
+
+  it('resolves without error when no access token is provided', async () => {
+    await expect(authService.logout(prismaUser.id)).resolves.toBeUndefined();
+    expect(mockSupabaseAdmin.auth.admin.signOut).not.toHaveBeenCalled();
+  });
 });
 
 // ── googleAuth ────────────────────────────────────────────────────────────────

@@ -580,24 +580,12 @@ export const adminService = {
       logger.warn(`Referral reward trigger failed on KYC approval for pro ${userId}`, err),
     );
 
-    // Notification in-app + e-mail
+    // Notification in-app + email via Brevo template kycApproved
     notificationsService.notify({
       type: 'kyc_approved',
       recipientId: userId,
       data: {},
     }).catch((err) => logger.warn('notify kyc approved failed', err));
-
-    // Récupère l'email pour l'envoi — userId ne suffit pas comme destinataire
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true } })
-      .then((u) => {
-        if (!u) return;
-        return sendEmail({
-          to: [{ email: u.email, name: u.firstName }],
-          subject: 'Votre compte professionnel Primeo est actif 🎉',
-          htmlContent: `<p>Bonjour ${u.firstName},</p><p>Votre compte professionnel Primeo a été approuvé. Vous pouvez maintenant publier vos annonces et recevoir des réservations.</p>`,
-        });
-      })
-      .catch((err) => logger.warn('email kyc approved failed', err));
   },
 
   async rejectKyc(userId: string, adminId: string, reason: string) {

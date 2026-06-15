@@ -616,7 +616,10 @@ export const authService = {
       throw new HttpError(401, 'Session expirée. Reconnectez-vous.');
     }
 
-    const user = await prisma.user.findUnique({ where: { id: input.userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: input.userId },
+      include: { professionalProfile: { select: { verificationStatus: true, verificationNotes: true } } },
+    });
     if (!user) throw new HttpError(400, 'Utilisateur introuvable');
 
     return {
