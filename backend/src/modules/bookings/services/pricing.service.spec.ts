@@ -9,8 +9,9 @@ jest.mock('../../../common/utils/logger', () => ({
 
 jest.mock('../../../database/prisma.service', () => ({
   prisma: {
-    property:  { findUnique: jest.fn() },
-    promoCode: { findUnique: jest.fn() },
+    property:     { findUnique: jest.fn() },
+    promoCode:    { findUnique: jest.fn() },
+    availability: { findMany: jest.fn() },
   },
 }));
 
@@ -53,6 +54,7 @@ describe('pricingService.compute', () => {
     jest.clearAllMocks();
     db.property!.findUnique.mockResolvedValue(makeProperty());
     db.promoCode!.findUnique.mockResolvedValue(null);
+    db.availability!.findMany.mockResolvedValue([]); // aucun tarif saisonnier par défaut
   });
 
   // ── Error cases ─────────────────────────────────────────────────────────────
@@ -248,5 +250,104 @@ describe('pricingService.compute', () => {
     });
     await expect(pricingService.compute({ ...baseParams, promoCode: 'MAX' }))
       .rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  // ── Tarifs saisonniers (Availability.priceOverride) ───────────────────────────
+  // Scénario : prix de base 1000 F/nuit, période saisonnière du 15 au 20 juin à 2000 F.
+  describe('tarifs saisonniers', () => {
+    const NIGHTLY = 1000;
+    const SEASON = 2000;
+
+    // Helpers : dates UTC à minuit (comme une réservation parsée depuis 'YYYY-MM-DD')
+    const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+
+    function seasonProperty() {
+      return makeProperty({ pricePerNight: NIGHTLY });
+    }
+
+    beforeEach(() => {
+      db.property!.findUnique.mockResolvedValue(seasonProperty());
+    });
+
+    it('utilise le tarif saisonnier (2000 F) pour une réservation dans la période', async () => {
+      // Séjour 16 → 19 juin = 3 nuits (16, 17, 18), toutes en saison à 2000 F
+      db.availability!.findMany.mockResolvedValue([
+        { date: day('2026-06-16'), priceOverride: SEASON },
+        { date: day('2026-06-17'), priceOverride: SEASON },
+        { date: day('2026-06-18'), priceOverride: SEASON },
+      ]);
+
+      const result = await pricingService.compute({
+        ...baseParams,
+        startDate: day('2026-06-16'),
+        endDate: day('2026-06-19'),
+      });
+
+      expect(result.nights).toBe(3);
+      expect(result.basePrice).toBe(3 * SEASON); // 6000 F, et non 3 × 1000
+      expect(result.totalAmount).toBe(3 * SEASON);
+    });
+
+    it('utilise le prix de base (1000 F) hors période saisonnière', async () => {
+      // Séjour 1 → 4 juin = 3 nuits, aucune surcharge en base
+      db.availability!.findMany.mockResolvedValue([]);
+
+      const result = await pricingService.compute({
+        ...baseParams,
+        startDate: day('2026-06-01'),
+        endDate: day('2026-06-04'),
+      });
+
+      expect(result.nights).toBe(3);
+      expect(result.basePrice).toBe(3 * NIGHTLY); // 3000 F
+    });
+
+    it('mélange tarif saisonnier et tarif de base au sein d\'un même séjour', async () => {
+      // Séjour 14 → 17 juin = 3 nuits : 14 (base 1000) + 15, 16 (saison 2000)
+      db.availability!.findMany.mockResolvedValue([
+        { date: day('2026-06-15'), priceOverride: SEASON },
+        { date: day('2026-06-16'), priceOverride: SEASON },
+        // le 14 n'a pas de priceOverride → tarif de base
+      ]);
+
+      const result = await pricingService.compute({
+        ...baseParams,
+        startDate: day('2026-06-14'),
+        endDate: day('2026-06-17'),
+      });
+
+      expect(result.nights).toBe(3);
+      expect(result.basePrice).toBe(NIGHTLY + SEASON + SEASON); // 1000 + 2000 + 2000 = 5000
+    });
+
+    it('ignore une priceOverride nulle (jour disponible sans surcharge)', async () => {
+      db.availability!.findMany.mockResolvedValue([
+        { date: day('2026-06-16'), priceOverride: null },
+        { date: day('2026-06-17'), priceOverride: SEASON },
+        { date: day('2026-06-18'), priceOverride: null },
+      ]);
+
+      const result = await pricingService.compute({
+        ...baseParams,
+        startDate: day('2026-06-16'),
+        endDate: day('2026-06-19'),
+      });
+
+      // 16 (base) + 17 (saison) + 18 (base) = 1000 + 2000 + 1000 = 4000
+      expect(result.basePrice).toBe(NIGHTLY + SEASON + NIGHTLY);
+    });
+
+    it('interroge la disponibilité pour chaque nuit du séjour (borne départ exclue)', async () => {
+      db.availability!.findMany.mockResolvedValue([]);
+      await pricingService.compute({
+        ...baseParams,
+        startDate: day('2026-06-16'),
+        endDate: day('2026-06-19'),
+      });
+      const call = db.availability!.findMany.mock.calls[0]![0];
+      expect(call.where.propertyId).toBe('prop-1');
+      // 3 nuits demandées : 16, 17, 18 (pas le 19 = jour de départ)
+      expect(call.where.date.in).toHaveLength(3);
+    });
   });
 });

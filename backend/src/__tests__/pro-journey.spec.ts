@@ -93,6 +93,7 @@ const mockPrisma = {
   booking: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
   transaction: { create: jest.fn(), findFirst: jest.fn() },
   promoCode: { findUnique: jest.fn() },
+  availability: { findMany: jest.fn().mockResolvedValue([]) },
   notification: { create: jest.fn() },
   auditLog: { create: jest.fn() },
   $transaction: jest.fn(),

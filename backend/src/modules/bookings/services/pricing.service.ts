@@ -53,7 +53,33 @@ export const pricingService = {
     const pricePerUnit = property.pricePerNight ?? property.pricePerMonth ?? property.priceSale ?? 0;
     if (!pricePerUnit) throw new HttpError(400, 'Aucun tarif défini pour cette propriété');
 
-    const basePrice = pricePerUnit * nights;
+    // ── Tarifs saisonniers ──────────────────────────────────────────────────
+    // Chaque nuit utilise availability.priceOverride si défini, sinon le tarif de
+    // base. On somme nuit par nuit (la nuit de départ est exclue, bornes [arrivée, départ[).
+    const nightDates: Date[] = [];
+    {
+      const cursor = new Date(params.startDate);
+      for (let i = 0; i < nights; i++) {
+        nightDates.push(new Date(cursor));
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+      }
+    }
+
+    const overrides = await prisma.availability.findMany({
+      where: { propertyId: params.propertyId, date: { in: nightDates } },
+      select: { date: true, priceOverride: true },
+    });
+    const overrideByDay = new Map<string, number>();
+    for (const a of overrides) {
+      if (a.priceOverride != null) {
+        overrideByDay.set(a.date.toISOString().slice(0, 10), a.priceOverride);
+      }
+    }
+
+    const basePrice = nightDates.reduce(
+      (sum, d) => sum + (overrideByDay.get(d.toISOString().slice(0, 10)) ?? pricePerUnit),
+      0,
+    );
 
     // Promo code
     let promoDiscount = 0;
