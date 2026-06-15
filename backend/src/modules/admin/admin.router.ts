@@ -57,6 +57,10 @@ import {
   listEmailTemplates,
   upsertEmailTemplate,
   sendTestEmailTemplate,
+  // Review moderation
+  hideReview,
+  unhideReview,
+  deleteReview,
 } from './admin.controller';
 import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-flags.controller';
 import { getMonitoringDashboard } from './monitoring.controller';
@@ -161,6 +165,11 @@ adminRouter.put('/email-templates/:name', upsertEmailTemplate);
 adminRouter.get('/client-ratings/reported', listReportedClientRatings);
 adminRouter.patch('/client-ratings/:id/hide', parseId, hideClientRating);
 adminRouter.patch('/client-ratings/:id/restore', parseId, restoreClientRating);
+
+// ── Review moderation ──────────────────────────────────────────────────────────
+adminRouter.patch('/reviews/:id/hide', parseId, hideReview);
+adminRouter.patch('/reviews/:id/unhide', parseId, unhideReview);
+adminRouter.delete('/reviews/:id', parseId, deleteReview);
 
 // ── Feature flags ──────────────────────────────────────────────────────────────
 adminRouter.get('/feature-flags', getAllFlags);

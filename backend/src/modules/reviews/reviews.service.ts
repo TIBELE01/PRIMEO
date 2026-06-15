@@ -193,7 +193,7 @@ export const reviewsService = {
     if (count >= 3) throw new HttpError(400, 'Maximum 3 photos par avis');
 
     const result = await mediaService.upload(file, 'reviews');
-    return prisma.reviewMedia.create({ data: { reviewId, url: result.optimizedUrl } });
+    return prisma.reviewMedia.create({ data: { reviewId, url: result.optimizedUrl, publicId: result.publicId } });
   },
 
   async deleteMedia(mediaId: string, authorId: string) {
@@ -204,8 +204,40 @@ export const reviewsService = {
     if (!media) throw new HttpError(404, 'Média introuvable');
     if (media.review.authorId !== authorId) throw new HttpError(403, 'Vous n\'êtes pas l\'auteur de cet avis');
 
+    if (media.publicId) await mediaService.delete(media.publicId).catch(() => null);
     await prisma.reviewMedia.delete({ where: { id: mediaId } });
     return { removed: true };
+  },
+
+  async adminHideReview(reviewId: string) {
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new HttpError(404, 'Avis introuvable');
+    await prisma.review.update({ where: { id: reviewId }, data: { status: 'hidden' } });
+    await recalculatePropertyRating(review.propertyId);
+    return { message: 'Avis masqué' };
+  },
+
+  async adminUnhideReview(reviewId: string) {
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new HttpError(404, 'Avis introuvable');
+    await prisma.review.update({ where: { id: reviewId }, data: { status: 'published' } });
+    await recalculatePropertyRating(review.propertyId);
+    return { message: 'Avis republié' };
+  },
+
+  async adminDeleteReview(reviewId: string) {
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { media: true },
+    });
+    if (!review) throw new HttpError(404, 'Avis introuvable');
+    const propertyId = review.propertyId;
+    for (const m of review.media) {
+      if (m.publicId) await mediaService.delete(m.publicId).catch(() => null);
+    }
+    await prisma.review.delete({ where: { id: reviewId } });
+    await recalculatePropertyRating(propertyId);
+    return { message: 'Avis supprimé' };
   },
 
   async addOwnerReply(reviewId: string, userId: string, reply: string) {

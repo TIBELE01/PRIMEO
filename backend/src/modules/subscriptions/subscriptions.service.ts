@@ -292,21 +292,33 @@ export const subscriptionsService = {
       throw new HttpError(400, 'Ajoutez un numéro de téléphone à votre profil pour régler votre abonnement.');
     }
 
+    // Proratisation : on ne charge que la différence de prix pour les jours restants
+    // dans la période de facturation en cours. Le plein tarif reprend au prochain cycle.
+    const now = new Date();
+    const daysRemaining = Math.max(
+      1,
+      Math.ceil((sub.nextBillingDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)),
+    );
+    const proratedAmount = Math.max(
+      1,
+      Math.round((targetPlan.monthlyPrice - sub.monthlyPrice) * daysRemaining / 30),
+    );
+
     const tx = await prisma.transaction.create({
       data: {
         userId,
         subscriptionId: sub.id,
         type:           'subscription_payment',
-        amount:         targetPlan.monthlyPrice,
+        amount:         proratedAmount,
         fee:            0,
-        netAmount:      targetPlan.monthlyPrice,
+        netAmount:      proratedAmount,
         status:         'initiated',
-        notes:          input.plan,
+        notes:          `${input.plan} — proraté ${daysRemaining}j/30`,
       },
     });
 
     const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
-      amount:         targetPlan.monthlyPrice,
+      amount:         proratedAmount,
       bookingId:      tx.id,
       customerEmail:  user.email,
       customerPhone:  user.phone ?? undefined,
@@ -324,8 +336,9 @@ export const subscriptionsService = {
       checkoutUrl,
       transactionId:   tx.id,
       plan:            input.plan,
-      amount:          targetPlan.monthlyPrice,
-      message:         `Réglez ${targetPlan.monthlyPrice.toLocaleString('fr-CI')} FCFA pour activer la formule ${targetPlan.name}.`,
+      amount:          proratedAmount,
+      daysRemaining,
+      message:         `Réglez ${proratedAmount.toLocaleString('fr-CI')} FCFA (${daysRemaining} jours restants) pour activer la formule ${targetPlan.name}.`,
     };
   },
 

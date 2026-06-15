@@ -2,6 +2,7 @@
 import { prisma } from '../../../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import type { SearchPropertiesInput } from '../dto/property.dto';
+import { PLAN_DETAILS } from '../../../common/constants/subscription-plans';
 
 // Construit le filtre Prisma pour propertyType (un seul ou plusieurs séparés par virgule)
 function buildTypeFilter(propertyType?: string): Prisma.PropertyWhereInput {
@@ -19,6 +20,10 @@ type SearchResult = {
   limit: number;
   pages: number;
 };
+
+// Score de visibilité basé sur le plan (0/30/100) — utilisé dans les deux méthodes de tri.
+const planVisibility = (plan: string): number =>
+  (PLAN_DETAILS[plan] ?? PLAN_DETAILS['starter']).visibilityBoostPct;
 
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {
@@ -109,17 +114,18 @@ export const searchService = {
       prisma.property.count({ where }),
     ]);
 
-    // Tri secondaire en mémoire : entreprise > business > starter (visibilité formule)
+    // Tri secondaire en mémoire : score de visibilité composite
+    // = visibilityBoostPct (0/30/100) + rating × 5 (max ~25)
+    // Garantit qu'Entreprise (100) est prioritaire, Business (+30) bénéficie d'un
+    // vrai avantage, et une note très élevée peut compenser une formule inférieure.
     const sorted = [...data].sort((a, b) => {
       const aAny = a as any;
       const bAny = b as any;
       if (aAny.isBoosted !== bAny.isBoosted) return aAny.isBoosted ? -1 : 1;
-      const tierScore = (plan: string) =>
-        plan === 'entreprise' ? 2 : plan === 'business' ? 1 : 0;
-      const tA = tierScore(aAny.owner?.subscription?.planType ?? '');
-      const tB = tierScore(bAny.owner?.subscription?.planType ?? '');
-      if (tA !== tB) return tB - tA;
-      return Number(bAny.rating) - Number(aAny.rating);
+      const scoreA = planVisibility(aAny.owner?.subscription?.planType ?? '') + Number(aAny.rating ?? 0) * 5;
+      const scoreB = planVisibility(bAny.owner?.subscription?.planType ?? '') + Number(bAny.rating ?? 0) * 5;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return Number(bAny.bookingsCount ?? 0) - Number(aAny.bookingsCount ?? 0);
     });
 
     const withBadge = sorted.map((p) => {
@@ -202,17 +208,14 @@ export const searchService = {
       },
     });
 
-    // Tri : boost actif → plan Entreprise → plan Business → distance → rating
-    const tierScore = (p: string) =>
-      p === 'entreprise' ? 2 : p === 'business' ? 1 : 0;
-
+    // Tri géo : boost → score visibilité (visibilityBoostPct) → distance → rating
     filtered.sort((a, b) => {
       const aAny = a as any;
       const bAny = b as any;
       if (aAny.isBoosted !== bAny.isBoosted) return aAny.isBoosted ? -1 : 1;
-      const tA = tierScore(aAny.owner?.subscription?.planType ?? '');
-      const tB = tierScore(bAny.owner?.subscription?.planType ?? '');
-      if (tA !== tB) return tB - tA;
+      const visA = planVisibility(aAny.owner?.subscription?.planType ?? '');
+      const visB = planVisibility(bAny.owner?.subscription?.planType ?? '');
+      if (visA !== visB) return visB - visA;
       const dA = geoDistanceMap.get(aAny.id) ?? Infinity;
       const dB = geoDistanceMap.get(bAny.id) ?? Infinity;
       if (Math.abs(dA - dB) > 0.01) return dA - dB;

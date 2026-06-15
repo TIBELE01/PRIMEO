@@ -1,6 +1,7 @@
 // Admin controller — platform management operations
 import { Request, Response, NextFunction } from 'express';
 import { adminService } from './admin.service';
+import { reviewsService } from '../reviews/reviews.service';
 
 export async function getSubscriptionHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -449,6 +450,35 @@ export async function changeUserPlan(req: Request, res: Response, next: NextFunc
   try {
     await adminService.changeUserPlan(req.params['id']!, req.user!.sub, req.body.plan, req.ip);
     res.json({ message: 'Formule mise à jour' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── Review moderation ──────────────────────────────────────────────────────────
+
+export async function hideReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await reviewsService.adminHideReview(req.params['id']!);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function unhideReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await reviewsService.adminUnhideReview(req.params['id']!);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await reviewsService.adminDeleteReview(req.params['id']!);
+    res.json(result);
   } catch (err) {
     next(err);
   }

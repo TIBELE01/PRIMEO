@@ -886,7 +886,8 @@ model ReviewMedia {
   id         String   @id @default(cuid())
   reviewId   String
   review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  url        String // URL Cloudinary
+  url        String   // URL Cloudinary optimisée
+  publicId   String?  // Cloudinary publicId — requis pour la suppression du CDN
   uploadedAt DateTime @default(now())
 
   @@map("review_media")
