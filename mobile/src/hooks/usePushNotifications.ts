@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { notificationsService } from '../services/notifications/onesignal';
 import { useAuthStore } from '../store/authStore';
+import { navigateFromNotification } from '../navigation/navigationRef';
 
 export const usePushNotifications = (): void => {
   const isAuthenticated = useAuthStore((s) => !!s.user);
@@ -27,12 +28,22 @@ export const usePushNotifications = (): void => {
       console.log(`[PushNotifications] received: ${title} — ${body}`);
     });
 
-    // Tap / interaction listener
+    // Tap / interaction listener — deep-link vers l'écran approprié
     responseSub.current = notificationsService.addNotificationResponseListener((response) => {
       const data = response.notification.request.content.data as Record<string, unknown>;
-      console.log('[PushNotifications] tapped:', data?.type);
-      // Deep-link routing can be added here based on data.type
+      navigateFromNotification(data);
     });
+
+    // Démarrage à froid : l'app a été lancée en touchant une notification
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) {
+          const data = response.notification.request.content.data as Record<string, unknown>;
+          // Laisser le NavigationContainer se monter avant de naviguer
+          setTimeout(() => navigateFromNotification(data), 600);
+        }
+      })
+      .catch(() => { /* ignore */ });
 
     return () => {
       receivedSub.current?.remove();

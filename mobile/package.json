@@ -39,6 +39,7 @@
     "expo-document-picker": "~13.0.1",
     "expo-font": "~13.0.1",
     "expo-gl": "~14.0.2",
+    "expo-image-picker": "~16.0.6",
     "expo-linking": "~7.0.3",
     "expo-web-browser": "~14.0.2",
     "expo-localization": "~16.0.1",

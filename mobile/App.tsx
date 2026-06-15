@@ -40,6 +40,7 @@ import { currenciesApi } from './src/services/api/endpoints/currencies';
 import { syncQueue } from './src/services/offline/syncQueue';
 import { apiClient } from './src/services/api/client';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
+import { navigationRef } from './src/navigation/navigationRef';
 
 // Deep-link mapping
 // Supabase password-reset redirects to:
@@ -247,7 +248,7 @@ function InnerApp() {
   }
 
   return (
-    <NavigationContainer key={isAuthenticated ? 'main' : 'auth'} linking={linking}>
+    <NavigationContainer ref={navigationRef} key={isAuthenticated ? 'main' : 'auth'} linking={linking}>
       <StatusBar style={(theme.colors.statusBar as string) === 'light-content' ? 'light' : 'dark'} />
       <RootNavigator />
       {/* Hôte global des modales d'alerte stylées (remplace les dialogues système) */}

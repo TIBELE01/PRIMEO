@@ -73,6 +73,7 @@ module.exports = ({ config }) => ({
     'expo-font',
     ['expo-notifications', { icon: './assets/notification-icon.png', color: '#1B5E20' }],
     ['expo-secure-store'],
+    ['expo-image-picker', { photosPermission: 'Primeo accède à vos photos pour ajouter des images à vos annonces et avis.' }],
     [
       'expo-build-properties',
       {

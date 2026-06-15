@@ -1,6 +1,7 @@
-// ImageGallery (PropertyDetail): gallery wrapper with expand-to-fullscreen gesture
-import React from 'react';
+// ImageGallery (PropertyDetail): carrousel + visionneuse plein écran au tap.
+import React, { useState } from 'react';
 import { PropertyImageGallery } from '../../../../components/property/PropertyImageGallery';
+import { FullscreenImageViewer } from '../../../../components/property/FullscreenImageViewer';
 
 interface ImageGalleryProps {
   images: string[];
@@ -9,8 +10,22 @@ interface ImageGalleryProps {
 }
 
 export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, width, height }) => {
-  const handlePress = (_index: number) => {
-    // TODO: open fullscreen modal viewer
-  };
-  return <PropertyImageGallery images={images} onImagePress={handlePress} width={width} height={height} />;
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  return (
+    <>
+      <PropertyImageGallery
+        images={images}
+        onImagePress={(index) => setViewerIndex(index)}
+        width={width}
+        height={height}
+      />
+      <FullscreenImageViewer
+        visible={viewerIndex !== null}
+        images={images}
+        initialIndex={viewerIndex ?? 0}
+        onClose={() => setViewerIndex(null)}
+      />
+    </>
+  );
 };

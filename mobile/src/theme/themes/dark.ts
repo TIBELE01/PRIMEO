@@ -32,7 +32,9 @@ export const darkTheme = {
 
     tabBar:           colors.neutral[800],
     tabBarActive:     colors.primary[400],
-    tabBarInactive:   colors.neutral[500],
+    // neutral[400] (#9AA6B8) sur tabBar sombre #1E293B ≈ 5.6:1 (WCAG AA) —
+    // neutral[500] échouait (~2.8:1) sur fond sombre.
+    tabBarInactive:   colors.neutral[400],
     statusBar:        'light-content' as const,
 
     card:             colors.neutral[800],

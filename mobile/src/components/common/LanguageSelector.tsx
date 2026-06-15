@@ -13,7 +13,14 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
   return (
     <View style={styles.container}>
       {LANGS.map(lang => (
-        <TouchableOpacity key={lang.code} style={[styles.btn, currentLang === lang.code && styles.active]} onPress={() => onSelect(lang.code)}>
+        <TouchableOpacity
+          key={lang.code}
+          style={[styles.btn, currentLang === lang.code && styles.active]}
+          onPress={() => onSelect(lang.code)}
+          accessibilityRole="button"
+          accessibilityLabel={lang.label}
+          accessibilityState={{ selected: currentLang === lang.code }}
+        >
           <Text style={[styles.text, currentLang === lang.code && styles.activeText]}>{lang.label}</Text>
         </TouchableOpacity>
       ))}

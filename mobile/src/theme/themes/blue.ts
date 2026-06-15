@@ -32,7 +32,8 @@ export const blueTheme = {
 
     tabBar:         '#FFFFFF',
     tabBarActive:   '#0D47A1',
-    tabBarInactive: '#78909C',
+    // #64748B sur blanc ≈ 4.7:1 (WCAG AA) — #78909C échouait (~3.4:1).
+    tabBarInactive: '#64748B',
     statusBar:      'dark-content' as const,
 
     card:   '#FFFFFF',
