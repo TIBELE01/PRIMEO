@@ -112,8 +112,15 @@ export function ConversationsScreen({ navigation }: Props) {
           const localUnread = (messages[item.bookingId] ?? []).filter(m => !m.isRead).length;
           const unread = item.unreadCount + localUnread;
           return (
-            <TouchableOpacity style={styles.row} onPress={() => goToChat(item)} activeOpacity={0.7}>
-              <View style={styles.avatarWrap}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => goToChat(item)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Conversation avec ${item.recipientName}${item.propertyName ? `, ${item.propertyName}` : ''}${unread > 0 ? `, ${unread} message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}` : ''}`}
+              accessibilityHint="Ouvre la discussion"
+            >
+              <View style={styles.avatarWrap} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                 {item.propertyImage
                   ? <Image source={{ uri: item.propertyImage }} style={styles.avatar} />
                   : <View style={[styles.avatar, styles.avatarFallback]}>

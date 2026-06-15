@@ -14,7 +14,7 @@ interface InputProps extends TextInputProps {
   hint?: string;
 }
 
-export function Input({ label, error, isPassword, hint, style, onFocus, onBlur, ...props }: InputProps) {
+export function Input({ label, error, isPassword, hint, style, onFocus, onBlur, accessibilityLabel, ...props }: InputProps) {
   const [showPwd, setShowPwd] = useState(false);
   const [focused, setFocused] = useState(false);
   const borderAnim = useRef(new Animated.Value(0)).current;
@@ -53,10 +53,17 @@ export function Input({ label, error, isPassword, hint, style, onFocus, onBlur, 
           placeholderTextColor={colors.neutral[400]}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          accessibilityLabel={accessibilityLabel ?? label}
           {...props}
         />
         {isPassword && (
-          <TouchableOpacity onPress={() => setShowPwd(v => !v)} activeOpacity={0.7} style={styles.toggleBtn}>
+          <TouchableOpacity
+            onPress={() => setShowPwd(v => !v)}
+            activeOpacity={0.7}
+            style={styles.toggleBtn}
+            accessibilityRole="button"
+            accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          >
             <Text style={styles.toggle}>{showPwd ? 'Masquer' : 'Voir'}</Text>
           </TouchableOpacity>
         )}

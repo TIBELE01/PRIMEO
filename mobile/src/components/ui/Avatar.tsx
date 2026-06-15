@@ -17,12 +17,24 @@ export function Avatar({ uri, name, size = 44 }: AvatarProps) {
     .slice(0, 2)
     .join('')
     .toUpperCase() || '?';
+  const a11yLabel = name ? `Photo de profil de ${name}` : 'Photo de profil';
   if (uri) {
-    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        accessibilityRole="image"
+        accessibilityLabel={a11yLabel}
+      />
+    );
   }
   return (
-    <View style={[styles.placeholder, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Text style={[styles.initials, { fontSize: size * 0.35 }]}>{initials}</Text>
+    <View
+      style={[styles.placeholder, { width: size, height: size, borderRadius: size / 2 }]}
+      accessibilityRole="image"
+      accessibilityLabel={a11yLabel}
+    >
+      <Text style={[styles.initials, { fontSize: size * 0.35 }]} accessibilityElementsHidden importantForAccessibility="no">{initials}</Text>
     </View>
   );
 }

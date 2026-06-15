@@ -127,6 +127,7 @@ export function LoginScreen({ navigation }: Props) {
                 <TouchableOpacity
                   style={s.eyeBtn}
                   onPress={() => setShowPw((v) => !v)}
+                  accessibilityRole="button"
                   accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
                   <Text style={s.eyeText}>{showPw ? '🙈' : '👁'}</Text>
@@ -188,6 +189,8 @@ export function LoginScreen({ navigation }: Props) {
               style={s.proBtn}
               onPress={() => navigation.navigate('ProRegister')}
               accessibilityRole="button"
+              accessibilityLabel="Inscription professionnelle"
+              accessibilityHint="Ouvre le formulaire d'inscription pour les professionnels"
             >
               <Text style={s.proBtnText}>🏢 Inscription professionnelle</Text>
             </TouchableOpacity>

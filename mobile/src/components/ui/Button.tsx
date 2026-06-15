@@ -17,11 +17,16 @@ interface ButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  /** A11y : libellé lu par le lecteur d'écran (défaut : le texte du bouton). */
+  accessibilityLabel?: string;
+  /** A11y : explique le résultat de l'action (ex: « Ouvre la page de paiement »). */
+  accessibilityHint?: string;
 }
 
 export function Button({
   label, title, onPress, variant = 'primary',
   isLoading, loading, disabled, style, textStyle,
+  accessibilityLabel, accessibilityHint,
 }: ButtonProps) {
   const displayLabel = label ?? title ?? '';
   const isLoadingState = isLoading ?? loading ?? false;
@@ -59,6 +64,10 @@ export function Button({
         onPressOut={pressOut}
         disabled={disabled || isLoadingState}
         activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? displayLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: disabled || isLoadingState, busy: isLoadingState }}
       >
         {isLoadingState ? (
           <ActivityIndicator

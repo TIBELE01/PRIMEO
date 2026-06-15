@@ -15,6 +15,9 @@ export function Chip({ label, selected, onPress, style }: ChipProps) {
       style={[styles.chip, selected ? styles.selected : null, style]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: !!selected }}
     >
       <Text style={[styles.text, selected ? styles.selectedText : null]}>{label}</Text>
     </TouchableOpacity>

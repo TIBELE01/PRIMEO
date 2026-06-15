@@ -288,10 +288,10 @@ export function SearchScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Retour">
           <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Recherche avancée</Text>
+        <Text style={s.headerTitle} accessibilityRole="header">Recherche avancée</Text>
       </View>
 
       {/* Search box */}
@@ -308,13 +308,14 @@ export function SearchScreen() {
             placeholderTextColor="#9CA3AF"
             returnKeyType="search"
             onSubmitEditing={() => { setShowSuggestions(false); search(1); }}
+            accessibilityLabel="Ville ou destination"
           />
           {destination.length > 0 ? (
-            <TouchableOpacity onPress={() => { setDestination(''); setSuggestions([]); }}>
+            <TouchableOpacity onPress={() => { setDestination(''); setSuggestions([]); }} accessibilityRole="button" accessibilityLabel="Effacer la destination">
               <Text style={s.clearBtn}>✕</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleGeolocate} disabled={geoLoading} hitSlop={8}>
+            <TouchableOpacity onPress={handleGeolocate} disabled={geoLoading} hitSlop={8} accessibilityRole="button" accessibilityLabel="Utiliser ma position actuelle">
               <Text style={s.geoBtn}>{geoLoading ? '⏳' : '📡'}</Text>
             </TouchableOpacity>
           )}
@@ -338,7 +339,12 @@ export function SearchScreen() {
 
         {/* Dates + voyageurs */}
         <View style={s.datesRow}>
-          <TouchableOpacity style={s.dateBtn} onPress={() => setShowCheckIn(true)}>
+          <TouchableOpacity
+            style={s.dateBtn}
+            onPress={() => setShowCheckIn(true)}
+            accessibilityRole="button"
+            accessibilityLabel={checkIn ? `Date d'arrivée : ${fmtDate(checkIn)}` : "Choisir la date d'arrivée"}
+          >
             <Text style={s.dateBtnLabel}>Arrivée</Text>
             <Text style={[s.dateBtnValue, !checkIn && s.datePlaceholder]}>
               {checkIn ? fmtDate(checkIn) : 'Choisir'}
@@ -347,7 +353,12 @@ export function SearchScreen() {
 
           <View style={s.dateDivider} />
 
-          <TouchableOpacity style={s.dateBtn} onPress={() => setShowCheckOut(true)}>
+          <TouchableOpacity
+            style={s.dateBtn}
+            onPress={() => setShowCheckOut(true)}
+            accessibilityRole="button"
+            accessibilityLabel={checkOut ? `Date de départ : ${fmtDate(checkOut)}` : 'Choisir la date de départ'}
+          >
             <Text style={s.dateBtnLabel}>Départ</Text>
             <Text style={[s.dateBtnValue, !checkOut && s.datePlaceholder]}>
               {checkOut ? fmtDate(checkOut) : 'Choisir'}
@@ -358,12 +369,12 @@ export function SearchScreen() {
 
           <View style={s.guestsInline}>
             <Text style={s.dateBtnLabel}>Voyageurs</Text>
-            <View style={s.guestsCounter}>
-              <TouchableOpacity style={s.cBtn} onPress={() => setGuests(g => Math.max(1, g - 1))}>
+            <View style={s.guestsCounter} accessibilityLabel={`${guests} voyageur${guests > 1 ? 's' : ''}`}>
+              <TouchableOpacity style={s.cBtn} onPress={() => setGuests(g => Math.max(1, g - 1))} accessibilityRole="button" accessibilityLabel="Retirer un voyageur">
                 <Text style={s.cBtnText}>−</Text>
               </TouchableOpacity>
               <Text style={s.guestsCount}>{guests}</Text>
-              <TouchableOpacity style={s.cBtn} onPress={() => setGuests(g => g + 1)}>
+              <TouchableOpacity style={s.cBtn} onPress={() => setGuests(g => g + 1)} accessibilityRole="button" accessibilityLabel="Ajouter un voyageur">
                 <Text style={s.cBtnText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -384,6 +395,9 @@ export function SearchScreen() {
             key={t.value}
             style={[s.typeChip, selectedType === t.value && s.typeChipActive]}
             onPress={() => setSelectedType(t.value as PropertyType | '')}
+            accessibilityRole="button"
+            accessibilityLabel={`Type : ${t.label}`}
+            accessibilityState={{ selected: selectedType === t.value }}
           >
             <Text style={[s.typeChipText, selectedType === t.value && s.typeChipTextActive]}>{t.label}</Text>
           </TouchableOpacity>
@@ -399,17 +413,21 @@ export function SearchScreen() {
           <TouchableOpacity
             style={[s.toolBtn, activeFilterCount > 0 && s.toolBtnActive, isOffline && s.toolBtnDisabled]}
             onPress={() => !isOffline && setShowFilter(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Filtres${activeFilterCount > 0 ? `, ${activeFilterCount} actifs` : ''}`}
           >
             <Text style={[s.toolBtnText, activeFilterCount > 0 && s.toolBtnTextActive]}>
               ⚙ Filtres{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.toolBtn, isOffline && s.toolBtnDisabled]} onPress={() => !isOffline && setShowSort(true)}>
+          <TouchableOpacity style={[s.toolBtn, isOffline && s.toolBtnDisabled]} onPress={() => !isOffline && setShowSort(true)} accessibilityRole="button" accessibilityLabel="Trier les résultats">
             <Text style={s.toolBtnText}>↕ Trier</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[s.viewToggle, viewMode === 'map' && s.viewToggleActive]}
             onPress={() => setViewMode(v => v === 'list' ? 'map' : 'list')}
+            accessibilityRole="button"
+            accessibilityLabel={viewMode === 'list' ? 'Afficher la carte' : 'Afficher la liste'}
           >
             <Text style={[s.viewToggleText, viewMode === 'map' && s.viewToggleTextActive]}>
               {viewMode === 'list' ? '🗺 Carte' : '☰ Liste'}

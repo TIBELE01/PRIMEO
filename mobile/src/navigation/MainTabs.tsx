@@ -53,28 +53,6 @@ import RestaurantOrderCartScreen    from '../screens/client/Restaurant/Restauran
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen     from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
 
-// ── Professional placeholder (all pro stacks share the same screen pool) ──────
-import { View, Text, StyleSheet } from 'react-native';
-
-const Placeholder = (label: string) => function Screen() {
-  return (
-    <View style={ph.container}>
-      <Text style={ph.label}>{label}</Text>
-    </View>
-  );
-};
-
-const ph = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9FAFB' },
-  label:     { fontSize: 15, color: '#6B7280' },
-});
-
-const ProDashboard   = Placeholder('Tableau de bord');
-const ProProperties  = Placeholder('Mes annonces');
-const ProBookings    = Placeholder('Réservations');
-const ProMessages    = Placeholder('Messages');
-const ProSettings    = Placeholder('Paramètres');
-
 // ── Shared tab bar options factory ────────────────────────────────────────────
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -199,18 +177,6 @@ function ProfileTabStack() {
   );
 }
 
-/** Simple one-screen pro tab */
-function ProStack(Screen: React.ComponentType, title: string) {
-  return function ProTabStack() {
-    const Stack = S();
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="Screen" component={Screen} options={{ title }} />
-      </Stack.Navigator>
-    );
-  };
-}
-
 // ── Client tab navigator ──────────────────────────────────────────────────────
 
 const ClientTab = createBottomTabNavigator();
@@ -292,78 +258,6 @@ function ClientTabs() {
         }}
       />
     </ClientTab.Navigator>
-  );
-}
-
-// ── Professional tab navigator (shared between all pro roles) ─────────────────
-
-const ProTab = createBottomTabNavigator();
-
-function ProfessionalTabs() {
-  const { theme } = useTheme();
-
-  return (
-    <ProTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor:   theme.colors.tabBarActive,
-        tabBarInactiveTintColor: theme.colors.tabBarInactive,
-        tabBarStyle: {
-          backgroundColor: theme.colors.tabBar,
-          borderTopColor:  theme.colors.border,
-          height: Platform.OS === 'ios' ? 84 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
-      }}
-    >
-      <ProTab.Screen
-        name="Tableau de bord"
-        component={ProStack(ProDashboard, 'Tableau de bord')}
-        options={{
-          tabBarAccessibilityLabel: 'Tableau de bord',
-          tabBarIcon: ({ color, size, focused }) =>
-            tabIcon(focused, 'bar-chart', 'bar-chart-outline')(color, size),
-        }}
-      />
-      <ProTab.Screen
-        name="Annonces"
-        component={ProStack(ProProperties, 'Mes annonces')}
-        options={{
-          tabBarAccessibilityLabel: 'Mes annonces',
-          tabBarIcon: ({ color, size, focused }) =>
-            tabIcon(focused, 'business', 'business-outline')(color, size),
-        }}
-      />
-      <ProTab.Screen
-        name="Réservations"
-        component={ProStack(ProBookings, 'Réservations')}
-        options={{
-          tabBarAccessibilityLabel: 'Réservations',
-          tabBarIcon: ({ color, size, focused }) =>
-            tabIcon(focused, 'calendar', 'calendar-outline')(color, size),
-        }}
-      />
-      <ProTab.Screen
-        name="Messages"
-        component={ProStack(ProMessages, 'Messages')}
-        options={{
-          tabBarAccessibilityLabel: 'Messages',
-          tabBarIcon: ({ color, size, focused }) =>
-            tabIcon(focused, 'chatbubbles', 'chatbubbles-outline')(color, size),
-        }}
-      />
-      <ProTab.Screen
-        name="Paramètres"
-        component={ProStack(ProSettings, 'Paramètres')}
-        options={{
-          tabBarAccessibilityLabel: 'Paramètres',
-          tabBarIcon: ({ color, size, focused }) =>
-            tabIcon(focused, 'settings', 'settings-outline')(color, size),
-        }}
-      />
-    </ProTab.Navigator>
   );
 }
 
