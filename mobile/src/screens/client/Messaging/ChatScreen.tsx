@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet,
-  KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
   Alert, Image, ScrollView, Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { messagesApi } from '../../../services/api/endpoints/messages';
@@ -11,17 +12,24 @@ import { socketService } from '../../../services/socket/socketService';
 import { useChatStore, type Message } from '../../../store/chatStore';
 import { useAuth } from '../../../hooks/useAuth';
 
+// Stable reference so the Zustand selector never returns a new [] on each call
+// when messages[bookingId] is undefined — Object.is([], []) is false and would
+// cause an infinite re-render loop.
+const EMPTY_MESSAGES: Message[] = [];
+
 type Props = ClientScreenProps<'Chat'>;
 
 export function ChatScreen({ navigation, route }: Props) {
   // Le chat est fréquemment ouvert depuis une notification push : les params
   // peuvent manquer — ne jamais déstructurer route.params sans repli.
   const { bookingId, recipientName } = route.params ?? ({} as Partial<Props['route']['params']>);
+  // recipientName devrait être une chaîne ; on s'en assure pour ne jamais rendre
+  // un objet (« Objects are not valid as a React child »).
+  const peerName = typeof recipientName === 'string' && recipientName ? recipientName : 'Discussion';
   const { user } = useAuth();
 
-  const messages = useChatStore(s => s.messages[bookingId] ?? []);
+  const messages = useChatStore(s => s.messages[bookingId] ?? EMPTY_MESSAGES);
   const setMessages = useChatStore(s => s.setMessages);
-  const addMessage = useChatStore(s => s.addMessage);
   const markReadLocal = useChatStore(s => s.markRead);
 
   const [text, setText] = useState('');
@@ -51,12 +59,16 @@ export function ChatScreen({ navigation, route }: Props) {
     (async () => {
       try {
         const res = await messagesApi.getConversation(bookingId);
-        const hist: Message[] = res?.data?.data ?? res?.data ?? [];
+        // Backend returns { messages: [...], total, page, limit, pages }
+        const raw: any[] = res?.data?.messages ?? res?.data?.data ?? (Array.isArray(res?.data) ? res.data : []);
+        const hist: Message[] = Array.isArray(raw)
+          ? raw.map((m: any) => ({ ...m, createdAt: m.createdAt ?? m.sentAt }))
+          : [];
         if (cancelled) return;
-        setMessages(bookingId, Array.isArray(hist) ? hist : []);
+        setMessages(bookingId, hist);
         messagesApi.markAsRead(bookingId).catch(() => null);
-        socketService.markRead(bookingId);
-        markReadLocal(bookingId);
+        // markReadLocal + socketService.markRead are handled by the
+        // messages.length effect below, which fires after setMessages updates the store.
       } catch {
         // keep empty
       } finally {
@@ -147,33 +159,28 @@ export function ChatScreen({ navigation, route }: Props) {
     let cancelled = false;
     let cleanupListeners: (() => void) | null = null;
 
+    // receive_message is handled globally by socketService — no per-screen listener
+    // here to avoid double-adding messages (global handler + per-screen = each message
+    // inserted twice, causing 2× store updates and duplicate bubbles).
     socketService.connect().then(() => {
       if (cancelled) return;
       socketService.joinRoom(bookingId);
       const socket = socketService.getSocket();
       if (!socket) return;
 
-      const handleMessage = (msg: Message) => {
-        if (cancelled || !msg) return;
-        addMessage(bookingId, msg);
-        socketService.markRead(bookingId);
-        markReadLocal(bookingId);
-      };
       const handleTyping = ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
         if (!cancelled && userId !== user?.id) setPeerTyping(isTyping);
       };
       const handleRead = () => { if (!cancelled) markReadLocal(bookingId); };
 
-      socket.on('receive_message', handleMessage);
       socket.on('typing', handleTyping);
       socket.on('messages_read', handleRead);
 
       cleanupListeners = () => {
-        socket.off('receive_message', handleMessage);
         socket.off('typing', handleTyping);
         socket.off('messages_read', handleRead);
       };
-    });
+    }).catch(() => null);
 
     return () => {
       cancelled = true;
@@ -182,15 +189,23 @@ export function ChatScreen({ navigation, route }: Props) {
   }, [bookingId, user?.id]);
 
   const scrollToBottom = useCallback(() => {
-    if (messages.length > 0) {
-      listRef.current?.scrollToEnd({ animated: true });
-    }
-  }, [messages.length]);
+    listRef.current?.scrollToEnd({ animated: true });
+  }, []); // stable — no dep on messages.length to avoid recreating on every message
 
   useEffect(() => {
+    if (messages.length === 0) return;
     const t = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(t);
-  }, [messages.length]);
+  }, [messages.length, scrollToBottom]);
+
+  // Mark messages as read whenever the message list grows (new message arrived via
+  // the global socket handler). Using messages.length (primitive) as dep is safe —
+  // Object.is(n, n) is always true so this only fires when the count actually changes.
+  useEffect(() => {
+    if (messages.length === 0 || !bookingId) return;
+    socketService.markRead(bookingId);
+    markReadLocal(bookingId);
+  }, [messages.length, bookingId]);
 
   const handleTextChange = (val: string) => {
     setText(val);
@@ -258,8 +273,9 @@ export function ChatScreen({ navigation, route }: Props) {
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isMine = item.senderId === user?.id;
-    // content peut être null (message supprimé / modéré côté serveur)
-    const content = item.content ?? '';
+    // content peut être null (message supprimé / modéré côté serveur) ou, selon
+    // le backend, un objet — on force une chaîne pour ne jamais rendre un objet.
+    const content = typeof item.content === 'string' ? item.content : '';
     const isImageMsg = content.startsWith('[Image] ');
     const imgUri = isImageMsg ? content.replace('[Image] ', '') : null;
 
@@ -289,7 +305,7 @@ export function ChatScreen({ navigation, route }: Props) {
   // malformée, deep link incomplet) : écran récupérable plutôt qu'un crash.
   if (!bookingId) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.centered}>
           <Text style={{ fontSize: 40 }}>💬</Text>
           <Text style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 32 }}>
@@ -304,14 +320,14 @@ export function ChatScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{recipientName ?? 'Discussion'}</Text>
+          <Text style={styles.headerName} numberOfLines={1}>{peerName}</Text>
           {peerTyping && <Text style={styles.typingLabel}>est en train d'écrire...</Text>}
         </View>
       </View>
@@ -327,13 +343,12 @@ export function ChatScreen({ navigation, route }: Props) {
           <FlatList
             ref={listRef}
             data={messages}
-            keyExtractor={item => item.id}
+            keyExtractor={(item, index) => item.id ?? String(index)}
             renderItem={renderMessage}
             contentContainerStyle={styles.list}
-            onContentSizeChange={scrollToBottom}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>Démarrez la conversation avec {recipientName}</Text>
+                <Text style={styles.emptyText}>Démarrez la conversation avec {peerName}</Text>
               </View>
             }
           />
@@ -450,14 +465,18 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
   flex: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6', backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16,
+    backgroundColor: '#808080',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
   },
-  backBtn: { padding: 8, marginRight: 4 },
-  backArrow: { fontSize: 22, color: '#1056E0', fontWeight: '600' },
-  headerInfo: { flex: 1 },
-  headerName: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  typingLabel: { fontSize: 12, color: '#6B7280', fontStyle: 'italic' },
+  backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
+  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
+  headerInfo: { alignItems: 'center' },
+  headerName: { fontSize: 18, fontWeight: '800', color: '#111111', textAlign: 'center' },
+  typingLabel: { fontSize: 12, color: '#6B7280', fontStyle: 'italic', textAlign: 'center' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 12, gap: 6 },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },

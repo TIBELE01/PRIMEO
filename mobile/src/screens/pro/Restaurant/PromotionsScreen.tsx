@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ function formatDiscount(promo: Promotion): string {
   if (promo.discountType === 'percent') {
     return `−${promo.discountValue}%`;
   }
-  return `−${promo.discountValue.toLocaleString('fr-CI')} FCFA`;
+  return `−${(promo.discountValue ?? 0).toLocaleString('fr-CI')} FCFA`;
 }
 
 function formatValidUntil(iso?: string): string | null {
@@ -130,7 +131,7 @@ function PromoCard({ promo, onToggle, onDelete }: PromoCardProps) {
             {promo.isActive ? 'Active' : 'Inactive'}
           </Text>
         </View>
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Supprimer l'offre ${promo.title}`}>
           <Ionicons name="trash-outline" size={16} color="#DC2626" />
           <Text style={styles.deleteBtnText}>Supprimer</Text>
         </TouchableOpacity>
@@ -196,7 +197,7 @@ function CreatePromoModal({ visible, onClose, onSubmit }: CreatePromoModalProps)
             {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Créer une offre</Text>
-              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Fermer la fenêtre">
                 <Ionicons name="close" size={22} color="#6B7280" />
               </TouchableOpacity>
             </View>
@@ -233,6 +234,8 @@ function CreatePromoModal({ visible, onClose, onSubmit }: CreatePromoModalProps)
                     form.discountType === 'percent' && styles.typeSelectorBtnActive,
                   ]}
                   onPress={() => setForm(p => ({ ...p, discountType: 'percent' }))}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sélectionner réduction en pourcentage"
                 >
                   <Text
                     style={[
@@ -249,6 +252,8 @@ function CreatePromoModal({ visible, onClose, onSubmit }: CreatePromoModalProps)
                     form.discountType === 'fixed' && styles.typeSelectorBtnActive,
                   ]}
                   onPress={() => setForm(p => ({ ...p, discountType: 'fixed' }))}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sélectionner réduction en montant fixe"
                 >
                   <Text
                     style={[
@@ -291,6 +296,8 @@ function CreatePromoModal({ visible, onClose, onSubmit }: CreatePromoModalProps)
                 onPress={handleSubmit}
                 disabled={submitting}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Créer l'offre"
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
@@ -450,12 +457,7 @@ export default function PromotionsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.screenHeader}>
-        <Text style={styles.screenTitle}>Offres spéciales</Text>
-        <Text style={styles.screenSubtitle}>Attirez plus de clients</Text>
-      </View>
-
+      <PageHeader title="Offres spéciales" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -516,6 +518,8 @@ export default function PromotionsScreen() {
         style={styles.fab}
         onPress={() => setModalVisible(true)}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Créer une offre spéciale"
       >
         <Ionicons name="add" size={22} color="#fff" />
         <Text style={styles.fabText}>Créer une offre</Text>
@@ -538,17 +542,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: '#6B7280' },
 
-  screenHeader: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  screenTitle: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  screenSubtitle: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-
-  scroll: { padding: 16, paddingBottom: 20 },
+  scroll: { padding: 16, paddingBottom: 80 },
 
   infoCard: {
     flexDirection: 'row',

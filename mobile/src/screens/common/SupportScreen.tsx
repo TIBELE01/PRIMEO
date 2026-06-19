@@ -1,9 +1,8 @@
-import React, { useState, useRef, useCallback } from 'react';
+﻿import React, { useState, useRef, useCallback } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
-  ScrollView, ActivityIndicator, Alert,
+  View, Text, TextInput, TouchableOpacity, FlatList, Modal, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { supportApi } from '../../services/api/endpoints/support';
@@ -259,7 +258,7 @@ export default function SupportScreen() {
         <FlatList
           ref={flatRef}
           data={msgs}
-          keyExtractor={m => m.id}
+          keyExtractor={(m, i) => m.id ?? String(i)}
           contentContainerStyle={s.msgList}
           renderItem={({ item }) => (
             <View style={[s.bubble, item.from === 'user' ? s.bubbleUser : s.bubbleBot]}>
@@ -332,7 +331,7 @@ export default function SupportScreen() {
 }
 
 const s = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:    { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   flex:    { flex: 1 },
   header:  {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

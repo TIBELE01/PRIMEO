@@ -1,4 +1,4 @@
-// Écran « Exporter mes données » — tableau de bord professionnel.
+﻿// Écran « Exporter mes données » — tableau de bord professionnel.
 // Lance un export asynchrone (CSV/PDF) des réservations, propriétés, transactions
 // ou statistiques avancées (Business/Entreprise), liste les exports passés et
 // permet de télécharger les fichiers prêts (lien sécurisé à durée limitée).
@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { exportsApi, DataExport, ExportType, ExportFormat } from '../../../services/api/endpoints/exports';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useSubscription } from '../../../hooks/useSubscription';
 
@@ -106,13 +107,7 @@ export function ExportsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title} accessibilityRole="header">Exporter mes données</Text>
-        <Text style={styles.subtitle}>
-          Générez un fichier CSV ou PDF de vos données (3 derniers mois) pour votre archivage.
-        </Text>
-      </View>
-
+      <PageHeader title="Exporter mes données" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
@@ -244,9 +239,6 @@ export function ExportsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 4, lineHeight: 18 },
   scroll: { padding: 16, paddingBottom: 48 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginTop: 16, marginBottom: 10 },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

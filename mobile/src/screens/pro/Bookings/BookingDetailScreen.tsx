@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, Linking,
@@ -241,19 +241,10 @@ export default function BookingDetailScreen() {
   const statusColor = STATUS_COLOR[booking.status] ?? STATUS_COLOR['cancelled'];
   const statusLabel = STATUS_LABEL[booking.status] ?? booking.status;
 
-  const initials = `${booking.client.firstName?.[0] ?? '?'}${booking.client.lastName?.[0] ?? ''}`.toUpperCase();
+  const initials = `${booking.client?.firstName?.[0] ?? '?'}${booking.client?.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Détail réservation</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Status + ref */}
@@ -262,7 +253,7 @@ export default function BookingDetailScreen() {
             <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
               <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>{statusLabel}</Text>
             </View>
-            <Text style={styles.bookingRef}>#{bookingId.slice(-8).toUpperCase()}</Text>
+            <Text style={styles.bookingRef}>#{String(bookingId ?? '').slice(-8).toUpperCase()}</Text>
           </View>
           <Text style={styles.createdAt}>Créée le {formatDate(booking.createdAt)}</Text>
         </View>
@@ -277,6 +268,8 @@ export default function BookingDetailScreen() {
                 style={[styles.actionBtnHalf, { backgroundColor: '#065F46' }]}
                 onPress={handleConfirm}
                 disabled={actionLoading === 'confirm'}
+                accessibilityRole="button"
+                accessibilityLabel="Accepter la réservation"
               >
                 {actionLoading === 'confirm'
                   ? <ActivityIndicator color="#fff" size="small" />
@@ -289,6 +282,8 @@ export default function BookingDetailScreen() {
                 style={[styles.actionBtnHalf, { backgroundColor: '#DC2626' }]}
                 onPress={handleReject}
                 disabled={actionLoading === 'reject'}
+                accessibilityRole="button"
+                accessibilityLabel="Refuser la réservation"
               >
                 {actionLoading === 'reject'
                   ? <ActivityIndicator color="#fff" size="small" />
@@ -311,7 +306,7 @@ export default function BookingDetailScreen() {
             <View style={styles.clientInfo}>
               <Text style={styles.clientName}>{booking.client.firstName} {booking.client.lastName}</Text>
               {booking.client.phone && (
-                <TouchableOpacity onPress={() => Linking.openURL(`tel:${booking.client.phone}`)}>
+                <TouchableOpacity onPress={() => Linking.openURL(`tel:${booking.client.phone}`)} accessibilityRole="button" accessibilityLabel={`Appeler ${booking.client.phone}`}>
                   <Text style={[styles.clientDetail, { color: theme.primary }]}>📞 {booking.client.phone}</Text>
                 </TouchableOpacity>
               )}
@@ -387,7 +382,7 @@ export default function BookingDetailScreen() {
           <View style={[styles.paymentRow, styles.paymentTotal]}>
             <Text style={styles.paymentTotalLabel}>Total</Text>
             <Text style={[styles.paymentTotalValue, { color: theme.primary }]}>
-              {booking.totalAmount.toLocaleString('fr-CI')} FCFA
+              {(booking.totalAmount ?? 0).toLocaleString('fr-CI')} FCFA
             </Text>
           </View>
         </View>
@@ -400,6 +395,8 @@ export default function BookingDetailScreen() {
               style={[styles.actionBtn, { backgroundColor: '#065F46' }]}
               onPress={handleMarkCash}
               disabled={actionLoading === 'cash'}
+              accessibilityRole="button"
+              accessibilityLabel="Marquer le paiement en espèces comme reçu"
             >
               {actionLoading === 'cash'
                 ? <ActivityIndicator color="#fff" size="small" />
@@ -413,6 +410,8 @@ export default function BookingDetailScreen() {
               style={[styles.actionBtn, { backgroundColor: theme.primary }]}
               onPress={handleDownloadInvoice}
               disabled={actionLoading === 'invoice'}
+              accessibilityRole="button"
+              accessibilityLabel="Télécharger la facture"
             >
               {actionLoading === 'invoice'
                 ? <ActivityIndicator color="#fff" size="small" />
@@ -426,6 +425,8 @@ export default function BookingDetailScreen() {
               style={[styles.actionBtn, { backgroundColor: '#DC2626' }]}
               onPress={handleCancelBooking}
               disabled={actionLoading === 'cancel'}
+              accessibilityRole="button"
+              accessibilityLabel="Annuler la réservation"
             >
               {actionLoading === 'cancel'
                 ? <ActivityIndicator color="#fff" size="small" />
@@ -438,6 +439,8 @@ export default function BookingDetailScreen() {
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: '#F59E0B' }]}
               onPress={() => navigation.navigate('RateClient', { bookingId, clientId: booking.client.id })}
+              accessibilityRole="button"
+              accessibilityLabel="Évaluer ce client"
             >
               <Ionicons name="star-outline" size={16} color="#fff" />
               <Text style={styles.actionBtnText}>Évaluer ce client</Text>
@@ -467,13 +470,6 @@ export default function BookingDetailScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB',
-  },
-  headerBack: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 12 },
   card: {

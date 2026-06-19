@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl,
@@ -366,7 +366,7 @@ export default function AdminDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:   { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   scroll: { padding: 16, paddingBottom: 40 },
 
   header: {

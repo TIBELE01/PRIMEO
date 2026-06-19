@@ -1,4 +1,4 @@
-// Publications supplémentaires — achat/résiliation de slots (500 FCFA/mois) qui
+﻿// Publications supplémentaires — achat/résiliation de slots (500 FCFA/mois) qui
 // s'ajoutent à la limite de la formule. Paiement Genius Pay (prorata du mois),
 // renouvellement tacite mensuel, résiliation effective à la prochaine échéance.
 import React, { useCallback, useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { subscriptionsApi } from '../../../services/api/endpoints/subscriptions';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 interface SlotsInfo {
   baseLimit: number;
@@ -161,8 +162,8 @@ export default function ExtraSlotsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
+      <PageHeader title="Publications suppl." />
       <ScrollView contentContainerStyle={s.scroll} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#1056E0" />}>
-        <Text style={s.title}>Publications supplémentaires</Text>
         <Text style={s.subtitle}>Dépassez la limite de votre formule — 500 FCFA / publication / mois</Text>
 
         {/* Synthèse */}

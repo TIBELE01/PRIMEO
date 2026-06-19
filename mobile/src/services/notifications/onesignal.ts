@@ -8,7 +8,9 @@ import { apiClient } from '../api/client';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    // SDK 54+ : shouldShowAlert est déprécié, remplacé par shouldShowBanner + shouldShowList
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),

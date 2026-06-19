@@ -1,4 +1,4 @@
-// BookingScreen — tunnel de réservation adapté au secteur
+﻿// BookingScreen — tunnel de réservation adapté au secteur
 // • mode « stay »  : hébergements / hôtels — séjour par nuits + paiement
 // • mode « table » : restaurants — date + heure + couverts, gratuit (sans paiement)
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -6,13 +6,13 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import type { RouteProp } from '@react-navigation/native';
@@ -979,7 +979,7 @@ export function BookingScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { fontSize: 14, color: '#6B7280', marginTop: 8 },
 

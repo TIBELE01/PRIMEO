@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, RefreshControl,
   ActivityIndicator, TouchableOpacity, Dimensions,
@@ -224,7 +224,7 @@ export default function DashboardScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => load(true)} tintColor={theme.primary} />}
       >
@@ -234,7 +234,7 @@ export default function DashboardScreen({ navigation }: any) {
             <Text style={styles.headerGreeting}>Bonjour, {firstName} 👋</Text>
             <Text style={styles.headerSub}>Voici votre tableau de bord</Text>
           </View>
-          <TouchableOpacity onPress={() => load(true)} style={styles.refreshBtn}>
+          <TouchableOpacity onPress={() => load(true)} style={styles.refreshBtn} accessibilityRole="button" accessibilityLabel="Rafraîchir le tableau de bord">
             <Ionicons name="refresh" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -276,6 +276,8 @@ export default function DashboardScreen({ navigation }: any) {
               style={[styles.subBanner, { borderLeftColor: PLAN_COLORS[subscription.planType] ?? theme.primary }]}
               onPress={() => navigation.navigate('Subscriptions')}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Voir mon abonnement"
             >
               <View style={styles.subBannerLeft}>
                 <View style={[styles.subBadge, { backgroundColor: PLAN_COLORS[subscription.planType] ?? theme.primary }]}>
@@ -317,7 +319,7 @@ export default function DashboardScreen({ navigation }: any) {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Revenus nets — mois en cours</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Analytics')} accessibilityRole="button" accessibilityLabel="Voir toutes les statistiques">
                 <Text style={[styles.cardLink, { color: theme.primary }]}>Tout voir →</Text>
               </TouchableOpacity>
             </View>
@@ -407,35 +409,35 @@ export default function DashboardScreen({ navigation }: any) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Actions rapides</Text>
             <View style={styles.quickGrid}>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('PropertiesList')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('PropertiesList')} accessibilityRole="button" accessibilityLabel="Gérer mes annonces">
                 <Ionicons name="business-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Annonces</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Bookings')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Bookings')} accessibilityRole="button" accessibilityLabel="Gérer les réservations">
                 <Ionicons name="calendar-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Réservations</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Analytics')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Analytics')} accessibilityRole="button" accessibilityLabel="Voir les statistiques">
                 <Ionicons name="bar-chart-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Statistiques</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('PropertyCalendar')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('PropertyCalendar')} accessibilityRole="button" accessibilityLabel="Voir le calendrier">
                 <Ionicons name="today-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Calendrier</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ReceivedReviews')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ReceivedReviews')} accessibilityRole="button" accessibilityLabel="Voir les avis clients">
                 <Ionicons name="star-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Avis</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Subscriptions')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Subscriptions')} accessibilityRole="button" accessibilityLabel="Gérer l'abonnement">
                 <Ionicons name="card-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Abonnement</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Payouts')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Payouts')} accessibilityRole="button" accessibilityLabel="Voir les reversements">
                 <Ionicons name="cash-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Reversements</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ExtraSlots')}>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ExtraSlots')} accessibilityRole="button" accessibilityLabel="Acheter des publications supplémentaires">
                 <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
                 <Text style={styles.quickLabel}>Publications +</Text>
               </TouchableOpacity>
@@ -448,7 +450,7 @@ export default function DashboardScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, fontWeight: '600' },
 

@@ -180,11 +180,8 @@ export const bookingsService = {
       void ensureBookingInvoice(booking.id).catch(
         (err) => logger.warn(`Pré-génération facture échouée pour ${booking.id}`, err),
       );
-      // Message automatique d'ouverture de la discussion
-      const autoMsg = isRestaurant
-        ? `Bonjour, j'ai réservé ${input.guests} couvert${input.guests > 1 ? 's' : ''} pour le ${startDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'long' })}${input.reservationTime ? ` à ${input.reservationTime}` : ''}. À bientôt !`
-        : `Bonjour, j'ai effectué une réservation pour votre propriété du ${startDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' })} au ${endDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' })}. N'hésitez pas à me contacter si vous avez des questions.`;
-      void messagingService.saveMessage(booking.id, clientId, autoMsg).catch(
+      // Message structuré d'ouverture de la discussion (détails complets de la réservation)
+      void messagingService.saveAutoBookingMessage(booking.id).catch(
         (err) => logger.warn(`Message automatique échoué pour ${booking.id}`, err),
       );
     }
@@ -753,10 +750,8 @@ export const bookingsService = {
       },
     });
 
-    // Message initial dans la discussion (message du client ou message par défaut)
-    const autoMsg = input.interestMessage?.trim()
-      || 'Bonjour, je suis intéressé(e) par votre bien. Pourriez-vous me contacter ?';
-    void messagingService.saveMessage(booking.id, clientId, autoMsg).catch(
+    // Message structuré d'ouverture de la discussion (inclut le message d'intérêt si fourni)
+    void messagingService.saveAutoBookingMessage(booking.id).catch(
       (err) => logger.warn(`Message automatique intérêt échoué pour ${booking.id}`, err),
     );
 

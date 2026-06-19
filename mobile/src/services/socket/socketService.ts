@@ -7,26 +7,43 @@ import { useChatStore } from '../../store/chatStore';
 const BASE_URL: string = Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:3000';
 
 let socket: Socket | null = null;
+// Guard against concurrent connect() calls — multiple callers (tabs, screens) can call
+// connect() at the same time; without this flag a second call sees socket===null (not yet
+// assigned) and creates a second Socket, causing duplicate global handlers.
+let connecting = false;
 
 export const socketService = {
   connect: async () => {
-    if (socket?.connected) return;
-    const token = await SecureStore.getItemAsync('accessToken');
-    if (!token) return;
+    if (socket?.connected || connecting) return;
+    connecting = true;
+    try {
+      const token = await SecureStore.getItemAsync('accessToken');
+      if (!token) { connecting = false; return; }
 
-    socket = io(`${BASE_URL}/chat`, {
-      auth: { token },
-      transports: ['websocket'],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-    });
+      socket = io(`${BASE_URL}/chat`, {
+        auth: { token },
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+      });
 
-    socket.on('connect', () => console.log('Socket connected:', socket?.id));
-    socket.on('disconnect', reason => console.log('Socket disconnected:', reason));
-    socket.on('receive_message', message => {
-      useChatStore.getState().addMessage(message.bookingId, message);
-    });
-    socket.on('error', err => console.error('Socket error:', err));
+      socket.on('connect', () => { connecting = false; console.log('Socket connected:', socket?.id); });
+      socket.on('connect_error', () => { connecting = false; });
+      socket.on('disconnect', reason => console.log('Socket disconnected:', reason));
+      // Global handler — adds incoming messages to the store for ALL open screens.
+      // ChatScreen subscribes to the store and does NOT register its own receive_message
+      // listener, preventing the double-add bug (message appearing twice).
+      socket.on('receive_message', (message: any) => {
+        useChatStore.getState().addMessage(message.bookingId, {
+          ...message,
+          createdAt: message.createdAt ?? message.sentAt,
+        });
+      });
+      socket.on('error', err => { connecting = false; console.error('Socket error:', err); });
+    } catch (err) {
+      connecting = false;
+      console.warn('[Socket] connect failed:', err);
+    }
   },
 
   disconnect: () => {

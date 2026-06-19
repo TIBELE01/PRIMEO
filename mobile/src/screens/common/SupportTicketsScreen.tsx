@@ -1,9 +1,8 @@
-import React, { useCallback } from 'react';
+﻿import React, { useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, FlatList,
-  StyleSheet, SafeAreaView, ActivityIndicator,
-  RefreshControl,
+  View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -126,7 +125,7 @@ export default function SupportTicketsScreen() {
       ) : (
         <FlatList
           data={tickets}
-          keyExtractor={t => t.id}
+          keyExtractor={(t, i) => t.id ?? String(i)}
           contentContainerStyle={tickets.length === 0 ? s.emptyWrap : s.listPad}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1056E0" />}
           renderItem={({ item }) => (
@@ -154,7 +153,7 @@ export default function SupportTicketsScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,

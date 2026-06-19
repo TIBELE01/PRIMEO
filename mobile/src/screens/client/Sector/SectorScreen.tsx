@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, ActivityIndicator, TextInput,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
@@ -60,7 +60,7 @@ export function SectorScreen() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState(meta.sortOptions[0]);
+  const [sortBy, setSortBy] = useState(meta.sortOptions[0] ?? null);
   const [search, setSearch] = useState('');
 
   const load = useCallback(async (p = 1, sort = sortBy, q = search) => {
@@ -171,7 +171,7 @@ export function SectorScreen() {
       {/* List */}
       <FlatList
         data={results}
-        keyExtractor={p => p.id}
+        keyExtractor={(p, i) => p.id ?? String(i)}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <PropertyCard
@@ -203,7 +203,7 @@ export function SectorScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   backBtn: {},
   backArrow: { fontSize: 22, color: '#fff', fontWeight: '300' },

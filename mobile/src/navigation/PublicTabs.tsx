@@ -1,6 +1,6 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import type { AuthStackParamList } from './types';
@@ -53,6 +53,9 @@ function tabIcon(name: string, outlineName: string) {
 }
 
 export function PublicTabs() {
+  const insets = useSafeAreaInsets();
+  const safeBottom = Math.max(8, insets.bottom);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -62,8 +65,8 @@ export function PublicTabs() {
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopColor: '#F1F5F9',
-          height: Platform.OS === 'ios' ? 84 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          height: 48 + safeBottom,
+          paddingBottom: safeBottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },

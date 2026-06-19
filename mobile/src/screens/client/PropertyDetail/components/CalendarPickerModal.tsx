@@ -169,21 +169,21 @@ export function CalendarPickerModal({
 const CELL = 44;
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' },
   sheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: '#1A1A1A', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingTop: 12, paddingHorizontal: 20, paddingBottom: 36,
     shadowColor: '#000', shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.14, shadowRadius: 20, elevation: 24,
+    shadowOpacity: 0.5, shadowRadius: 20, elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 17, fontWeight: '800', color: '#111827', textAlign: 'center', marginBottom: 18 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#444', alignSelf: 'center', marginBottom: 16 },
+  sheetTitle: { fontSize: 17, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', marginBottom: 18 },
 
   monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  navBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
-  navArrow: { fontSize: 22, color: '#374151', lineHeight: 28 },
-  monthLabel: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  navBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#252525', justifyContent: 'center', alignItems: 'center' },
+  navArrow: { fontSize: 22, color: '#FFFFFF', lineHeight: 28 },
+  monthLabel: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
   dayHeaders: { flexDirection: 'row', marginBottom: 6 },
   dayHeader: { flex: 1, textAlign: 'center', fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
@@ -191,23 +191,24 @@ const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   cell: { width: `${100/7}%` as any, height: CELL, justifyContent: 'center', alignItems: 'center' },
   cellSel: { borderRadius: CELL / 2 },
-  cellText: { fontSize: 14, color: '#111827', fontWeight: '500' },
+  cellText: { fontSize: 14, color: '#FFFFFF', fontWeight: '500' },
   cellTextSel: { color: '#fff', fontWeight: '700' },
-  cellTextDis: { color: '#D1D5DB' },
+  cellTextDis: { color: '#4A4A4A' },
 
   recap: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16,
+    backgroundColor: '#252525',
   },
-  recapLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+  recapLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500' },
   recapDate: { fontSize: 14, fontWeight: '700' },
 
   actions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
     flex: 1, paddingVertical: 14, borderRadius: 14,
-    borderWidth: 1.5, borderColor: '#E5E7EB', alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#333333', alignItems: 'center',
   },
-  cancelText: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  cancelText: { fontSize: 15, fontWeight: '600', color: '#9CA3AF' },
   confirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   confirmBtnDis: { opacity: 0.45 },
   confirmText: { fontSize: 15, fontWeight: '700', color: '#fff' },

@@ -16,7 +16,7 @@ jest.mock('../webhooks/handlers/genius-pay.handler', () => ({
 jest.mock('../notifications/notifications.service', () => ({
   notificationsService: { notify: jest.fn(async () => undefined) },
 }));
-jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn() } }));
+jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 jest.mock('../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn() } }));
 jest.mock('../wallets/wallets.service', () => ({ walletService: { credit: jest.fn(), debit: jest.fn(), getBalance: jest.fn() } }));
 

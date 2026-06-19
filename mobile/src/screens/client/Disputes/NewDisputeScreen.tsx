@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator,
+  Alert, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
@@ -219,7 +220,7 @@ export function NewDisputeScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   scroll: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 20 },
   title: { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 4 },

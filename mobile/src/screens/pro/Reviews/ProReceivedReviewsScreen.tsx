@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput, Modal,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
@@ -124,15 +124,6 @@ export default function ProReceivedReviewsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Avis reçus</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
       {/* Summary bar */}
       {avgRating && (
         <View style={styles.summaryBar}>
@@ -167,7 +158,7 @@ export default function ProReceivedReviewsScreen() {
                   <View style={styles.reviewerAvatar}>
                     <Text style={styles.reviewerAvatarText}>
                       {review.reviewer
-                        ? `${review.reviewer.firstName[0]}${review.reviewer.lastName[0]}`
+                        ? `${review.reviewer.firstName?.[0] ?? '?'}${review.reviewer.lastName?.[0] ?? ''}`
                         : '?'}
                     </Text>
                   </View>
@@ -261,14 +252,11 @@ export default function ProReceivedReviewsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  headerBack: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
   summaryBar: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   summaryAvg: { fontSize: 18, fontWeight: '800', color: '#111827' },
   summaryCount: { fontSize: 13, color: '#6B7280' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, gap: 12 },
+  scrollContent: { padding: 16, gap: 12, paddingBottom: 80 },
   emptyContainer: { alignItems: 'center', paddingVertical: 60, gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#374151' },
   emptySubtitle: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },

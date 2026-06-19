@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Platform,
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Animated, Image, Linking,
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Platform, View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Animated, Image, Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
@@ -86,13 +86,10 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
   // Cet écran est monté dans les piles « Accueil » / « Rechercher » : les routes
   // Chat, BookingDetail et MyBookings vivent dans d'autres onglets. On navigue donc
   // via le tab navigator parent (l'action remonte automatiquement l'arborescence).
-  const goToChat = useCallback((name: string) => {
+  const goToConversations = useCallback(() => {
     if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
-    (navigation as any).navigate('Messages', {
-      screen: 'Chat',
-      params: { bookingId, recipientName: name },
-    });
-  }, [navigation, bookingId]);
+    (navigation as any).navigate('Messages', { screen: 'Conversations' });
+  }, [navigation]);
 
   const goToBookingDetail = useCallback(() => {
     if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
@@ -221,15 +218,14 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
     poll();
   }, [fetchBooking, markSuccess, markFailed, poll]);
 
-  // Naviguer automatiquement vers la discussion 2,5 s après la confirmation de paiement
+  // Naviguer automatiquement vers la messagerie 2,5 s après la confirmation
   useEffect(() => {
     if (phase !== 'success' || !booking) return;
-    const name = booking.property?.title ?? booking.property?.name ?? 'Le responsable';
-    chatTimerRef.current = setTimeout(() => goToChat(name), 2500);
+    chatTimerRef.current = setTimeout(() => goToConversations(), 2500);
     return () => {
       if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
     };
-  }, [phase, booking, goToChat]);
+  }, [phase, booking, goToConversations]);
 
   useEffect(() => {
     startPolling();
@@ -488,7 +484,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
           {/* Discussion ouverte automatiquement — priorité principale */}
           <TouchableOpacity
             style={styles.chatCTA}
-            onPress={() => goToChat(booking.property?.title ?? booking.property?.name ?? 'Le responsable')}
+            onPress={goToConversations}
           >
             <Text style={styles.chatCTAText}>💬 Ouvrir la messagerie</Text>
           </TouchableOpacity>
@@ -506,7 +502,7 @@ export function BookingConfirmationScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
   scrollContent: { paddingBottom: 40 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 24 },
   errorIcon: { fontSize: 48 },

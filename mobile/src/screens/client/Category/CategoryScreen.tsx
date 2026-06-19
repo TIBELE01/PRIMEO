@@ -1,13 +1,11 @@
-// Page de catégorie avec recherche avancée intégrée :
+﻿// Page de catégorie avec recherche avancée intégrée :
 // autocomplétion Geoapify, géolocalisation, calendrier visuel avec prix,
 // sélecteur de voyageurs/convives, filtres complets par type et carte interactive.
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, ActivityIndicator, ScrollView, Modal,
-  ImageBackground, Dimensions, Platform, Animated, LayoutAnimation,
-  UIManager,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Modal, ImageBackground, Dimensions, Platform, Animated, LayoutAnimation, UIManager,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
@@ -462,7 +460,7 @@ export function CategoryScreen() {
 
   // Filtres avancés (sheet)
   const [filters, setFilters] = useState<FilterState>({});
-  const [sortBy, setSortBy] = useState<string>(config.sortOptions[0].key);
+  const [sortBy, setSortBy] = useState<string>(config.sortOptions[0]?.key ?? '');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Recherche avancée (panneau)
@@ -673,7 +671,7 @@ export function CategoryScreen() {
       ) : (
         <FlatList
           data={results}
-          keyExtractor={p => p.id}
+          keyExtractor={(p, i) => p.id ?? String(i)}
           numColumns={2}
           contentContainerStyle={st.gridContent}
           columnWrapperStyle={st.gridRow}
@@ -746,7 +744,7 @@ export function CategoryScreen() {
 const HERO_H = 240 + (Platform.OS === 'ios' ? 44 : 30);
 
 const st = StyleSheet.create({
-  safe: { flex: 1 },
+  safe: { flex: 1, paddingTop: 16 },
   hero: { width: '100%', height: HERO_H, justifyContent: 'flex-end' },
   heroGrad1: { ...StyleSheet.absoluteFillObject, opacity: 0.55 },
   heroGrad2: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },

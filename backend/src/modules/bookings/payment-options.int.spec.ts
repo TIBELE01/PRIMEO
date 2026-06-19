@@ -10,7 +10,7 @@ jest.mock('./services/cancellation.service', () => ({ cancellationService: { com
 jest.mock('../payments/services/genius-pay.service', () => ({ geniusPayService: { initiatePayment: jest.fn(async () => ({ checkoutUrl: 'https://pay/x', reference: 'GP-REF' })) } }));
 jest.mock('../wallets/wallets.service', () => ({ walletService: { getBalance: jest.fn(async () => 0), debit: jest.fn(), credit: jest.fn() } }));
 jest.mock('../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
-jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(async () => ({ id: 'm' })) } }));
+jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(async () => ({ id: 'm' })), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 jest.mock('../notifications/notifications.service', () => ({ notificationsService: { notify: jest.fn(async () => undefined) } }));
 
 // Webhook handler — externes mockés (Brevo/OneSignal/SMS/facture)
@@ -93,8 +93,8 @@ describe('Option 1 — 100 % en ligne → webhook succès → CONFIRMÉE', () =>
     expect(sendTemplateEmail).toHaveBeenCalled(); // email pro
     expect(sendPushNotification).toHaveBeenCalledWith(expect.objectContaining({ externalUserIds: [CLIENT] }));
     expect(sendPushNotification).toHaveBeenCalledWith(expect.objectContaining({ externalUserIds: [OWNER] }));
-    // Conversation ouverte
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-1', CLIENT, expect.any(String));
+    // Conversation ouverte (message structuré post-paiement)
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-1');
   });
 });
 
@@ -134,7 +134,7 @@ describe('Option 3 — 0 % en ligne → CONFIRMATION IMMÉDIATE (sans webhook)',
     // Confirmation immédiate : notification au pro + au client
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'new_booking', recipientId: OWNER }));
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'booking_confirmed', recipientId: CLIENT }));
-    // Conversation ouverte dès la création
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-confirmed', CLIENT, expect.any(String));
+    // Conversation ouverte dès la création (message structuré)
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-confirmed');
   });
 });

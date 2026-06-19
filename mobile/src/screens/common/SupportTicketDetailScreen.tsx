@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+﻿import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
-  StyleSheet, SafeAreaView, KeyboardAvoidingView,
+  StyleSheet, KeyboardAvoidingView,
   Platform, ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { supportApi } from '../../services/api/endpoints/support';
@@ -154,7 +155,7 @@ export default function SupportTicketDetailScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color="#0F1729" />
         </TouchableOpacity>
-        <Text style={s.headerText} numberOfLines={1}>#{ticketId.slice(0, 8)}</Text>
+        <Text style={s.headerText} numberOfLines={1}>#{String(ticketId ?? '').slice(0, 8)}</Text>
         <View style={[s.statusBadge, { backgroundColor: st.bg }]}>
           <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
         </View>
@@ -174,7 +175,7 @@ export default function SupportTicketDetailScreen() {
         <FlatList
           ref={flatRef}
           data={allMsgs}
-          keyExtractor={m => m.id}
+          keyExtractor={(m, i) => m.id ?? String(i)}
           contentContainerStyle={s.msgList}
           renderItem={({ item }) => <MsgBubble msg={item} />}
           onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: false })}
@@ -216,7 +217,7 @@ export default function SupportTicketDetailScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  safe:  { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:  { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   flex:  { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 

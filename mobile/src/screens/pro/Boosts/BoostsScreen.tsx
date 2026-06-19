@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -379,6 +379,8 @@ export default function BoostsScreen() {
             style={styles.selectorButton}
             onPress={() => setSelectorVisible(true)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Choisir une annonce à booster"
           >
             <Text style={selectedPropertyId ? styles.selectorTextSelected : styles.selectorPlaceholder}>
               {selectedProperty?.name ?? 'Choisir une annonce…'}
@@ -401,6 +403,8 @@ export default function BoostsScreen() {
               onPress={handleFreeBoost}
               disabled={!selectedPropertyId || isPurchasing}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Utiliser un boost gratuit"
             >
               <Ionicons name="gift-outline" size={18} color="#15803D" style={{ marginRight: 8 }} />
               <Text style={styles.freeBoostBtnText}>
@@ -415,6 +419,8 @@ export default function BoostsScreen() {
             onPress={handlePurchase}
             disabled={!selectedPropertyId || isPurchasing}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Acheter un boost payant pour cette annonce"
           >
             {isPurchasing ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -439,7 +445,7 @@ export default function BoostsScreen() {
           <Pressable style={styles.modalSheet} onPress={() => {}}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Choisir une annonce</Text>
-              <TouchableOpacity onPress={() => setSelectorVisible(false)}>
+              <TouchableOpacity onPress={() => setSelectorVisible(false)} accessibilityRole="button" accessibilityLabel="Fermer la sélection d'annonce">
                 <Ionicons name="close" size={24} color="#374151" />
               </TouchableOpacity>
             </View>
@@ -450,7 +456,7 @@ export default function BoostsScreen() {
             ) : (
               <FlatList
                 data={properties}
-                keyExtractor={item => item.id}
+                keyExtractor={(item, i) => item.id ?? String(i)}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     style={[
@@ -461,6 +467,9 @@ export default function BoostsScreen() {
                       setSelectedPropertyId(item.id);
                       setSelectorVisible(false);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Sélectionner ${item.name}`}
+                    accessibilityState={{ selected: item.id === selectedPropertyId }}
                   >
                     <Text style={[
                       styles.propertyRowText,
@@ -487,7 +496,7 @@ export default function BoostsScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F5F5' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F5F5F5' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   scroll: { padding: 16, paddingBottom: 48 },
 

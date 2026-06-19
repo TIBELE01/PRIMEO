@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl, Image,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 type DisputeStatus =
   | 'open'
@@ -132,7 +133,7 @@ export function DisputeListScreen({ navigation }: Props) {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}><Text style={styles.title}>Mes litiges</Text></View>
+        <PageHeader title="Mes litiges" />
         <View style={styles.centered}><ActivityIndicator size="large" color="#DC2626" /></View>
       </SafeAreaView>
     );
@@ -140,14 +141,12 @@ export function DisputeListScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mes litiges</Text>
-        <Text style={styles.headerSub}>{disputes.length} litige{disputes.length !== 1 ? 's' : ''}</Text>
-      </View>
+      <PageHeader title="Mes litiges" />
+      <Text style={styles.headerSub}>{disputes.length} litige{disputes.length !== 1 ? 's' : ''}</Text>
 
       <FlatList
         data={[...openDisputes, ...closedDisputes]}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, i) => item.id ?? String(i)}
         contentContainerStyle={[styles.list, disputes.length === 0 && styles.emptyFlex]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#DC2626" />}
         renderItem={renderItem}
@@ -180,9 +179,7 @@ export function DisputeListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
+  headerSub: { fontSize: 13, color: '#9CA3AF', paddingHorizontal: 20, paddingVertical: 6, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 16 },
   emptyFlex: { flex: 1 },

@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert, TextInput, FlatList,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, TextInput, FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
@@ -151,7 +151,7 @@ export default function RestaurantOrderCartScreen({ navigation, route }: Props) 
                         {unavailable && <Text style={s.unavailableBadge}>Indisponible</Text>}
                       </View>
                       {item.description ? <Text style={[s.menuItemDesc, unavailable && s.menuItemTextFaded]} numberOfLines={2}>{item.description}</Text> : null}
-                      <Text style={[s.menuItemPrice, unavailable && s.menuItemTextFaded]}>{item.price.toLocaleString()} FCFA</Text>
+                      <Text style={[s.menuItemPrice, unavailable && s.menuItemTextFaded]}>{(item.price ?? 0).toLocaleString()} FCFA</Text>
                     </View>
                     {unavailable ? (
                       <View style={s.unavailableSlot} />
@@ -192,7 +192,7 @@ export default function RestaurantOrderCartScreen({ navigation, route }: Props) 
         <View style={s.bottomBar}>
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>{cart.reduce((s, c) => s + c.quantity, 0)} article(s)</Text>
-            <Text style={s.totalAmount}>{total.toLocaleString()} FCFA</Text>
+            <Text style={s.totalAmount}>{(total ?? 0).toLocaleString()} FCFA</Text>
           </View>
           <TouchableOpacity style={s.orderBtn} onPress={handleOrder} disabled={submitting}>
             {submitting
@@ -207,7 +207,7 @@ export default function RestaurantOrderCartScreen({ navigation, route }: Props) 
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:               { flex: 1, backgroundColor: t.colors.background },
+    safe:               { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     header:             { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.border },
     backBtn:            { marginRight: 12 },
     backText:           { fontSize: 16, color: t.colors.primary },

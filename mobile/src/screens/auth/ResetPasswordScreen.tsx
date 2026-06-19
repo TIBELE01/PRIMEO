@@ -1,9 +1,9 @@
-// Reset password — new password form, accepts token from deep link or OTP context
+﻿// Reset password — new password form, accepts token from deep link or OTP context
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { authApi } from '../../services/api/endpoints/auth';
 import { validatePassword } from './auth.utils';
@@ -146,7 +146,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:             { flex: 1, backgroundColor: t.colors.background },
+    safe:             { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     scroll:           { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24, gap: 24 },
     successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 16 },
     successIcon:      { fontSize: 48 },

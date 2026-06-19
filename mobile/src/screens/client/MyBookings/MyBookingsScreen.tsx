@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useRef } from 'react';
+﻿import React, { useState, useCallback, useRef } from 'react';
 import {
-  View, Text, FlatList, Image, TouchableOpacity, StyleSheet,
-  SafeAreaView, RefreshControl, ActivityIndicator,
+  View, Text, FlatList, Image, TouchableOpacity, StyleSheet, RefreshControl, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
@@ -71,7 +72,7 @@ const STATUS_COLORS: Record<BookingStatus, string> = {
 const FALLBACK_STATUS_LABEL = 'Réservation';
 const FALLBACK_STATUS_COLOR = '#6B7280';
 
-const fmt = (n: number) => n.toLocaleString('fr-CI') + ' FCFA';
+const fmt = (n?: number | null) => (n ?? 0).toLocaleString('fr-CI') + ' FCFA';
 const BOOKINGS_CACHE_KEY = '@primeo_upcoming_bookings';
 
 function fmtDateShort(d: string) {
@@ -221,15 +222,12 @@ export function MyBookingsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <NetworkStatus />
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mes réservations</Text>
-        {isFromCache && (
-          <View style={styles.cacheBadge}>
-            <Text style={styles.cacheBadgeText}>hors ligne</Text>
-          </View>
-        )}
-      </View>
+      <PageHeader title="Mes réservations" />
+      {isFromCache && (
+        <View style={styles.cacheBadge}>
+          <Text style={styles.cacheBadgeText}>hors ligne</Text>
+        </View>
+      )}
 
       {/* Tabs */}
       <View style={styles.tabs}>
@@ -260,7 +258,7 @@ export function MyBookingsScreen() {
       ) : (
         <FlatList
           data={tabData}
-          keyExtractor={b => b.id}
+          keyExtractor={(b, i) => b.id ?? String(i)}
           renderItem={({ item }) => (
             <BookingCard
               booking={item}
@@ -288,9 +286,7 @@ export function MyBookingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  cacheBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 },
+  cacheBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 14, paddingVertical: 4, alignSelf: 'flex-start', margin: 8, borderRadius: 10 },
   cacheBadgeText: { fontSize: 11, color: '#92400E', fontWeight: '600' },
 
   // Tabs
@@ -305,7 +301,7 @@ const styles = StyleSheet.create({
   tabCountTextActive: { color: '#1056E0' },
 
   loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { padding: 16, gap: 12, paddingBottom: 32 },
+  list: { padding: 16, gap: 12, paddingBottom: 80 },
 
   // Card
   card: { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },

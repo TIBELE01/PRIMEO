@@ -18,7 +18,12 @@ jest.mock('../../subscriptions/subscriptions.service', () => ({ subscriptionsSer
 jest.mock('../../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
 jest.mock('../../analytics/analytics.service', () => ({ analyticsService: { generateMarketReport: jest.fn() } }));
 jest.mock('../../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/invoice.pdf') }));
-jest.mock('../../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(async () => ({ id: 'msg-1' })) } }));
+jest.mock('../../messaging/messaging.service', () => ({
+  messagingService: {
+    saveMessage: jest.fn(async () => ({ id: 'msg-1' })),
+    saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })),
+  },
+}));
 
 const CLIENT = 'client-1';
 const OWNER = 'owner-1';
@@ -78,8 +83,8 @@ describe('processSuccessfulPayment — réservation payée en ligne', () => {
     await processSuccessfulPayment(tx, 16500);
     await flush();
 
-    // Conversation ouverte automatiquement après paiement
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-1', CLIENT, expect.stringContaining('confirmée'));
+    // Conversation ouverte automatiquement après paiement (message structuré)
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-1');
 
     // Emails Brevo : client (confirmation) + professionnel (alerte)
     expect(sendBookingConfirmationEmail).toHaveBeenCalledWith(expect.objectContaining({ bookingId: 'bk-1' }));
@@ -94,7 +99,7 @@ describe('processSuccessfulPayment — réservation payée en ligne', () => {
     const tx = { id: 'tx-1', status: 'success', type: 'client_payment', bookingId: 'bk-1', amount: 16500, webhookReceived: true } as never;
     await processSuccessfulPayment(tx, 16500);
     await flush();
-    expect(messagingService.saveMessage).not.toHaveBeenCalled();
+    expect(messagingService.saveAutoBookingMessage).not.toHaveBeenCalled();
     expect(sendPushNotification).not.toHaveBeenCalled();
   });
 });

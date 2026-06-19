@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+﻿import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
   Switch, Image, ActivityIndicator, Modal, Alert,
@@ -94,11 +94,11 @@ function Counter({ label, value, onChange, min = 0, max = 99 }: any) {
     <View style={styles.counterRow}>
       <Text style={styles.counterLabel}>{label}</Text>
       <View style={styles.counterCtrl}>
-        <TouchableOpacity style={styles.counterBtn} onPress={() => onChange(Math.max(min, (value ?? 0) - 1))}>
+        <TouchableOpacity style={styles.counterBtn} onPress={() => onChange(Math.max(min, (value ?? 0) - 1))} accessibilityRole="button" accessibilityLabel={`Diminuer ${label}`}>
           <Text style={styles.counterBtnText}>−</Text>
         </TouchableOpacity>
         <Text style={styles.counterVal}>{value ?? 0}</Text>
-        <TouchableOpacity style={styles.counterBtn} onPress={() => onChange(Math.min(max, (value ?? 0) + 1))}>
+        <TouchableOpacity style={styles.counterBtn} onPress={() => onChange(Math.min(max, (value ?? 0) + 1))} accessibilityRole="button" accessibilityLabel={`Augmenter ${label}`}>
           <Text style={styles.counterBtnText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -166,6 +166,9 @@ function StepInformations({ data, onChange, errors, allowedTypes }: any) {
                 key={t}
                 style={[styles.chip, data.type === t && styles.chipActive]}
                 onPress={() => onChange('type', t)}
+                accessibilityRole="button"
+                accessibilityLabel={PROPERTY_TYPE_LABELS[t]}
+                accessibilityState={{ selected: data.type === t }}
               >
                 <Text style={[styles.chipText, data.type === t && styles.chipTextActive]}>
                   {PROPERTY_TYPE_LABELS[t]}
@@ -377,17 +380,17 @@ function StepTypesChambres({ data, onChange, errors }: any) {
             <Text style={styles.roomTypeDetails}>{rt.capacity} pers. · {rt.beds} lit(s)</Text>
           </View>
           <View style={styles.roomTypeActions}>
-            <TouchableOpacity onPress={() => openEdit(i)} style={styles.iconBtn}>
+            <TouchableOpacity onPress={() => openEdit(i)} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel={`Modifier le type de chambre ${rt.label}`}>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDelete(i)} style={styles.iconBtn}>
+            <TouchableOpacity onPress={() => handleDelete(i)} style={styles.iconBtn} accessibilityRole="button" accessibilityLabel={`Supprimer le type de chambre ${rt.label}`}>
               <Text style={styles.deleteIcon}>🗑</Text>
             </TouchableOpacity>
           </View>
         </View>
       ))}
 
-      <TouchableOpacity style={styles.addRoomTypeBtn} onPress={openCreate}>
+      <TouchableOpacity style={styles.addRoomTypeBtn} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un type de chambre">
         <Text style={styles.addRoomTypeBtnText}>+ Ajouter un type de chambre</Text>
       </TouchableOpacity>
 
@@ -406,6 +409,9 @@ function StepTypesChambres({ data, onChange, errors }: any) {
                   key={preset}
                   style={[styles.chip, formLabel === preset && styles.chipActive, { marginRight: 8 }]}
                   onPress={() => setFormLabel(preset)}
+                  accessibilityRole="button"
+                  accessibilityLabel={preset}
+                  accessibilityState={{ selected: formLabel === preset }}
                 >
                   <Text style={[styles.chipText, formLabel === preset && styles.chipTextActive]}>{preset}</Text>
                 </TouchableOpacity>
@@ -424,10 +430,10 @@ function StepTypesChambres({ data, onChange, errors }: any) {
             <Counter label="Nombre de lits"       value={formBeds}     onChange={setFormBeds}     min={1} max={10} />
 
             <View style={[styles.navRow, { marginTop: 16 }]}>
-              <TouchableOpacity style={styles.prevBtn} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity style={styles.prevBtn} onPress={() => setModalVisible(false)} accessibilityRole="button" accessibilityLabel="Annuler">
                 <Text style={styles.prevBtnText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.nextBtn, { backgroundColor: '#1056E0' }]} onPress={handleSave}>
+              <TouchableOpacity style={[styles.nextBtn, { backgroundColor: '#1056E0' }]} onPress={handleSave} accessibilityRole="button" accessibilityLabel="Enregistrer le type de chambre">
                 <Text style={styles.nextBtnText}>Enregistrer</Text>
               </TouchableOpacity>
             </View>
@@ -532,6 +538,9 @@ function StepEquipements({ data, onChange }: any) {
             key={a.key}
             style={[styles.amenityChip, active && styles.amenityChipActive]}
             onPress={() => toggle(a.key)}
+            accessibilityRole="button"
+            accessibilityLabel={a.label}
+            accessibilityState={{ selected: active }}
           >
             <Text style={[styles.amenityText, active && styles.amenityTextActive]}>{a.label}</Text>
           </TouchableOpacity>
@@ -673,14 +682,14 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
         <>
           <Text style={styles.fieldLabel}>Photos ({images.length}/20)</Text>
           <Text style={styles.fieldHint}>La 1ère photo sera l&apos;image principale. Formats acceptés : JPG, PNG, WebP.</Text>
-          <TouchableOpacity style={styles.uploadBtn} onPress={pickImages} disabled={images.length >= 20}>
+          <TouchableOpacity style={styles.uploadBtn} onPress={pickImages} disabled={images.length >= 20} accessibilityRole="button" accessibilityLabel="Choisir des photos">
             <Text style={styles.uploadBtnText}>📷 Choisir des photos</Text>
           </TouchableOpacity>
           <View style={styles.imageGrid}>
             {images.map((img, i) => (
               <View key={i} style={styles.imageThumb}>
                 <Image source={{ uri: img.uri }} style={styles.imagePrev} />
-                <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeImage(i)}>
+                <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeImage(i)} accessibilityRole="button" accessibilityLabel="Supprimer cette photo">
                   <Text style={styles.removeImgText}>✕</Text>
                 </TouchableOpacity>
                 {i === 0 && <View style={styles.primaryBadge}><Text style={styles.primaryBadgeText}>Principale</Text></View>}
@@ -696,13 +705,13 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
           <Text style={styles.infoBoxText}>
             {`Ajoutez 1 vidéo de présentation (MP4, MOV, max 100 Mo). ${videoFiles.length}/1`}
           </Text>
-          <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 1}>
+          <TouchableOpacity style={styles.tourBtn} onPress={pickVideo} disabled={videoFiles.length >= 1} accessibilityRole="button" accessibilityLabel="Ajouter une vidéo">
             <Text style={styles.tourBtnText}>🎥 Ajouter une vidéo ({videoFiles.length}/1)</Text>
           </TouchableOpacity>
           {videoFiles.map((v, i) => (
             <View key={i} style={styles.videoRow}>
               <Text style={styles.videoName} numberOfLines={1}>🎬 {v.name}</Text>
-              <TouchableOpacity onPress={() => removeVideo(i)}>
+              <TouchableOpacity onPress={() => removeVideo(i)} accessibilityRole="button" accessibilityLabel="Supprimer la vidéo">
                 <Text style={styles.removeImgText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -716,7 +725,7 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
           <Text style={styles.infoBoxText}>
             Ajoutez des photos équirectangulaires (2:1, min 4000×2000 px). Chaque photo devient une pièce visitable.
           </Text>
-          <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages} disabled={tourImages.length >= 10}>
+          <TouchableOpacity style={styles.tourBtn} onPress={pickTourImages} disabled={tourImages.length >= 10} accessibilityRole="button" accessibilityLabel="Ajouter des photos 360°">
             <Text style={styles.tourBtnText}>🌐 Ajouter des photos 360° ({tourImages.length}/10)</Text>
           </TouchableOpacity>
           {tourImages.length > 0 && (
@@ -733,7 +742,7 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
                       placeholderTextColor="#9CA3AF"
                       editable={!img.existing}
                     />
-                    <TouchableOpacity onPress={() => removeTourImage(i)} hitSlop={8}>
+                    <TouchableOpacity onPress={() => removeTourImage(i)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Supprimer cette photo 360°">
                       <Text style={styles.removeImgText}>✕</Text>
                     </TouchableOpacity>
                   </View>
@@ -858,6 +867,9 @@ function StepTarification({ data, onChange, errors }: any) {
               key={key}
               style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
               onPress={() => togglePayment(key)}
+              accessibilityRole="button"
+              accessibilityLabel={PAYMENT_OPTION_LABELS[key]}
+              accessibilityState={{ selected: active }}
             >
               <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
                 {active && <Text style={styles.paymentCheckmark}>✓</Text>}
@@ -901,11 +913,11 @@ function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; e
   return (
     <View style={styles.calContainer}>
       <View style={styles.calHeader}>
-        <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}>
+        <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} accessibilityRole="button" accessibilityLabel="Mois précédent">
           <Text style={styles.calArrow}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.calMonth}>{MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}</Text>
-        <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}>
+        <TouchableOpacity onPress={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} accessibilityRole="button" accessibilityLabel="Mois suivant">
           <Text style={styles.calArrow}>›</Text>
         </TouchableOpacity>
       </View>
@@ -923,6 +935,9 @@ function CalendarPicker({ startDate, endDate, onSelect }: { startDate: string; e
               key={i}
               style={[styles.calCell, inRange && styles.calCellRange, (start || end) && styles.calCellSelected]}
               onPress={() => handleDay(day)}
+              accessibilityRole="button"
+              accessibilityLabel={`Jour ${day}`}
+              accessibilityState={{ selected: start || end }}
             >
               <Text style={[styles.calCellText, (start || end) && styles.calCellTextSelected]}>{day}</Text>
             </TouchableOpacity>
@@ -966,7 +981,7 @@ function TimeSelector({ label, value, onChange }: any) {
   return (
     <View style={styles.field}>
       <FieldLabel label={label} />
-      <TouchableOpacity style={styles.timeSelector} onPress={() => setOpen(!open)}>
+      <TouchableOpacity style={styles.timeSelector} onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityLabel={`${label} : ${value ?? 'Sélectionner'}`}>
         <Text style={styles.timeSelectorText}>{value ?? 'Sélectionner'}</Text>
         <Text style={styles.timeSelectorArrow}>{open ? '▲' : '▼'}</Text>
       </TouchableOpacity>
@@ -978,6 +993,9 @@ function TimeSelector({ label, value, onChange }: any) {
                 key={t}
                 style={[styles.timeOption, value === t && styles.timeOptionActive]}
                 onPress={() => { onChange(t); setOpen(false); }}
+                accessibilityRole="button"
+                accessibilityLabel={t}
+                accessibilityState={{ selected: value === t }}
               >
                 <Text style={[styles.timeOptionText, value === t && styles.timeOptionTextActive]}>{t}</Text>
               </TouchableOpacity>
@@ -1060,6 +1078,9 @@ function StepDocuments({ data, onChange }: any) {
               key={d.key}
               style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
               onPress={() => toggleDiag(d.key)}
+              accessibilityRole="button"
+              accessibilityLabel={d.label}
+              accessibilityState={{ selected: active }}
             >
               <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
                 {active && <Text style={styles.paymentCheckmark}>✓</Text>}
@@ -1131,6 +1152,8 @@ function FeedbackModal({ state, onClose }: { state: FeedbackState; onClose: () =
           <TouchableOpacity
             style={[styles.modalBtn, { backgroundColor: state.success ? '#059669' : '#DC2626' }]}
             onPress={dismiss}
+            accessibilityRole="button"
+            accessibilityLabel="OK"
           >
             <Text style={styles.modalBtnText}>OK</Text>
           </TouchableOpacity>
@@ -1511,6 +1534,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         <TouchableOpacity
           onPress={() => step > 0 ? setStep(s => s - 1) : navigation.goBack()}
           style={styles.headerBackBtn}
+          accessibilityRole="button"
+          accessibilityLabel={step > 0 ? "Étape précédente" : "Retour"}
         >
           <Text style={[styles.headerBackIcon, { color: theme.primary }]}>←</Text>
         </TouchableOpacity>
@@ -1536,7 +1561,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
       {/* Navigation bas de page */}
       <View style={styles.navRow}>
         {step > 0 && (
-          <TouchableOpacity style={styles.prevBtn} onPress={() => setStep(s => s - 1)}>
+          <TouchableOpacity style={styles.prevBtn} onPress={() => setStep(s => s - 1)} accessibilityRole="button" accessibilityLabel="Étape précédente">
             <Text style={styles.prevBtnText}>Précédent</Text>
           </TouchableOpacity>
         )}
@@ -1544,6 +1569,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
           style={[styles.nextBtn, { backgroundColor: theme.primary }, isSubmitting && { opacity: 0.6 }]}
           onPress={handleNext}
           disabled={isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel={step === currentSteps.length - 1 ? (isEdit ? 'Enregistrer les modifications' : "Publier l'annonce") : 'Étape suivante'}
         >
           {isSubmitting
             ? (uploadStatus
@@ -1569,7 +1596,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
 
   progressHeader: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,

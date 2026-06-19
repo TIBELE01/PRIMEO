@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, RefreshControl,
   ActivityIndicator, TouchableOpacity, Dimensions,
@@ -359,7 +359,7 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:        { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
   loadingText: { fontSize: 14, fontWeight: '600' },
 

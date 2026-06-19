@@ -1,4 +1,4 @@
-// Import iCal externe (Airbnb / Booking / autre).
+﻿// Import iCal externe (Airbnb / Booking / autre).
 //
 // Le professionnel ajoute l'URL iCal publique de son calendrier externe ;
 // Primeo la télécharge périodiquement (toutes les 6 h, cron côté serveur) et
@@ -7,9 +7,9 @@
 // permet aussi de forcer une mise à jour immédiate.
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
-  ScrollView, Alert, ActivityIndicator, TextInput, RefreshControl,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, TextInput, RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
 
 interface IcalFeed {
@@ -229,12 +229,11 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#1056E0',
   },
   backBtn: { padding: 8, width: 40 },
-  backArrow: { fontSize: 22, color: '#1056E0', fontWeight: '600' },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  backArrow: { fontSize: 22, color: '#FFFFFF', fontWeight: '600' },
+  headerTitle: { fontSize: 17, fontWeight: '800', color: '#FFFFFF' },
   body: { padding: 16, paddingBottom: 40 },
   intro: { fontSize: 13, color: '#6B7280', lineHeight: 19, marginBottom: 16 },
   card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#EEF0F3' },

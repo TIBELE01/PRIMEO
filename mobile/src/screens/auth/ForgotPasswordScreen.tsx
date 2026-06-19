@@ -1,9 +1,9 @@
-// Forgot password — email → API call → success state
+﻿// Forgot password — email → API call → success state
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { authApi } from '../../services/api/endpoints/auth';
 import type { AuthScreenProps } from '../../navigation/types';
@@ -110,7 +110,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:        { flex: 1, backgroundColor: t.colors.background },
+    safe:        { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     container:   { flex: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24, justifyContent: 'space-between', gap: 24 },
     header:      { gap: 8 },
     title:       { fontSize: 26, fontWeight: '800', color: t.colors.text },

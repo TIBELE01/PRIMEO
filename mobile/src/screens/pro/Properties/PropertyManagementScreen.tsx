@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, ActivityIndicator,
@@ -297,7 +297,7 @@ export default function PropertyManagementScreen({ navigation, route }: any) {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: '#F9FAFB' },
+  safe:    { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
 

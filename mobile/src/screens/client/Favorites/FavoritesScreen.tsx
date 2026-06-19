@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl, Image, Alert, Share, TextInput, Modal,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Alert, Share, TextInput, Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { favoritesApi } from '../../../services/api/endpoints/favorites';
@@ -181,7 +182,7 @@ export function FavoritesScreen({ navigation }: Props) {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}><Text style={styles.title}>Favoris</Text></View>
+        <PageHeader title="Favoris" />
         <View style={styles.centered}><ActivityIndicator size="large" color="#1056E0" /></View>
       </SafeAreaView>
     );
@@ -189,10 +190,8 @@ export function FavoritesScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Favoris</Text>
-        <Text style={styles.count}>{favorites.length} propriété{favorites.length !== 1 ? 's' : ''}</Text>
-      </View>
+      <PageHeader title="Favoris" />
+      <Text style={styles.count}>{favorites.length} propriété{favorites.length !== 1 ? 's' : ''}</Text>
 
       {/* Lists tabs */}
       <View style={styles.listsRow}>
@@ -227,11 +226,11 @@ export function FavoritesScreen({ navigation }: Props) {
 
       <FlatList
         data={displayedFavorites}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, i) => item.id ?? String(i)}
         numColumns={2}
         columnWrapperStyle={styles.cols}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#1056E0" />}
-        contentContainerStyle={displayedFavorites.length === 0 && styles.emptyFlex}
+        contentContainerStyle={displayedFavorites.length === 0 ? styles.emptyFlex : styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyInner}>
             <Text style={styles.emptyIcon}>🏡</Text>
@@ -319,9 +318,7 @@ export function FavoritesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  count: { fontSize: 14, color: '#9CA3AF' },
+  count: { fontSize: 13, color: '#6B7280', paddingHorizontal: 20, paddingVertical: 8, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
   listChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },
@@ -332,6 +329,7 @@ const styles = StyleSheet.create({
   newListBtnText: { fontSize: 13, color: '#D97706', fontWeight: '700' },
   shareListBtn: { marginHorizontal: 16, marginBottom: 8, padding: 10, backgroundColor: '#F0FDF4', borderRadius: 8, alignItems: 'center' },
   shareListText: { fontSize: 13, color: '#1056E0', fontWeight: '600' },
+  listContent: { paddingBottom: 80 },
   emptyFlex: { flex: 1 },
   emptyInner: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, gap: 12 },
   emptyIcon: { fontSize: 48 },

@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert, RefreshControl,
+  ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
@@ -33,7 +34,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
     if (isRefresh) setRefreshing(true);
     try {
       const res = await foodOrdersApi.getById(orderId);
-      setOrder(res.data.data);
+      setOrder(res?.data?.data ?? null);
     } catch {
       Alert.alert('Erreur', 'Impossible de charger la commande');
     } finally {
@@ -60,7 +61,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
           setCancelling(true);
           try {
             const res = await foodOrdersApi.cancelOrder(orderId, 'Annulé par le client');
-            setOrder(res.data.data);
+            setOrder(res?.data?.data ?? null);
           } catch (err: any) {
             Alert.alert('Erreur', err?.response?.data?.message ?? "Impossible d'annuler");
           } finally { setCancelling(false); }
@@ -72,7 +73,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
   if (loading) return <SafeAreaView style={s.safe}><ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} /></SafeAreaView>;
   if (!order) return <SafeAreaView style={s.safe}><Text style={s.emptyText}>Commande introuvable</Text></SafeAreaView>;
 
-  const config = STATUS_CONFIG[order.status];
+  const config = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
   const currentIdx = STATUS_ORDER.indexOf(order.status);
 
   return (
@@ -81,7 +82,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
           <Text style={s.backText}>‹ Retour</Text>
         </TouchableOpacity>
-        <Text style={s.title}>Commande #{order.id.slice(-6).toUpperCase()}</Text>
+        <Text style={s.title}>Commande #{String(order.id ?? '').slice(-6).toUpperCase()}</Text>
       </View>
 
       <ScrollView
@@ -128,19 +129,19 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
         {/* Order items */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Articles commandés</Text>
-          {order.items.map(item => (
+          {(order.items ?? []).map(item => (
             <View key={item.id} style={s.itemRow}>
               <Text style={s.itemQty}>{item.quantity}×</Text>
               <View style={{ flex: 1 }}>
-                <Text style={s.itemName}>{item.menuItem.name}</Text>
+                <Text style={s.itemName}>{item.menuItem?.name ?? ''}</Text>
                 {item.notes ? <Text style={s.itemNotes}>{item.notes}</Text> : null}
               </View>
-              <Text style={s.itemPrice}>{item.totalPrice.toLocaleString()} FCFA</Text>
+              <Text style={s.itemPrice}>{(item.totalPrice ?? 0).toLocaleString()} FCFA</Text>
             </View>
           ))}
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>Total</Text>
-            <Text style={s.totalAmount}>{order.totalAmount.toLocaleString()} FCFA</Text>
+            <Text style={s.totalAmount}>{(order.totalAmount ?? 0).toLocaleString()} FCFA</Text>
           </View>
         </View>
 

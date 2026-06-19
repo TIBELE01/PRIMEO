@@ -29,8 +29,12 @@ jest.mock('../modules/notifications/notifications.service', () => ({
 }));
 
 const mockSaveMessage = jest.fn().mockResolvedValue(undefined);
+const mockSaveAuto = jest.fn().mockResolvedValue(undefined);
 jest.mock('../modules/messaging/messaging.service', () => ({
-  messagingService: { saveMessage: (...a: unknown[]) => mockSaveMessage(...a) },
+  messagingService: {
+    saveMessage: (...a: unknown[]) => mockSaveMessage(...a),
+    saveAutoBookingMessage: (...a: unknown[]) => mockSaveAuto(...a),
+  },
 }));
 
 jest.mock('../modules/referrals/referrals.service', () => ({
@@ -186,32 +190,34 @@ describe('Intérêt immobilier — parcours complet', () => {
   // ── Messagerie automatique ────────────────────────────────────────────────────
 
   describe('Conversation ouverte automatiquement', () => {
-    it('messagingService.saveMessage est appelé pour ouvrir la discussion', async () => {
-      // Le message est envoyé en background (void) — on attend les timers async
+    it('saveAutoBookingMessage est appelé pour ouvrir la discussion', async () => {
+      // Le message structuré est envoyé en background (void) — on attend les timers async
       await bookingsService.create(CLIENT_ID, bookingInput as never);
       // Laisser les promesses background se résoudre
       await new Promise(r => setImmediate(r));
-      expect(mockSaveMessage).toHaveBeenCalledTimes(1);
+      expect(mockSaveAuto).toHaveBeenCalledTimes(1);
+      expect(mockSaveAuto).toHaveBeenCalledWith(interestBooking.id);
     });
 
-    it('le message transmis est le message d\'intérêt fourni par le client', async () => {
+    it('le message d\'intérêt fourni par le client est persisté (specialRequests) pour alimenter le message auto', async () => {
       await bookingsService.create(CLIENT_ID, bookingInput as never);
       await new Promise(r => setImmediate(r));
-      expect(mockSaveMessage).toHaveBeenCalledWith(
-        interestBooking.id,
-        CLIENT_ID,
-        bookingInput.interestMessage,
+      expect(mockPrisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ specialRequests: bookingInput.interestMessage }),
+        }),
       );
     });
 
-    it('utilise un message par défaut si aucun interestMessage n\'est fourni', async () => {
+    it('aucun interestMessage → specialRequests null (message par défaut généré côté serveur)', async () => {
       await bookingsService.create(CLIENT_ID, { ...bookingInput, interestMessage: undefined } as never);
       await new Promise(r => setImmediate(r));
-      expect(mockSaveMessage).toHaveBeenCalledWith(
-        interestBooking.id,
-        CLIENT_ID,
-        expect.stringContaining('intéressé'),
+      expect(mockPrisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ specialRequests: null }),
+        }),
       );
+      expect(mockSaveAuto).toHaveBeenCalledWith(interestBooking.id);
     });
   });
 

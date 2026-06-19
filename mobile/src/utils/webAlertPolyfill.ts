@@ -7,13 +7,15 @@
 import { Alert } from 'react-native';
 import { showStyledAlert, AlertButton } from './alertManager';
 
-Alert.alert = (
+const alertFn = (
   title?: string,
   message?: string,
   buttons?: AlertButton[],
 ): void => {
   showStyledAlert({ title, message, buttons });
 };
+// Réassignation via cast (la signature locale d'AlertButton diffère de celle de RN).
+(Alert as unknown as { alert: typeof alertFn }).alert = alertFn;
 
 // Alert.prompt n'existe nativement que sur iOS — on le redirige vers la modale
 // stylée avec champ de saisie pour un comportement uniforme web/Android/iOS.

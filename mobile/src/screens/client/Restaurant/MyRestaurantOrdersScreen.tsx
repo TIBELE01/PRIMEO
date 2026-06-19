@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
@@ -38,7 +39,7 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
     if (isRefresh) setRefreshing(true);
     try {
       const res = await foodOrdersApi.getMyOrders();
-      setOrders(res.data.data);
+      setOrders(Array.isArray(res?.data?.data) ? res.data.data : []);
     } catch { /* silent */ } finally {
       setLoading(false);
       setRefreshing(false);
@@ -57,7 +58,7 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <View style={s.cardHeader}>
-          <Text style={s.orderRef}>#{item.id.slice(-6).toUpperCase()}</Text>
+          <Text style={s.orderRef}>#{String(item.id ?? '').slice(-6).toUpperCase()}</Text>
           <View style={[s.statusBadge, { backgroundColor: color + '20', borderColor: color }]}>
             <Text style={[s.statusText, { color }]}>{STATUS_LABEL[item.status]}</Text>
           </View>
@@ -66,10 +67,10 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
           <Text style={s.propertyName}>{item.property.title}</Text>
         )}
         <Text style={s.itemsSummary} numberOfLines={1}>
-          {item.items.map(i => `${i.quantity}× ${i.menuItem.name}`).join(' · ')}
+          {(item.items ?? []).map(i => `${i.quantity}× ${i.menuItem?.name ?? ''}`).join(' · ')}
         </Text>
         <View style={s.cardFooter}>
-          <Text style={s.amount}>{item.totalAmount.toLocaleString()} FCFA</Text>
+          <Text style={s.amount}>{(item.totalAmount ?? 0).toLocaleString()} FCFA</Text>
           <Text style={s.date}>
             {new Date(item.orderedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </Text>
@@ -101,7 +102,7 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
       </View>
       <FlatList
         data={orders}
-        keyExtractor={o => o.id}
+        keyExtractor={(o, i) => o.id ?? String(i)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchOrders(true)} />}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
@@ -119,7 +120,7 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:           { flex: 1, backgroundColor: t.colors.background },
+    safe:           { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     header:         { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.border },
     backBtn:        { marginRight: 12 },
     backText:       { fontSize: 16, color: t.colors.primary },

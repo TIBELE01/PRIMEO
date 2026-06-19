@@ -1,4 +1,3 @@
-// Screen wrapper with safe area and consistent padding
 import React from 'react';
 import { View, ScrollView, StyleSheet, ViewStyle, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,30 +6,84 @@ interface ScreenWrapperProps {
   children: React.ReactNode;
   scrollable?: boolean;
   style?: ViewStyle;
+  contentStyle?: ViewStyle;
   onRefresh?: () => void;
   refreshing?: boolean;
+  backgroundColor?: string;
+  /** Extra horizontal padding on top of the default 16px. Pass 0 to remove. */
+  paddingHorizontal?: number;
+  /** Extra padding at the top (under safe area). */
+  paddingTop?: number;
+  /** Extra padding at the bottom (above safe area). */
+  paddingBottom?: number;
 }
 
-export function ScreenWrapper({ children, scrollable, style, onRefresh, refreshing }: ScreenWrapperProps) {
-  const content = scrollable ? (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={onRefresh ? <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} tintColor="#1056E0" /> : undefined}
-    >
-      {children}
-    </ScrollView>
-  ) : (
-    <View style={[styles.container, style]}>{children}</View>
-  );
+export function ScreenWrapper({
+  children,
+  scrollable,
+  style,
+  contentStyle,
+  onRefresh,
+  refreshing,
+  backgroundColor = '#F5F5F5',
+  paddingHorizontal = 16,
+  paddingTop = 16,
+  paddingBottom = 80,
+}: ScreenWrapperProps) {
+  const safeStyle = [styles.safe, { backgroundColor }];
 
-  return <SafeAreaView style={styles.safe}>{content}</SafeAreaView>;
+  if (scrollable) {
+    return (
+      <SafeAreaView style={safeStyle}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingHorizontal,
+              paddingTop,
+              paddingBottom,
+            },
+            contentStyle,
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing ?? false}
+                onRefresh={onRefresh}
+                tintColor="#1056E0"
+              />
+            ) : undefined
+          }
+        >
+          {children}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={safeStyle}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingHorizontal,
+            paddingTop,
+          },
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F5F5' },
-  container: { flex: 1, padding: 16 },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 32 },
+  safe:          { flex: 1 },
+  container:     { flex: 1 },
+  scroll:        { flex: 1 },
+  scrollContent: { flexGrow: 1 },
 });

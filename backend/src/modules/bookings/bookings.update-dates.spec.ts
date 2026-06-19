@@ -14,7 +14,7 @@ jest.mock('../notifications/notifications.service', () => ({
   notificationsService: { notify: jest.fn(async () => undefined) },
 }));
 jest.mock('../messaging/messaging.service', () => ({
-  messagingService: { saveMessage: jest.fn(async () => ({})) },
+  messagingService: { saveMessage: jest.fn(async () => ({})), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) },
 }));
 jest.mock('../referrals/referrals.service', () => ({
   referralsService: { triggerReward: jest.fn(async () => undefined) },

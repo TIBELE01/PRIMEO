@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, RefreshControl, Modal, TextInput, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
 
@@ -202,7 +203,7 @@ export function MyReviewsScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={reviews}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, i) => item.id ?? String(i)}
           renderItem={renderItem}
           contentContainerStyle={[styles.list, reviews.length === 0 && styles.emptyFlex]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#1056E0" />}
@@ -265,7 +266,7 @@ export function MyReviewsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   backBtn: { padding: 4, marginRight: 8 },
   backArrow: { fontSize: 22, color: '#1056E0', fontWeight: '600' },

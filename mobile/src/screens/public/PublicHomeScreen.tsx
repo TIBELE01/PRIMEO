@@ -1,4 +1,4 @@
-// PublicHomeScreen — page d'accueil non-authentifiée.
+﻿// PublicHomeScreen — page d'accueil non-authentifiée.
 // Strictement identique à HomeScreen, à deux différences près :
 //   1. Le bouton « Se connecter » remplace la cloche dans l'en-tête.
 //   2. Tout clic sur une annonce transite par l'onglet Recherche (SearchStack)
@@ -6,10 +6,9 @@
 //      connexion si l'utilisateur n'est pas connecté.
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, RefreshControl, ActivityIndicator,
-  TextInput, Dimensions,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, RefreshControl, ActivityIndicator, TextInput, Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { propertiesApi } from '@services/api/endpoints/properties';
@@ -201,7 +200,7 @@ export function PublicHomeScreen() {
             {statCards.map(card => (
               <View key={card.label} style={s.statCard}>
                 <Text style={s.statIcon}>{card.icon}</Text>
-                <Text style={s.statValue}>{card.value.toLocaleString('fr-FR')}+</Text>
+                <Text style={s.statValue}>{(card.value ?? 0).toLocaleString('fr-FR')}+</Text>
                 <Text style={s.statLabel}>{card.label}</Text>
               </View>
             ))}
@@ -322,7 +321,7 @@ const CARD_SHADOW = {
 };
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F6FB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F6FB' },
   loader: { marginVertical: 24 },
   section: { marginBottom: 44 },
   hList:   { paddingHorizontal: 16, gap: 14 },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Modal,
@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 interface SpecialMenu {
   id: string;
@@ -22,8 +23,8 @@ function formatSpecialDate(ymd: string): string {
   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function formatPrice(n: number): string {
-  return n.toLocaleString('fr-CI') + ' FCFA';
+function formatPrice(n?: number | null): string {
+  return (n ?? 0).toLocaleString('fr-CI') + ' FCFA';
 }
 
 function isPast(ymd: string): boolean {
@@ -176,8 +177,8 @@ export default function SpecialMenusScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <PageHeader title="Menus spéciaux" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Menus spéciaux</Text>
 
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={18} color="#2563EB" style={{ marginTop: 1 }} />
@@ -370,7 +371,6 @@ export default function SpecialMenusScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 16 },
 
   infoBox: { flexDirection: 'row', gap: 10, backgroundColor: '#EFF6FF', padding: 14, borderRadius: 10, marginBottom: 20, borderWidth: 1, borderColor: '#BFDBFE' },
   infoText: { flex: 1, fontSize: 13, color: '#1D4ED8', lineHeight: 19 },

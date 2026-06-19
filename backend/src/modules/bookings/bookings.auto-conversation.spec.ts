@@ -1,7 +1,7 @@
 // Tests de l'ouverture automatique de conversation + notifications à la création
 // d'une réservation. Couvre les deux flux à confirmation immédiate :
-//   - Restaurant : réservation de table → message auto + notify(new_booking, booking_confirmed)
-//   - Immobilier : expression d'intérêt → message auto + notify(interest_booking_received, interest_submitted)
+//   - Restaurant : réservation de table → message auto structuré + notify(new_booking, booking_confirmed)
+//   - Immobilier : expression d'intérêt → message auto structuré + notify(interest_booking_received, interest_submitted)
 // Le flux paiement en ligne (webhook Genius Pay) est couvert par
 // genius-pay.auto-conversation.spec.ts.
 jest.mock('../../common/utils/logger', () => ({
@@ -21,7 +21,10 @@ jest.mock('../notifications/notifications.service', () => ({
   notificationsService: { notify: jest.fn(async () => undefined) },
 }));
 jest.mock('../messaging/messaging.service', () => ({
-  messagingService: { saveMessage: jest.fn(async () => ({ id: 'msg-1' })) },
+  messagingService: {
+    saveMessage: jest.fn(async () => ({ id: 'msg-1' })),
+    saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })),
+  },
 }));
 jest.mock('../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
 jest.mock('../wallets/wallets.service', () => ({
@@ -58,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('Réservation restaurant — conversation auto + notifications', () => {
-  it('crée le message d\'ouverture et notifie le client ET le professionnel', async () => {
+  it('crée le message automatique structuré et notifie le client ET le professionnel', async () => {
     mockPrisma.property.findUnique.mockResolvedValue({
       id: 'prop-resto', ownerId: OWNER, propertyType: 'restaurant', status: 'active', capacity: 50, title: 'La Saveur du Monde',
     });
@@ -70,8 +73,8 @@ describe('Réservation restaurant — conversation auto + notifications', () => 
     } as never);
     await flush();
 
-    // Message automatique d'ouverture de la conversation (côté client → professionnel)
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-resto', CLIENT, expect.stringContaining('couvert'));
+    // Message automatique structuré via saveAutoBookingMessage
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-resto');
     // Notifications : nouvelle réservation au pro + confirmation au client
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'new_booking', recipientId: OWNER }));
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'booking_confirmed', recipientId: CLIENT }));
@@ -79,7 +82,7 @@ describe('Réservation restaurant — conversation auto + notifications', () => 
 });
 
 describe('Immobilier — expression d\'intérêt : conversation auto + notifications', () => {
-  it('crée le message d\'intérêt et notifie le client ET le professionnel', async () => {
+  it('crée le message automatique structuré et notifie le client ET le professionnel', async () => {
     mockPrisma.property.findUnique.mockResolvedValue({
       id: 'prop-immo', ownerId: OWNER, propertyType: 'immobilier_achat', status: 'active', title: 'Villa R+1 Bassam',
     });
@@ -90,12 +93,12 @@ describe('Immobilier — expression d\'intérêt : conversation auto + notificat
     } as never);
     await flush();
 
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-interest', CLIENT, expect.stringContaining('disponible'));
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-interest');
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'interest_booking_received', recipientId: OWNER }));
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'interest_submitted', recipientId: CLIENT }));
   });
 
-  it('utilise un message par défaut si le client n\'en fournit aucun', async () => {
+  it('crée le message automatique même sans message d\'intérêt personnalisé', async () => {
     mockPrisma.property.findUnique.mockResolvedValue({
       id: 'prop-immo', ownerId: OWNER, propertyType: 'immobilier_location', status: 'active', title: 'Appartement Marcory',
     });
@@ -103,7 +106,7 @@ describe('Immobilier — expression d\'intérêt : conversation auto + notificat
       propertyId: 'prop-immo', startDate: '2026-01-01', endDate: '2026-01-02', guests: 1, paymentOption: 'zero_online',
     } as never);
     await flush();
-    expect(messagingService.saveMessage).toHaveBeenCalledWith('bk-interest', CLIENT, expect.stringContaining('intéressé'));
+    expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-interest');
   });
 });
 

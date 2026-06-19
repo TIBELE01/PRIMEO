@@ -86,24 +86,38 @@ interface TabDef {
  * themeColor drives the active tab color (blue/green/red per role).
  */
 function buildRoleNavigator(screens: ScreenDef[], tabs: TabDef[], themeColor = '#1056E0') {
-  const Stack = createNativeStackNavigator();
   const RoleTab = createBottomTabNavigator();
 
-  // One stack component per tab, created once (stable identity → no remounts).
+  // Each tab gets its OWN navigator instance so that when React Navigation
+  // keeps multiple tabs mounted simultaneously (after lazy first-visit), each
+  // <Stack.Navigator> operates on an independent navigation context.
+  // Sharing a single instance across tabs corrupts the navigator state when
+  // two <Stack.Navigator> components try to use the same context concurrently.
   const stackComponents: Record<string, AnyComp> = {};
   for (const tab of tabs) {
-    stackComponents[tab.name] = function TabStack() {
+    const TabStack = createNativeStackNavigator();
+    const initialRoute = tab.initialRoute;
+    stackComponents[tab.name] = function TabStackComponent() {
       return (
-        <Stack.Navigator initialRouteName={tab.initialRoute}>
+        <TabStack.Navigator
+          initialRouteName={initialRoute}
+          screenOptions={{
+            headerStyle: { backgroundColor: '#808080' },
+            headerTintColor: '#111111',
+            headerTitleAlign: 'center' as const,
+            headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
+            headerShadowVisible: true,
+          }}
+        >
           {screens.map((s) => (
-            <Stack.Screen
+            <TabStack.Screen
               key={s.name}
               name={s.name}
               component={s.component}
               options={{ title: s.title ?? s.name, headerShown: s.headerShown ?? true }}
             />
           ))}
-        </Stack.Navigator>
+        </TabStack.Navigator>
       );
     };
   }

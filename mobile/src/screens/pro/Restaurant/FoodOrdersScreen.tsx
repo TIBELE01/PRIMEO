@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, RefreshControl, Alert,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
@@ -75,7 +76,7 @@ export default function FoodOrdersScreen() {
         propertyId,
         filter ? { status: filter as FoodOrderStatus } : undefined,
       );
-      setOrders(res.data.data);
+      setOrders(Array.isArray(res?.data?.data) ? res.data.data : []);
     } catch { /* silent */ } finally {
       setLoading(false);
       setRefreshing(false);
@@ -128,7 +129,7 @@ export default function FoodOrdersScreen() {
     return (
       <View style={s.card}>
         <View style={s.cardHeader}>
-          <Text style={s.orderRef}>#{item.id.slice(-6).toUpperCase()}</Text>
+          <Text style={s.orderRef}>#{String(item.id ?? '').slice(-6).toUpperCase()}</Text>
           <View style={[s.statusBadge, { backgroundColor: color + '20', borderColor: color }]}>
             <Text style={[s.statusText, { color }]}>{STATUS_LABEL[item.status]}</Text>
           </View>
@@ -143,7 +144,7 @@ export default function FoodOrdersScreen() {
           </Text>
         </View>
         <View style={s.cardFooter}>
-          <Text style={s.amount}>{item.totalAmount.toLocaleString()} FCFA</Text>
+          <Text style={s.amount}>{(item.totalAmount ?? 0).toLocaleString()} FCFA</Text>
           <Text style={s.time}>{new Date(item.orderedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
         </View>
         {/* Action buttons */}
@@ -193,7 +194,7 @@ export default function FoodOrdersScreen() {
       <FlatList
         horizontal
         data={STATUS_FILTERS}
-        keyExtractor={i => i.key}
+        keyExtractor={(i, idx) => i.key ?? String(idx)}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.filterRow}
         renderItem={({ item }) => (
@@ -208,7 +209,7 @@ export default function FoodOrdersScreen() {
 
       <FlatList
         data={orders}
-        keyExtractor={o => o.id}
+        keyExtractor={(o, i) => o.id ?? String(i)}
         renderItem={renderOrder}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchOrders(true)} />}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}

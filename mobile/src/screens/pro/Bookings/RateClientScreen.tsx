@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput, Switch,
-  StyleSheet, SafeAreaView, Alert, ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity, TextInput, Switch, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { clientRatingsApi } from '../../../services/api/endpoints/clientRatings';
@@ -107,14 +107,6 @@ export default function RateClientScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Évaluer le client</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Info notice */}
@@ -202,11 +194,8 @@ export default function RateClientScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  headerBack: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, gap: 16 },
+  scrollContent: { padding: 16, gap: 16, paddingBottom: 40 },
   notice: { flexDirection: 'row', gap: 8, backgroundColor: '#EFF6FF', borderRadius: 10, padding: 12, alignItems: 'flex-start' },
   noticeText: { flex: 1, fontSize: 12, color: '#1E40AF', lineHeight: 18 },
   avgCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },

@@ -1,11 +1,19 @@
-// Dynamic filter sheet driven by a CategoryConfig. Renders range / single / multi
+﻿// Dynamic filter sheet driven by a CategoryConfig. Renders range / single / multi
 // fields plus an optional availability date range, depending on the category.
 import React, { useState, useEffect } from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, SafeAreaView,
+  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { CategoryConfig, FilterField } from './categoryConfig';
+import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal';
+
+const MONTHS_SHORT = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+function fmtDateFR(str: string): string {
+  if (!str) return '';
+  const [, m, d] = str.split('-');
+  return `${d} ${MONTHS_SHORT[parseInt(m, 10) - 1]}`;
+}
 
 export type FilterState = Record<string, any>;
 
@@ -20,6 +28,8 @@ interface Props {
 
 export function CategoryFilterSheet({ visible, config, values, onClose, onApply, onReset }: Props) {
   const [draft, setDraft] = useState<FilterState>(values);
+  const [showCheckinCal,  setShowCheckinCal]  = useState(false);
+  const [showCheckoutCal, setShowCheckoutCal] = useState(false);
 
   useEffect(() => { if (visible) setDraft(values); }, [visible, values]);
 
@@ -102,6 +112,7 @@ export function CategoryFilterSheet({ visible, config, values, onClose, onApply,
   };
 
   return (
+    <>
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={st.safe}>
         <View style={st.header}>
@@ -117,16 +128,34 @@ export function CategoryFilterSheet({ visible, config, values, onClose, onApply,
               <View style={st.priceRow}>
                 <View style={st.priceField}>
                   <Text style={st.priceLabel}>{config.key === 'restaurant' ? 'Date' : 'Arrivée'}</Text>
-                  <TextInput style={st.input} value={draft.checkIn ?? ''} onChangeText={v => setDate('checkIn', v)}
-                    placeholder="AAAA-MM-JJ" placeholderTextColor="#9CA3AF" keyboardType="numbers-and-punctuation" />
+                  <TouchableOpacity
+                    style={st.dateTouchable}
+                    onPress={() => setShowCheckinCal(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={draft.checkIn ? `Arrivée : ${fmtDateFR(draft.checkIn)}` : 'Choisir la date d\'arrivée'}
+                  >
+                    <Text style={[st.dateValue, !draft.checkIn && st.datePlaceholder]}>
+                      {draft.checkIn ? fmtDateFR(draft.checkIn) : 'Choisir'}
+                    </Text>
+                    <Text style={st.dateIcon}>📅</Text>
+                  </TouchableOpacity>
                 </View>
                 {config.key !== 'restaurant' && (
                   <>
                     <Text style={st.priceSep}>—</Text>
                     <View style={st.priceField}>
                       <Text style={st.priceLabel}>Départ</Text>
-                      <TextInput style={st.input} value={draft.checkOut ?? ''} onChangeText={v => setDate('checkOut', v)}
-                        placeholder="AAAA-MM-JJ" placeholderTextColor="#9CA3AF" keyboardType="numbers-and-punctuation" />
+                      <TouchableOpacity
+                        style={st.dateTouchable}
+                        onPress={() => setShowCheckoutCal(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel={draft.checkOut ? `Départ : ${fmtDateFR(draft.checkOut)}` : 'Choisir la date de départ'}
+                      >
+                        <Text style={[st.dateValue, !draft.checkOut && st.datePlaceholder]}>
+                          {draft.checkOut ? fmtDateFR(draft.checkOut) : 'Choisir'}
+                        </Text>
+                        <Text style={st.dateIcon}>📅</Text>
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}
@@ -144,6 +173,24 @@ export function CategoryFilterSheet({ visible, config, values, onClose, onApply,
         </View>
       </SafeAreaView>
     </Modal>
+
+    <DarkCalendarModal
+      visible={showCheckinCal}
+      mode="checkin"
+      onClose={() => setShowCheckinCal(false)}
+      onConfirm={(d) => {
+        setDate('checkIn', d);
+        if (draft.checkOut && d >= draft.checkOut) setDate('checkOut', '');
+      }}
+    />
+    <DarkCalendarModal
+      visible={showCheckoutCal}
+      mode="checkout"
+      existingCheckIn={draft.checkIn ?? null}
+      onClose={() => setShowCheckoutCal(false)}
+      onConfirm={(d) => setDate('checkOut', d)}
+    />
+    </>
   );
 }
 
@@ -162,7 +209,7 @@ export function countActive(state: FilterState, config: CategoryConfig): number 
 }
 
 const st = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   cancel: { fontSize: 15, color: '#6B7280' },
   title: { fontSize: 16, fontWeight: '700', color: '#111827' },
@@ -174,6 +221,10 @@ const st = StyleSheet.create({
   priceField: { flex: 1, gap: 4 },
   priceLabel: { fontSize: 12, color: '#6B7280' },
   input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 10, fontSize: 14, color: '#111827' },
+  dateTouchable: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 10 },
+  dateValue: { fontSize: 14, color: '#111827', fontWeight: '500' },
+  datePlaceholder: { color: '#9CA3AF', fontWeight: '400' },
+  dateIcon: { fontSize: 14 },
   priceSep: { fontSize: 18, color: '#9CA3AF' },
   chipGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 13, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },

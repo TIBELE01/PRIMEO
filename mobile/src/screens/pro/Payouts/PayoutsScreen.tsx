@@ -1,4 +1,4 @@
-// PayoutsScreen — portefeuille virtuel professionnel : solde, reversements,
+﻿// PayoutsScreen — portefeuille virtuel professionnel : solde, reversements,
 // récompenses de parrainage et autres crédits.
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { walletApi } from '../../../services/api/endpoints/wallet';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 type TxType = 'payout_to_professional' | 'referral_reward' | 'refund';
 
@@ -87,10 +88,7 @@ export default function PayoutsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <Text style={s.title}>Portefeuille</Text>
-        <Text style={s.subtitle}>Solde, reversements et crédits de parrainage</Text>
-      </View>
+      <PageHeader title="Portefeuille" />
 
       {/* Balance card */}
       <View style={s.balanceCard}>
@@ -114,7 +112,7 @@ export default function PayoutsScreen() {
 
       <FlatList
         data={wallet?.transactions ?? []}
-        keyExtractor={(it) => it.id}
+        keyExtractor={(it, i) => it.id ?? String(i)}
         contentContainerStyle={(wallet?.transactions.length ?? 0) === 0 ? s.emptyWrap : { padding: 16 }}
         refreshControl={
           <RefreshControl
@@ -168,9 +166,6 @@ export default function PayoutsScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F6FB' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   balanceCard: {
     marginHorizontal: 16, marginBottom: 8,
     backgroundColor: '#1056E0', borderRadius: 18,

@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet,
-  KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator,
-  ScrollView, Image,
+  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
 import { socketService } from '../../../services/socket/socketService';
@@ -211,9 +210,9 @@ export function DisputeDetailScreen({ navigation, route }: Props) {
           {dispute?.booking?.property?.title ?? 'Litige'}
         </Text>
         {cfg && (
-          <View style={[styles.headerBadge, { backgroundColor: cfg.bg }]}>
+          <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeIcon}>{cfg.icon}</Text>
-            <Text style={[styles.headerBadgeText, { color: cfg.color }]}>{cfg.label}</Text>
+            <Text style={styles.headerBadgeText}>{cfg.label}</Text>
           </View>
         )}
       </View>
@@ -317,7 +316,7 @@ export function DisputeDetailScreen({ navigation, route }: Props) {
             <FlatList
               ref={listRef}
               data={messages}
-              keyExtractor={item => item.id}
+              keyExtractor={(item, i) => item.id ?? String(i)}
               renderItem={renderMessage}
               contentContainerStyle={styles.chatList}
               onContentSizeChange={scrollToBottom}
@@ -370,15 +369,15 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   flex: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6', gap: 8,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12,
+    backgroundColor: '#1056E0', gap: 8,
   },
   backBtn: { padding: 6 },
-  backArrow: { fontSize: 22, color: '#DC2626', fontWeight: '600' },
-  headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: '#111827' },
-  headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
+  backArrow: { fontSize: 22, color: '#FFFFFF', fontWeight: '600' },
+  headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)' },
   headerBadgeIcon: { fontSize: 12 },
-  headerBadgeText: { fontSize: 11, fontWeight: '700' },
+  headerBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   infoPanel: { flex: 1 },
   cover: { width: '100%', height: 160 },

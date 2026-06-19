@@ -37,6 +37,14 @@ import MyRestaurantOrdersScreen from '../screens/client/Restaurant/MyRestaurantO
 
 const Stack = createNativeStackNavigator<ClientStackParamList>();
 
+const BLUE_HEADER = {
+  headerStyle: { backgroundColor: '#808080' },
+  headerTintColor: '#111111',
+  headerTitleAlign: 'center' as const,
+  headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
+  headerShadowVisible: true,
+};
+
 export function ClientStack() {
   return (
     <Stack.Navigator>
@@ -65,7 +73,7 @@ export function ClientStack() {
       <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} options={{ title: 'Authentification 2FA' }} />
       <Stack.Screen name="LegalLinks" component={LegalLinksScreen} options={{ title: 'Informations légales' }} />
       <Stack.Screen name="MyReviews" component={MyReviewsScreen} options={{ title: 'Mes avis' }} />
-      <Stack.Screen name="ReceivedRatings" component={ReceivedRatingsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ReceivedRatings" component={ReceivedRatingsScreen} options={{ headerShown: true, title: 'Évaluations reçues', ...BLUE_HEADER }} />
       <Stack.Screen name="DisputeList" component={DisputeListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DisputeDetail" component={DisputeDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NewDispute" component={NewDisputeScreen} options={{ title: 'Signaler un problème' }} />

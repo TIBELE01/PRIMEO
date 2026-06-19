@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -172,8 +172,8 @@ function formatDate(iso: string): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function formatAmount(n: number): string {
-  return `${n.toLocaleString('fr-CI')} FCFA`;
+function formatAmount(n?: number | null): string {
+  return `${(n ?? 0).toLocaleString('fr-CI')} FCFA`;
 }
 
 function normalizePlanKey(raw: string | undefined): PlanKey | null {
@@ -787,7 +787,7 @@ export default function SubscriptionsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    paddingTop: 16, backgroundColor: '#F9FAFB',
   },
   scrollView: {
     flex: 1,
@@ -795,6 +795,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 12,
+    paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,

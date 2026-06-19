@@ -48,7 +48,7 @@ jest.mock('../modules/notifications/notifications.service', () => ({
 }));
 
 jest.mock('../modules/messaging/messaging.service', () => ({
-  messagingService: { sendAutoMessage: jest.fn().mockResolvedValue(undefined) },
+  messagingService: { sendAutoMessage: jest.fn().mockResolvedValue(undefined), saveMessage: jest.fn().mockResolvedValue(undefined), saveAutoBookingMessage: jest.fn().mockResolvedValue(undefined) },
 }));
 
 jest.mock('../modules/referrals/referrals.service', () => ({

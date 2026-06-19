@@ -1,4 +1,4 @@
-// Journal d'audit admin — consultation sécurisée (lecture seule) des actions
+﻿// Journal d'audit admin — consultation sécurisée (lecture seule) des actions
 // sensibles : filtres par action / type de cible / période, pagination et
 // export CSV via la feuille de partage native. Les logs sont immuables côté
 // base (trigger SQL) : aucun bouton de modification ou suppression n'existe.
@@ -155,7 +155,7 @@ export default function AdminAuditLogsScreen() {
       <FlatList
         horizontal
         data={ACTION_FILTERS}
-        keyExtractor={(f) => f.value}
+        keyExtractor={(f, i) => f.value ?? String(i)}
         showsHorizontalScrollIndicator={false}
         style={styles.filters}
         contentContainerStyle={styles.filtersContent}
@@ -174,7 +174,7 @@ export default function AdminAuditLogsScreen() {
       ) : (
         <FlatList
           data={visible}
-          keyExtractor={(l) => l.id}
+          keyExtractor={(l, i) => l.id ?? String(i)}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, true)} />}
@@ -197,7 +197,7 @@ export default function AdminAuditLogsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC' },
+  container: { flex: 1, paddingTop: 16, backgroundColor: '#F7F9FC' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   title: { fontSize: 18, fontWeight: '800', color: '#16224D' },
   searchBox: {

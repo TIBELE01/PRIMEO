@@ -10,7 +10,7 @@ jest.mock('../webhooks/handlers/genius-pay.handler', () => ({
   processSuccessfulPayment: jest.fn(async () => undefined), processFailedPayment: jest.fn(async () => undefined), ensureBookingInvoice: jest.fn(async () => 'https://cdn/i.pdf'),
 }));
 jest.mock('../notifications/notifications.service', () => ({ notificationsService: { notify: jest.fn(async () => undefined) } }));
-jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn() } }));
+jest.mock('../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 jest.mock('../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
 jest.mock('../wallets/wallets.service', () => ({ walletService: { getBalance: jest.fn(async () => 0), debit: jest.fn(), credit: jest.fn() } }));
 jest.mock('../../common/handlers/http-error.handler', () => ({

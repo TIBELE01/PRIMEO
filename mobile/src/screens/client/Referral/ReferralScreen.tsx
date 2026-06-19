@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ScrollView, View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert, Linking, Share, FlatList, Clipboard, TextInput,
+  ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Linking, Share, FlatList, Clipboard, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { referralsApi } from '../../../services/api/endpoints/referrals';
 import { ReferralHistoryItem } from '../../../components/referral/ReferralHistoryItem';
@@ -147,7 +148,7 @@ export function ReferralScreen({ navigation }: Props) {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}><Text style={styles.title}>Parrainage</Text></View>
+        <PageHeader title="Parrainage" />
         <View style={styles.centered}><ActivityIndicator size="large" color="#1056E0" /></View>
       </SafeAreaView>
     );
@@ -156,10 +157,7 @@ export function ReferralScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Parrainage</Text>
-          <Text style={styles.subtitle}>Invitez vos proches et gagnez des récompenses</Text>
-        </View>
+        <PageHeader title="Parrainage" />
 
         {/* Reward info card — montants différenciés selon le type de filleul */}
         <View style={styles.rewardCard}>
@@ -180,7 +178,7 @@ export function ReferralScreen({ navigation }: Props) {
           <View style={styles.codeCard}>
             <Text style={styles.codeLabel}>Votre code de parrainage</Text>
             <View style={styles.codeRow}>
-              <Text style={styles.code}>{codeData.code}</Text>
+              <Text style={styles.code} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{codeData.code}</Text>
               <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
                 <Text style={styles.copyBtnText}>{copied ? '✓ Copié' : 'Copier'}</Text>
               </TouchableOpacity>
@@ -233,7 +231,7 @@ export function ReferralScreen({ navigation }: Props) {
               <Text style={styles.statLbl}>Récompensés</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={[styles.statNum, { color: '#1056E0' }]}>{stats.totalRewardsFcfa.toLocaleString()}</Text>
+              <Text style={[styles.statNum, { color: '#1056E0' }]}>{(stats.totalRewardsFcfa ?? 0).toLocaleString()}</Text>
               <Text style={styles.statLbl}>FCFA gagnés</Text>
             </View>
           </View>
@@ -313,7 +311,7 @@ export function ReferralScreen({ navigation }: Props) {
                     <Text style={styles.rewardIcon}>🎉</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rewardItemAmount}>+{reward.amount.toLocaleString('fr-CI')} FCFA</Text>
+                    <Text style={styles.rewardItemAmount}>+{(reward.amount ?? 0).toLocaleString('fr-CI')} FCFA</Text>
                     <Text style={styles.rewardItemNote} numberOfLines={1}>{reward.notes ?? 'Récompense parrainage'}</Text>
                   </View>
                   <Text style={styles.rewardItemDate}>
@@ -333,7 +331,7 @@ export function ReferralScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { paddingBottom: 40 },
+  scroll: { paddingBottom: 80 },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
   title: { fontSize: 24, fontWeight: '800', color: '#111827' },
   subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
@@ -370,9 +368,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6,
   },
   codeLabel: { fontSize: 13, color: '#6B7280', marginBottom: 10 },
-  codeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  code: { fontSize: 28, fontWeight: '900', color: '#1056E0', letterSpacing: 4 },
-  copyBtn: { backgroundColor: '#1056E0', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  code: { flex: 1, fontSize: 20, fontWeight: '900', color: '#1056E0', letterSpacing: 2 },
+  copyBtn: { backgroundColor: '#1056E0', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8, flexShrink: 0 },
   copyBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   statsRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 20, gap: 10 },
   statBox: { flex: 1, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 14, alignItems: 'center' },

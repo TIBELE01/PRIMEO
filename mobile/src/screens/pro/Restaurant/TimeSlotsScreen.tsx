@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Switch, Modal,
@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 
 interface TimeSlot {
@@ -160,8 +161,8 @@ export default function TimeSlotsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <PageHeader title="Créneaux horaires" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Créneaux horaires</Text>
 
         {DAYS.map((dayName, dayIndex) => {
           const daySlots = slotsByDay(dayIndex);
@@ -169,7 +170,7 @@ export default function TimeSlotsScreen() {
             <View key={dayIndex} style={styles.daySection}>
               <View style={styles.dayHeader}>
                 <Text style={styles.dayName}>{dayName}</Text>
-                <TouchableOpacity style={styles.addDayBtn} onPress={() => openAddModal(dayIndex)}>
+                <TouchableOpacity style={styles.addDayBtn} onPress={() => openAddModal(dayIndex)} accessibilityRole="button" accessibilityLabel={`Ajouter un créneau pour ${dayName}`}>
                   <Ionicons name="add" size={20} color="#1056E0" />
                 </TouchableOpacity>
               </View>
@@ -202,7 +203,7 @@ export default function TimeSlotsScreen() {
                         onSubmitEditing={() => handleCapacitySubmit(slot)}
                       />
                     ) : (
-                      <TouchableOpacity onPress={() => { setEditingCapacityId(slot.id); setEditingCapacityValue(String(slot.maxCapacity)); }}>
+                      <TouchableOpacity onPress={() => { setEditingCapacityId(slot.id); setEditingCapacityValue(String(slot.maxCapacity)); }} accessibilityRole="button" accessibilityLabel="Modifier la capacité">
                         <Text style={styles.slotCapacity}>{slot.maxCapacity} couverts</Text>
                       </TouchableOpacity>
                     )}
@@ -214,7 +215,7 @@ export default function TimeSlotsScreen() {
                         trackColor={{ false: '#DC2626', true: '#1056E0' }}
                         thumbColor="#fff"
                       />
-                      <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(slot)}>
+                      <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(slot)} accessibilityRole="button" accessibilityLabel={`Supprimer le créneau ${slot.startTime}–${slot.endTime}`}>
                         <Ionicons name="trash-outline" size={18} color="#DC2626" />
                       </TouchableOpacity>
                     </View>
@@ -261,10 +262,10 @@ export default function TimeSlotsScreen() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)} accessibilityRole="button" accessibilityLabel="Annuler">
                 <Text style={styles.cancelBtnText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleAddSlot} disabled={saving}>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleAddSlot} disabled={saving} accessibilityRole="button" accessibilityLabel="Ajouter le créneau">
                 {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Ajouter</Text>}
               </TouchableOpacity>
             </View>
@@ -278,7 +279,6 @@ export default function TimeSlotsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 20 },
 
   daySection: { marginBottom: 20 },
   dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },

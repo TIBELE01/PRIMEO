@@ -1,7 +1,7 @@
 // Role-based tab navigator — adapts tabs and icons to the authenticated user's role
 import React from 'react';
-import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -64,116 +64,126 @@ function tabIcon(focused: boolean, name: IoniconsName, outlineName: IoniconsName
 }
 
 // ── Stack builders ────────────────────────────────────────────────────────────
+// Each tab gets its own stable navigator instance created at module level.
+// Creating navigators inside component functions causes a new instance on every
+// render, which breaks React Navigation's internal state tracking.
 
-const S = createNativeStackNavigator;
+const HomeStack     = createNativeStackNavigator();
+const SearchStack   = createNativeStackNavigator();
+const BookingsStack = createNativeStackNavigator();
+const MessagesStack = createNativeStackNavigator();
+const FavoritesStack = createNativeStackNavigator();
+const ProfileStack  = createNativeStackNavigator();
+
+const GREY_HEADER = {
+  headerStyle: { backgroundColor: '#808080' },
+  headerTintColor: '#111111',
+  headerTitleAlign: 'center' as const,
+  headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
+  headerShadowVisible: true,
+};
 
 /** Home tab: browse + category pages + property detail + booking */
 function HomeTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home"                  component={HomeScreen} />
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home"                  component={HomeScreen} />
       {/* 4 category pages — one per sector card on the home screen */}
-      <Stack.Screen name="ResidencesCategory"    component={CategoryScreen} initialParams={{ category: 'residence' }} />
-      <Stack.Screen name="HotelsCategory"        component={CategoryScreen} initialParams={{ category: 'hotel' }} />
-      <Stack.Screen name="ImmobilierCategory"    component={CategoryScreen} initialParams={{ category: 'immobilier' }} />
-      <Stack.Screen name="RestaurantsCategory"   component={CategoryScreen} initialParams={{ category: 'restaurant' }} />
+      <HomeStack.Screen name="ResidencesCategory"    component={CategoryScreen} initialParams={{ category: 'residence' }} />
+      <HomeStack.Screen name="HotelsCategory"        component={CategoryScreen} initialParams={{ category: 'hotel' }} />
+      <HomeStack.Screen name="ImmobilierCategory"    component={CategoryScreen} initialParams={{ category: 'immobilier' }} />
+      <HomeStack.Screen name="RestaurantsCategory"   component={CategoryScreen} initialParams={{ category: 'restaurant' }} />
       {/* Legacy sector screen kept for backward compatibility */}
-      <Stack.Screen name="SectorScreen"          component={SectorScreen} />
-      <Stack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
-      <Stack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
-      <Stack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
-      <Stack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
-      <Stack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
-    </Stack.Navigator>
+      <HomeStack.Screen name="SectorScreen"          component={SectorScreen} />
+      <HomeStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
+      <HomeStack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
+      <HomeStack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
+      <HomeStack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
+      <HomeStack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
+    </HomeStack.Navigator>
   );
 }
 
 /** Search tab */
 function SearchTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Search"              component={SearchScreen} />
-      <Stack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
-      <Stack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
-      <Stack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
-      <Stack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
-      <Stack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
-    </Stack.Navigator>
+    <SearchStack.Navigator screenOptions={{ headerShown: false }}>
+      <SearchStack.Screen name="Search"              component={SearchScreen} />
+      <SearchStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
+      <SearchStack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
+      <SearchStack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
+      <SearchStack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
+      <SearchStack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
+    </SearchStack.Navigator>
   );
 }
 
 /** Bookings tab */
 function BookingsTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="MyBookings"    component={MyBookingsScreen} options={{ title: 'Mes réservations' }} />
-      <Stack.Screen name="BookingDetail" component={BookingDetailScreen} options={{ title: 'Détail réservation' }} />
-      <Stack.Screen name="WriteReview"   component={sc(WriteReviewScreen)} options={{ title: 'Laisser un avis' }} />
-      <Stack.Screen name="Chat"          component={sc(ChatScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="NewDispute"    component={sc(NewDisputeScreen)} options={{ title: 'Signaler un problème' }} />
-      <Stack.Screen name="DisputeList"   component={sc(DisputeListScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="DisputeDetail" component={sc(DisputeDetailScreen)} options={{ headerShown: false }} />
-    </Stack.Navigator>
+    <BookingsStack.Navigator screenOptions={{ headerShown: false }}>
+      <BookingsStack.Screen name="MyBookings"    component={MyBookingsScreen} />
+      <BookingsStack.Screen name="BookingDetail" component={BookingDetailScreen} />
+      <BookingsStack.Screen name="WriteReview"   component={sc(WriteReviewScreen)} options={{ headerShown: true, title: 'Laisser un avis', ...GREY_HEADER }} />
+      <BookingsStack.Screen name="Chat"          component={sc(ChatScreen)} />
+      <BookingsStack.Screen name="NewDispute"    component={sc(NewDisputeScreen)} options={{ headerShown: true, title: 'Signaler un problème', ...GREY_HEADER }} />
+      <BookingsStack.Screen name="DisputeList"   component={sc(DisputeListScreen)} />
+      <BookingsStack.Screen name="DisputeDetail" component={sc(DisputeDetailScreen)} />
+    </BookingsStack.Navigator>
   );
 }
 
 /** Messages tab */
 function MessagesTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Conversations" component={sc(ConversationsScreen)} />
-      <Stack.Screen name="Chat"          component={sc(ChatScreen)} />
-    </Stack.Navigator>
+    <MessagesStack.Navigator screenOptions={{ headerShown: false }}>
+      <MessagesStack.Screen name="Conversations" component={sc(ConversationsScreen)} />
+      <MessagesStack.Screen name="Chat"          component={sc(ChatScreen)} />
+    </MessagesStack.Navigator>
   );
 }
 
 /** Favorites tab — liste des favoris + accès à la fiche détail et au tunnel de réservation */
 function FavoritesTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Favorites"               component={sc(FavoritesScreen)} />
-      <Stack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
-      <Stack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
-      <Stack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
-      <Stack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
-      <Stack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
-    </Stack.Navigator>
+    <FavoritesStack.Navigator screenOptions={{ headerShown: false }}>
+      <FavoritesStack.Screen name="Favorites"               component={sc(FavoritesScreen)} />
+      <FavoritesStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
+      <FavoritesStack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
+      <FavoritesStack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="GeniusPayWebView"        component={sc(GeniusPayWebViewScreen)} />
+      <FavoritesStack.Screen name="BookingConfirmation"     component={sc(BookingConfirmationScreen)} />
+      <FavoritesStack.Screen name="RestaurantOrderCart"     component={sc(RestaurantOrderCartScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="RestaurantOrderTracking" component={sc(RestaurantOrderTrackingScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="MyRestaurantOrders"      component={sc(MyRestaurantOrdersScreen)} options={{ headerShown: false }} />
+    </FavoritesStack.Navigator>
   );
 }
 
 /** Profile tab */
 function ProfileTabStack() {
-  const Stack = S();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Profile"          component={sc(ProfileScreen)} />
-      <Stack.Screen name="EditProfile"      component={EditProfileScreen} options={{ headerShown: true, title: 'Modifier mon profil' }} />
-      <Stack.Screen name="ChangePassword"   component={ChangePasswordScreen} options={{ headerShown: true, title: 'Mot de passe' }} />
-      <Stack.Screen name="TwoFactorSetup"   component={TwoFactorSetupScreen} options={{ headerShown: true, title: 'Authentification 2FA' }} />
-      <Stack.Screen name="LegalLinks"       component={LegalLinksScreen} options={{ headerShown: true, title: 'Informations légales' }} />
-      <Stack.Screen name="Referral"          component={sc(ReferralScreen)} />
-      <Stack.Screen name="MyReviews"         component={sc(MyReviewsScreen)} options={{ headerShown: true, title: 'Mes avis' }} />
-      <Stack.Screen name="ReceivedRatings"   component={sc(ReceivedRatingsScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="DisputeList"          component={sc(DisputeListScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="DisputeDetail"        component={sc(DisputeDetailScreen)} options={{ headerShown: false }} />
-      <Stack.Screen name="SupportChatbot"       component={SupportChatbotScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SupportTickets"       component={SupportTicketsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SupportTicketDetail"  component={SupportTicketDetailScreen} options={{ headerShown: false }} />
-    </Stack.Navigator>
+    <ProfileStack.Navigator screenOptions={{ headerShown: false, ...GREY_HEADER }}>
+      <ProfileStack.Screen name="Profile"          component={sc(ProfileScreen)} />
+      <ProfileStack.Screen name="EditProfile"      component={EditProfileScreen} options={{ headerShown: true, title: 'Modifier mon profil' }} />
+      <ProfileStack.Screen name="ChangePassword"   component={ChangePasswordScreen} options={{ headerShown: true, title: 'Mot de passe' }} />
+      <ProfileStack.Screen name="TwoFactorSetup"   component={TwoFactorSetupScreen} options={{ headerShown: true, title: 'Authentification 2FA' }} />
+      <ProfileStack.Screen name="LegalLinks"       component={LegalLinksScreen} options={{ headerShown: true, title: 'Informations légales' }} />
+      <ProfileStack.Screen name="Referral"          component={sc(ReferralScreen)} />
+      <ProfileStack.Screen name="MyReviews"         component={sc(MyReviewsScreen)} options={{ headerShown: true, title: 'Mes avis' }} />
+      <ProfileStack.Screen name="ReceivedRatings"   component={sc(ReceivedRatingsScreen)} options={{ headerShown: true, title: 'Évaluations reçues', ...GREY_HEADER }} />
+      <ProfileStack.Screen name="DisputeList"          component={sc(DisputeListScreen)} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="DisputeDetail"        component={sc(DisputeDetailScreen)} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="SupportChatbot"       component={SupportChatbotScreen} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="SupportTickets"       component={SupportTicketsScreen} options={{ headerShown: false }} />
+      <ProfileStack.Screen name="SupportTicketDetail"  component={SupportTicketDetailScreen} options={{ headerShown: false }} />
+    </ProfileStack.Navigator>
   );
 }
 
@@ -183,6 +193,8 @@ const ClientTab = createBottomTabNavigator();
 
 function ClientTabs() {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const safeBottom = Math.max(8, insets.bottom);
 
   return (
     <ClientTab.Navigator
@@ -193,8 +205,8 @@ function ClientTabs() {
         tabBarStyle: {
           backgroundColor: theme.colors.tabBar,
           borderTopColor:  theme.colors.border,
-          height: Platform.OS === 'ios' ? 84 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          height: 48 + safeBottom,
+          paddingBottom: safeBottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: {

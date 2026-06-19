@@ -1,9 +1,9 @@
-// OnboardingScreen — premium redesign: dark canvas, ambient glow, rich slides
+﻿// OnboardingScreen — premium redesign: dark canvas, ambient glow, rich slides
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, FlatList, Dimensions, TouchableOpacity,
-  StyleSheet, SafeAreaView, StatusBar,
+  View, Text, FlatList, Dimensions, TouchableOpacity, StyleSheet, StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -83,7 +83,7 @@ export default function OnboardingScreen({ navigation }: any) {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, i) => item.id ?? String(i)}
           onMomentumScrollEnd={e =>
             setIndex(Math.round(e.nativeEvent.contentOffset.x / width))
           }
@@ -150,7 +150,7 @@ export default function OnboardingScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0F1E' },
-  safe:      { flex: 1 },
+  safe: { flex: 1, paddingTop: 16 },
 
   // Ambient glows
   glow1: {

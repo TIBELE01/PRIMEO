@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl,
@@ -110,15 +111,12 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* En-tête */}
-      <View style={[s.header, { backgroundColor: theme.primary }]}>
-        <Text style={s.headerTitle}>Notifications</Text>
-        {unread > 0 && (
-          <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn}>
-            <Text style={s.markAllText}>Tout lire</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <PageHeader title="Notifications" />
+      {unread > 0 && (
+        <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn}>
+          <Text style={s.markAllText}>Tout marquer comme lu</Text>
+        </TouchableOpacity>
+      )}
 
       {unread > 0 && (
         <View style={[s.unreadBadge, { backgroundColor: theme.primary + '14' }]}>
@@ -130,9 +128,9 @@ export default function NotificationsScreen() {
 
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, i) => item.id ?? String(i)}
         renderItem={renderItem}
-        contentContainerStyle={notifications.length === 0 ? s.emptyContainer : { paddingBottom: 32 }}
+        contentContainerStyle={notifications.length === 0 ? s.emptyContainer : { paddingBottom: 80 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

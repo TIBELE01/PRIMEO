@@ -20,6 +20,12 @@ const DEFAULT_PRO_TEMPLATES = [
   { label: 'Bon séjour', content: 'Tout est prêt pour votre arrivée. Excellent séjour à vous !' },
 ];
 
+const PAYMENT_LABELS: Record<string, string> = {
+  full_online: '100% en ligne',
+  ten_percent_online: '10% en ligne + 90% en espèces',
+  zero_online: '0% en ligne + 100% en espèces',
+};
+
 const isPro = (role: string) =>
   ['professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'].includes(role);
 
@@ -110,7 +116,6 @@ export const messagingService = {
   },
 
   async listConversations(userId: string, role: string) {
-    // Find all bookings where user is client or professional
     const bookingFilter =
       role === 'admin'
         ? {}
@@ -124,10 +129,11 @@ export const messagingService = {
     const bookings = await prisma.booking.findMany({
       where: {
         ...bookingFilter,
-        messages: { some: {} }, // only bookings with at least one message
+        messages: { some: {} },
       },
       select: {
         id: true,
+        status: true,
         client: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
         property: {
           select: {
@@ -146,17 +152,32 @@ export const messagingService = {
       orderBy: { updatedAt: 'desc' },
     });
 
-    // Attach unread count per conversation
-    const withUnread = await Promise.all(
+    const conversations = await Promise.all(
       bookings.map(async (b) => {
         const unreadCount = await prisma.message.count({
           where: { bookingId: b.id, receiverId: userId, isRead: false },
         });
-        return { ...b, lastMessage: b.messages[0] ?? null, unreadCount };
+        const lastMsg = b.messages[0] ?? null;
+        // Role-aware: property owner sees the client; client sees the property owner
+        const isOwner = b.property.ownerId === userId;
+        const recipient = isOwner ? b.client : b.property.owner;
+        return {
+          bookingId: b.id,
+          bookingStatus: b.status,
+          propertyId: b.property.id,
+          propertyTitle: b.property.title,
+          recipientId: recipient.id,
+          recipientName: `${recipient.firstName} ${recipient.lastName}`.trim(),
+          recipientAvatarUrl: recipient.avatarUrl ?? null,
+          lastMessage: lastMsg?.content ?? null,
+          lastMessageAt: lastMsg?.sentAt?.toISOString() ?? null,
+          lastMessageSenderId: lastMsg?.senderId ?? null,
+          unreadCount,
+        };
       }),
     );
 
-    return withUnread;
+    return conversations;
   },
 
   async markAsRead(bookingId: string, userId: string) {
@@ -179,6 +200,120 @@ export const messagingService = {
 
     return prisma.message.create({
       data: { bookingId, senderId, receiverId, content },
+      include: {
+        sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+      },
+    });
+  },
+
+  // Envoie un message structuré automatique au professionnel après confirmation d'une réservation.
+  // Récupère toutes les données nécessaires depuis la DB pour construire le message.
+  async saveAutoBookingMessage(bookingId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
+        property: {
+          select: {
+            title: true,
+            propertyType: true,
+            ownerId: true,
+            owner: { select: { firstName: true } },
+          },
+        },
+      },
+    });
+    if (!booking) return null;
+
+    const { client, property } = booking;
+    const isRestaurant = property.propertyType === 'restaurant';
+    const isRealEstate = property.propertyType.startsWith('immobilier');
+    const ref = `#${bookingId.slice(0, 8).toUpperCase()}`;
+    const phone = client.phone ?? 'Non renseigné';
+
+    let content: string;
+
+    if (isRealEstate) {
+      const interestText = booking.specialRequests?.trim()
+        || 'Je souhaite obtenir plus d\'informations sur ce bien.';
+      content = [
+        `Bonjour ${property.owner.firstName},`,
+        interestText,
+        '',
+        `📋 Ma demande :`,
+        `Bien : ${property.title}`,
+        `Référence : ${ref}`,
+        '',
+        `Informations de contact :`,
+        `Nom : ${client.firstName} ${client.lastName}`,
+        `Téléphone : ${phone}`,
+        `Email : ${client.email}`,
+        '',
+        `Cordialement, ${client.firstName}`,
+      ].join('\n');
+    } else if (isRestaurant) {
+      const dateStr = booking.startDate.toLocaleDateString('fr-CI', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      });
+      // Extract reservation time from specialRequests ("Réservation de table à HH:MM…")
+      const timeMatch = booking.specialRequests?.match(/à (\d{1,2}:\d{2})/);
+      const timeStr = timeMatch ? ` à ${timeMatch[1]}` : '';
+      content = [
+        `Bonjour ${property.owner.firstName},`,
+        `Je viens d'effectuer une réservation de table chez vous.`,
+        '',
+        `📋 Détails de la réservation :`,
+        `Restaurant : ${property.title}`,
+        `Date : ${dateStr}${timeStr}`,
+        `Couverts : ${booking.guests} couvert${booking.guests > 1 ? 's' : ''}`,
+        `Référence : ${ref}`,
+        '',
+        `Informations du client :`,
+        `Nom : ${client.firstName} ${client.lastName}`,
+        `Téléphone : ${phone}`,
+        `Email : ${client.email}`,
+        '',
+        `Je reste à votre disposition pour toute information complémentaire.`,
+        `Cordialement, ${client.firstName}`,
+      ].join('\n');
+    } else {
+      // Hébergement / hôtel
+      const nights = Math.round(
+        (booking.endDate.getTime() - booking.startDate.getTime()) / 86_400_000,
+      );
+      const startStr = booking.startDate.toLocaleDateString('fr-CI', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      });
+      const endStr = booking.endDate.toLocaleDateString('fr-CI', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      });
+      const lines = [
+        `Bonjour ${property.owner.firstName},`,
+        `Je viens d'effectuer une réservation chez vous.`,
+        '',
+        `📋 Détails de la réservation :`,
+        `Bien : ${property.title}`,
+        `Dates : ${startStr} → ${endStr} (${nights} nuit${nights > 1 ? 's' : ''})`,
+        `Voyageurs : ${booking.guests} personne${booking.guests > 1 ? 's' : ''}`,
+      ];
+      if (booking.totalAmount > 0) {
+        lines.push(`Montant total : ${booking.totalAmount.toLocaleString('fr-CI')} FCFA`);
+        lines.push(`Mode de paiement : ${PAYMENT_LABELS[booking.paymentOption] ?? booking.paymentOption}`);
+      }
+      lines.push(`Référence : ${ref}`);
+      lines.push('');
+      lines.push(`Informations du client :`);
+      lines.push(`Nom : ${client.firstName} ${client.lastName}`);
+      lines.push(`Téléphone : ${phone}`);
+      lines.push(`Email : ${client.email}`);
+      lines.push('');
+      lines.push(`Je reste à votre disposition pour toute information complémentaire.`);
+      lines.push(`Cordialement, ${client.firstName}`);
+      content = lines.join('\n');
+    }
+
+    return prisma.message.create({
+      data: { bookingId, senderId: client.id, receiverId: property.ownerId, content },
       include: {
         sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       },

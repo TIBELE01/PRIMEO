@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, Alert, RefreshControl, TextInput, Modal,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, RefreshControl, TextInput, Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { clientRatingsApi } from '../../../services/api/endpoints/clientRatings';
 
@@ -122,16 +122,6 @@ export function ReceivedRatingsScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.title}>Évaluations reçues</Text>
-          <Text style={styles.titleSub}>Laissées par vos hôtes</Text>
-        </View>
-      </View>
-
       {/* Privacy notice */}
       <View style={styles.privacyBanner}>
         <Text style={styles.privacyIcon}>ℹ️</Text>
@@ -145,7 +135,7 @@ export function ReceivedRatingsScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={ratings}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, i) => item.id ?? String(i)}
           renderItem={renderItem}
           contentContainerStyle={[styles.list, ratings.length === 0 && styles.emptyFlex]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor="#1056E0" />}
@@ -204,11 +194,6 @@ export function ReceivedRatingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6', gap: 10 },
-  backBtn: { padding: 4 },
-  backArrow: { fontSize: 22, color: '#1056E0', fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  titleSub: { fontSize: 12, color: '#9CA3AF' },
   privacyBanner: { flexDirection: 'row', gap: 8, backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 10, alignItems: 'flex-start' },
   privacyIcon: { fontSize: 16 },
   privacyText: { flex: 1, fontSize: 12, color: '#1D4ED8', lineHeight: 17 },

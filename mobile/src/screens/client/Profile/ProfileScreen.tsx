@@ -1,4 +1,4 @@
-// ProfileScreen — écran principal du profil utilisateur client.
+﻿// ProfileScreen — écran principal du profil utilisateur client.
 // Organisé en sections accordéon (une seule ouverte à la fois) :
 //   Informations · Mon compte · Avis et évaluations · Soutien et aide ·
 //   Notifications · Zone sensible.
@@ -7,20 +7,9 @@
 // barre d'onglets principale, plus dans le profil.
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-  Modal,
-  Image,
-  Switch,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert, TextInput, Modal, Image, Switch,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { usersApi } from '../../../services/api/endpoints/users';
@@ -32,6 +21,7 @@ import {
   ProfileInfoRow,
   useSingleAccordion,
 } from '../../../components/ui/ProfileAccordion';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
@@ -232,7 +222,8 @@ export function ProfileScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6FB" />
+      <StatusBar barStyle="light-content" backgroundColor="#1056E0" />
+      <PageHeader title="Mon profil" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* En-tête : avatar + nom + badge rôle */}
@@ -461,7 +452,7 @@ export function ProfileScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F4F6FB' },
-  scroll: { paddingBottom: 48 },
+  scroll: { paddingBottom: 80 },
   loadingIndicator: { position: 'absolute', top: 12, right: 12 },
 
   // En-tête

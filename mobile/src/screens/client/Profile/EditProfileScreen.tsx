@@ -1,17 +1,9 @@
-// EditProfileScreen — formulaire de modification du profil utilisateur
+﻿// EditProfileScreen — formulaire de modification du profil utilisateur
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  TextInput,
-  ActivityIndicator,
-  Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
@@ -262,7 +254,7 @@ export default function EditProfileScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F6FB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F6FB' },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -56,7 +56,7 @@ export default function MaintenanceScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: '#F7F9FC' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: 48, backgroundColor: '#F7F9FC' },
   iconWrap: {
     width: 120, height: 120, borderRadius: 60, backgroundColor: '#E8F0FE',
     justifyContent: 'center', alignItems: 'center', marginBottom: 24,

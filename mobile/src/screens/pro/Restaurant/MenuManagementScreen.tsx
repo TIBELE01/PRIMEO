@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Switch, Modal, Image,
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 // Couleur principale restaurant
 const PRIMARY  = '#DC2626';
@@ -50,8 +51,8 @@ const HEALTH_TIPS = [
 
 const PORTION_SIZES = ['Petite', 'Normale', 'Grande', 'À partager'];
 
-function formatPrice(n: number): string {
-  return n.toLocaleString('fr-CI') + ' FCFA';
+function formatPrice(n?: number | null): string {
+  return (n ?? 0).toLocaleString('fr-CI') + ' FCFA';
 }
 
 // ── Composants internes ────────────────────────────────────────────────────────
@@ -93,10 +94,10 @@ function MenuItemCard({
             ) : null}
           </View>
           <View style={styles.itemActions}>
-            <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
+            <TouchableOpacity style={styles.actionBtn} onPress={onEdit} accessibilityRole="button" accessibilityLabel="Modifier l'article">
               <Ionicons name="pencil" size={15} color="#2563EB" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={onDelete}>
+            <TouchableOpacity style={styles.actionBtn} onPress={onDelete} accessibilityRole="button" accessibilityLabel="Supprimer l'article">
               <Ionicons name="trash" size={15} color={PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -370,6 +371,8 @@ export default function MenuManagementScreen() {
           <TouchableOpacity
             style={[styles.onboardingBtn, { backgroundColor: PRIMARY }]}
             onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
+            accessibilityRole="button"
+            accessibilityLabel="Créer mon restaurant"
           >
             <Ionicons name="add-circle-outline" size={20} color="#fff" />
             <Text style={styles.onboardingBtnText}>Créer mon restaurant</Text>
@@ -394,13 +397,11 @@ export default function MenuManagementScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      <PageHeader title="Menu" />
+      {/* Stats + action */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Menu</Text>
-          <Text style={styles.headerSub}>{totalItems} article{totalItems !== 1 ? 's' : ''} · {availableCount} disponible{availableCount !== 1 ? 's' : ''}</Text>
-        </View>
-        <TouchableOpacity style={[styles.addBtn, { backgroundColor: PRIMARY }]} onPress={openCreate}>
+        <Text style={styles.headerSub}>{totalItems} article{totalItems !== 1 ? 's' : ''} · {availableCount} disponible{availableCount !== 1 ? 's' : ''}</Text>
+        <TouchableOpacity style={[styles.addBtn, { backgroundColor: PRIMARY }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
           <Ionicons name="add" size={18} color="#fff" />
           <Text style={styles.addBtnText}>Ajouter</Text>
         </TouchableOpacity>
@@ -413,6 +414,9 @@ export default function MenuManagementScreen() {
             key={sec}
             style={[styles.tab, activeSection === sec && { backgroundColor: PRIMARY, borderColor: PRIMARY }]}
             onPress={() => setActiveSection(sec)}
+            accessibilityRole="button"
+            accessibilityLabel={sec === 'Tout' ? 'Voir tout le menu' : `Section ${sec}`}
+            accessibilityState={{ selected: activeSection === sec }}
           >
             {sec !== 'Tout' && <Text style={styles.tabIcon}>{SECTION_ICONS[sec] ?? '🍴'}</Text>}
             <Text style={[styles.tabText, activeSection === sec && styles.tabTextActive]}>{sec}</Text>
@@ -426,7 +430,7 @@ export default function MenuManagementScreen() {
           <View style={styles.empty}>
             <Ionicons name="restaurant-outline" size={48} color="#D1D5DB" />
             <Text style={styles.emptyText}>Aucun article dans cette section</Text>
-            <TouchableOpacity style={[styles.emptyBtn, { borderColor: PRIMARY }]} onPress={openCreate}>
+            <TouchableOpacity style={[styles.emptyBtn, { borderColor: PRIMARY }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
               <Text style={[styles.emptyBtnText, { color: PRIMARY }]}>Ajouter un article</Text>
             </TouchableOpacity>
           </View>
@@ -502,6 +506,8 @@ export default function MenuManagementScreen() {
                             key={sec}
                             style={[styles.chip, formSection === sec && { backgroundColor: PRIMARY, borderColor: PRIMARY }]}
                             onPress={() => setFormSection(sec)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Catégorie ${sec}`}
                           >
                             <Text style={styles.chipIcon}>{SECTION_ICONS[sec] ?? '🍴'}</Text>
                             <Text style={[styles.chipText, formSection === sec && styles.chipTextActive]}>{sec}</Text>
@@ -571,6 +577,8 @@ export default function MenuManagementScreen() {
                           key={p}
                           style={[styles.chip, formPortion === p && { backgroundColor: PRIMARY, borderColor: PRIMARY }]}
                           onPress={() => setFormPortion(p)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Portion ${p}`}
                         >
                           <Text style={[styles.chipText, formPortion === p && styles.chipTextActive]}>{p}</Text>
                         </TouchableOpacity>
@@ -656,6 +664,8 @@ export default function MenuManagementScreen() {
                           key={a}
                           style={[styles.allergenChip, formAllergens.includes(a) && styles.allergenChipActive]}
                           onPress={() => toggleAllergen(a)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Allergène ${a}`}
                         >
                           <Text style={[styles.allergenChipText, formAllergens.includes(a) && styles.allergenChipTextActive]}>
                             {a}
@@ -678,6 +688,8 @@ export default function MenuManagementScreen() {
                           key={t}
                           style={[styles.healthChip, formHealthTips.includes(t) && styles.healthChipActive]}
                           onPress={() => toggleHealthTip(t)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Conseil santé ${t}`}
                         >
                           <Text style={[styles.healthChipText, formHealthTips.includes(t) && styles.healthChipTextActive]}>
                             {t}
@@ -735,12 +747,14 @@ export default function MenuManagementScreen() {
                 style={styles.cancelBtn}
                 onPress={formStep === 1 ? () => setModalVisible(false) : handlePrevStep}
                 disabled={saving}
+                accessibilityRole="button"
+                accessibilityLabel={formStep === 1 ? 'Annuler' : 'Étape précédente'}
               >
                 <Text style={styles.cancelBtnText}>{formStep === 1 ? 'Annuler' : '← Retour'}</Text>
               </TouchableOpacity>
 
               {formStep < TOTAL_STEPS ? (
-                <TouchableOpacity style={[styles.saveBtn, { backgroundColor: PRIMARY }]} onPress={handleNextStep}>
+                <TouchableOpacity style={[styles.saveBtn, { backgroundColor: PRIMARY }]} onPress={handleNextStep} accessibilityRole="button" accessibilityLabel="Étape suivante">
                   <Text style={styles.saveBtnText}>Suivant →</Text>
                 </TouchableOpacity>
               ) : (
@@ -748,6 +762,8 @@ export default function MenuManagementScreen() {
                   style={[styles.saveBtn, { backgroundColor: PRIMARY }, saving && { opacity: 0.7 }]}
                   onPress={handleSave}
                   disabled={saving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enregistrer l'article"
                 >
                   {saving
                     ? <ActivityIndicator color="#fff" size="small" />
@@ -776,9 +792,8 @@ const styles = StyleSheet.create({
   onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   // Header
-  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  headerTitle:{ fontSize: 20, fontWeight: '800', color: '#111827' },
-  headerSub:  { fontSize: 12, color: '#6B7280', marginTop: 1 },
+  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  headerSub:  { fontSize: 12, color: '#6B7280' },
   addBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 

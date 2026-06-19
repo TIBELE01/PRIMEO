@@ -1,5 +1,6 @@
-// Access management screen — co-manager invitations (§7.11, Premium only)
+﻿// Access management screen — co-manager invitations (§7.11, Premium only)
 import React, { useState, useCallback, useEffect } from 'react';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, Modal, TextInput, Switch,
@@ -281,9 +282,7 @@ export default function AccessManagementScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Gestion des accès</Text>
-        </View>
+        <PageHeader title="Gestion des accès" />
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#1056E0" />
         </View>

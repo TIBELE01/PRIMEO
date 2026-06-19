@@ -1,9 +1,9 @@
-// Login screen — email + password, 2FA redirect, auto-session on success
+﻿// Login screen — email + password, 2FA redirect, auto-session on success
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
@@ -204,7 +204,7 @@ export function LoginScreen({ navigation }: Props) {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:             { flex: 1, backgroundColor: t.colors.background },
+    safe:             { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     scroll:           { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24, justifyContent: 'space-between', gap: 32 },
     header:           { gap: 4 },
     title:            { fontSize: 28, fontWeight: '800', color: t.colors.text },

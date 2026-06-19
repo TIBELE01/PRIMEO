@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, SafeAreaView,
+  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface FilterValues {
   minPrice?: number;
@@ -265,7 +265,7 @@ export function FilterSheet({ visible, onClose, values, sectorType, onApply, onR
 }
 
 const fs = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   cancel: { fontSize: 15, color: '#6B7280' },
   title: { fontSize: 16, fontWeight: '700', color: '#111827' },

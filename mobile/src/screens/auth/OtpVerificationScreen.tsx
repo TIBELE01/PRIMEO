@@ -1,9 +1,9 @@
-// OTP verification — 6-digit entry, 60 s resend cooldown, wired to auth API
+﻿// OTP verification — 6-digit entry, 60 s resend cooldown, wired to auth API
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
@@ -164,7 +164,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:         { flex: 1, backgroundColor: t.colors.background },
+    safe:         { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     container:    { flex: 1, paddingHorizontal: 24, paddingTop: 40, alignItems: 'center', gap: 24 },
     header:       { alignItems: 'center', gap: 8 },
     title:        { fontSize: 26, fontWeight: '800', color: t.colors.text },

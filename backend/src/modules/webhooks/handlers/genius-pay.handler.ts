@@ -314,13 +314,10 @@ export async function processSuccessfulPayment(
       await referralsService.triggerReward(booking.clientId).catch((err) =>
         logger.warn(`Referral reward trigger failed on payment confirm for client ${booking.clientId}`, err),
       );
-      // Message automatique d'ouverture de la conversation après confirmation de paiement.
+      // Message structuré d'ouverture de la conversation après confirmation de paiement.
       // Pour les réservations immédiates (restaurant/cash), ce message est créé à la création
       // du booking. Pour les paiements en ligne, il est créé ici après validation du paiement.
-      const startStr = booking.startDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' });
-      const endStr = booking.endDate.toLocaleDateString('fr-CI', { day: 'numeric', month: 'short' });
-      const autoMsg = `Bonjour, ma réservation du ${startStr} au ${endStr} vient d'être confirmée. N'hésitez pas à me contacter si vous avez des questions.`;
-      void messagingService.saveMessage(tx.bookingId, booking.clientId, autoMsg).catch((err) =>
+      void messagingService.saveAutoBookingMessage(tx.bookingId).catch((err) =>
         logger.warn(`Auto-message post-paiement échoué pour booking ${tx.bookingId}`, err),
       );
     }

@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
-  ScrollView, Alert, ActivityIndicator, Modal, TextInput, Share,
-  type DimensionValue,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Modal, TextInput, Share, type DimensionValue,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
 
 const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -257,9 +256,8 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
+      {/* iCal actions */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Calendrier</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => navigation.navigate('IcalFeeds', { propertyId })} style={styles.icalBtn}>
             <Text style={styles.icalBtnText}>Import iCal</Text>
@@ -379,8 +377,7 @@ const CELL_SIZE = `${Math.floor(100/7)}%`;
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  header: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   headerActions: { flexDirection: 'row', gap: 8 },
   icalBtn: { backgroundColor: '#EFF6FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE' },
   icalBtnText: { fontSize: 12, color: '#1D4ED8', fontWeight: '700' },

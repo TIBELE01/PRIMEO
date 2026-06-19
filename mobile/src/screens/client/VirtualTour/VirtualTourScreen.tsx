@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VirtualTourScreen — Visite virtuelle 3D immersive (panorama 360°)
  *
  * ╔══════════════════════════════════════════════════════════════════════╗
@@ -35,17 +35,9 @@ import React, {
   MutableRefObject,
 } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  Dimensions,
-  PixelRatio,
-  type ViewStyle,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Dimensions, PixelRatio, type ViewStyle,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber/native';
 import {
   TextureLoader,
@@ -496,7 +488,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
-  safe: { flex: 1, backgroundColor: '#000' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#000' },
 
   // Écran de repli (aucun panorama)
   emptyWrap:    { paddingTop: 48 },

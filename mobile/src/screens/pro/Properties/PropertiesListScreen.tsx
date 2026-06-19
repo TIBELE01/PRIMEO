@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, Image, TouchableOpacity, StyleSheet,
-  SafeAreaView, RefreshControl, ActivityIndicator, Alert,
+  View, Text, FlatList, Image, TouchableOpacity, StyleSheet, RefreshControl, ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { useProTheme } from '../../../hooks/useProTheme';
@@ -25,7 +25,7 @@ function PropertyRow({ property, onPress, onCalendar, onDuplicate }: { property:
   const imageUrl = property.mainImageUrl ?? property.media?.[0]?.url ?? property.images?.[0]?.url;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Voir l'annonce ${property.name ?? property.title}`}>
       {imageUrl
         ? <Image source={{ uri: imageUrl }} style={styles.thumb} />
         : <View style={[styles.thumb, styles.thumbFallback]}><Text style={styles.thumbEmoji}>🏠</Text></View>
@@ -46,10 +46,10 @@ function PropertyRow({ property, onPress, onCalendar, onDuplicate }: { property:
         )}
       </View>
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.actBtn} onPress={onDuplicate} accessibilityLabel="Dupliquer l'annonce">
+        <TouchableOpacity style={styles.actBtn} onPress={onDuplicate} accessibilityRole="button" accessibilityLabel="Dupliquer l'annonce">
           <Text style={styles.actIcon}>⧉</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actBtn} onPress={onCalendar} accessibilityLabel="Calendrier">
+        <TouchableOpacity style={styles.actBtn} onPress={onCalendar} accessibilityRole="button" accessibilityLabel="Voir le calendrier">
           <Text style={styles.actIcon}>📅</Text>
         </TouchableOpacity>
       </View>
@@ -116,7 +116,7 @@ export default function PropertiesListScreen({ navigation }: any) {
     <SafeAreaView style={styles.safe}>
       <FlatList
         data={properties}
-        keyExtractor={p => p.id}
+        keyExtractor={(p, i) => p.id ?? String(i)}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <PropertyRow
@@ -127,7 +127,7 @@ export default function PropertiesListScreen({ navigation }: any) {
           />
         )}
         ListHeaderComponent={
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={() => navigation.navigate('AddProperty')}>
+          <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.primary }]} onPress={() => navigation.navigate('AddProperty')} accessibilityRole="button" accessibilityLabel="Ajouter une propriété">
             <Text style={styles.addText}>+ Ajouter une propriété</Text>
           </TouchableOpacity>
         }
@@ -145,7 +145,7 @@ export default function PropertiesListScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F5F5' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F5F5F5' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 16, gap: 12, paddingBottom: 40 },
   addBtn: { backgroundColor: '#1056E0', borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 4 },

@@ -15,7 +15,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress }) =>
       <BookingStatusBadge status={booking.status} />
     </View>
     <Text style={styles.dates}>{booking.checkIn} → {booking.checkOut}</Text>
-    <Text style={styles.amount}>{booking.totalAmount.toLocaleString()} XOF</Text>
+    <Text style={styles.amount}>{(booking.totalAmount ?? 0).toLocaleString()} XOF</Text>
   </TouchableOpacity>
 );
 

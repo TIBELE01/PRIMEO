@@ -11,7 +11,7 @@ jest.mock('../../subscriptions/subscriptions.service', () => ({ subscriptionsSer
 jest.mock('../../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
 jest.mock('../../analytics/analytics.service', () => ({ analyticsService: { generateMarketReport: jest.fn() } }));
 jest.mock('../../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/invoice.pdf') }));
-jest.mock('../../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn() } }));
+jest.mock('../../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 
 const mockPrisma: Record<string, any> = {
   booking: { findUnique: jest.fn(), update: jest.fn(async () => ({})) },

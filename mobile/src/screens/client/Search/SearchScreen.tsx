@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet,
-  SafeAreaView, StatusBar, ActivityIndicator, ScrollView, Modal, Platform,
+  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
@@ -12,7 +12,6 @@ import { useAuthStore } from '@store/authStore';
 import type { Property, PropertyType } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { safeJsonParse } from '@/utils/safeJson';
-import { isValidDateStr } from '@/utils/dates';
 import { useDebounce } from '@hooks/useDebounce';
 import { useOffline } from '@hooks/useOffline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,6 +20,7 @@ import { FilterSheet, type FilterValues } from './FilterSheet';
 import { SortSheet } from './SortSheet';
 import { SearchMapView } from './MapView';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
+import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal';
 import { trackEvent } from '../../../services/analytics';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
@@ -41,61 +41,6 @@ const PROPERTY_TYPES: { label: string; value: PropertyType | '' }[] = [
   { label: 'Villas', value: 'villa' },
 ];
 
-// ── Date picker modal (no external lib) ──────────────────────────────────────
-
-function DateModal({
-  visible, title, value, onClose, onSelect,
-}: { visible: boolean; title: string; value: string; onClose: () => void; onSelect: (d: string) => void }) {
-  const [draft, setDraft] = useState(value);
-  // Validation sémantique (pas seulement le format) : rejette 2025-99-99,
-  // 2025-02-30… qui passaient la regex et partaient en 400 côté API.
-  const isValid = isValidDateStr(draft);
-  useEffect(() => { if (visible) setDraft(value); }, [visible, value]);
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={dm.overlay}>
-        <View style={dm.box}>
-          <Text style={dm.title}>{title}</Text>
-          <Text style={dm.hint}>Format : AAAA-MM-JJ</Text>
-          <TextInput
-            style={dm.input}
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="2025-06-15"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numbers-and-punctuation"
-            autoFocus
-          />
-          <View style={dm.actions}>
-            <TouchableOpacity style={dm.cancelBtn} onPress={onClose}>
-              <Text style={dm.cancelText}>Annuler</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[dm.okBtn, !isValid && dm.okBtnDisabled]}
-              onPress={() => { if (isValid) { onSelect(draft); onClose(); } }}
-            >
-              <Text style={dm.okText}>Confirmer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-const dm = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 },
-  box: { backgroundColor: '#fff', borderRadius: 20, padding: 24, gap: 12 },
-  title: { fontSize: 17, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  hint: { fontSize: 12, color: '#6B7280', textAlign: 'center' },
-  input: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14, fontSize: 18, color: '#111827', textAlign: 'center', letterSpacing: 2 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  cancelBtn: { flex: 1, padding: 13, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center' },
-  cancelText: { fontSize: 14, color: '#6B7280', fontWeight: '600' },
-  okBtn: { flex: 1, padding: 13, borderRadius: 12, backgroundColor: '#1056E0', alignItems: 'center' },
-  okBtnDisabled: { opacity: 0.4 },
-  okText: { fontSize: 14, color: '#fff', fontWeight: '700' },
-});
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -288,7 +233,7 @@ export function SearchScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Retour">
+        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={12} accessibilityRole="button" accessibilityLabel="Retour">
           <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={s.headerTitle} accessibilityRole="header">Recherche avancée</Text>
@@ -443,7 +388,7 @@ export function SearchScreen() {
         <FlatList
           testID="search-results"
           data={results}
-          keyExtractor={p => p.id}
+          keyExtractor={(p, i) => p.id ?? String(i)}
           contentContainerStyle={s.list}
           renderItem={({ item, index }) => (
             <PropertyCard
@@ -489,21 +434,19 @@ export function SearchScreen() {
         onSelect={s2 => { setSortBy(s2); setShowSort(false); }}
       />
 
-      {/* Date modals */}
-      {/* Cohérence de plage : une nouvelle arrivée >= départ efface le départ, et inversement */}
-      <DateModal
+      {/* Date modals — calendrier sombre */}
+      <DarkCalendarModal
         visible={showCheckIn}
-        title="Date d'arrivée"
-        value={checkIn}
+        mode="checkin"
         onClose={() => setShowCheckIn(false)}
-        onSelect={(d) => { setCheckIn(d); if (checkOut && d >= checkOut) setCheckOut(''); }}
+        onConfirm={(d) => { setCheckIn(d); if (checkOut && d >= checkOut) setCheckOut(''); }}
       />
-      <DateModal
+      <DarkCalendarModal
         visible={showCheckOut}
-        title="Date de départ"
-        value={checkOut}
+        mode="checkout"
+        existingCheckIn={checkIn || null}
         onClose={() => setShowCheckOut(false)}
-        onSelect={(d) => { setCheckOut(d); if (checkIn && d <= checkIn) setCheckIn(''); }}
+        onConfirm={(d) => { setCheckOut(d); if (checkIn && d <= checkIn) setCheckIn(''); }}
       />
     </SafeAreaView>
   );
@@ -511,9 +454,15 @@ export function SearchScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
-  backArrow: { fontSize: 24, color: '#111827', fontWeight: '300' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, backgroundColor: '#808080',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
+  },
+  backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
+  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111111', textAlign: 'center' },
   searchBox: { backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#E5E7EB', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   inputIcon: { fontSize: 18 },
@@ -554,7 +503,7 @@ const s = StyleSheet.create({
   viewToggleActive: { backgroundColor: '#1056E0' },
   viewToggleText: { fontSize: 12, color: '#1056E0', fontWeight: '600' },
   viewToggleTextActive: { color: '#fff' },
-  list: { padding: 16, gap: 14 },
+  list: { padding: 16, gap: 14, paddingBottom: 80 },
   listCard: { width: '100%' },
   emptyState: { alignItems: 'center', marginTop: 64, gap: 8 },
   emptyIcon: { fontSize: 48 },

@@ -1,8 +1,9 @@
-// SortSheet: bottom sheet for search result sort order
+﻿// SortSheet: bottom sheet for search result sort order
 import React from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  Modal, View, Text, TouchableOpacity, StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SORT_OPTIONS: { key: string; label: string }[] = [
   { key: 'rating', label: 'Mieux notés' },
@@ -48,7 +49,7 @@ export function SortSheet({ visible, onClose, selected, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   cancel: { fontSize: 15, color: '#6B7280', width: 60 },
   title: { fontSize: 16, fontWeight: '700', color: '#111827' },

@@ -1,4 +1,4 @@
-// Éditeur de visite 3D — renomme les pièces et définit les hotspots de
+﻿// Éditeur de visite 3D — renomme les pièces et définit les hotspots de
 // navigation inter-pièces. Chaque hotspot pointe vers une autre pièce, avec un
 // libellé et une direction (cap horizontal en degrés → theta ; horizon par défaut).
 import React, { useCallback, useEffect, useState } from 'react';
@@ -173,7 +173,7 @@ export default function Scene3dEditorScreen({ route }: any) {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F6FB' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F6FB' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { padding: 16, paddingBottom: 40 },
   title: { fontSize: 22, fontWeight: '800', color: '#111827' },

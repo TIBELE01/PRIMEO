@@ -1,4 +1,4 @@
-// ProSettingsScreen — profil / paramètres des comptes professionnels
+﻿// ProSettingsScreen — profil / paramètres des comptes professionnels
 // (résidences, hôtels, immobilier, restaurants). Organisé en sections accordéon
 // (une seule ouverte à la fois) :
 //   Informations professionnelles · Mon compte · Avis et évaluations ·
@@ -326,7 +326,7 @@ export default function ProSettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:   { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   scroll: { paddingBottom: 40, paddingTop: 4 },
 
   headerBand: {

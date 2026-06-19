@@ -1,9 +1,10 @@
-// Modale de réservation de table (restaurants) — date, créneau horaire, couverts.
+﻿// Modale de réservation de table (restaurants) — date, créneau horaire, couverts.
 // Sans paiement : la réservation de table est gratuite et confirmée immédiatement.
 import React, { useMemo, useState } from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, TextInput,
+  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Property } from '@/types/property';
 
 interface Props {
@@ -138,7 +139,7 @@ export function RestaurantReservationModal({ visible, property, color = '#DC2626
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   cancel: { fontSize: 15, color: '#6B7280', width: 60 },
   title: { fontSize: 17, fontWeight: '800', color: '#111827' },

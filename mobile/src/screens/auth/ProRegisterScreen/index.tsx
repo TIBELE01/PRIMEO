@@ -1,10 +1,9 @@
-// Écran d'inscription professionnel en 3 étapes — design premium inspiré WelcomeScreen
+﻿// Écran d'inscription professionnel en 3 étapes — design premium inspiré WelcomeScreen
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ScrollView, ActivityIndicator, Linking,
-  StatusBar,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -296,7 +295,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
 }
 
 const step1Styles = StyleSheet.create({
-  safe:              { flex: 1, backgroundColor: '#F8FAFC' },
+  safe:              { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   scroll:            { flexGrow: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, gap: 16 },
   sectionHeader:     { gap: 6 },
   title:             { fontSize: 22, fontWeight: '800', color: DARK_NAVY, letterSpacing: -0.3 },
@@ -581,7 +580,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
 }
 
 const step2Styles = StyleSheet.create({
-  safe:            { flex: 1, backgroundColor: '#FFFFFF' },
+  safe:            { flex: 1, paddingTop: 16, backgroundColor: '#FFFFFF' },
   scroll:          { flexGrow: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, gap: 16 },
   sectionHeader:   { gap: 6, marginBottom: 4 },
   title:           { fontSize: 22, fontWeight: '800', color: DARK_NAVY, letterSpacing: -0.3 },
@@ -859,7 +858,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
 }
 
 const step3Styles = StyleSheet.create({
-  safe:          { flex: 1, backgroundColor: '#FFFFFF' },
+  safe:          { flex: 1, paddingTop: 16, backgroundColor: '#FFFFFF' },
   scroll:        { flexGrow: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, gap: 16 },
   sectionHeader: { gap: 6, marginBottom: 4 },
   title:         { fontSize: 22, fontWeight: '800', color: DARK_NAVY, letterSpacing: -0.3 },

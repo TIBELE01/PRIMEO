@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import {
   View,
   Text,
@@ -57,12 +58,12 @@ function formatDate(iso: string): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function formatAmount(n: number): string {
-  return `${n.toLocaleString('fr-CI')} FCFA`;
+function formatAmount(n?: number | null): string {
+  return `${(n ?? 0).toLocaleString('fr-CI')} FCFA`;
 }
 
-function getInitials(first: string, last: string): string {
-  return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+function getInitials(first?: string | null, last?: string | null): string {
+  return `${(first ?? '').charAt(0)}${(last ?? '').charAt(0)}`.toUpperCase() || '?';
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -288,6 +289,8 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
       style={styles.card}
       activeOpacity={0.85}
       onPress={() => navigation.navigate('BookingDetail', { bookingId: booking.id })}
+      accessibilityRole="button"
+      accessibilityLabel={`Voir la réservation de ${booking.client.firstName} ${booking.client.lastName}`}
     >
       {/* Unrated indicator for completed bookings */}
       {tab === 'history' && booking.status === 'completed' && !isRated && (
@@ -397,6 +400,8 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
           style={styles.profileToggle}
           onPress={(e) => { e.stopPropagation?.(); handleToggleProfile(); }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={profileExpanded ? 'Masquer le profil client' : 'Voir le profil client'}
         >
           <Ionicons name="person-circle-outline" size={14} color="#2563EB" />
           <Text style={styles.profileToggleText}>
@@ -463,6 +468,8 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
                   key={r.key}
                   style={[styles.reasonChip, reportReason === r.key && styles.reasonChipActive]}
                   onPress={() => setReportReason(r.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={r.label}
                 >
                   <Text style={[styles.reasonChipText, reportReason === r.key && styles.reasonChipTextActive]}>{r.label}</Text>
                 </TouchableOpacity>
@@ -481,10 +488,10 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
             />
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setReportVisible(false)} disabled={reportSubmitting}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setReportVisible(false)} disabled={reportSubmitting} accessibilityRole="button" accessibilityLabel="Annuler le signalement">
                 <Text style={styles.modalCancelText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalConfirm, reportSubmitting && { opacity: 0.6 }]} onPress={submitReport} disabled={reportSubmitting}>
+              <TouchableOpacity style={[styles.modalConfirm, reportSubmitting && { opacity: 0.6 }]} onPress={submitReport} disabled={reportSubmitting} accessibilityRole="button" accessibilityLabel="Envoyer le signalement">
                 {reportSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalConfirmText}>Envoyer le signalement</Text>}
               </TouchableOpacity>
             </View>
@@ -512,6 +519,8 @@ function ActionButton({ label, color, loading, onPress, icon }: ActionButtonProp
       onPress={onPress}
       disabled={loading}
       activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       {loading ? (
         <ActivityIndicator size="small" color={color} />
@@ -608,10 +617,7 @@ export default function BookingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Réservations</Text>
-      </View>
+      <PageHeader title="Réservations" />
 
       {/* Tabs */}
       <View style={styles.tabBar}>
@@ -621,6 +627,9 @@ export default function BookingsScreen() {
             style={[styles.tabItem, activeTab === tab.key && { ...styles.tabItemActive, borderBottomColor: theme.primary }]}
             onPress={() => setActiveTab(tab.key)}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={tab.label}
+            accessibilityState={{ selected: activeTab === tab.key }}
           >
             <Text
               style={[
@@ -706,18 +715,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111827',
-  },
 
   // Tabs
   tabBar: {
@@ -776,6 +773,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 12,
+    paddingBottom: 80,
   },
   centerContainer: {
     flex: 1,

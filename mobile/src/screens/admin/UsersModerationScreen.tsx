@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl, Image, Modal, TextInput, Alert,
@@ -227,7 +227,7 @@ function KycDetailModal({
         {/* Header */}
         <View style={det.header}>
           <TouchableOpacity onPress={onClose} style={det.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color="#111111" />
           </TouchableOpacity>
           <Text style={det.headerTitle} numberOfLines={1}>
             {user.firstName} {user.lastName}
@@ -414,7 +414,7 @@ export default function UsersModerationScreen() {
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color="#111111" />
         </TouchableOpacity>
         <View style={s.headerText}>
           <Text style={s.title}>Modération KYC</Text>
@@ -484,7 +484,7 @@ export default function UsersModerationScreen() {
                 {/* Avatar */}
                 <View style={[s.avatar, { backgroundColor: (ACCOUNT_TYPE_COLOR[getAccountType(user)] ?? '#1056E0') + '20' }]}>
                   <Text style={[s.avatarText, { color: ACCOUNT_TYPE_COLOR[getAccountType(user)] ?? '#1056E0' }]}>
-                    {(user.firstName[0] ?? '?').toUpperCase()}
+                    {(user.firstName?.[0] ?? '?').toUpperCase()}
                   </Text>
                 </View>
 
@@ -542,12 +542,12 @@ export default function UsersModerationScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  safe:          { flex: 1, backgroundColor: '#F8FAFC' },
-  header:        { backgroundColor: '#1056E0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12 },
+  safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
+  header:        { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:       { padding: 4 },
   headerText:    { flex: 1 },
-  title:         { fontSize: 18, fontWeight: '800', color: '#fff' },
-  subtitle:      { fontSize: 12, color: '#BFDBFE', marginTop: 1 },
+  title:         { fontSize: 18, fontWeight: '800', color: '#111111' },
+  subtitle:      { fontSize: 12, color: '#6B7280', marginTop: 1 },
   searchWrap:    { flexDirection: 'row', alignItems: 'center', margin: 12, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E5E7EB', gap: 8 },
   searchIcon:    {},
   searchInput:   { flex: 1, fontSize: 14, color: '#111827' },
@@ -577,10 +577,10 @@ const s = StyleSheet.create({
 });
 
 const det = StyleSheet.create({
-  safe:       { flex: 1, backgroundColor: '#F8FAFC' },
-  header:     { backgroundColor: '#1056E0', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12 },
+  safe:       { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
+  header:     { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:    { padding: 4 },
-  headerTitle:{ flex: 1, fontSize: 17, fontWeight: '800', color: '#fff' },
+  headerTitle:{ flex: 1, fontSize: 17, fontWeight: '800', color: '#111111' },
   statusBadge:{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   statusText: { fontSize: 11, fontWeight: '700' },
   section:    { margin: 12, backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },

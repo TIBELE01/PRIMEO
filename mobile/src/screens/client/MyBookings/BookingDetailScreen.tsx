@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, ScrollView, Image, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert, Modal, TextInput,
+  View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
@@ -80,7 +80,7 @@ const PAYMENT_OPTION_LABELS_RESTAURANT: Record<PaymentOption, string> = {
   zero_online: 'Gratuit — aucun prépaiement',
 };
 
-const fmt = (n: number) => n.toLocaleString('fr-CI') + ' FCFA';
+const fmt = (n?: number | null) => (n ?? 0).toLocaleString('fr-CI') + ' FCFA';
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('fr-CI', { day: 'numeric', month: 'long', year: 'numeric' });
 }
@@ -544,10 +544,15 @@ const styles = StyleSheet.create({
   retryBtnText: { color: '#fff', fontWeight: '600' },
 
   // Header
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, backgroundColor: '#808080',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
+  },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backArrow: { fontSize: 26, color: '#111827', fontWeight: '300' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: '#111111', textAlign: 'center' },
 
   scrollContent: { paddingBottom: 16 },
   heroImage: { width: '100%', height: 220 },

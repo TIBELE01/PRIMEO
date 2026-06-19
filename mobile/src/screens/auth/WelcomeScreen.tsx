@@ -1,9 +1,9 @@
-// WelcomeScreen — premium redesign: dark hero, brand identity, floating bottom card
+﻿// WelcomeScreen — premium redesign: dark hero, brand identity, floating bottom card
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, Dimensions, StatusBar, Image,
+  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LottieView = require('lottie-react-native').default as React.ComponentType<{
   source: unknown; autoPlay?: boolean; loop?: boolean; style?: unknown; accessibilityLabel?: string;
@@ -102,7 +102,7 @@ export function WelcomeScreen({ navigation }: Props) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#040C1F' },
-  safe:      { flex: 1, justifyContent: 'space-between' },
+  safe:      { flex: 1, paddingTop: 16, justifyContent: 'space-between' },
 
   // Background ambient glows
   glowTop: {

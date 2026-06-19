@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import {
   View,
   Text,
@@ -50,8 +51,8 @@ type Period = '7d' | '30d' | '90d' | '1y';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatNumber(n: number): string {
-  return n.toLocaleString('fr-CI');
+function formatNumber(n?: number | null): string {
+  return (n ?? 0).toLocaleString('fr-CI');
 }
 
 function formatPercent(n: number): string {
@@ -253,7 +254,7 @@ function LockedScreen({ onUpgrade }: { onUpgrade: () => void }) {
         <Text style={styles.lockedDesc}>
           Vues détaillées, taux de clics, conversion, comparaison marché et suggestions de prix
         </Text>
-        <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Passer à l'offre Prestige">
           <Ionicons name="arrow-up-circle" size={18} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.upgradeBtnText}>Passer à Prestige</Text>
         </TouchableOpacity>
@@ -369,6 +370,7 @@ export default function AnalyticsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <PageHeader title="Statistiques" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -380,11 +382,6 @@ export default function AnalyticsScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Statistiques avancées</Text>
-          <Text style={styles.subtitle}>Analyse détaillée de vos annonces</Text>
-        </View>
 
         {/* ── Period selector ───────────────────────────────────────────── */}
         <View style={styles.periodRow}>
@@ -394,6 +391,9 @@ export default function AnalyticsScreen() {
               style={[styles.periodChip, period === p && { ...styles.periodChipActive, backgroundColor: theme.primary, borderColor: theme.primary }]}
               onPress={() => setPeriod(p)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={PERIOD_LABELS[p]}
+              accessibilityState={{ selected: period === p }}
             >
               <Text style={[styles.periodChipText, period === p && styles.periodChipTextActive]}>
                 {PERIOD_LABELS[p]}
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F5F5' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   centeredBlock: { paddingVertical: 60, alignItems: 'center' },
-  scroll: { padding: 16, paddingBottom: 48 },
+  scroll: { padding: 16, paddingBottom: 80 },
 
   // Header
   header: { marginBottom: 16 },

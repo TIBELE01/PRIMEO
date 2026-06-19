@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+﻿import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 
 const LABELS: Record<string, string> = {
@@ -92,7 +93,7 @@ export default function PendingValidationScreen() {
 }
 
 const s = StyleSheet.create({
-  safe:          { flex: 1, backgroundColor: '#F9FAFB' },
+  safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   content:       { padding: 24, gap: 20, paddingBottom: 40, alignItems: 'center' },
   iconWrap:      { width: 96, height: 96, borderRadius: 48, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', marginTop: 20 },
   iconWrapError: { backgroundColor: '#FEE2E2' },

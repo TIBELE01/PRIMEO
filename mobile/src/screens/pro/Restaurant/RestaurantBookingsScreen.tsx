@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { PageHeader } from '../../../components/layout/PageHeader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,8 +44,8 @@ function formatDate(iso: string): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function getInitials(first: string, last: string): string {
-  return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+function getInitials(first?: string | null, last?: string | null): string {
+  return `${(first ?? '').charAt(0)}${(last ?? '').charAt(0)}`.toUpperCase() || '?';
 }
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -385,11 +386,7 @@ export default function RestaurantBookingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.screenHeader}>
-        <Text style={styles.screenTitle}>Réservations</Text>
-        <Text style={styles.screenSubtitle}>Gestion des tables</Text>
-      </View>
+      <PageHeader title="Réservations" />
 
       {/* Tabs */}
       <View style={styles.tabBar}>
@@ -466,16 +463,6 @@ export default function RestaurantBookingsScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
 
-  screenHeader: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  screenTitle: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  screenSubtitle: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-
   // Tabs
   tabBar: {
     flexDirection: 'row',
@@ -510,7 +497,7 @@ const styles = StyleSheet.create({
 
   // Content
   scrollView: { flex: 1 },
-  scrollContent: { padding: 16, gap: 12 },
+  scrollContent: { padding: 16, gap: 12, paddingBottom: 80 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: '#6B7280' },
   emptyContainer: {

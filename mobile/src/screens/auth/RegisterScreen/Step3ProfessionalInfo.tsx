@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { RegistrationData } from './index';
 
@@ -124,7 +125,7 @@ export function Step3ProfessionalInfo({ data, onUpdate, onNext, onBack, currentS
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:         { flex: 1, backgroundColor: t.colors.background },
+    safe:         { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     progressTrack:{ height: 4, backgroundColor: t.colors.border },
     progressFill: { height: '100%', backgroundColor: t.colors.primary, borderRadius: 2 },
     scroll:       { flexGrow: 1, padding: 24, gap: 24, paddingBottom: 40 },

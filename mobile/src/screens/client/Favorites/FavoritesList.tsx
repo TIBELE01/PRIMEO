@@ -18,7 +18,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({ favorites, onPrope
   return (
     <FlatList
       data={favorites}
-      keyExtractor={f => f.id}
+      keyExtractor={(f, i) => f.id ?? String(i)}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
         <PropertyCard property={item} onPress={() => onPropertyPress(item.id)} onFavorite={() => onRemoveFavorite(item.id)} isFavorite />

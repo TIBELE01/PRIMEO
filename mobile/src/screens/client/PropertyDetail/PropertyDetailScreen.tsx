@@ -1,12 +1,13 @@
-// Fiche détail propriété — moteur partagé hébergements, hôtels, restaurants
+﻿// Fiche détail propriété — moteur partagé hébergements, hôtels, restaurants
 // et immobilier. Carousel + en-tête thématique (prix gauche / action droite) +
 // sections accordéon adaptées au type (seule "Caractéristiques" ouverte par défaut).
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, ActivityIndicator, Share, Alert,
+  StatusBar, ActivityIndicator, Share, Alert,
   ImageBackground, Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
@@ -654,7 +655,7 @@ export function PropertyDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F4F5F7' },
+  safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F5F7' },
   cacheNotice: { backgroundColor: '#FEF3C7', paddingVertical: 6, paddingHorizontal: 14 },
   cacheNoticeText: { fontSize: 12, color: '#92400E', fontWeight: '500' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', gap: 12 },
