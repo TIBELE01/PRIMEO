@@ -81,15 +81,24 @@ Le `datasource db` de `backend/prisma/schema.prisma` référence les deux :
 
 ### `primeo-api` (backend)
 
-Valeurs **non secrètes déjà fixées** dans `render.yaml` :
-`NODE_ENV=production`, `ALLOW_DEV_ADMIN_SEED=false`, `COOKIE_SECURE=true`,
-`COOKIE_SAMESITE=none`, `SKIP_OTP_VERIFICATION=false`, `MAINTENANCE_MODE=false`,
+**Toutes** les variables du backend sont en `sync: false` : aucune valeur n'est
+stockée dans `render.yaml`, tout est saisi dans le dashboard Render (ou au
+« Apply » du Blueprint). Valeurs recommandées pour les variables non secrètes :
+`NODE_ENV=production`, `ALLOW_DEV_ADMIN_SEED=false`, `SKIP_OTP_VERIFICATION=false`,
+`MAINTENANCE_MODE=false`, `COOKIE_SECURE=true`, `COOKIE_SAMESITE=none`,
 `SOCKET_IO_REDIS_ENABLED=false`, `EXCHANGERATE_BASE_CURRENCY=XOF`, `CORS_ORIGINS=…`.
 
-> `PORT` est **injecté automatiquement par Render** — ne pas le définir.
-> Le backend écoute sur `process.env.PORT` (cf. `server.listen(env.PORT)`).
+> `PORT` : Render l'**injecte automatiquement** ; le backend écoute sur
+> `process.env.PORT` (`server.listen(env.PORT)`). La clé est listée dans
+> `render.yaml`, mais **ne la laissez pas vide** — soit vous ne la renseignez
+> pas du tout (Render fournit la valeur), soit vous mettez `10000`.
 
-À renseigner dans le dashboard (`sync: false`) :
+> `JWT_SECRET` / `JWT_REFRESH_SECRET` / `EMAIL_LOGO_URL` sont présentes par
+> sécurité/compat : l'authentification actuelle repose sur **Supabase Auth**,
+> donc ces variables ne sont pas lues par le backend (zod ignore les clés
+> inconnues). Les laisser vides est sans effet.
+
+Variables à renseigner (toutes `sync: false`) :
 
 | Groupe | Variables | Obligatoire |
 |---|---|---|
@@ -130,10 +139,11 @@ Sites statiques — **aucune variable d'environnement** requise.
 ## 4. Détails de build par service
 
 ### Backend (`primeo-api`)
-- **Build** : `npm install --include=dev && npx prisma generate && npm run build`
+- **Build** : `npm install --include=dev && npx prisma generate && npx tsc -p tsconfig.build.json`
   - `--include=dev` force l'installation des devDependencies (`prisma`,
     `typescript`) même quand Render fixe `NODE_ENV=production` au build.
-  - `npm run build` = `tsc -p tsconfig.build.json` → sortie dans `dist/`.
+  - `tsc -p tsconfig.build.json` (= `npm run build`) compile `src/` → `dist/`
+    en excluant les tests.
 - **Pre-deploy** : `npx prisma migrate deploy` (applique les migrations *après*
   le build, *avant* la bascule du trafic).
 - **Start** : `npm start` = `node dist/main.js`.
