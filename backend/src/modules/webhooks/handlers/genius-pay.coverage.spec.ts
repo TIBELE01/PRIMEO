@@ -2,7 +2,7 @@
 // remboursement, et aiguillage des événements webhook.
 jest.mock('../../../config/env.config', () => ({ env: { FRONTEND_URL: 'http://app.test' } }));
 jest.mock('../../../common/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
-jest.mock('../../../common/utils/mailer', () => ({ sendBookingConfirmationEmail: jest.fn(async () => undefined), sendTemplateEmail: jest.fn(async () => undefined) }));
+jest.mock('../../../common/utils/mailer', () => ({ sendBookingConfirmationEmail: jest.fn(async () => undefined), sendTemplateEmail: jest.fn(async () => undefined), sendBookingInvoiceEmail: jest.fn(async () => undefined) }));
 jest.mock('../../../common/utils/push', () => ({ sendPushNotification: jest.fn(async () => undefined) }));
 jest.mock('../../../common/utils/sms', () => ({ sendSms: jest.fn(async () => undefined) }));
 jest.mock('../../../config/brevo.config', () => ({ brevoConfig: { templates: { bookingConfirmation: 3, bookingCancellation: 4 } } }));
@@ -10,7 +10,7 @@ jest.mock('../../boosts/boosts.service', () => ({ boostsService: { activatePaidB
 jest.mock('../../subscriptions/subscriptions.service', () => ({ subscriptionsService: { applyPaidPlanChange: jest.fn() } }));
 jest.mock('../../referrals/referrals.service', () => ({ referralsService: { triggerReward: jest.fn(async () => undefined) } }));
 jest.mock('../../analytics/analytics.service', () => ({ analyticsService: { generateMarketReport: jest.fn() } }));
-jest.mock('../../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/invoice.pdf') }));
+jest.mock('../../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/invoice.pdf'), formatBookingInvoiceRef: jest.fn(() => 'FAC-2026-06-TEST') }));
 jest.mock('../../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 
 const mockPrisma: Record<string, any> = {

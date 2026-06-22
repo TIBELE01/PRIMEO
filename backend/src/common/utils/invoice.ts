@@ -24,8 +24,22 @@ export async function generateAndUploadInvoice(data: InvoiceData): Promise<strin
 
 // ── Factures de réservation ────────────────────────────────────────────────
 
+/**
+ * Numéro de facture unique et déterministe au format FAC-YYYY-MM-XXXX
+ * (XXXX = 4 derniers caractères de l'identifiant de réservation, en majuscules).
+ * Déterministe → la même réservation produit toujours le même numéro.
+ */
+export function formatBookingInvoiceRef(date: Date, bookingId: string): string {
+  // UTC pour un numéro stable quel que soit le fuseau du serveur.
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const suffix = (bookingId.replace(/[^a-zA-Z0-9]/g, '').slice(-4) || '0000').toUpperCase();
+  return `FAC-${y}-${m}-${suffix}`;
+}
+
 export interface BookingInvoiceData {
   invoiceNumber: string; // identifiant de réservation (ou court)
+  invoiceRef?: string;   // numéro de facture unique FAC-YYYY-MM-XXXX
   invoiceDate: Date;
   customerName: string;
   customerEmail: string;
@@ -85,8 +99,10 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
     }
 
     // ── Métadonnées ───────────────────────────────────────────────────────────
-    doc.fillColor(textMuted).fontSize(9).font('Helvetica').text('N° de réservation', 50, 148);
-    doc.fillColor(textDark).fontSize(10).font('Helvetica-Bold').text(data.invoiceNumber, 50, 160);
+    const invoiceRef = data.invoiceRef ?? data.invoiceNumber;
+    doc.fillColor(textMuted).fontSize(9).font('Helvetica').text('N° de facture', 50, 148);
+    doc.fillColor(textDark).fontSize(10).font('Helvetica-Bold').text(invoiceRef, 50, 160);
+    doc.fillColor(textMuted).fontSize(8).font('Helvetica').text(`Réf. réservation : ${data.invoiceNumber}`, 50, 174);
 
     doc.fillColor(textMuted).fontSize(9).font('Helvetica').text('Date', 250, 148);
     doc

@@ -15,7 +15,7 @@ jest.mock('./services/pricing.service', () => ({ pricingService: { compute: jest
 jest.mock('./services/cancellation.service', () => ({ cancellationService: { computeRefund: jest.fn() } }));
 jest.mock('../payments/services/genius-pay.service', () => ({ geniusPayService: { initiatePayment: jest.fn() } }));
 jest.mock('../webhooks/handlers/genius-pay.handler', () => ({
-  processSuccessfulPayment: jest.fn(), processFailedPayment: jest.fn(), ensureBookingInvoice: jest.fn(async () => null),
+  processSuccessfulPayment: jest.fn(), processFailedPayment: jest.fn(), ensureBookingInvoice: jest.fn(async () => null), emailBookingInvoice: jest.fn(async () => undefined),
 }));
 jest.mock('../notifications/notifications.service', () => ({
   notificationsService: { notify: jest.fn(async () => undefined) },

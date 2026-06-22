@@ -224,7 +224,7 @@ export const websiteService = {
 
   // Testimonials
   listTestimonials: () => api.get<any[]>('/website/admin/testimonials'),
-  createTestimonial: (d: { name: string; rating: number; text: string }) =>
+  createTestimonial: (d: { name: string; rating: number; text: string; role?: string }) =>
     api.post('/website/admin/testimonials', d),
   updateTestimonial: (id: string, d: object) => api.put(`/website/admin/testimonials/${id}`, d),
   uploadTestimonialPhoto: (id: string, file: File) => {
@@ -331,6 +331,8 @@ export const websiteService = {
   // Blog — Newsletter
   listNewsletterSubscribers: (page = 1, limit = 50) =>
     api.get<any>('/website/admin/blog/newsletter', { page, limit }),
+  updateNewsletterSubscriberStatus: (id: string, status: string) =>
+    api.put(`/website/admin/blog/newsletter/${id}/status`, { status }),
   deleteNewsletterSubscriber: (id: string) =>
     api.delete(`/website/admin/blog/newsletter/${id}`),
   exportNewsletterUrl: () => {

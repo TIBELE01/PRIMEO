@@ -10,13 +10,14 @@ import Link from 'next/link';
 interface Testimonial {
   id: string;
   name: string;
+  role?: string;
   rating: number;
   text: string;
   photoUrl?: string;
   active: boolean;
   sortOrder: number;
 }
-interface TestimonialFormValues { name: string; rating: number; text: string; }
+interface TestimonialFormValues { name: string; role: string; rating: number; text: string; }
 
 function StarRating({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
@@ -37,7 +38,7 @@ function TestimonialForm({ initial, onSave, onCancel }: {
   onCancel: () => void;
 }) {
   const { register, handleSubmit, control, watch, formState: { errors } } = useForm<TestimonialFormValues>({
-    defaultValues: { name: initial?.name || '', rating: initial?.rating ?? 5, text: initial?.text || '' },
+    defaultValues: { name: initial?.name || '', role: initial?.role || '', rating: initial?.rating ?? 5, text: initial?.text || '' },
   });
   const text = watch('text');
   return (
@@ -58,6 +59,14 @@ function TestimonialForm({ initial, onSave, onCancel }: {
             <StarRating value={field.value} onChange={field.onChange} />
           )} />
         </div>
+      </div>
+      <div>
+        <label className="text-xs font-semibold text-gray-600">Rôle / fonction (optionnel)</label>
+        <input
+          className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Propriétaire, Cliente, Hôtelier…"
+          {...register('role')}
+        />
       </div>
       <div>
         <label className="text-xs font-semibold text-gray-600">Témoignage (100–150 caractères recommandés)</label>
@@ -156,6 +165,7 @@ export default function TestimonialsPage() {
                         ))}
                       </div>
                     </div>
+                    {item.role && <p className="text-xs text-gray-400 mt-0.5">{item.role}</p>}
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">"{item.text}"</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">

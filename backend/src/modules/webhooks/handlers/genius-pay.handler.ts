@@ -2,7 +2,7 @@
 import type { Transaction } from '@prisma/client';
 import { prisma } from '../../../database/prisma.service';
 import { logger } from '../../../common/utils/logger';
-import { sendBookingConfirmationEmail, sendTemplateEmail } from '../../../common/utils/mailer';
+import { sendBookingConfirmationEmail, sendTemplateEmail, sendBookingInvoiceEmail } from '../../../common/utils/mailer';
 import { sendPushNotification } from '../../../common/utils/push';
 import { sendSms } from '../../../common/utils/sms';
 import { brevoConfig } from '../../../config/brevo.config';
@@ -11,7 +11,7 @@ import { boostsService } from '../../boosts/boosts.service';
 import { subscriptionsService } from '../../subscriptions/subscriptions.service';
 import { referralsService } from '../../referrals/referrals.service';
 import { analyticsService } from '../../analytics/analytics.service';
-import { generateAndUploadBookingInvoice } from '../../../common/utils/invoice';
+import { generateAndUploadBookingInvoice, formatBookingInvoiceRef } from '../../../common/utils/invoice';
 import { messagingService } from '../../messaging/messaging.service';
 
 // ── Génération de facture ─────────────────────────────────────────────────────
@@ -41,10 +41,13 @@ export async function ensureBookingInvoice(bookingId: string): Promise<string | 
     ? `${booking.property.title} — Réservation de table · ${booking.guests} couvert${booking.guests > 1 ? 's' : ''}`
     : `${booking.property.title} — ${nights} nuit${nights > 1 ? 's' : ''}`;
 
+  // Date d'émission stable (confirmedAt sinon createdAt) → numéro de facture déterministe.
+  const issueDate = booking.confirmedAt ?? booking.createdAt ?? new Date();
   try {
     const url = await generateAndUploadBookingInvoice({
       invoiceNumber: booking.id.slice(0, 8).toUpperCase(),
-      invoiceDate: new Date(),
+      invoiceRef: formatBookingInvoiceRef(issueDate, booking.id),
+      invoiceDate: issueDate,
       customerName: `${booking.client.firstName} ${booking.client.lastName}`.trim(),
       customerEmail: booking.client.email,
       propertyTitle: booking.property.title,
@@ -64,6 +67,29 @@ export async function ensureBookingInvoice(bookingId: string): Promise<string | 
     logger.warn(`Échec génération facture réservation ${bookingId}`, err);
     return null;
   }
+}
+
+// Génère la facture (si nécessaire) puis l'envoie au client par email (lien + PDF
+// en pièce jointe). Idempotent côté génération (réutilise booking.invoiceUrl).
+export async function emailBookingInvoice(bookingId: string): Promise<void> {
+  const url = await ensureBookingInvoice(bookingId);
+  if (!url) return;
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      client: { select: { firstName: true, lastName: true, email: true } },
+      property: { select: { title: true } },
+    },
+  });
+  if (!booking?.client?.email) return;
+  const issueDate = booking.confirmedAt ?? booking.createdAt ?? new Date();
+  await sendBookingInvoiceEmail({
+    to: [{ email: booking.client.email, name: `${booking.client.firstName} ${booking.client.lastName}`.trim() }],
+    firstName: booking.client.firstName,
+    propertyTitle: booking.property.title,
+    invoiceRef: formatBookingInvoiceRef(issueDate, bookingId),
+    invoiceUrl: url,
+  }).catch((err) => logger.warn(`Envoi email facture échoué pour ${bookingId}`, err));
 }
 
 // ── Availability blocking ─────────────────────────────────────────────────────
@@ -152,6 +178,10 @@ async function notifyBookingConfirmed(bookingId: string): Promise<void> {
     guests: booking.guests,
     invoiceUrl,
   }).catch((err) => logger.warn('Booking confirmation email to client failed', err));
+
+  // Email dédié « facture » au client : lien + PDF en pièce jointe (indépendant
+  // du template Brevo, donc garanti de contenir la facture).
+  await emailBookingInvoice(bookingId).catch((err) => logger.warn('Booking invoice email failed', err));
 
   // Email to professional (nouvelle réservation reçue — template pro dédié)
   await sendTemplateEmail(

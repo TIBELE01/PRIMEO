@@ -41,10 +41,10 @@ const DEFAULT_WHY = [
 ];
 
 const DEFAULT_TESTIMONIALS = [
-  { id: 'default-1', name: 'Ama Konan', rating: 5, text: "Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple.", photoUrl: null, sortOrder: 0 },
-  { id: 'default-2', name: 'Jean-Baptiste Koffi', rating: 5, text: "Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60% à 90% en un mois !", photoUrl: null, sortOrder: 1 },
-  { id: 'default-3', name: 'Marie Touré', rating: 4, text: "Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps.", photoUrl: null, sortOrder: 2 },
-  { id: 'default-4', name: 'David Assi', rating: 5, text: "La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement. Incroyable gain de temps.", photoUrl: null, sortOrder: 3 },
+  { id: 'default-1', name: 'Ama Konan', role: 'Cliente', rating: 5, text: "Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple.", photoUrl: null, sortOrder: 0 },
+  { id: 'default-2', name: 'Jean-Baptiste Koffi', role: 'Propriétaire', rating: 5, text: "Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60% à 90% en un mois !", photoUrl: null, sortOrder: 1 },
+  { id: 'default-3', name: 'Marie Touré', role: 'Cliente', rating: 4, text: "Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps.", photoUrl: null, sortOrder: 2 },
+  { id: 'default-4', name: 'David Assi', role: 'Hôtelier', rating: 5, text: "La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement. Incroyable gain de temps.", photoUrl: null, sortOrder: 3 },
 ];
 
 const DEFAULT_SOLUTIONS_INTRO = {
@@ -414,12 +414,12 @@ export const websiteService = {
     return prisma.websiteTestimonial.findMany({ orderBy: { sortOrder: 'asc' } });
   },
 
-  async createTestimonial(data: { name: string; rating: number; text: string }) {
+  async createTestimonial(data: { name: string; rating: number; text: string; role?: string | null }) {
     const max = await prisma.websiteTestimonial.aggregate({ _max: { sortOrder: true } });
     return prisma.websiteTestimonial.create({ data: { ...data, sortOrder: (max._max.sortOrder ?? -1) + 1 } });
   },
 
-  async updateTestimonial(id: string, data: Partial<{ name: string; rating: number; text: string; active: boolean }>) {
+  async updateTestimonial(id: string, data: Partial<{ name: string; role: string | null; rating: number; text: string; active: boolean }>) {
     await this._requireTestimonial(id);
     return prisma.websiteTestimonial.update({ where: { id }, data });
   },
@@ -1287,7 +1287,14 @@ export const websiteService = {
 
   async subscribeNewsletter(email: string) {
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
-    if (existing) throw createHttpError(409, 'Cet email est déjà abonné.');
+    if (existing) {
+      // Réabonnement d'un email précédemment désactivé → on le réactive.
+      if (existing.status === 'disabled') {
+        await prisma.newsletterSubscriber.update({ where: { id: existing.id }, data: { status: 'active' } });
+        return existing;
+      }
+      throw createHttpError(409, 'Cet email est déjà abonné.');
+    }
     const sub = await prisma.newsletterSubscriber.create({ data: { email } });
     await sendEmail({
       to: [{ email }],
@@ -1425,13 +1432,21 @@ export const websiteService = {
 
   async adminExportNewsletterSubscribers() {
     const rows = await prisma.newsletterSubscriber.findMany({ orderBy: { subscribedAt: 'desc' } });
-    const headers = ['Email', 'Date abonnement', 'Confirmé'];
+    const headers = ['Email', 'Date abonnement', 'Confirmé', 'Statut'];
     const lines = rows.map((s) => [
       s.email,
       new Date(s.subscribedAt).toLocaleString('fr-FR'),
       s.confirmedAt ? new Date(s.confirmedAt).toLocaleDateString('fr-FR') : 'Non',
+      s.status === 'disabled' ? 'Désactivé' : 'Actif',
     ]);
     return [headers, ...lines].map((r) => r.map((v) => `"${v}"`).join(',')).join('\n');
+  },
+
+  async adminUpdateNewsletterSubscriberStatus(id: string, status: string) {
+    const normalized = status === 'disabled' ? 'disabled' : 'active';
+    const row = await prisma.newsletterSubscriber.findUnique({ where: { id } });
+    if (!row) throw createHttpError(404, 'Abonné introuvable');
+    return prisma.newsletterSubscriber.update({ where: { id }, data: { status: normalized } });
   },
 
   async adminDeleteNewsletterSubscriber(id: string) {

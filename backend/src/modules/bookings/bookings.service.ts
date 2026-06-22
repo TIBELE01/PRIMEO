@@ -12,6 +12,7 @@ import {
   processSuccessfulPayment,
   processFailedPayment,
   ensureBookingInvoice,
+  emailBookingInvoice,
 } from '../webhooks/handlers/genius-pay.handler';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
@@ -177,8 +178,9 @@ export const bookingsService = {
       }).catch(
         (err) => logger.warn(`Notification réservation confirmée échouée pour ${booking.id}`, err),
       );
-      void ensureBookingInvoice(booking.id).catch(
-        (err) => logger.warn(`Pré-génération facture échouée pour ${booking.id}`, err),
+      // Génère la facture PDF ET l'envoie au client par email (lien + pièce jointe).
+      void emailBookingInvoice(booking.id).catch(
+        (err) => logger.warn(`Facture (génération/email) échouée pour ${booking.id}`, err),
       );
       // Message structuré d'ouverture de la discussion (détails complets de la réservation)
       void messagingService.saveAutoBookingMessage(booking.id).catch(

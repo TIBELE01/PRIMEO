@@ -280,6 +280,18 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 7B — PARTENAIRES (chargés dynamiquement depuis l'API)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section partners-section" id="partners-section" hidden>
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Nos partenaires</h2>
+        </div>
+        <div class="partners-row" id="partners-row"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
          SECTION 8 — TÉLÉCHARGEMENT (simplified)
          ═══════════════════════════════════════════════════════════════════ -->
     <section class="section download-section">
@@ -292,6 +304,33 @@
         </div>
       </div>
     </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION 9 — BULLETIN D'INFORMATION (newsletter)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="section newsletter-section">
+      <div class="container">
+        <div class="newsletter-inner reveal">
+          <div class="section-header">
+            <h2>Bulletin d'information</h2>
+            <p>Recevez les nouveautés, offres exclusives et conseils Primeo directement dans votre boîte mail.</p>
+          </div>
+          <form id="newsletter-form" class="newsletter-form" novalidate>
+            <input
+              type="email"
+              id="newsletter-email"
+              class="newsletter-input"
+              placeholder="Votre adresse email"
+              required
+              autocomplete="email"
+              aria-label="Votre adresse email"
+            />
+            <button type="submit" class="newsletter-btn" id="newsletter-submit">S'abonner</button>
+          </form>
+          <p class="newsletter-msg" id="newsletter-msg" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div id="footer-placeholder"></div>
@@ -299,5 +338,104 @@
   <script src="./assets/js/main.js" data-base="."></script>
   <script src="./assets/js/api.js"></script>
   <script src="./assets/js/home.js"></script>
+
+  <!-- Partenaires — chargement dynamique depuis l'API (/about/partners) -->
+  <script>
+    (function () {
+      var row = document.getElementById('partners-row');
+      var section = document.getElementById('partners-section');
+      if (!row || !section || !window.PrimeoApi || typeof window.PrimeoApi.getAboutPartners !== 'function') return;
+
+      window.PrimeoApi.getAboutPartners()
+        .then(function (list) {
+          var partners = Array.isArray(list) ? list : [];
+          if (!partners.length) return; // pas de partenaires → la section reste masquée
+          var frag = document.createDocumentFragment();
+          partners.forEach(function (p) {
+            if (!p) return;
+            var inner;
+            if (p.logoUrl) {
+              inner = document.createElement('img');
+              inner.className = 'partner-logo';
+              inner.src = p.logoUrl;
+              inner.alt = p.name || 'Partenaire';
+              inner.loading = 'lazy';
+            } else {
+              inner = document.createElement('span');
+              inner.className = 'partner-name';
+              inner.textContent = p.name || '';
+            }
+            var item;
+            if (p.url) {
+              item = document.createElement('a');
+              item.href = p.url;
+              item.target = '_blank';
+              item.rel = 'noopener noreferrer';
+            } else {
+              item = document.createElement('div');
+            }
+            item.className = 'partner-item';
+            item.appendChild(inner);
+            frag.appendChild(item);
+          });
+          row.appendChild(frag);
+          section.hidden = false;
+        })
+        .catch(function () { /* silencieux — la section reste masquée */ });
+    })();
+  </script>
+
+  <!-- Bulletin d'information — envoi de l'email à l'API + message de confirmation -->
+  <script>
+    (function () {
+      var form = document.getElementById('newsletter-form');
+      if (!form) return;
+      var input = document.getElementById('newsletter-email');
+      var btn = document.getElementById('newsletter-submit');
+      var msg = document.getElementById('newsletter-msg');
+      var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      function setMsg(text, ok) {
+        msg.textContent = text;
+        msg.style.color = ok ? '#fff' : '#FFE0E0';
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = (input.value || '').trim().toLowerCase();
+        if (!EMAIL_RE.test(email)) {
+          setMsg('Veuillez saisir une adresse email valide.', false);
+          input.focus();
+          return;
+        }
+        if (!window.PrimeoApi || typeof window.PrimeoApi.subscribeNewsletter !== 'function') {
+          setMsg('Service indisponible pour le moment. Réessayez plus tard.', false);
+          return;
+        }
+        btn.disabled = true;
+        var original = btn.textContent;
+        btn.textContent = '…';
+        setMsg('', true);
+        window.PrimeoApi.subscribeNewsletter({ email: email })
+          .then(function () {
+            form.reset();
+            setMsg('✓ Merci ! Vous êtes bien abonné(e) au bulletin Primeo.', true);
+          })
+          .catch(function (err) {
+            var m = (err && (err.message || (err.error && err.error.message))) || '';
+            // 409 / déjà inscrit → message neutre et positif
+            if (/déjà|already|exist/i.test(m)) {
+              setMsg('Vous êtes déjà abonné(e) à notre bulletin. 👍', true);
+            } else {
+              setMsg('Une erreur est survenue. Vérifiez votre connexion et réessayez.', false);
+            }
+          })
+          .finally(function () {
+            btn.disabled = false;
+            btn.textContent = original;
+          });
+      });
+    })();
+  </script>
 </body>
 </html>

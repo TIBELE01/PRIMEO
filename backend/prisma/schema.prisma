@@ -1477,6 +1477,7 @@ model WebsiteWhyCard {
 model WebsiteTestimonial {
   id            String   @id @default(cuid())
   name          String
+  role          String?  // rôle/fonction du client affiché sous son nom (ex: « Propriétaire »)
   rating        Int      @default(5)
   text          String
   photoUrl      String?
@@ -1849,6 +1850,7 @@ model NewsletterSubscriber {
   email        String    @unique
   subscribedAt DateTime  @default(now())
   confirmedAt  DateTime?
+  status       String    @default("active") // "active" | "disabled"
 
   @@map("newsletter_subscribers")
 }

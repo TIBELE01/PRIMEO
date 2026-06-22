@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { websiteService } from '@/services/api';
 import { Trash2, Download } from 'lucide-react';
 
-type Subscriber = { id: string; email: string; subscribedAt: string; confirmedAt: string | null };
+type Subscriber = { id: string; email: string; subscribedAt: string; confirmedAt: string | null; status?: string };
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -26,6 +26,12 @@ export default function NewsletterPage() {
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => websiteService.deleteNewsletterSubscriber(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['newsletter'] }),
+  });
+
+  const statusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      websiteService.updateNewsletterSubscriberStatus(id, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['newsletter'] }),
   });
 
@@ -58,6 +64,7 @@ export default function NewsletterPage() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Inscrit le</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Confirmé</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Statut</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -70,6 +77,16 @@ export default function NewsletterPage() {
                     {s.confirmedAt
                       ? <span className="text-green-600 font-medium text-xs">✓ {formatDate(s.confirmedAt)}</span>
                       : <span className="text-yellow-600 text-xs">En attente</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => statusMut.mutate({ id: s.id, status: s.status === 'disabled' ? 'active' : 'disabled' })}
+                      disabled={statusMut.isPending}
+                      title={s.status === 'disabled' ? 'Cliquez pour réactiver' : 'Cliquez pour désactiver'}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 ${s.status === 'disabled' ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                    >
+                      {s.status === 'disabled' ? 'Désactivé' : 'Actif'}
+                    </button>
                   </td>
                   <td className="px-4 py-3">
                     <button

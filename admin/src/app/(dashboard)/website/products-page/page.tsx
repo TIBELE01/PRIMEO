@@ -59,7 +59,7 @@ function IntroTab() {
 ══════════════════════════════════════════════════════════════════════════ */
 
 interface SubPlan { id: string; slug: string; name: string; price: string; badge: string | null; highlighted: boolean; ctaLabel: string; ctaUrl: string; active: boolean; }
-interface SubRow  { id: string; feature: string; highlight: boolean; essential: string; prestige: string; premium: string; active: boolean; }
+interface SubRow  { id: string; feature: string; highlight: boolean; starter: string; business: string; entreprise: string; active: boolean; }
 
 function PlanCard({ plan, onSave }: { plan: SubPlan; onSave: (id: string, d: SubPlan) => void }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -118,7 +118,7 @@ function SubRowItem({ row, onSave, onDelete }: { row: SubRow; onSave: (id: strin
         <td className="px-3 py-1.5">
           <input className={inp} value={draft.feature} onChange={e => setDraft(p => ({...p, feature: e.target.value}))} />
         </td>
-        {(['essential', 'prestige', 'premium'] as const).map(k => (
+        {(['starter', 'business', 'entreprise'] as const).map(k => (
           <td key={k} className="px-3 py-1.5">
             <input className={inp + ' text-center'} value={draft[k]} onChange={e => setDraft(p => ({...p, [k]: e.target.value}))} />
           </td>
@@ -136,9 +136,9 @@ function SubRowItem({ row, onSave, onDelete }: { row: SubRow; onSave: (id: strin
   return (
     <tr className={rowCls}>
       <td className="px-3 py-2 text-sm">{row.feature}</td>
-      <td className="px-3 py-2 text-center text-sm">{row.essential || '—'}</td>
-      <td className="px-3 py-2 text-center text-sm">{row.prestige  || '—'}</td>
-      <td className="px-3 py-2 text-center text-sm font-semibold text-blue-700">{row.premium || '—'}</td>
+      <td className="px-3 py-2 text-center text-sm">{row.starter || '—'}</td>
+      <td className="px-3 py-2 text-center text-sm">{row.business  || '—'}</td>
+      <td className="px-3 py-2 text-center text-sm font-semibold text-blue-700">{row.entreprise || '—'}</td>
       <td className="px-3 py-2">
         <div className="flex gap-1 justify-end">
           <button onClick={() => setIsEditing(true)} className="p-1 text-gray-400 hover:text-blue-600"><Edit2 size={13}/></button>
@@ -155,7 +155,7 @@ function SubscriptionsTab() {
   const { data: rows  = [] } = useQuery<SubRow[]> ({ queryKey: ['prod-rows'],  queryFn: () => websiteService.listSubRows()  });
 
   const [addingRow, setAddingRow] = useState(false);
-  const [newRow, setNewRow] = useState({ feature: '', essential: '', prestige: '', premium: '', highlight: false });
+  const [newRow, setNewRow] = useState({ feature: '', starter: '', business: '', entreprise: '', highlight: false });
 
   const updatePlan = useMutation({
     mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSubPlan(id, d),
@@ -163,7 +163,7 @@ function SubscriptionsTab() {
   });
   const createRow = useMutation({
     mutationFn: (d: object) => websiteService.createSubRow(d),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-rows'] }); setAddingRow(false); setNewRow({ feature: '', essential: '', prestige: '', premium: '', highlight: false }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-rows'] }); setAddingRow(false); setNewRow({ feature: '', starter: '', business: '', entreprise: '', highlight: false }); },
   });
   const updateRow = useMutation({
     mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSubRow(id, d),
@@ -203,9 +203,9 @@ function SubscriptionsTab() {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Fonctionnalité</th>
-                <th className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Essentiel</th>
-                <th className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Prestige</th>
-                <th className="px-3 py-2 text-xs font-semibold text-blue-600 uppercase">Premium</th>
+                <th className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Starter</th>
+                <th className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Business</th>
+                <th className="px-3 py-2 text-xs font-semibold text-blue-600 uppercase">Entreprise</th>
                 <th className="px-3 py-2 w-20"></th>
               </tr>
             </thead>
@@ -215,7 +215,7 @@ function SubscriptionsTab() {
                   <td className="px-3 py-2">
                     <input className={inp} value={newRow.feature} onChange={e => setNewRow(p => ({...p, feature: e.target.value}))} placeholder="Nom de la fonctionnalité" />
                   </td>
-                  {(['essential', 'prestige', 'premium'] as const).map(k => (
+                  {(['starter', 'business', 'entreprise'] as const).map(k => (
                     <td key={k} className="px-3 py-2">
                       <input className={inp + ' text-center'} value={newRow[k]} onChange={e => setNewRow(p => ({...p, [k]: e.target.value}))} placeholder="—" />
                     </td>

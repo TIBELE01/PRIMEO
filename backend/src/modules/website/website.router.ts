@@ -215,6 +215,7 @@ websiteRouter.put('/admin/blog/categories/:id',         c.adminUpdateBlogCategor
 websiteRouter.delete('/admin/blog/categories/:id',      c.adminDeleteBlogCategory);
 websiteRouter.get('/admin/blog/newsletter',             c.adminListNewsletterSubscribers);
 websiteRouter.get('/admin/blog/newsletter/export',      c.adminExportNewsletterSubscribers);
+websiteRouter.put('/admin/blog/newsletter/:id/status',  c.adminUpdateNewsletterSubscriberStatus);
 websiteRouter.delete('/admin/blog/newsletter/:id',      c.adminDeleteNewsletterSubscriber);
 websiteRouter.get('/admin/blog/comments',               c.adminListBlogComments);
 websiteRouter.put('/admin/blog/comments/:id/approve',   c.adminApproveComment);

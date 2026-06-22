@@ -38,6 +38,7 @@ jest.mock('../webhooks/handlers/genius-pay.handler', () => ({
   processSuccessfulPayment: jest.fn(),
   processFailedPayment: jest.fn(),
   ensureBookingInvoice: jest.fn(async () => null),
+  emailBookingInvoice: jest.fn(async () => undefined),
 }));
 
 // bookingRepository.findOverlapping est utilisé par updateDates

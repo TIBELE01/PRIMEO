@@ -152,8 +152,8 @@ export async function adminListTestimonials(req: Request, res: Response, next: N
 
 export async function adminCreateTestimonial(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name, rating, text } = req.body;
-    res.status(201).json(await websiteService.createTestimonial({ name, rating: Number(rating), text }));
+    const { name, rating, text, role } = req.body;
+    res.status(201).json(await websiteService.createTestimonial({ name, rating: Number(rating), text, role: role ?? null }));
   } catch (e) { next(e); }
 }
 
@@ -848,6 +848,10 @@ export async function adminExportNewsletterSubscribers(_req: Request, res: Respo
     res.setHeader('Content-Disposition', `attachment; filename="newsletter-${Date.now()}.csv"`);
     res.send('﻿' + csv);
   } catch (e) { next(e); }
+}
+
+export async function adminUpdateNewsletterSubscriberStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await websiteService.adminUpdateNewsletterSubscriberStatus(req.params.id!, req.body.status)); } catch (e) { next(e); }
 }
 
 export async function adminDeleteNewsletterSubscriber(req: Request, res: Response, next: NextFunction): Promise<void> {

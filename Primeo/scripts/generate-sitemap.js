@@ -21,7 +21,6 @@ const RULES = {
   '': { priority: '1.0', changefreq: 'weekly' },
   'solutions': { priority: '0.9', changefreq: 'monthly' },
   'produits': { priority: '0.9', changefreq: 'monthly' },
-  'tarification': { priority: '0.9', changefreq: 'monthly' },
   'professionnels': { priority: '0.9', changefreq: 'monthly' },
   'devenir-partenaire': { priority: '0.8', changefreq: 'monthly' },
   'telechargement': { priority: '0.8', changefreq: 'monthly' },

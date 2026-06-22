@@ -26,12 +26,20 @@ interface EmailRecipient {
   name?: string;
 }
 
+/** Pièce jointe Brevo : soit une URL publique, soit un contenu base64. */
+export interface EmailAttachment {
+  url?: string;       // URL publique (Brevo télécharge le fichier)
+  content?: string;   // contenu base64
+  name: string;       // nom du fichier (ex: Facture-FAC-2026-06-A3F2.pdf)
+}
+
 interface SendEmailOptions {
   to: EmailRecipient[];
   subject: string;
   htmlContent?: string;
   templateId?: number;
   params?: Record<string, unknown>;
+  attachment?: EmailAttachment[];
 }
 
 
@@ -41,6 +49,7 @@ async function sendViaBrevoApi(
   to: EmailRecipient[],
   subject: string,
   htmlContent: string,
+  attachment?: EmailAttachment[],
 ): Promise<void> {
   const apiKey = brevoConfig.apiKey;
   if (!apiKey) {
@@ -55,10 +64,11 @@ async function sendViaBrevoApi(
       to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
       subject,
       htmlContent,
+      ...(attachment && attachment.length ? { attachment } : {}),
     },
     {
       headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
-      timeout: 10_000,
+      timeout: 15_000,
     },
   );
 }
@@ -117,7 +127,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     }
 
     try {
-      await sendViaBrevoApi([recipient], finalSubject, htmlContent);
+      await sendViaBrevoApi([recipient], finalSubject, htmlContent, options.attachment);
       logger.debug(`Email Brevo envoyé à ${recipient.email}`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -242,6 +252,47 @@ export async function sendBookingConfirmationEmail(opts: {
   });
 }
 
+/**
+ * Email dédié « facture » : HTML inline (entièrement contrôlé par le code, donc
+ * indépendant des templates Brevo) avec lien de téléchargement ET la facture PDF
+ * en pièce jointe. Envoyé à chaque confirmation de réservation.
+ */
+export async function sendBookingInvoiceEmail(opts: {
+  to: EmailRecipient[];
+  firstName: string;
+  propertyTitle: string;
+  invoiceRef: string;
+  invoiceUrl: string;
+}): Promise<void> {
+  if (!opts.invoiceUrl) return;
+  const html = renderEmail({
+    title: 'Votre facture Primeo',
+    accent: 'primary',
+    preheader: `Facture ${opts.invoiceRef} — ${opts.propertyTitle}`,
+    body:
+      heading('🧾 Votre facture est disponible') +
+      greeting(opts.firstName) +
+      paragraph(
+        `Voici votre facture <strong>${opts.invoiceRef}</strong> pour votre réservation ` +
+        `« <strong>${opts.propertyTitle}</strong> ». Elle est jointe à cet email (PDF) et ` +
+        `téléchargeable via le bouton ci-dessous.`,
+      ) +
+      button(opts.invoiceUrl, '📄 Télécharger la facture PDF') +
+      divider() +
+      muted(
+        'Vous pouvez retrouver cette facture à tout moment depuis « Mes réservations » ' +
+        'dans l\'application Primeo.',
+      ),
+  });
+
+  await sendEmail({
+    to: opts.to,
+    subject: `Facture ${opts.invoiceRef} — Primeo`,
+    htmlContent: html,
+    attachment: [{ url: opts.invoiceUrl, name: `Facture-${opts.invoiceRef}.pdf` }],
+  });
+}
+
 export async function sendCollaboratorInviteEmail(opts: {
   to: EmailRecipient[];
   inviterName: string;
@@ -316,7 +367,7 @@ export async function sendTestEmail(opts: {
     amount: 25000,
     rewardAmount: 1000,
     bookingId: 'a1b2c3d4e5f6',
-    planName: 'Premium',
+    planName: 'Entreprise',
     nextBillingDate: '14 juillet 2026',
     reason: 'Document illisible — merci de renvoyer une photo nette.',
     rating: 5,
