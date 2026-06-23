@@ -1,0 +1,221 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Blueprint — Plateforme PRIMEO
+# 4 services : API backend, site vitrine, site légal, dashboard admin.
+# L'application mobile (Expo / React Native) n'est PAS déployée ici.
+#
+# Déploiement continu : tout `git push` sur `main` redéploie automatiquement
+# les services concernés (autoDeploy: true).
+#
+# AUCUN secret n'est stocké dans ce fichier : toutes les variables du backend
+# sont en `sync: false` et doivent être saisies dans le dashboard Render
+# (Service → Environment), ou au moment du « Apply » du Blueprint.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ───────────────────────────────────────────────────────────────────────────
+  # 1) BACKEND — API Node.js / Express / TypeScript (+ Prisma)
+  # ───────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: primeo-api
+    runtime: node
+    plan: starter            # `starter` : pas de cold start + requis pour preDeployCommand
+    region: frankfurt        # région la plus proche de la Côte d'Ivoire
+    rootDir: backend
+    branch: main
+    autoDeploy: true
+    # `--include=dev` : indispensable pour installer typescript + prisma (devDeps),
+    # sinon Render (NODE_ENV=production au build) les omet et `tsc`/`prisma` échouent.
+    # `tsc -p tsconfig.build.json` = build du projet (exclut les tests) → dist/.
+    buildCommand: npm install --include=dev && npx prisma generate && npx tsc -p tsconfig.build.json
+    preDeployCommand: npx prisma migrate deploy   # applique les migrations avant la bascule du trafic
+    startCommand: npm start                        # = node dist/main.js
+    healthCheckPath: /api/health
+    envVars:
+      # ── Serveur ────────────────────────────────────────────────────────────
+      - key: NODE_ENV
+        sync: false          # mettre: production
+      - key: PORT
+        sync: false          # Render injecte PORT automatiquement ; si renseigné, mettre 10000 (ne PAS laisser vide)
+
+      # ── Base de données (Supabase PostgreSQL) ────────────────────────────────
+      - key: DATABASE_URL    # pooled / PgBouncer (port 6543, ?pgbouncer=true) — runtime
+        sync: false
+      - key: DIRECT_URL      # connexion directe (port 5432) — requise par `prisma migrate deploy`
+        sync: false
+
+      # ── Auth / JWT ───────────────────────────────────────────────────────────
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+
+      # ── URLs applicatives ────────────────────────────────────────────────────
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+
+      # ── Supabase Auth ────────────────────────────────────────────────────────
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      # ── Compte admin (seed) ──────────────────────────────────────────────────
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+
+      # ── Flags / sécurité ─────────────────────────────────────────────────────
+      - key: ALLOW_DEV_ADMIN_SEED
+        sync: false          # mettre: false
+      - key: SKIP_OTP_VERIFICATION
+        sync: false          # mettre: false
+      - key: MAINTENANCE_MODE
+        sync: false          # mettre: false
+
+      # ── Cookies ──────────────────────────────────────────────────────────────
+      - key: COOKIE_SECURE
+        sync: false          # mettre: true
+      - key: COOKIE_SAMESITE
+        sync: false          # mettre: none
+      - key: COOKIE_DOMAIN
+        sync: false          # ex: .primeo.ci (optionnel)
+
+      # ── CORS ─────────────────────────────────────────────────────────────────
+      - key: CORS_ORIGINS
+        sync: false          # ex: https://primeo.ci,https://www.primeo.ci,https://legal.primeo.ci,https://admin.primeo.ci,*.onrender.com
+
+      # ── Genius Pay (paiements) ───────────────────────────────────────────────
+      - key: GENIUS_PAY_API_KEY
+        sync: false
+      - key: GENIUS_PAY_SECRET_API_KEY
+        sync: false
+      - key: GENIUS_PAY_API_URL
+        sync: false
+      - key: GENIUS_PAY_WEBHOOK_SECRET
+        sync: false
+
+      # ── Brevo (emails transactionnels) ───────────────────────────────────────
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SMTP_HOST
+        sync: false
+      - key: BREVO_SMTP_PORT
+        sync: false
+      - key: BREVO_SMTP_USER
+        sync: false
+      - key: BREVO_SMTP_PASS
+        sync: false
+      - key: BREVO_WEBHOOK_SECRET
+        sync: false
+      - key: EMAIL_LOGO_URL
+        sync: false
+
+      # ── OneSignal (push) ─────────────────────────────────────────────────────
+      - key: ONESIGNAL_APP_ID
+        sync: false
+      - key: ONESIGNAL_REST_API_KEY
+        sync: false
+      - key: ONESIGNAL_WEBHOOK_SECRET
+        sync: false
+
+      # ── Orange SMS (OTP) ─────────────────────────────────────────────────────
+      - key: ORANGE_CLIENT_ID
+        sync: false
+      - key: ORANGE_CLIENT_SECRET
+        sync: false
+      - key: ORANGE_SENDER
+        sync: false
+      - key: ORANGE_WEBHOOK_SECRET
+        sync: false
+
+      # ── Cloudinary (médias) ──────────────────────────────────────────────────
+      - key: CLOUDINARY_URL
+        sync: false          # cloudinary://api_key:api_secret@cloud_name
+
+      # ── Geoapify (cartes) ────────────────────────────────────────────────────
+      - key: GEOAPIFY_API_KEY
+        sync: false
+      - key: GEOAPIFY_URL
+        sync: false
+
+      # ── Upstash Redis / Socket.io ────────────────────────────────────────────
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SOCKET_IO_REDIS_ENABLED
+        sync: false          # mettre: false (ou true si multi-instances)
+
+      # ── Taux de change ───────────────────────────────────────────────────────
+      - key: EXCHANGERATE_API_KEY
+        sync: false
+      - key: EXCHANGERATE_BASE_CURRENCY
+        sync: false          # mettre: XOF
+
+      # ── Observabilité ────────────────────────────────────────────────────────
+      - key: SENTRY_DSN
+        sync: false
+      - key: LOGTAIL_SOURCE_TOKEN
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 2) SITE VITRINE — statique (HTML / CSS / JS)
+  # ───────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: primeo-vitrine
+    runtime: static
+    branch: main
+    autoDeploy: true
+    buildCommand: ""           # site statique — aucun build
+    staticPublishPath: ./Primeo
+    pullRequestPreviewsEnabled: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 3) SITE LÉGAL — statique (HTML / CSS / JS)
+  # ───────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: primeo-legal
+    runtime: static
+    branch: main
+    autoDeploy: true
+    buildCommand: ""           # site statique — aucun build
+    staticPublishPath: ./legal-site
+    pullRequestPreviewsEnabled: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 4) DASHBOARD ADMIN — Next.js (sortie "standalone") → service web Node
+  #    (export 100% statique impossible : routes de détail dynamiques /[id])
+  # ───────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: primeo-admin
+    runtime: node
+    plan: starter
+    region: frankfurt
+    rootDir: admin
+    branch: main
+    autoDeploy: true
+    # `next build` (output: standalone) ne copie pas .next/static ni public/ :
+    # on les place manuellement dans .next/standalone, sinon 404 sur les assets.
+    buildCommand: npm install --include=dev && npm run build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/public
+    startCommand: npm start    # = node .next/standalone/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOSTNAME
+        value: "0.0.0.0"       # le serveur standalone Next doit écouter sur toutes les interfaces
+      - key: NEXT_PUBLIC_API_URL
+        sync: false            # injectée au BUILD — ex: https://api.primeo.ci
