@@ -1,47 +1,28 @@
 'use client';
 import { useConfigStore } from '@/stores/configStore';
 import { configService } from '@/services/api';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import type { PlanConfig } from '@/types/config';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/hooks/useToast';
 import { formatAmount } from '@/lib/utils';
 import { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, ToggleLeft, ToggleRight } from 'lucide-react';
 
-// Ligne du tableau comparatif
-interface FeatureRow {
-  label: string;
-  starter: string | boolean;
-  business: string | boolean;
-  entreprise: string | boolean;
-}
+type PlanKey = 'starter' | 'business' | 'entreprise';
 
-const FEATURE_ROWS: FeatureRow[] = [
-  { label: 'Publications',         starter: '3',           business: '10',          entreprise: '40 (∞ resto)' },
-  { label: 'Commission',           starter: '0 %',         business: '0 %',         entreprise: '0 %' },
-  { label: 'Boosts gratuits/mois', starter: '0',           business: '2 (3 jours)', entreprise: '7 (3 jours)' },
-  { label: 'Upload vidéo',         starter: false,         business: true,          entreprise: true },
-  { label: 'Visite virtuelle 3D',  starter: false,         business: false,         entreprise: true },
-  { label: 'Badge',                starter: '—',           business: 'Vérifié',     entreprise: 'Premium' },
-  { label: 'Visibilité',           starter: 'Standard',    business: '+30 %',       entreprise: 'Prioritaire' },
-  { label: 'Statistiques',         starter: 'Basiques',    business: 'Avancées',    entreprise: 'Avancées' },
-  { label: 'Multi-utilisateurs',   starter: false,         business: false,         entreprise: true },
-  { label: 'Rapport PDF mensuel',  starter: false,         business: false,         entreprise: true },
-  { label: 'Programme fidélité',   starter: false,         business: false,         entreprise: true },
+const PLANS: { key: PlanKey; label: string; color: string }[] = [
+  { key: 'starter',    label: 'Starter',    color: 'bg-gray-100 text-gray-700' },
+  { key: 'business',   label: 'Business',   color: 'bg-blue-100 text-blue-700' },
+  { key: 'entreprise', label: 'Entreprise', color: 'bg-purple-100 text-purple-700' },
 ];
 
-function FeatureCell({ value }: { value: string | boolean }) {
-  if (value === true)  return <Check size={16} className="text-green-600 mx-auto" />;
-  if (value === false) return <X     size={16} className="text-gray-300 mx-auto" />;
-  return <span className="text-sm text-gray-700">{value}</span>;
-}
-
-const PLAN_COLOR: Record<string, string> = {
-  starter:    'bg-gray-100 text-gray-700',
-  business:   'bg-blue-100 text-blue-700',
-  entreprise: 'bg-purple-100 text-purple-700',
-};
+// Lignes booléennes éditables (capacités média)
+const BOOL_FIELDS: { key: keyof PlanConfig; label: string }[] = [
+  { key: 'videoUpload', label: 'Upload vidéo' },
+  { key: 'virtualTour', label: 'Visite virtuelle 3D' },
+];
 
 export default function SubscriptionsConfigPage() {
   const { config, updateConfigKey } = useConfigStore();
@@ -50,104 +31,130 @@ export default function SubscriptionsConfigPage() {
   const [editing, setEditing] = useState(false);
 
   if (!config) return null;
+  const subs = config.subscriptions;
 
-  const plans: Array<{ key: keyof typeof config.subscriptions; label: string }> = [
-    { key: 'starter',    label: 'Starter' },
-    { key: 'business',   label: 'Business' },
-    { key: 'entreprise', label: 'Entreprise' },
-  ];
+  // Met à jour un champ d'une formule dans le store local
+  const setField = (plan: PlanKey, patch: Partial<PlanConfig>) =>
+    updateConfigKey('subscriptions', { [plan]: { ...subs[plan], ...patch } });
 
   const save = async () => {
     setSaving(true);
     try {
       await configService.updateConfig({ subscriptions: config.subscriptions });
-      toast.success('Tarifs mis à jour');
+      toast.success('Formules mises à jour — appliquées immédiatement');
       setEditing(false);
     } catch { toast.error('Erreur lors de la sauvegarde'); } finally { setSaving(false); }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Formules d&apos;abonnement</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Formules d&apos;abonnement</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Prix, limites et fonctionnalités — appliqués en temps réel à l&apos;application.</p>
+        </div>
         {!editing ? (
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Modifier les prix</Button>
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Modifier</Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Annuler</Button>
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Fermer</Button>
             <Button size="sm" loading={saving} onClick={save}>Sauvegarder</Button>
           </div>
         )}
       </div>
 
-      {/* Cartes prix */}
-      <div className="grid grid-cols-3 gap-4">
-        {plans.map(({ key, label }) => {
-          const price = config.subscriptions[key];
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {PLANS.map(({ key, label, color }) => {
+          const p = subs[key];
+          const disabled = p.active === false;
           return (
-            <Card key={key}>
-              <CardContent className="pt-5">
-                <Badge className={PLAN_COLOR[key]}>{label}</Badge>
-                {editing && key !== 'starter' ? (
-                  <div className="mt-3">
-                    <label className="text-xs text-gray-500">Prix mensuel (FCFA)</label>
+            <Card key={key} className={disabled ? 'opacity-60' : ''}>
+              <CardContent className="pt-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge className={color}>{label}</Badge>
+                  {/* Activer / désactiver (Starter toujours actif) */}
+                  {editing && key !== 'starter' ? (
+                    <button
+                      type="button"
+                      onClick={() => setField(key, { active: disabled })}
+                      className={`flex items-center gap-1 text-xs font-medium ${disabled ? 'text-gray-400' : 'text-green-700'}`}
+                    >
+                      {disabled ? <ToggleLeft size={22} className="text-gray-300" /> : <ToggleRight size={22} className="text-green-600" />}
+                      {disabled ? 'Désactivée' : 'Active'}
+                    </button>
+                  ) : (
+                    <Badge variant={disabled ? 'danger' : 'success'}>{disabled ? 'Désactivée' : 'Active'}</Badge>
+                  )}
+                </div>
+
+                {/* Prix */}
+                <div>
+                  <label className="text-xs text-gray-500">Prix mensuel (FCFA)</label>
+                  {editing && key !== 'starter' ? (
                     <input
-                      type="number"
-                      min={0}
-                      value={price}
-                      onChange={(e) =>
-                        updateConfigKey('subscriptions', { ...config.subscriptions, [key]: Number(e.target.value) })
-                      }
+                      type="number" min={0}
+                      value={p.monthlyPrice}
+                      onChange={(e) => setField(key, { monthlyPrice: Number(e.target.value) })}
                       className="input w-full mt-1"
                     />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {p.monthlyPrice === 0 ? 'Gratuit' : formatAmount(p.monthlyPrice)}
+                      {p.monthlyPrice > 0 && <span className="text-sm font-normal text-gray-500"> /mois</span>}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">0 % de commission</p>
+                </div>
+
+                {/* Limites de publications */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500">Publications (biens)</label>
+                    {editing ? (
+                      <input type="number" min={0} value={p.includedPropertiesLimit}
+                        onChange={(e) => setField(key, { includedPropertiesLimit: Number(e.target.value) })}
+                        className="input w-full mt-1" />
+                    ) : <p className="text-sm font-semibold text-gray-800 mt-1">{p.includedPropertiesLimit}</p>}
                   </div>
-                ) : (
-                  <p className="text-2xl font-bold text-gray-900 mt-3">
-                    {price === 0 ? 'Gratuit' : formatAmount(price)}
-                    {price > 0 && <span className="text-sm font-normal text-gray-500"> /mois</span>}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">0 % de commission</p>
+                  <div>
+                    <label className="text-xs text-gray-500">Menus (restaurants)</label>
+                    {editing ? (
+                      <input type="number" min={0} value={p.includedMenusLimit}
+                        onChange={(e) => setField(key, { includedMenusLimit: Number(e.target.value) })}
+                        className="input w-full mt-1" />
+                    ) : <p className="text-sm font-semibold text-gray-800 mt-1">{p.includedMenusLimit >= 9999 ? '∞' : p.includedMenusLimit}</p>}
+                  </div>
+                </div>
+
+                {/* Capacités média */}
+                <div className="space-y-2 border-t border-gray-100 pt-3">
+                  {BOOL_FIELDS.map(({ key: f, label: flabel }) => {
+                    const val = Boolean(p[f]);
+                    return (
+                      <div key={f as string} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">{flabel}</span>
+                        {editing ? (
+                          <button type="button" onClick={() => setField(key, { [f]: !val } as Partial<PlanConfig>)}>
+                            {val ? <ToggleRight size={22} className="text-green-600" /> : <ToggleLeft size={22} className="text-gray-300" />}
+                          </button>
+                        ) : (
+                          val ? <Check size={16} className="text-green-600" /> : <X size={16} className="text-gray-300" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Tableau comparatif */}
-      <Card padding={false}>
-        <CardHeader className="p-4 border-b border-gray-100">
-          <CardTitle>Tableau comparatif des fonctionnalités</CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 w-48">Fonctionnalité</th>
-                {plans.map(({ key, label }) => (
-                  <th key={key} className="py-3 px-4 text-center font-semibold text-gray-700">
-                    <Badge className={PLAN_COLOR[key]}>{label}</Badge>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {FEATURE_ROWS.map((row, i) => (
-                <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  <td className="py-2.5 px-4 text-gray-600 font-medium">{row.label}</td>
-                  <td className="py-2.5 px-4 text-center"><FeatureCell value={row.starter} /></td>
-                  <td className="py-2.5 px-4 text-center"><FeatureCell value={row.business} /></td>
-                  <td className="py-2.5 px-4 text-center"><FeatureCell value={row.entreprise} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* Note Genius Pay */}
       <p className="text-xs text-gray-400">
-        * Des frais Genius Pay s&apos;appliquent sur les paiements en ligne (carte, mobile money). Les paiements en espèces ne sont pas soumis à des frais.
+        Les modifications sont appliquées immédiatement : tarifs (montée/descente de gamme),
+        limites de publications, autorisation vidéo / visite 3D et disponibilité des formules.
+        Une formule désactivée n&apos;est plus proposée aux professionnels (Starter reste toujours disponible).
+        * Des frais Genius Pay s&apos;appliquent sur les paiements en ligne.
       </p>
     </div>
   );

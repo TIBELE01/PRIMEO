@@ -2,7 +2,7 @@
 import { prisma } from '../../../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import type { SearchPropertiesInput } from '../dto/property.dto';
-import { PLAN_DETAILS } from '../../../common/constants/subscription-plans';
+import { getPlanDetails } from '../../../common/constants/subscription-plans';
 
 // Construit le filtre Prisma pour propertyType (un seul ou plusieurs séparés par virgule)
 function buildTypeFilter(propertyType?: string): Prisma.PropertyWhereInput {
@@ -23,7 +23,7 @@ type SearchResult = {
 
 // Score de visibilité basé sur le plan (0/30/100) — utilisé dans les deux méthodes de tri.
 const planVisibility = (plan: string): number =>
-  (PLAN_DETAILS[plan] ?? PLAN_DETAILS['starter']).visibilityBoostPct;
+  (getPlanDetails(plan) ?? getPlanDetails('starter')).visibilityBoostPct;
 
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {

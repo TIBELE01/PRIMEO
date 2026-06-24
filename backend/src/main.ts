@@ -8,6 +8,7 @@ import { startAllJobs } from './jobs';
 import { logger } from './common/utils/logger';
 import { env, reportEnvReadiness } from './config/env.config';
 import { validateSmtpConnection } from './common/utils/mailer';
+import { initPlatformSettings } from './common/settings/platform-settings';
 
 async function bootstrap(): Promise<void> {
   // Audit de configuration : signale les intégrations tierces incomplètes sans
@@ -23,6 +24,10 @@ async function bootstrap(): Promise<void> {
 
   // Probe des services externes au démarrage (non-bloquant)
   validateSmtpConnection().catch(() => null);
+
+  // Amorce le cache de configuration plateforme (overrides admin lus par le métier)
+  // + rafraîchissement périodique. Non-bloquant : repli sur les constantes si échec.
+  initPlatformSettings().catch(() => null);
 
   // Start all cron jobs
   startAllJobs();

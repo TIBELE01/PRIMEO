@@ -2,7 +2,7 @@
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { geniusPayService } from '../payments/services/genius-pay.service';
-import { PAID_BOOST_COST_FCFA, PAID_BOOST_DURATION_DAYS, PLAN_DETAILS } from '../../common/constants/subscription-plans';
+import { getPaidBoostCost, getPaidBoostDuration, getPlanDetails } from '../../common/constants/subscription-plans';
 import { env } from '../../config/env.config';
 import { CreateBoostInput } from './dto/boost.dto';
 import { notificationsService } from '../notifications/notifications.service';
@@ -29,7 +29,7 @@ export const boostsService = {
     const sub = await prisma.subscription.findUnique({ where: { userId: ownerId } });
     if (!sub) throw new HttpError(400, 'Aucun abonnement actif');
 
-    const plan = PLAN_DETAILS[sub.planType];
+    const plan = getPlanDetails(sub.planType);
     if (!plan || plan.freeBoostsPerMonth === 0) {
       throw new HttpError(400, 'Votre plan ne comprend pas de boosts gratuits');
     }
@@ -82,12 +82,14 @@ export const boostsService = {
     });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
+    const boostCost = getPaidBoostCost();
+
     const tx = await prisma.transaction.create({
       data: {
         userId: ownerId,
         type: 'boost_purchase',
-        amount: PAID_BOOST_COST_FCFA,
-        netAmount: PAID_BOOST_COST_FCFA,
+        amount: boostCost,
+        netAmount: boostCost,
         status: 'initiated',
         notes: propertyId,
         webhookPayload: { propertyId, propertyTitle } as never,
@@ -95,7 +97,7 @@ export const boostsService = {
     });
 
     const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
-      amount: PAID_BOOST_COST_FCFA,
+      amount: boostCost,
       bookingId: tx.id,
       customerEmail: user.email,
       customerPhone: user.phone ?? undefined,
@@ -108,7 +110,7 @@ export const boostsService = {
       data: { geniusPayTransactionId: reference, checkoutUrl },
     });
 
-    return { transactionId: tx.id, checkoutUrl, type: 'paid', amount: PAID_BOOST_COST_FCFA };
+    return { transactionId: tx.id, checkoutUrl, type: 'paid', amount: boostCost };
   },
 
   // Called by the webhook handler after boost_purchase payment.success
@@ -125,8 +127,9 @@ export const boostsService = {
     });
     if (!property || property.isBoosted) return; // already activated or gone
 
+    const durationDays = getPaidBoostDuration();
     const startDate = new Date();
-    const endDate = new Date(startDate.getTime() + PAID_BOOST_DURATION_DAYS * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
     await prisma.$transaction([
       prisma.boost.create({
@@ -154,7 +157,7 @@ export const boostsService = {
       void notificationsService.notify({
         type: 'boost_activated',
         recipientId: owner.ownerId,
-        data: { propertyTitle: owner.title, durationDays: PAID_BOOST_DURATION_DAYS },
+        data: { propertyTitle: owner.title, durationDays },
       }).catch(() => {});
     }
   },
@@ -178,7 +181,7 @@ export const boostsService = {
   async getBalance(userId: string) {
     const sub = await prisma.subscription.findUnique({ where: { userId } });
     if (!sub) return { freeBoostsRemaining: 0, freeBoostsTotal: 0, freeBoostDuration: 0, plan: null, planType: null };
-    const plan = PLAN_DETAILS[sub.planType];
+    const plan = getPlanDetails(sub.planType);
     const freeBoostsRemaining = Math.max(0, sub.boostsFreeMonthly - sub.boostsFreeUsedThisMonth);
     return {
       freeBoostsRemaining,

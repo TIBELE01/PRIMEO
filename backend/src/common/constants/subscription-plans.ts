@@ -2,6 +2,12 @@
 // Toutes les formules sont à 0% de commission depuis la v2.0.
 // Les frais Genius Pay (paiement en ligne) sont déduits automatiquement par GP
 // et ne sont pas imputés à Primeo.
+//
+// Ces valeurs sont les valeurs PAR DÉFAUT. L'administrateur peut les surcharger
+// depuis l'onglet Configuration (table platform_config) ; les accesseurs en bas
+// de ce fichier (getPlanDetails / getPaidBoostCost / …) fusionnent ces overrides
+// sur les valeurs par défaut. Toujours utiliser ces accesseurs côté métier.
+import { getRuntimeOverrides, type PlanOverride } from '../settings/runtime-config';
 
 export const SubscriptionPlan = {
   STARTER:    'starter',
@@ -150,8 +156,9 @@ export const PLAN_DETAILS: Record<string, PlanDetails> = {
 };
 
 // Retourne la limite de publications selon le plan ET le type de compte
+// (overrides admin pris en compte via getPlanDetails).
 export function getPublicationLimit(planType: string, accountType: string): number {
-  const plan = PLAN_DETAILS[planType];
+  const plan = getPlanDetails(planType);
   if (!plan) return 3;
   return accountType === 'restaurateur' ? plan.includedMenusLimit : plan.includedPropertiesLimit;
 }
@@ -174,4 +181,70 @@ export function effectivePublicationLimit(
   extraSlots = 0,
 ): number {
   return getPublicationLimit(planType, accountType) + Math.max(0, extraSlots);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACCESSEURS AVEC OVERRIDES ADMIN (platform_config) — à utiliser côté métier.
+// Chaque accesseur retombe sur la constante par défaut si aucun override n'existe.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Champs de PlanDetails qu'un override admin peut remplacer.
+const PLAN_OVERRIDE_KEYS = [
+  'monthlyPrice', 'includedPropertiesLimit', 'includedMenusLimit', 'freeBoostsPerMonth',
+  'boostDurationDays', 'videoUpload', 'virtualTour', 'verifiedBadge', 'premiumBadge',
+  'analytics', 'multiUser', 'monthlyReport', 'loyaltyProgram', 'visibilityBoostPct',
+] as const satisfies readonly (keyof PlanDetails & keyof PlanOverride)[];
+
+// Détails de la formule, overrides admin fusionnés sur les valeurs par défaut.
+export function getPlanDetails(planType: string): PlanDetails {
+  const base = PLAN_DETAILS[planType];
+  if (!base) return base;
+  const { subscriptions, boosts } = getRuntimeOverrides();
+  const planOv = subscriptions?.[planType];
+  if (!planOv && !boosts) return base;
+
+  const merged: PlanDetails = { ...base };
+  if (planOv) {
+    for (const k of PLAN_OVERRIDE_KEYS) {
+      const v = planOv[k];
+      if (v !== undefined && v !== null) (merged as unknown as Record<string, unknown>)[k] = v;
+    }
+  }
+  // Les boosts gratuits / la durée peuvent aussi provenir de la section "boosts".
+  if (boosts) {
+    if (planType === 'business'   && typeof boosts.freeBoostsBusiness   === 'number') merged.freeBoostsPerMonth = boosts.freeBoostsBusiness;
+    if (planType === 'entreprise' && typeof boosts.freeBoostsEntreprise === 'number') merged.freeBoostsPerMonth = boosts.freeBoostsEntreprise;
+    if (planType === 'business'   && typeof boosts.freeDaysBusiness     === 'number') merged.boostDurationDays  = boosts.freeDaysBusiness;
+    if (planType === 'entreprise' && typeof boosts.freeDaysEntreprise   === 'number') merged.boostDurationDays  = boosts.freeDaysEntreprise;
+  }
+  return merged;
+}
+
+// Une formule est active par défaut ; l'admin peut la désactiver (active=false).
+export function isPlanActive(planType: string): boolean {
+  return getRuntimeOverrides().subscriptions?.[planType]?.active !== false;
+}
+
+// Coût d'un boost payant (FCFA / période), override admin pris en compte.
+export function getPaidBoostCost(): number {
+  const v = getRuntimeOverrides().boosts?.pricePerThreeDays;
+  return typeof v === 'number' && v >= 0 ? v : PAID_BOOST_COST_FCFA;
+}
+
+// Durée d'un boost payant (jours), override admin pris en compte.
+export function getPaidBoostDuration(): number {
+  const v = getRuntimeOverrides().boosts?.durationDays;
+  return typeof v === 'number' && v > 0 ? v : PAID_BOOST_DURATION_DAYS;
+}
+
+// Délai de grâce abonnement (jours) — override admin, sinon valeur fournie.
+export function getGraceDays(defaultDays: number): number {
+  const v = getRuntimeOverrides().grace?.subscriptionGraceDays;
+  return typeof v === 'number' && v > 0 ? v : defaultDays;
+}
+
+// Feature-toggle global (ex. virtualTourEnabled, referralEnabled…) — actif par défaut.
+export function isFeatureEnabled(key: string, defaultEnabled = true): boolean {
+  const v = getRuntimeOverrides().features?.[key];
+  return typeof v === 'boolean' ? v : defaultEnabled;
 }

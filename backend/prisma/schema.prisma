@@ -952,7 +952,7 @@ model Referral {
   id String @id @default(cuid())
 
   // §3.10 : code, referrer_id, referee_id, inscription_date, reward_date
-  referralCode String  @unique // code utilisé pour l'inscription
+  referralCode String  // code du parrain utilisé par le filleul — NON unique : un même code parrain est partagé par tous ses filleuls
   referrerId   String
   referrer     User    @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Restrict)
   refereeId    String? @unique

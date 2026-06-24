@@ -1226,8 +1226,8 @@ export const adminService = {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { accountType: true } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
-    const { PLAN_DETAILS } = await import('../../common/constants/subscription-plans');
-    const planDef = PLAN_DETAILS[plan];
+    const { getPlanDetails } = await import('../../common/constants/subscription-plans');
+    const planDef = getPlanDetails(plan);
     if (!planDef) throw new HttpError(400, `Formule inconnue : ${plan}`);
 
     const { Decimal } = await import('@prisma/client/runtime/library');
@@ -1400,6 +1400,11 @@ export const adminService = {
       update: { value: value as never, updatedBy: adminId },
       create: { key, value: value as never, updatedBy: adminId },
     });
+
+    // Recharge immédiatement le cache lu par le code métier (abonnements, boosts,
+    // délai de grâce, features) pour que la modification prenne effet sans redémarrage.
+    const { reloadPlatformSettings } = await import('../../common/settings/platform-settings');
+    await reloadPlatformSettings();
 
     await createAudit({
       adminId,

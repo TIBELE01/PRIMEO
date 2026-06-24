@@ -7,6 +7,7 @@
 //
 // Le versement est idempotent : une fois le parrainage passé en `rewarded`, tout
 // nouvel appel est sans effet (la recherche ne porte que sur les `pending`).
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { env } from '../../config/env.config';
@@ -111,19 +112,32 @@ export const referralsService = {
     const already = await prisma.referral.findUnique({ where: { refereeId: userId } });
     if (already) throw new HttpError(409, 'Vous avez déjà renseigné un code de parrainage');
 
-    const referrer = await prisma.user.findFirst({ where: { referralCode: code } });
+    // Recherche INSENSIBLE À LA CASSE : les codes clients sont des cuid en minuscules
+    // et les codes pros en majuscules — la saisie manuelle ne doit pas échouer sur la casse.
+    const referrer = await prisma.user.findFirst({
+      where: { referralCode: { equals: code, mode: 'insensitive' } },
+    });
     if (!referrer) throw new HttpError(404, 'Code de parrainage invalide');
     if (referrer.id === userId) throw new HttpError(400, 'Vous ne pouvez pas utiliser votre propre code');
 
-    await prisma.referral.create({
-      data: {
-        referralCode: code,
-        referrerId: referrer.id,
-        refereeId: userId,
-        status: 'pending',
-        inscriptionDate: new Date(),
-      },
-    });
+    try {
+      await prisma.referral.create({
+        data: {
+          referralCode: referrer.referralCode ?? code, // on stocke le code canonique du parrain
+          referrerId: referrer.id,
+          refereeId: userId,
+          status: 'pending',
+          inscriptionDate: new Date(),
+        },
+      });
+    } catch (err) {
+      // Course concurrente : la contrainte refereeId @unique peut se déclencher si deux
+      // requêtes arrivent en parallèle. On renvoie un message clair plutôt qu'un 500.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new HttpError(409, 'Vous avez déjà renseigné un code de parrainage');
+      }
+      throw err;
+    }
 
     // Si les conditions de récompense sont déjà remplies (ex. le pro a déjà un KYC
     // approuvé, ou le client a déjà une réservation confirmée), on verse immédiatement.

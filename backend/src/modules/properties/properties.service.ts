@@ -441,9 +441,9 @@ export const propertiesService = {
   // Vérifie que la formule du professionnel autorise le type de média demandé.
   async _assertPlanAllowsMediaChoice(userId: string, choice: 'photos' | 'video' | 'threed'): Promise<void> {
     if (choice === 'photos') return; // toujours autorisé, toutes formules
-    const { PLAN_DETAILS } = await import('../../common/constants/subscription-plans');
+    const { getPlanDetails } = await import('../../common/constants/subscription-plans');
     const sub = await prisma.subscription.findUnique({ where: { userId } });
-    const plan = sub ? PLAN_DETAILS[sub.planType] : null;
+    const plan = sub ? getPlanDetails(sub.planType) : null;
     if (choice === 'video' && !plan?.videoUpload) {
       throw new HttpError(403, 'La vidéo est réservée aux formules Business et Entreprise.');
     }

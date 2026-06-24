@@ -4,10 +4,10 @@ import { configService } from '@/services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Settings2, Tag, Zap, Palette, Mail, Clock, ToggleLeft, ToggleRight, ShieldCheck, Flag,
+  Settings2, Tag, Zap, Palette, Mail, Clock, ToggleLeft, ToggleRight, ShieldCheck, Flag, CreditCard,
 } from 'lucide-react';
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -22,6 +22,29 @@ export default function ConfigurationPage() {
   const toast = useToast();
   const [savingGrace, setSavingGrace] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
+
+  // Frais Genius Pay (clé plate platform_config, lue par le service payouts)
+  const [geniusFee, setGeniusFee] = useState<number>(0);
+  const [savingFee, setSavingFee] = useState(false);
+  useEffect(() => {
+    configService.getConfig()
+      .then((raw: Record<string, unknown>) => {
+        const v = raw?.genius_pay_fee_percent;
+        setGeniusFee(typeof v === 'number' ? v : 0);
+      })
+      .catch(() => {});
+  }, []);
+  const saveGeniusFee = async () => {
+    setSavingFee(true);
+    try {
+      await configService.updateConfigKey('genius_pay_fee_percent', geniusFee);
+      toast.success('Frais Genius Pay sauvegardés');
+    } catch {
+      toast.error('Erreur lors de la sauvegarde');
+    } finally {
+      setSavingFee(false);
+    }
+  };
 
   const subPages = [
     { href: '/configuration/subscriptions', icon: Settings2, label: 'Abonnements', desc: 'Tarifs Starter / Business / Entreprise' },
@@ -101,6 +124,39 @@ export default function ConfigurationPage() {
               loading={savingGrace}
               onClick={() => save('grace', config.grace, setSavingGrace, 'Délai de grâce')}
             >
+              Sauvegarder
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Frais Genius Pay */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CreditCard size={16} className="text-gray-400" />
+            <CardTitle>Frais Genius Pay</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Pourcentage de frais appliqué par Genius Pay sur les paiements en ligne, utilisé pour le
+            calcul des versements aux professionnels (montant net). Mettre 0 pour aucun frais.
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                value={geniusFee}
+                onChange={(e) => setGeniusFee(Number(e.target.value))}
+                className="input w-28"
+              />
+              <span className="text-sm text-gray-600">%</span>
+            </div>
+            <Button size="sm" loading={savingFee} onClick={saveGeniusFee}>
               Sauvegarder
             </Button>
           </div>

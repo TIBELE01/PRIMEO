@@ -29,16 +29,25 @@ export default function BoostsConfigPage() {
       <Card>
         <CardHeader>
           <CardTitle>Mise en avant</CardTitle>
-          <span className="text-sm text-gray-500">{formatAmount(config.boosts.pricePerThreeDays)} / 3 jours</span>
+          <span className="text-sm text-gray-500">{formatAmount(config.boosts.pricePerThreeDays)} / {config.boosts.durationDays} jours</span>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Prix / 3 jours (FCFA)</label>
+              <label className="block text-sm text-gray-600 mb-1">Prix du boost payant (FCFA)</label>
               <input
                 type="number" min={0}
                 value={config.boosts.pricePerThreeDays}
                 onChange={(e) => updateConfigKey('boosts', { ...config.boosts, pricePerThreeDays: Number(e.target.value) })}
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Durée du boost payant (jours)</label>
+              <input
+                type="number" min={1}
+                value={config.boosts.durationDays}
+                onChange={(e) => updateConfigKey('boosts', { ...config.boosts, durationDays: Number(e.target.value) })}
                 className="input w-full"
               />
             </div>

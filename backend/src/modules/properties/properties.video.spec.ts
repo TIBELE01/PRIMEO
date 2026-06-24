@@ -15,13 +15,17 @@ const mockPrisma = {
 
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
-jest.mock('../../common/constants/subscription-plans', () => ({
-  PLAN_DETAILS: {
+jest.mock('../../common/constants/subscription-plans', () => {
+  const PLAN_DETAILS = {
     starter:    { videoUpload: false, virtualTour: false },
     business:   { videoUpload: true,  virtualTour: false },
     entreprise: { videoUpload: true,  virtualTour: true  },
-  },
-}));
+  } as Record<string, { videoUpload: boolean; virtualTour: boolean }>;
+  return {
+    PLAN_DETAILS,
+    getPlanDetails: (k: string) => PLAN_DETAILS[k],
+  };
+});
 
 const mockUploadAndSaveMedia = jest.fn();
 jest.mock('./properties.service', () => ({

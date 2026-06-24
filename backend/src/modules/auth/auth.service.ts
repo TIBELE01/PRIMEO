@@ -154,11 +154,11 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
 
   if (input.referralCode) {
     try {
-      const referrer = await prisma.user.findFirst({ where: { referralCode: input.referralCode } });
+      const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: input.referralCode, mode: 'insensitive' } } });
       if (referrer && referrer.id !== user.id) {
         await prisma.referral.create({
           data: {
-            referralCode: input.referralCode,
+            referralCode: referrer.referralCode ?? input.referralCode,
             referrerId: referrer.id,
             refereeId: user.id,
             status: 'pending',
@@ -349,11 +349,11 @@ export const authService = {
     // Parrainage — ne bloque pas la création si erreur
     if (pending.referralCode) {
       try {
-        const referrer = await prisma.user.findFirst({ where: { referralCode: pending.referralCode } });
+        const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: pending.referralCode, mode: 'insensitive' } } });
         if (referrer && referrer.id !== user.id) {
           await prisma.referral.create({
             data: {
-              referralCode: pending.referralCode,
+              referralCode: referrer.referralCode ?? pending.referralCode,
               referrerId: referrer.id,
               refereeId: user.id,
               status: 'pending',

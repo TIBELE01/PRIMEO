@@ -152,9 +152,9 @@ export async function uploadMediaFile(req: Request, res: Response, next: NextFun
     // Vérification des droits d'upload selon la formule
     if (mediaType === 'video' || mediaType === 'virtual_tour_360') {
       const { prisma } = await import('../../database/prisma.service');
-      const { PLAN_DETAILS } = await import('../../common/constants/subscription-plans');
+      const { getPlanDetails } = await import('../../common/constants/subscription-plans');
       const sub = await prisma.subscription.findUnique({ where: { userId: req.user!.sub } });
-      const plan = sub ? PLAN_DETAILS[sub.planType] : null;
+      const plan = sub ? getPlanDetails(sub.planType) : null;
 
       if (mediaType === 'video' && !plan?.videoUpload) {
         res.status(403).json({ error: 'L\'upload de vidéos est réservé aux formules Business et Entreprise.' });

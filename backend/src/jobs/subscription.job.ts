@@ -6,7 +6,7 @@ import { geniusPayService } from '../modules/payments/services/genius-pay.servic
 import { generateAndUploadInvoice } from '../common/utils/invoice';
 import { sendTemplateEmail } from '../common/utils/mailer';
 import { brevoConfig } from '../config/brevo.config';
-import { PLAN_DETAILS } from '../common/constants/subscription-plans';
+import { getPlanDetails, getGraceDays } from '../common/constants/subscription-plans';
 import { notificationsService } from '../modules/notifications/notifications.service';
 import { updatePlanBenefits } from '../modules/subscriptions/subscriptions.service';
 
@@ -37,7 +37,7 @@ async function processSubscriptionRenewal(sub: {
   let activePlanType = sub.planType;
 
   if (pendingPlanType) {
-    const newPlan = PLAN_DETAILS[pendingPlanType];
+    const newPlan = getPlanDetails(pendingPlanType);
     if (newPlan) {
       activePlanType = pendingPlanType;
       // Déléguer à updatePlanBenefits pour recalcul cohérent des avantages
@@ -46,7 +46,7 @@ async function processSubscriptionRenewal(sub: {
     }
   }
 
-  const plan = PLAN_DETAILS[activePlanType];
+  const plan = getPlanDetails(activePlanType);
   if (!plan) return;
 
   // Publications supplémentaires : applique les résiliations programmées à
@@ -174,8 +174,10 @@ async function processSubscriptionRenewal(sub: {
       data: { planName: plan.name },
     }).catch((err) => logger.warn(`payment_failed notify failed (sub=${sub.id})`, err));
 
-    // Count consecutive failures in the last GRACE_PERIOD_DAYS days
-    const gracePeriodStart = new Date(Date.now() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+    // Délai de grâce configurable (override admin), repli sur la constante.
+    const graceDays = getGraceDays(GRACE_PERIOD_DAYS);
+    // Count consecutive failures in the last `graceDays` days
+    const gracePeriodStart = new Date(Date.now() - graceDays * 24 * 60 * 60 * 1000);
 
     const [failedCount, successCount] = await Promise.all([
       prisma.transaction.count({
@@ -196,14 +198,14 @@ async function processSubscriptionRenewal(sub: {
       }),
     ]);
 
-    if (failedCount >= GRACE_PERIOD_DAYS && successCount === 0) {
+    if (failedCount >= graceDays && successCount === 0) {
       // Rétrograder vers Starter via updatePlanBenefits (stocke suspendedFromPlan dans features)
       await updatePlanBenefits(sub.userId, 'starter', 'payment_failure');
 
-      logger.warn(`Subscription ${sub.id} auto-downgraded to Starter after ${GRACE_PERIOD_DAYS} payment failures`);
+      logger.warn(`Subscription ${sub.id} auto-downgraded to Starter after ${graceDays} payment failures`);
     } else if (failedCount === GRACE_WARNING_DAY && successCount === 0) {
       // Avertissement J-3 avant suspension
-      const daysRemaining = GRACE_PERIOD_DAYS - failedCount;
+      const daysRemaining = graceDays - failedCount;
       notificationsService.notify({
         type: 'subscription_grace_warning',
         recipientId: sub.userId,
@@ -212,7 +214,7 @@ async function processSubscriptionRenewal(sub: {
 
       logger.warn(`Subscription ${sub.id} grace warning sent (${daysRemaining} days left)`);
     } else {
-      logger.warn(`Subscription ${sub.id} payment failed (attempt ${failedCount}/${GRACE_PERIOD_DAYS})`);
+      logger.warn(`Subscription ${sub.id} payment failed (attempt ${failedCount}/${graceDays})`);
     }
   }
 }

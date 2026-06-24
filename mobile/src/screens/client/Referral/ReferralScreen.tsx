@@ -200,7 +200,7 @@ export function ReferralScreen({ navigation }: Props) {
                 onChangeText={setApplyInput}
                 placeholder="Code de parrainage"
                 placeholderTextColor="#9CA3AF"
-                autoCapitalize="characters"
+                autoCapitalize="none"
                 autoCorrect={false}
                 editable={!applying}
                 accessibilityLabel="Saisir un code de parrainage"

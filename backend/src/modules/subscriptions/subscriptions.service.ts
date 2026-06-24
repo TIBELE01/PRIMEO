@@ -1,7 +1,7 @@
 // Subscriptions service — activation, montées en gamme, renouvellements, historique factures
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { PLAN_DETAILS, getPublicationLimit, EXTRA_PUBLICATION_SLOT_FCFA } from '../../common/constants/subscription-plans';
+import { PLAN_DETAILS, getPlanDetails, isPlanActive, getPublicationLimit, EXTRA_PUBLICATION_SLOT_FCFA } from '../../common/constants/subscription-plans';
 import { UpgradePlanInput } from './dto/subscription.dto';
 import { geniusPayService } from '../payments/services/genius-pay.service';
 import { notificationsService } from '../notifications/notifications.service';
@@ -18,7 +18,7 @@ export type BenefitUpdateContext =
   | 'reactivation';
 
 function planConfig(planType: string) {
-  const plan = PLAN_DETAILS[planType];
+  const plan = getPlanDetails(planType);
   if (!plan) throw new Error(`Unknown plan: ${planType}`);
   return plan;
 }
@@ -40,7 +40,7 @@ function serializeSubscription<T extends Record<string, unknown>>(sub: T | null)
   if (!sub) return null;
   const features = (sub.features as Record<string, unknown> | null) ?? {};
   const planType = sub.planType as string;
-  const planDef  = PLAN_DETAILS[planType] ?? {};
+  const planDef  = getPlanDetails(planType) ?? {};
   return {
     ...sub,
     plan:         planType,
@@ -77,7 +77,7 @@ export async function updatePlanBenefits(
   if (!sub) throw new HttpError(404, 'Aucun abonnement trouvé');
 
   const previousPlan = sub.planType;
-  const newPlan = PLAN_DETAILS[newPlanType];
+  const newPlan = getPlanDetails(newPlanType);
   if (!newPlan) throw new HttpError(400, `Formule inconnue : ${newPlanType}`);
 
   const user = await prisma.user.findUnique({
@@ -150,7 +150,7 @@ export async function updatePlanBenefits(
   }
 
   // Notification multi-canal
-  const prevPlanName = PLAN_DETAILS[previousPlan]?.name ?? previousPlan;
+  const prevPlanName = getPlanDetails(previousPlan)?.name ?? previousPlan;
   const newPlanName = newPlan.name;
 
   const notifType =
@@ -262,6 +262,7 @@ export const subscriptionsService = {
     // Permettre la réactivation depuis un état suspendu via paiement
     if (sub.status === 'cancelled') throw new HttpError(400, 'Abonnement annulé — contactez le support');
     if (sub.planType === input.plan && sub.status === 'active') throw new HttpError(400, 'Vous êtes déjà sur cette formule');
+    if (!isPlanActive(input.plan)) throw new HttpError(400, "Cette formule n'est pas disponible actuellement.");
 
     const targetPlan = planConfig(input.plan);
     const isUpgrade  = targetPlan.monthlyPrice > sub.monthlyPrice;
@@ -545,7 +546,14 @@ export const subscriptionsService = {
 
   // Liste les formules disponibles avec les capacités par type de compte
   async listPlans(accountType?: string) {
-    return Object.entries(PLAN_DETAILS).map(([key, plan]) => ({
+    // On masque les formules désactivées par l'admin (Starter reste toujours
+    // disponible car c'est la formule gratuite par défaut). Les prix/limites/
+    // fonctionnalités reflètent les overrides admin via getPlanDetails().
+    return Object.keys(PLAN_DETAILS)
+      .filter((key) => key === 'starter' || isPlanActive(key))
+      .map((key) => {
+      const plan = getPlanDetails(key);
+      return {
       key,
       name:               plan.name,
       monthlyPrice:       plan.monthlyPrice,
@@ -564,6 +572,8 @@ export const subscriptionsService = {
       betaAccess:         plan.betaAccess,
       loyaltyProgram:     plan.loyaltyProgram,
       features:           plan.features,
-    }));
+      active:             isPlanActive(key),
+      };
+    });
   },
 };
