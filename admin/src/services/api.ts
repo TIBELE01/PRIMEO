@@ -1,7 +1,7 @@
 // Shared Axios API client re-export — alias of src/lib/api.ts for compatibility
 export { api, apiClient } from '../lib/api';
 
-import { api } from '../lib/api';
+import { api, API_BASE } from '../lib/api';
 import type { PlatformUser, UserDetail } from '../types/user';
 import type { AdminProperty } from '../types/property';
 import type { AdminBooking } from '../types/booking';
@@ -303,10 +303,7 @@ export const websiteService = {
     api.put(`/website/admin/messages/${id}/read`, { isRead }),
   replyMessage: (id: string, replyText: string) =>
     api.post(`/website/admin/messages/${id}/reply`, { replyText }),
-  exportMessagesUrl: () => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
-    return `${base}/website/admin/messages/export`;
-  },
+  exportMessagesUrl: () => `${API_BASE}/website/admin/messages/export`,
 
   // Blog — Posts
   listBlogPosts: (page = 1, limit = 20, search = '') =>
@@ -335,10 +332,7 @@ export const websiteService = {
     api.put(`/website/admin/blog/newsletter/${id}/status`, { status }),
   deleteNewsletterSubscriber: (id: string) =>
     api.delete(`/website/admin/blog/newsletter/${id}`),
-  exportNewsletterUrl: () => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
-    return `${base}/website/admin/blog/newsletter/export`;
-  },
+  exportNewsletterUrl: () => `${API_BASE}/website/admin/blog/newsletter/export`,
 
   // Blog — Comments
   listBlogComments: (status?: string) =>

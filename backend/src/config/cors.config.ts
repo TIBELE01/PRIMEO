@@ -23,7 +23,10 @@ export const corsConfig: CorsOptions = {
     if (!origin || isAllowed(origin)) {
       callback(null, true);
     } else {
-      callback(new Error(`CORS: origin ${origin} not allowed`));
+      // Origine non autorisée : rejet PROPRE (réponse sans en-tête
+      // Access-Control-Allow-Origin) au lieu de lever une erreur — qui se
+      // transformerait en 500 et masquerait le vrai blocage CORS côté navigateur.
+      callback(null, false);
     }
   },
   credentials: true,
