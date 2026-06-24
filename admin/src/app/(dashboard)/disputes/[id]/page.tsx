@@ -155,7 +155,7 @@ export default function DisputeDetailPage() {
                         : 'bg-amber-50 border border-amber-200'
                     }`}>
                       <p className={`text-xs font-semibold mb-1 ${
-                        isAdmin ? 'text-amber-700' : isClient ? 'text-blue-700' : 'text-gray-600'
+                        isAdmin ? 'text-amber-700' : isClient ? 'text-blue-700' : 'text-gray-600 dark:text-gray-400'
                       }`}>
                         {m.authorName}
                         <span className="font-normal ml-1">
@@ -249,15 +249,15 @@ export default function DisputeDetailPage() {
             <CardContent>
               <dl className="space-y-2.5 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Client</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Client</dt>
                   <dd className="font-medium text-gray-900">{dispute.clientName}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Professionnel</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Professionnel</dt>
                   <dd className="font-medium text-gray-900">{dispute.professionalName}</dd>
                 </div>
                 <div className="flex justify-between items-center">
-                  <dt className="text-gray-500">Réservation</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Réservation</dt>
                   <dd>
                     {dispute.bookingId ? (
                       <button
@@ -272,18 +272,18 @@ export default function DisputeDetailPage() {
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Ouvert le</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Ouvert le</dt>
                   <dd>{formatDate(dispute.createdAt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Ancienneté</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Ancienneté</dt>
                   <dd className={days >= 7 ? 'text-red-600 font-semibold' : days >= 2 ? 'text-amber-600' : ''}>
                     {days} jour{days > 1 ? 's' : ''}
                   </dd>
                 </div>
                 {maxRefund > 0 && (
                   <div className="flex justify-between pt-2.5 border-t border-gray-100">
-                    <dt className="text-gray-500">Remboursement demandé</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Remboursement demandé</dt>
                     <dd className="font-bold text-gray-900">{formatAmount(maxRefund)}</dd>
                   </div>
                 )}
@@ -304,18 +304,18 @@ export default function DisputeDetailPage() {
               <CardContent>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Décision</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Décision</dt>
                     <dd className="font-medium">{resolutionLabel[dispute.resolution] ?? dispute.resolution ?? '—'}</dd>
                   </div>
                   {dispute.resolvedAmount !== null && dispute.resolvedAmount !== undefined && dispute.resolvedAmount > 0 && (
                     <div className="flex justify-between">
-                      <dt className="text-gray-500">Montant remboursé</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">Montant remboursé</dt>
                       <dd className="font-semibold text-green-700">{formatAmount(dispute.resolvedAmount)}</dd>
                     </div>
                   )}
                   {dispute.resolvedAt && (
                     <div className="flex justify-between">
-                      <dt className="text-gray-500">Résolu le</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">Résolu le</dt>
                       <dd>{formatDate(dispute.resolvedAt)}</dd>
                     </div>
                   )}

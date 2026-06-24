@@ -3,7 +3,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAdminStore } from '@/store/adminStore';
 import { Button } from '@/components/ui/Button';
 import { initials, cn } from '@/lib/utils';
-import { Search, LogOut, Clock } from 'lucide-react';
+import { Search, LogOut, Clock, Menu } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/auth';
 import { useState, useEffect } from 'react';
@@ -34,7 +35,7 @@ function useSessionCountdown() {
 
 export function Header() {
   const { admin, logout } = useAuthStore();
-  const { globalSearch, setGlobalSearch } = useAdminStore();
+  const { globalSearch, setGlobalSearch, setMobileNav } = useAdminStore();
   const router = useRouter();
   const [searching, setSearching] = useState(false);
   const { label: sessionLabel, isWarning } = useSessionCountdown();
@@ -46,25 +47,36 @@ export function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 shrink-0">
-      <div className={`relative transition-all duration-200 ${searching ? 'w-80' : 'w-48'}`}>
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="search"
-          placeholder="Rechercher…"
-          value={globalSearch}
-          onChange={(e) => setGlobalSearch(e.target.value)}
-          onFocus={() => setSearching(true)}
-          onBlur={() => setSearching(false)}
-          className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-        />
+    <header className="flex items-center justify-between h-16 px-4 sm:px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="flex items-center gap-2">
+        {/* Hamburger — ouvre le tiroir de navigation (mobile/tablette) */}
+        <button
+          onClick={() => setMobileNav(true)}
+          className="lg:hidden p-1.5 -ml-1 text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded"
+          aria-label="Ouvrir le menu de navigation"
+        >
+          <Menu size={22} />
+        </button>
+        <div className={`relative transition-all duration-200 ${searching ? 'w-44 sm:w-80' : 'w-40 sm:w-48'}`}>
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            placeholder="Rechercher…"
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            onFocus={() => setSearching(true)}
+            onBlur={() => setSearching(false)}
+            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 dark:text-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-gray-600"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <ThemeToggle />
         {/* Session countdown */}
         <div className={cn(
           'hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full',
-          isWarning ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500',
+          isWarning ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300',
         )}>
           <Clock size={12} />
           <span>Session : {sessionLabel}</span>
@@ -77,8 +89,8 @@ export function Header() {
           </div>
           {admin && (
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-gray-900 leading-tight">{admin.firstName} {admin.lastName}</p>
-              <p className="text-xs text-gray-500 capitalize">{admin.role.replace(/_/g, ' ')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">{admin.firstName} {admin.lastName}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{admin.role.replace(/_/g, ' ')}</p>
             </div>
           )}
         </div>

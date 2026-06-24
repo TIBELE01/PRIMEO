@@ -27,7 +27,7 @@ export default function BookingDetailPage() {
   });
 
   if (isLoading) return <PageSpinner />;
-  if (!booking) return <p className="text-gray-500">Réservation introuvable</p>;
+  if (!booking) return <p className="text-gray-500 dark:text-gray-400">Réservation introuvable</p>;
 
   return (
     <div className="space-y-4 max-w-4xl">
@@ -41,13 +41,13 @@ export default function BookingDetailPage() {
           <CardHeader><CardTitle>Détails</CardTitle></CardHeader>
           <CardContent>
             <dl className="space-y-2 text-sm">
-              <div className="flex justify-between"><dt className="text-gray-500">Propriété</dt><dd>{booking.propertyTitle}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Client</dt><dd>{booking.clientName}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Arrivée</dt><dd>{formatDate(booking.checkIn)}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Départ</dt><dd>{formatDate(booking.checkOut)}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Montant total</dt><dd className="font-bold">{formatAmount(booking.totalAmount)}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Commission</dt><dd>{formatAmount(booking.commissionAmount)}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">Option paiement</dt><dd>{booking.paymentOption}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Propriété</dt><dd>{booking.propertyTitle}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Client</dt><dd>{booking.clientName}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Arrivée</dt><dd>{formatDate(booking.checkIn)}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Départ</dt><dd>{formatDate(booking.checkOut)}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Montant total</dt><dd className="font-bold">{formatAmount(booking.totalAmount)}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Commission</dt><dd>{formatAmount(booking.commissionAmount)}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Option paiement</dt><dd>{booking.paymentOption}</dd></div>
             </dl>
           </CardContent>
         </Card>

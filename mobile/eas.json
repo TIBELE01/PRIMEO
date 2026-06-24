@@ -7,21 +7,21 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://primeo-api-sszr.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
         "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
       }
     },
     "staging": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://primeo-api-sszr.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
         "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
       }
     },
     "production": {
       "distribution": "store",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://primeo-api-sszr.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
         "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
       }
     }

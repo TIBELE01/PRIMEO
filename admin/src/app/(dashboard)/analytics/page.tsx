@@ -90,7 +90,8 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: s
 
 // ── Chart export button ───────────────────────────────────────────────────────
 function ChartExportBtn({ containerRef, filename, data, csvColumns }: {
-  containerRef: React.RefObject<HTMLDivElement>;
+  // React 19 : useRef<T>(null) renvoie RefObject<T | null> — le type du prop doit l'accepter.
+  containerRef: React.RefObject<HTMLDivElement | null>;
   filename: string; data: object[]; csvColumns: string[];
 }) {
   return (

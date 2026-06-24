@@ -63,6 +63,7 @@ import {
   deleteReview,
 } from './admin.controller';
 import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-flags.controller';
+import { listAdminAccounts, createAdminAccount, updateAdminAccount } from './admin-accounts.controller';
 import { getMonitoringDashboard } from './monitoring.controller';
 import { changeUserPlan, getSubscriptionHistory, forceRecalculateBenefits, getPaymentFailures } from './admin.controller';
 import { ChangeUserPlanDto } from './dto/admin.dto';
@@ -170,6 +171,11 @@ adminRouter.patch('/client-ratings/:id/restore', parseId, restoreClientRating);
 adminRouter.patch('/reviews/:id/hide', parseId, hideReview);
 adminRouter.patch('/reviews/:id/unhide', parseId, unhideReview);
 adminRouter.delete('/reviews/:id', parseId, deleteReview);
+
+// ── Comptes administrateurs (super_admin uniquement — vérifié dans le contrôleur) ──
+adminRouter.get('/accounts', listAdminAccounts);
+adminRouter.post('/accounts', createAdminAccount);
+adminRouter.patch('/accounts/:id', parseId, updateAdminAccount);
 
 // ── Feature flags ──────────────────────────────────────────────────────────────
 adminRouter.get('/feature-flags', getAllFlags);

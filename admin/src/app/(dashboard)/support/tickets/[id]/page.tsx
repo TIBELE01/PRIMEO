@@ -179,7 +179,7 @@ export default function TicketDetailPage() {
                         onChange={() => setIsInternal(false)}
                         className="accent-primary-600"
                       />
-                      <Eye size={13} className="text-gray-500" />
+                      <Eye size={13} className="text-gray-500 dark:text-gray-400" />
                       Visible par l'utilisateur
                     </label>
                     <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
@@ -318,21 +318,21 @@ export default function TicketDetailPage() {
             <CardContent>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Catégorie</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Catégorie</dt>
                   <dd className="font-medium text-gray-900">{CATEGORY_LABELS[ticket.category] ?? ticket.category}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Priorité</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Priorité</dt>
                   <dd><Badge variant={priorityBadge[ticket.priority] ?? 'default'}>{PRIORITY_LABELS[ticket.priority] ?? ticket.priority}</Badge></dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Créé le</dt>
-                  <dd className="text-gray-700">{formatDateTime(ticket.createdAt)}</dd>
+                  <dt className="text-gray-500 dark:text-gray-400">Créé le</dt>
+                  <dd className="text-gray-700 dark:text-gray-300">{formatDateTime(ticket.createdAt)}</dd>
                 </div>
                 {ticket.resolvedAt && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Résolu le</dt>
-                    <dd className="text-gray-700">{formatDateTime(ticket.resolvedAt)}</dd>
+                    <dt className="text-gray-500 dark:text-gray-400">Résolu le</dt>
+                    <dd className="text-gray-700 dark:text-gray-300">{formatDateTime(ticket.resolvedAt)}</dd>
                   </div>
                 )}
               </dl>

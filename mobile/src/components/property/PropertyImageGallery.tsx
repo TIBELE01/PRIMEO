@@ -1,7 +1,8 @@
 // PropertyImageGallery: swipeable image carousel for property detail.
 // Largeur/hauteur paramétrables pour s'insérer dans la carte média (avec marges).
 import React, { useState } from 'react';
-import { View, Image, FlatList, TouchableOpacity, Text, Dimensions, StyleSheet } from 'react-native';
+import { View, FlatList, TouchableOpacity, Text, Dimensions, StyleSheet } from 'react-native';
+import { AppImage } from '../ui/AppImage';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -36,7 +37,7 @@ export const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
         onMomentumScrollEnd={e => setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
         renderItem={({ item, index }) => (
           <TouchableOpacity onPress={() => onImagePress?.(index)} activeOpacity={0.9}>
-            <Image source={{ uri: item }} style={{ width, height }} />
+            <AppImage source={{ uri: item }} style={{ width, height }} recyclingKey={item} />
           </TouchableOpacity>
         )}
       />

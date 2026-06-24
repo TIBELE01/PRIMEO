@@ -111,7 +111,7 @@ export default function MessagesPage() {
                 onClick={() => openMessage(m)}
                 className={`bg-white border rounded-xl p-4 cursor-pointer transition-all hover:shadow-sm ${
                   selected?.id === m.id ? 'border-blue-400 ring-2 ring-blue-100' :
-                  !m.isRead ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'
+                  !m.isRead ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
@@ -120,7 +120,7 @@ export default function MessagesPage() {
                       ? <MailOpen size={14} className="text-gray-400 flex-shrink-0" />
                       : <Mail size={14} className="text-blue-500 flex-shrink-0" />
                     }
-                    <p className={`text-sm font-semibold truncate ${!m.isRead ? 'text-gray-900' : 'text-gray-700'}`}>{m.name}</p>
+                    <p className={`text-sm font-semibold truncate ${!m.isRead ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>{m.name}</p>
                   </div>
                   <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
                     {new Date(m.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}

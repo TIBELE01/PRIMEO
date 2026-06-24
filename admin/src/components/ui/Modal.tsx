@@ -33,13 +33,13 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
 
   return createPortal(
     <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in" onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}>
-      <div className={cn('bg-white rounded-3xl shadow-xl w-full animate-fade-up', sizes[size])}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900">{title}</h2>
-          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-2xl leading-none">&times;</button>
+      <div className={cn('bg-white dark:bg-gray-800 rounded-3xl shadow-xl w-full animate-fade-up', sizes[size])}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100">{title}</h2>
+          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl leading-none">&times;</button>
         </div>
         <div className="px-6 py-5">{children}</div>
-        {footer && <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">{footer}</div>}
+        {footer && <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">{footer}</div>}
       </div>
     </div>,
     document.body,

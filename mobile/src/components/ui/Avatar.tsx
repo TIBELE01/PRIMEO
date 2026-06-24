@@ -1,6 +1,7 @@
 // User avatar with image or initials fallback
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { AppImage } from './AppImage';
 
 interface AvatarProps {
   uri?: string | null;
@@ -20,11 +21,12 @@ export function Avatar({ uri, name, size = 44 }: AvatarProps) {
   const a11yLabel = name ? `Photo de profil de ${name}` : 'Photo de profil';
   if (uri) {
     return (
-      <Image
+      <AppImage
         source={{ uri }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
         accessibilityRole="image"
         accessibilityLabel={a11yLabel}
+        recyclingKey={uri}
       />
     );
   }

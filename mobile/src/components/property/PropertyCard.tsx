@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
+import { AppImage } from '../ui/AppImage';
 import { BoostBadge } from '../boost/BoostBadge';
 import { useCurrency } from '../../hooks/useCurrency';
 import { num } from '../../utils/normalizeProperty';
@@ -25,7 +26,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress, o
       <TouchableOpacity onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} activeOpacity={1}>
         <View style={styles.imgBox}>
           {property.mainImageUrl ? (
-            <Image source={{ uri: property.mainImageUrl }} style={styles.img} />
+            <AppImage source={{ uri: property.mainImageUrl }} style={styles.img} recyclingKey={property.id} />
           ) : (
             <View style={[styles.img, styles.imgFallback]} />
           )}

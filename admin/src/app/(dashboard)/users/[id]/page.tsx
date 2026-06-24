@@ -510,11 +510,11 @@ export default function UserDetailPage() {
               <CardContent>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Formule</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Formule</dt>
                     <dd className="font-semibold capitalize">{user.subscription.planType ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Statut</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Statut</dt>
                     <dd>
                       <Badge variant={user.subscription.status === 'active' ? 'success' : 'warning'}>
                         {user.subscription.status ?? '—'}
@@ -523,19 +523,19 @@ export default function UserDetailPage() {
                   </div>
                   {user.subscription.monthlyPrice > 0 && (
                     <div className="flex justify-between">
-                      <dt className="text-gray-500">Mensualité</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">Mensualité</dt>
                       <dd className="font-semibold">{formatAmount(user.subscription.monthlyPrice)}</dd>
                     </div>
                   )}
                   {user.subscription.nextBillingDate && (
                     <div className="flex justify-between">
-                      <dt className="text-gray-500">Prochain renouvellement</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">Prochain renouvellement</dt>
                       <dd className="font-semibold">{formatDate(user.subscription.nextBillingDate)}</dd>
                     </div>
                   )}
                   {typeof user.subscription.includedPropertiesLimit === 'number' && (
                     <div className="flex justify-between">
-                      <dt className="text-gray-500">Limite annonces</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">Limite annonces</dt>
                       <dd className="font-semibold">
                         {user.subscription.includedPropertiesLimit >= 9999 ? '∞' : user.subscription.includedPropertiesLimit}
                       </dd>
@@ -597,7 +597,7 @@ export default function UserDetailPage() {
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
                       {subHistory.transactions.slice(0, 10).map((tx: any) => (
                         <div key={tx.id} className="flex items-center justify-between text-xs">
-                          <span className={tx.status === 'success' ? 'text-green-700' : tx.status === 'failed' ? 'text-red-600' : 'text-gray-500'}>
+                          <span className={tx.status === 'success' ? 'text-green-700' : tx.status === 'failed' ? 'text-red-600' : 'text-gray-500 dark:text-gray-400'}>
                             {tx.status === 'success' ? '✓' : tx.status === 'failed' ? '✗' : '○'} {tx.notes?.slice(0, 30) ?? '—'}
                           </span>
                           <span className="text-gray-400 shrink-0 ml-2">
@@ -615,7 +615,7 @@ export default function UserDetailPage() {
                     <div className="space-y-1.5 max-h-36 overflow-y-auto">
                       {subHistory.auditLogs.slice(0, 5).map((log: any) => (
                         <div key={log.id} className="text-xs">
-                          <span className="text-gray-700">{log.description?.slice(0, 60) ?? log.action}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{log.description?.slice(0, 60) ?? log.action}</span>
                           <span className="block text-gray-400">
                             {log.createdAt ? new Date(log.createdAt).toLocaleString('fr-FR') : ''}
                           </span>
@@ -634,16 +634,16 @@ export default function UserDetailPage() {
             <CardContent>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Propriétés</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Propriétés</dt>
                   <dd className="font-semibold">{user.propertiesCount ?? 0}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Réservations</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Réservations</dt>
                   <dd className="font-semibold">{user.bookingsCount ?? 0}</dd>
                 </div>
                 {typeof user.totalRevenue === 'number' && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Revenus générés</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Revenus générés</dt>
                     <dd className="font-semibold">{formatAmount(user.totalRevenue)}</dd>
                   </div>
                 )}

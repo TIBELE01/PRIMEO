@@ -12,8 +12,15 @@ import { AccountType, UserStatus } from '@prisma/client';
 const TOTP_PENDING_TTL = 300;
 const TOTP_PENDING_KEY = (userId: string) => `totp_pending:${userId}`;
 
-function adminProfile(user: { id: string; email: string; firstName: string; lastName: string; accountType: string }) {
-  return { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.accountType };
+function adminProfile(user: { id: string; email: string; firstName: string; lastName: string; accountType: string; adminRole?: string | null }) {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    // Rôle granulaire admin exposé au dashboard (RBAC UI). null ⇒ super_admin.
+    role: user.accountType === 'admin' ? (user.adminRole ?? 'super_admin') : user.accountType,
+  };
 }
 
 export async function adminLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -62,7 +69,7 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
 
 async function continueLogin(
   signInData: { session: { access_token: string; refresh_token: string }; user: { id: string; app_metadata?: Record<string, unknown> } },
-  user: { id: string; email: string; firstName: string; lastName: string; accountType: string },
+  user: { id: string; email: string; firstName: string; lastName: string; accountType: string; adminRole?: string | null },
   res: Response,
   _next: NextFunction,
 ): Promise<void> {

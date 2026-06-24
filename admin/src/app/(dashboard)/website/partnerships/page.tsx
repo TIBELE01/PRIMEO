@@ -132,7 +132,7 @@ export default function PartnershipsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-gray-900">{r.contactName}</div>
+                        <div className="text-gray-900 dark:text-gray-100">{r.contactName}</div>
                         <div className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                           <Mail size={11} />{r.email}
                         </div>

@@ -44,7 +44,7 @@ const roleLabel: Record<AdminRole, string> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar, stats } = useAdminStore();
+  const { sidebarCollapsed, toggleSidebar, stats, mobileNavOpen, setMobileNav } = useAdminStore();
   const { admin } = useAuthStore();
 
   // Normalise role: handle uppercase, hyphen variants, unknown → super_admin fallback
@@ -60,7 +60,24 @@ export function Sidebar() {
   };
 
   return (
-    <aside className={cn('flex flex-col bg-primary-900 text-white transition-all duration-300 shrink-0', sidebarCollapsed ? 'w-16' : 'w-64')}>
+    <>
+    {/* Overlay (mobile/tablette) — ferme le tiroir au tap en dehors */}
+    {mobileNavOpen && (
+      <div
+        className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+        onClick={() => setMobileNav(false)}
+        aria-hidden="true"
+      />
+    )}
+    <aside className={cn(
+      'flex flex-col bg-primary-900 text-white transition-transform duration-300 z-50',
+      // Mobile : tiroir off-canvas plein écran à gauche
+      'fixed inset-y-0 left-0 w-64',
+      mobileNavOpen ? 'translate-x-0' : '-translate-x-full',
+      // Desktop : colonne statique, repliable
+      'lg:static lg:translate-x-0 lg:shrink-0',
+      sidebarCollapsed ? 'lg:w-16' : 'lg:w-64',
+    )}>
       <div className="flex items-center justify-between px-4 py-5 border-b border-primary-800">
         {!sidebarCollapsed && (
           <div className="flex items-center gap-2">
@@ -83,6 +100,7 @@ export function Sidebar() {
               key={href}
               href={href}
               title={sidebarCollapsed ? label : undefined}
+              onClick={() => setMobileNav(false)}
               className={cn(
                 'flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg mx-2 transition-colors',
                 active ? 'bg-primary-700 text-white' : 'text-primary-300 hover:bg-primary-800 hover:text-white',
@@ -113,5 +131,6 @@ export function Sidebar() {
         </div>
       )}
     </aside>
+    </>
   );
 }

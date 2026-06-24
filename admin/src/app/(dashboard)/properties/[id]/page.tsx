@@ -185,35 +185,35 @@ export default function PropertyDetailPage() {
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
                 <div className="flex justify-between col-span-2 border-b border-gray-50 pb-2">
-                  <dt className="text-gray-500">Propriétaire</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Propriétaire</dt>
                   <dd className="font-medium text-gray-900">{property.ownerName}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Prix / nuit</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Prix / nuit</dt>
                   <dd className="font-medium">{formatAmount(property.pricePerNight)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Ville</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Ville</dt>
                   <dd>{property.city}, {property.country}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Note</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Note</dt>
                   <dd>★ {property.rating} ({property.reviewCount} avis)</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Réservations</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Réservations</dt>
                   <dd>{bookingsCount}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Revenus totaux</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Revenus totaux</dt>
                   <dd>{formatAmount(totalRevenue)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Soumis le</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Soumis le</dt>
                   <dd>{formatDate(property.submittedAt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Modifié le</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Modifié le</dt>
                   <dd>{formatDate(property.updatedAt)}</dd>
                 </div>
               </dl>
@@ -353,23 +353,23 @@ export default function PropertyDetailPage() {
             <CardContent>
               <dl className="space-y-2.5 text-sm">
                 <div className="flex justify-between items-center">
-                  <dt className="text-gray-500">Nom</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Nom</dt>
                   <dd className="font-medium text-gray-900">{property.ownerName}</dd>
                 </div>
                 {ownerEmail && (
                   <div className="flex justify-between items-center">
-                    <dt className="text-gray-500">Email</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Email</dt>
                     <dd className="text-xs text-primary-700 break-all">{ownerEmail}</dd>
                   </div>
                 )}
                 {ownerPhone && (
                   <div className="flex justify-between items-center">
-                    <dt className="text-gray-500">Téléphone</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Téléphone</dt>
                     <dd className="text-xs text-gray-700">{ownerPhone}</dd>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <dt className="text-gray-500">Statut KYC</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Statut KYC</dt>
                   <dd>
                     <Badge variant={kycBadge[ownerKycStatus ?? 'none'] ?? 'default'}>
                       {ownerKycStatus === 'verified' ? 'Vérifié'
@@ -381,7 +381,7 @@ export default function PropertyDetailPage() {
                 </div>
                 {ownerSubscriptionPlan && (
                   <div className="flex justify-between items-center">
-                    <dt className="text-gray-500">Abonnement</dt>
+                    <dt className="text-gray-500 dark:text-gray-400">Abonnement</dt>
                     <dd className="capitalize text-xs font-medium text-gray-700">{ownerSubscriptionPlan}</dd>
                   </div>
                 )}

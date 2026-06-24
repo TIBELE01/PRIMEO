@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
+import { AppImage } from '../../../components/ui/AppImage';
 import type { Property } from '@/types/property';
 import { num } from '@/utils/normalizeProperty';
 import { useCurrency } from '../../../hooks/useCurrency';
@@ -44,7 +45,7 @@ export function PropertyCard({ property, onPress, style, onFavorite, isFavorite 
         {/* ── Image section ── */}
         <View style={styles.imgWrap}>
           {mainImage ? (
-            <Image source={{ uri: mainImage }} style={styles.img} resizeMode="cover" />
+            <AppImage source={{ uri: mainImage }} style={styles.img} recyclingKey={property.id} />
           ) : (
             <View style={[styles.img, styles.imgFallback]} />
           )}

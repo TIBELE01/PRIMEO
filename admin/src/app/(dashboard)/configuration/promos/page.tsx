@@ -114,7 +114,7 @@ export default function PromosPage() {
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
                       <span>
                         Réduction :{' '}
-                        <strong className="text-gray-700">
+                        <strong className="text-gray-700 dark:text-gray-300">
                           {promo.discountType === 'percentage'
                             ? `${promo.discountValue}%`
                             : formatAmount(promo.discountValue)}
@@ -124,7 +124,7 @@ export default function PromosPage() {
                         <span>Min. : {formatAmount((promo as any).minAmount)}</span>
                       )}
                       <span>
-                        Utilisations : <strong className="text-gray-700">{promo.usedCount}</strong>
+                        Utilisations : <strong className="text-gray-700 dark:text-gray-300">{promo.usedCount}</strong>
                         {promo.maxUses !== null && promo.maxUses !== undefined ? ` / ${promo.maxUses}` : ' (illimité)'}
                       </span>
                       <span>

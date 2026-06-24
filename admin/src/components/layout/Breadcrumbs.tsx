@@ -17,7 +17,7 @@ export function Breadcrumbs() {
   const parts = pathname.split('/').filter(Boolean);
 
   return (
-    <nav className="flex items-center gap-1 text-sm text-gray-500 mb-4">
+    <nav className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-4">
       <Link href="/dashboard" className="hover:text-primary-700"><Home size={14} /></Link>
       {parts.map((part, i) => {
         const href = '/' + parts.slice(0, i + 1).join('/');
@@ -27,7 +27,7 @@ export function Breadcrumbs() {
           <span key={href} className="flex items-center gap-1">
             <ChevronRight size={14} />
             {isLast ? (
-              <span className="text-gray-900 font-medium">{label}</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">{label}</span>
             ) : (
               <Link href={href} className="hover:text-primary-700">{label}</Link>
             )}

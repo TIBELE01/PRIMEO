@@ -40,7 +40,7 @@ export default function SupportPage() {
     {
       label: 'Délai moyen résolution',
       value: data?.avgResolutionHours !== null && data?.avgResolutionHours !== undefined ? `${data.avgResolutionHours}h` : '—',
-      icon: <Clock size={20} className="text-gray-500" />,
+      icon: <Clock size={20} className="text-gray-500 dark:text-gray-400" />,
       bg: 'bg-gray-50',
       href: '#',
     },
@@ -104,7 +104,7 @@ export default function SupportPage() {
                   return (
                     <div key={key}>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">{label}</span>
+                        <span className="text-gray-600 dark:text-gray-400">{label}</span>
                         <span className="font-medium text-gray-900">{count}</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -133,7 +133,7 @@ export default function SupportPage() {
                   return (
                     <div key={key}>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">{label}</span>
+                        <span className="text-gray-600 dark:text-gray-400">{label}</span>
                         <span className="font-medium text-gray-900">{count}</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-1.5">

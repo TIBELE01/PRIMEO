@@ -6,10 +6,14 @@ import { STORAGE_KEYS } from './cookies';
 // Base API normalisée : se termine TOUJOURS par /api, que NEXT_PUBLIC_API_URL
 // inclue déjà le suffixe ou non (ex. https://primeo-api.onrender.com → .../api).
 // Corrige le 404 « Cannot POST /admin/auth/login » quand l'URL Render omet /api.
-export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000')
-  .replace(/\/+$/, '')
-  .replace(/\/api$/, '')
-  + '/api';
+export function normalizeApiBase(raw?: string | null): string {
+  return (raw ?? 'http://localhost:4000')
+    .replace(/\/+$/, '')
+    .replace(/\/api$/, '')
+    + '/api';
+}
+
+export const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
 
 // 65 s : couvre le cold-start de Render free tier (jusqu'à 60 s) avec marge
 export const apiClient: AxiosInstance = axios.create({

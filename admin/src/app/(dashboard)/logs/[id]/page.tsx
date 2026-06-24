@@ -14,7 +14,7 @@ export default function LogDetailPage() {
   const { data: log, isLoading } = useQuery<any>({ queryKey: ['log', id], queryFn: () => logsService.getLogById(id) });
 
   if (isLoading) return <PageSpinner />;
-  if (!log) return <p className="text-gray-500">Entrée introuvable</p>;
+  if (!log) return <p className="text-gray-500 dark:text-gray-400">Entrée introuvable</p>;
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -26,10 +26,10 @@ export default function LogDetailPage() {
         <CardHeader><CardTitle>{log.action}</CardTitle><Badge variant="info">{log.level}</Badge></CardHeader>
         <CardContent>
           <dl className="space-y-3 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Admin</dt><dd>{log.adminName}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Cible</dt><dd>{log.targetType}:{log.targetId}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Date</dt><dd>{formatDateTime(log.createdAt)}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">IP</dt><dd>{log.ip ?? '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Admin</dt><dd>{log.adminName}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Cible</dt><dd>{log.targetType}:{log.targetId}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">Date</dt><dd>{formatDateTime(log.createdAt)}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">IP</dt><dd>{log.ip ?? '—'}</dd></div>
           </dl>
           {log.metadata && (
             <div className="mt-4">

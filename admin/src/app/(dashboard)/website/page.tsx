@@ -188,7 +188,7 @@ export default function WebsitePage() {
               <span className="font-medium">{emptyCount}</span> section{emptyCount !== 1 ? 's' : ''} vide{emptyCount !== 1 ? 's' : ''} — données non encore importées
             </div>
           ) : (
-            <div className="text-gray-500">Toutes les sections sont renseignées</div>
+            <div className="text-gray-500 dark:text-gray-400">Toutes les sections sont renseignées</div>
           )}
           {emptyCount > 0 && (
             <>

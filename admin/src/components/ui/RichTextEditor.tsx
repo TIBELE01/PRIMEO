@@ -29,7 +29,7 @@ function ToolbarButton({
       title={title}
       aria-label={title}
       aria-pressed={active}
-      className={`p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 ${active ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
+      className={`p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 ${active ? 'bg-blue-100 text-blue-700' : 'text-gray-600 dark:text-gray-400'}`}
     >
       {children}
     </button>

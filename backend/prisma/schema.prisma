@@ -276,6 +276,9 @@ model User {
   // Rôle et statut
   accountType AccountType @default(client)
   extraRoles  Json? // rôles complémentaires (admin sub-roles)
+  // Rôle admin granulaire (uniquement pour accountType=admin) :
+  // super_admin | moderateur | support | analyste. null ⇒ traité comme super_admin.
+  adminRole   String?
   status      UserStatus  @default(pending)
   deactivatedUntil  DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
 
