@@ -126,7 +126,7 @@ export default function DisputesPage() {
           </div>
           <div className={`${criticalCount > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3 text-center`}>
             <p className={`text-2xl font-bold ${criticalCount > 0 ? 'text-red-700' : 'text-gray-500 dark:text-gray-400'}`}>{criticalCount}</p>
-            <p className={`text-xs mt-0.5 ${criticalCount > 0 ? 'text-red-600' : 'text-gray-400'}`}>Critiques (+7j)</p>
+            <p className={`text-xs mt-0.5 ${criticalCount > 0 ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>Critiques (+7j)</p>
           </div>
         </div>
       )}

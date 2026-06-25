@@ -76,7 +76,7 @@ async function build() {
   // Blog articles — source de vérité : table blog_posts (via l'API publique).
   // Échec réseau au build → on saute simplement les URLs d'articles.
   try {
-    const apiBase = (process.env.PRIMEO_API_URL || 'https://primeo-api-sszr.onrender.com').replace(/\/$/, '');
+    const apiBase = (process.env.PRIMEO_API_URL || 'https://primeo-api-xhef.onrender.com').replace(/\/$/, '');
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
     const res = await fetch(`${apiBase}/api/website/blog/posts?limit=100`, { signal: ctrl.signal });

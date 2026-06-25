@@ -346,7 +346,7 @@ export default function PropertyDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <User size={15} className="text-gray-400" />
+                <User size={15} className="text-gray-400 dark:text-gray-500" />
                 <CardTitle>Informations légales du propriétaire</CardTitle>
               </div>
             </CardHeader>

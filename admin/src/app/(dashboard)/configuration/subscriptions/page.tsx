@@ -77,7 +77,7 @@ export default function SubscriptionsConfigPage() {
                     <button
                       type="button"
                       onClick={() => setField(key, { active: disabled })}
-                      className={`flex items-center gap-1 text-xs font-medium ${disabled ? 'text-gray-400' : 'text-green-700'}`}
+                      className={`flex items-center gap-1 text-xs font-medium ${disabled ? 'text-gray-400 dark:text-gray-500' : 'text-green-700'}`}
                     >
                       {disabled ? <ToggleLeft size={22} className="text-gray-300" /> : <ToggleRight size={22} className="text-green-600" />}
                       {disabled ? 'Désactivée' : 'Active'}

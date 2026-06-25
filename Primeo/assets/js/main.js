@@ -16,7 +16,7 @@
   var apiMeta = document.querySelector('meta[name="api-url"]');
   var API = (apiMeta && apiMeta.content
     ? apiMeta.content
-    : (window.PRIMEO_API_BASE_URL || 'https://primeo-api-sszr.onrender.com')).replace(/\/$/, '');
+    : (window.PRIMEO_API_BASE_URL || 'https://primeo-api-xhef.onrender.com')).replace(/\/$/, '');
 
   /* ── 1. Redirection si maintenance active ── */
   var onMaintenancePage = window.location.pathname.indexOf('/maintenance') === 0;

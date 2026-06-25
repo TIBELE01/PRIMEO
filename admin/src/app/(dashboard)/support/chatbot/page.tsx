@@ -70,7 +70,7 @@ function StatsSection() {
             {data.topIntents.map((item: { intent: string; count: number }, i: number) => (
               <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
                 <span className="font-medium text-purple-700">{item.intent}</span>
-                <span className="text-gray-400">·</span>
+                <span className="text-gray-400 dark:text-gray-500">·</span>
                 <span>{item.count}</span>
               </span>
             ))}

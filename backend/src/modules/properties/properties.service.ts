@@ -5,6 +5,8 @@ import { Prisma } from '@prisma/client';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { geocodeAddress } from '../../common/utils/maps';
 import { cloudinaryConfig } from '../../config/cloudinary.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
+import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
 import { searchService } from './services/search.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
@@ -540,6 +542,14 @@ export const propertiesService = {
     if (!media) throw new HttpError(404, 'Média introuvable');
 
     await prisma.propertyMedia.delete({ where: { id: mediaId } });
+
+    // Nettoyage de l'asset Cloudinary (best effort)
+    if (media.publicId) {
+      const resourceType = (media.mediaType as string) === 'video' ? 'video' : 'image';
+      await deleteFromCloudinary(media.publicId, resourceType).catch((err) => {
+        logger.error('Échec suppression média du CDN', err);
+      });
+    }
   },
 
   // ── Upload proxy → Supabase Storage ────────────────────────────────────────
@@ -564,37 +574,33 @@ export const propertiesService = {
     const count = await prisma.propertyMedia.count({ where: { propertyId } });
     if (count >= 20) throw new HttpError(400, 'Limite de 20 médias par propriété atteinte');
 
-    const { supabaseAdmin } = await import('../../config/supabase.config');
-    const ext = file.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${propertyId}/${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('property-media')
-      .upload(path, file.buffer, { contentType: file.mimetype, upsert: false });
-
-    if (uploadError) {
-      logger.error('Échec upload Supabase Storage', uploadError);
+    // Stockage Cloudinary, rangé par type de bien + bien + type de média :
+    // Primeo/Properties/<Type>/<propertyId>/{images|videos|3d}
+    const folder = cloudinaryPaths.propertyMedia(property.type, propertyId, opts.mediaType);
+    const resourceType = opts.mediaType === 'video' ? 'video' : 'image';
+    let uploaded;
+    try {
+      uploaded = await uploadToCloudinary(file.buffer, folder, file.originalname, resourceType);
+    } catch (uploadError) {
+      logger.error('Échec upload Cloudinary', uploadError);
       throw new HttpError(502, 'Échec du stockage de l\'image. Réessayez.');
     }
 
-    const { data: urlData } = supabaseAdmin.storage.from('property-media').getPublicUrl(path);
-    const url = urlData.publicUrl;
-
     // Écritures DB atomiques : si l'une échoue, aucune flag isPrimary n'est
-    // perdue et aucune ligne partielle n'est créée. Le fichier déjà stocké est
-    // supprimé du bucket pour ne pas laisser d'orphelin.
+    // perdue et aucune ligne partielle n'est créée. L'asset Cloudinary déjà
+    // créé est supprimé pour ne pas laisser d'orphelin.
     try {
       return await prisma.$transaction(async (tx) => {
         if (opts.isPrimary) {
           await tx.propertyMedia.updateMany({ where: { propertyId, isPrimary: true }, data: { isPrimary: false } });
         }
         return tx.propertyMedia.create({
-          data: { propertyId, url, publicId: path, mediaType: opts.mediaType as never, isPrimary: opts.isPrimary, sortOrder: opts.sortOrder },
+          data: { propertyId, url: uploaded.url, publicId: uploaded.publicId, mediaType: opts.mediaType as never, isPrimary: opts.isPrimary, sortOrder: opts.sortOrder },
         });
       });
     } catch (dbError) {
-      // Rollback du stockage : le fichier vient d'être uploadé, on le retire.
-      await supabaseAdmin.storage.from('property-media').remove([path]).catch((removeErr) => {
+      // Rollback du stockage : l'asset vient d'être uploadé, on le retire.
+      await deleteFromCloudinary(uploaded.publicId, resourceType).catch((removeErr) => {
         logger.error('Échec suppression média orphelin après erreur DB', removeErr);
       });
       logger.error('Échec enregistrement PropertyMedia — média retiré du stockage', dbError);
@@ -629,24 +635,19 @@ export const propertiesService = {
     const count = await prisma.property3dScene.count({ where: { propertyId } });
     if (count >= 10) throw new HttpError(400, 'Limite de 10 photos 360° par propriété atteinte');
 
-    const { supabaseAdmin } = await import('../../config/supabase.config');
-    const ext = file.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${propertyId}/3d/${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('property-media')
-      .upload(path, file.buffer, { contentType: file.mimetype, upsert: false });
-
-    if (uploadError) {
-      logger.error('Échec upload scène 3D Supabase Storage', uploadError);
+    // Stockage Cloudinary : Primeo/Properties/<Type>/<propertyId>/3d
+    const folder = cloudinaryPaths.property3d(property.type, propertyId);
+    let uploaded;
+    try {
+      uploaded = await uploadToCloudinary(file.buffer, folder, file.originalname, 'image');
+    } catch (uploadError) {
+      logger.error('Échec upload scène 3D Cloudinary', uploadError);
       throw new HttpError(502, 'Échec du stockage de la photo 360°. Réessayez.');
     }
 
-    const { data: urlData } = supabaseAdmin.storage.from('property-media').getPublicUrl(path);
-
     try {
       const scene = await prisma.property3dScene.create({
-        data: { propertyId, roomName: opts.roomName, url: urlData.publicUrl, publicId: path, sortOrder: opts.sortOrder },
+        data: { propertyId, roomName: opts.roomName, url: uploaded.url, publicId: uploaded.publicId, sortOrder: opts.sortOrder },
       });
       // Active le flag de visite 3D sur la propriété (idempotent)
       if (!property.hasVirtualTour) {
@@ -654,7 +655,7 @@ export const propertiesService = {
       }
       return scene;
     } catch (dbError) {
-      await supabaseAdmin.storage.from('property-media').remove([path]).catch((removeErr) => {
+      await deleteFromCloudinary(uploaded.publicId, 'image').catch((removeErr) => {
         logger.error('Échec suppression scène 3D orpheline après erreur DB', removeErr);
       });
       logger.error('Échec enregistrement Property3dScene — fichier retiré du stockage', dbError);
@@ -715,11 +716,10 @@ export const propertiesService = {
 
     await prisma.property3dScene.delete({ where: { id: sceneId } });
 
-    // Nettoyage du fichier dans le bucket (best effort)
+    // Nettoyage de l'asset Cloudinary (best effort)
     if (scene.publicId) {
-      const { supabaseAdmin } = await import('../../config/supabase.config');
-      await supabaseAdmin.storage.from('property-media').remove([scene.publicId]).catch((err) => {
-        logger.error('Échec suppression fichier scène 3D du bucket', err);
+      await deleteFromCloudinary(scene.publicId, 'image').catch((err) => {
+        logger.error('Échec suppression fichier scène 3D du CDN', err);
       });
     }
 

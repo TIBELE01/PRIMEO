@@ -325,7 +325,7 @@ function PropertiesTab({ onCountChange }: { onCountChange: (n: number) => void }
                     <p className="text-sm text-gray-500 mt-0.5">{p.city}</p>
                     <p className="text-xs text-gray-400 mt-1">
                       Propriétaire : <span className="font-medium text-gray-600">{p.ownerName}</span>
-                      {(p as any).ownerEmail && <span className="text-gray-400"> · {(p as any).ownerEmail}</span>}
+                      {(p as any).ownerEmail && <span className="text-gray-400 dark:text-gray-500"> · {(p as any).ownerEmail}</span>}
                       {dateRef && <span> · Soumis le {safeDate(dateRef)}</span>}
                     </p>
                     {(p as any).description && (

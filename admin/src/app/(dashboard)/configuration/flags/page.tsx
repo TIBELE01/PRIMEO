@@ -136,7 +136,7 @@ export default function FeatureFlagsPage() {
               >
                 {form.enabled
                   ? <ToggleRight size={28} className="text-green-500" />
-                  : <ToggleLeft size={28} className="text-gray-400" />}
+                  : <ToggleLeft size={28} className="text-gray-400 dark:text-gray-500" />}
               </button>
               <span className="text-sm text-gray-500">{form.enabled ? 'Activé' : 'Désactivé'}</span>
             </div>

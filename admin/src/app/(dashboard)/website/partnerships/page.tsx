@@ -159,7 +159,7 @@ export default function PartnershipsPage() {
                           </span>
                           <div className="relative group">
                             <button className="p-1 hover:bg-gray-100 rounded" title="Changer le statut">
-                              <ChevronDown size={13} className="text-gray-400" />
+                              <ChevronDown size={13} className="text-gray-400 dark:text-gray-500" />
                             </button>
                             <div className="absolute right-0 top-6 z-10 bg-white border border-gray-200 rounded-lg shadow-lg hidden group-focus-within:block min-w-[140px]">
                               {Object.entries(STATUS_LABELS).map(([val, { label }]) => (

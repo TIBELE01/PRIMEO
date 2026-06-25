@@ -3,6 +3,7 @@
   <url><loc>https://legal.primeo.ci/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
   <url><loc>https://legal.primeo.ci/cgu/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://legal.primeo.ci/conditions-vente/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://legal.primeo.ci/remboursement/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://legal.primeo.ci/confidentialite/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://legal.primeo.ci/mentions-legales/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://legal.primeo.ci/professionnels/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>

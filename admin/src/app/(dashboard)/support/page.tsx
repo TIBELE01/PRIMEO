@@ -41,7 +41,7 @@ export default function SupportPage() {
       label: 'Délai moyen résolution',
       value: data?.avgResolutionHours !== null && data?.avgResolutionHours !== undefined ? `${data.avgResolutionHours}h` : '—',
       icon: <Clock size={20} className="text-gray-500 dark:text-gray-400" />,
-      bg: 'bg-gray-50',
+      bg: 'bg-gray-50 dark:bg-gray-800',
       href: '#',
     },
   ];

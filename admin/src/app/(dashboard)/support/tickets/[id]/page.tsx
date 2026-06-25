@@ -145,7 +145,7 @@ export default function TicketDetailPage() {
                             ? 'bg-amber-50 border border-amber-200'
                             : isFromAdmin
                             ? 'bg-primary-700 text-white'
-                            : 'bg-gray-100'
+                            : 'bg-gray-100 dark:bg-gray-700'
                         }`}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
@@ -159,7 +159,7 @@ export default function TicketDetailPage() {
                           )}
                         </div>
                         <p className="leading-relaxed">{c.content}</p>
-                        <p className={`text-xs mt-1 ${isFromAdmin && !c.isInternal ? 'text-white/60' : 'text-gray-400'}`}>
+                        <p className={`text-xs mt-1 ${isFromAdmin && !c.isInternal ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'}`}>
                           {formatDateTime(c.createdAt)}
                         </p>
                       </div>

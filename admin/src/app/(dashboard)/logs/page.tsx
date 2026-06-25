@@ -76,7 +76,7 @@ function MetaDiff({ log }: { log: AuditLog }) {
     <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs font-mono">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="text-gray-400">
+          <tr className="text-gray-400 dark:text-gray-500">
             <th className="text-left pb-1 pr-4 font-medium">Champ</th>
             <th className="text-left pb-1 pr-4 font-medium text-orange-500">Avant</th>
             <th className="text-left pb-1 font-medium text-green-600">Après</th>
@@ -88,7 +88,7 @@ function MetaDiff({ log }: { log: AuditLog }) {
             const newVal = meta.new?.[k];
             const changed = JSON.stringify(oldVal) !== JSON.stringify(newVal);
             return (
-              <tr key={k} className={changed ? 'text-gray-800 dark:text-gray-200' : 'text-gray-400'}>
+              <tr key={k} className={changed ? 'text-gray-800 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>
                 <td className="pr-4 py-0.5">{k}</td>
                 <td className="pr-4 py-0.5 text-orange-600">
                   {oldVal !== undefined ? String(oldVal) : <span className="italic text-gray-300">—</span>}

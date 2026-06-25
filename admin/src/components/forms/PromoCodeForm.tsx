@@ -84,7 +84,7 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
           {/* Valeur */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">
-              Valeur <span className="text-gray-400">({form.discountType === 'percent' ? '%' : 'FCFA'})</span>
+              Valeur <span className="text-gray-400 dark:text-gray-500">({form.discountType === 'percent' ? '%' : 'FCFA'})</span>
             </label>
             <input
               type="number"

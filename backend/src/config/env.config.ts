@@ -83,8 +83,12 @@ const envSchema = z.object({
   // Secret partagé pour vérifier les callbacks de livraison Orange (callbackData)
   ORANGE_WEBHOOK_SECRET: z.string().optional(),
 
-  // Cloudinary (media) — parsed from CLOUDINARY_URL
+  // Cloudinary (media) — soit via CLOUDINARY_URL (cloudinary://key:secret@cloud),
+  // soit via les 3 variables séparées ci-dessous (prioritaires si présentes).
   CLOUDINARY_URL: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 
   // Geoapify (maps)
   GEOAPIFY_API_KEY: z.string().optional(),
@@ -140,8 +144,14 @@ if (env.NODE_ENV === 'production' && env.SKIP_OTP_VERIFICATION) {
   env.SKIP_OTP_VERIFICATION = false;
 }
 
-// Derived: parsed Cloudinary credentials from CLOUDINARY_URL
-export const cloudinaryParsed = parseCloudinaryUrl(env.CLOUDINARY_URL);
+// Identifiants Cloudinary résolus : on privilégie les 3 variables séparées
+// (CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET) si elles sont toutes définies,
+// sinon on retombe sur le parsing de CLOUDINARY_URL. Aucun breaking change pour
+// les environnements existants qui utilisent CLOUDINARY_URL (ex. Render).
+export const cloudinaryParsed =
+  env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
+    ? { cloudName: env.CLOUDINARY_CLOUD_NAME, apiKey: env.CLOUDINARY_API_KEY, apiSecret: env.CLOUDINARY_API_SECRET }
+    : parseCloudinaryUrl(env.CLOUDINARY_URL);
 
 // ─── Audit de configuration au démarrage ──────────────────────────────────────
 // Les variables CRITIQUES (DATABASE_URL + Supabase Auth) sont déjà requises par
@@ -161,7 +171,8 @@ const OPTIONAL_INTEGRATIONS: IntegrationGroup[] = [
   { name: 'Brevo — emails transactionnels',     vars: ['BREVO_SMTP_HOST', 'BREVO_SMTP_USER', 'BREVO_SMTP_PASS'] },
   { name: 'OneSignal — notifications push',     vars: ['ONESIGNAL_APP_ID', 'ONESIGNAL_REST_API_KEY'] },
   { name: 'Orange — SMS / OTP',                 vars: ['ORANGE_CLIENT_ID', 'ORANGE_CLIENT_SECRET', 'ORANGE_SENDER'] },
-  { name: 'Cloudinary — stockage médias',       vars: ['CLOUDINARY_URL'] },
+  // Cloudinary est vérifié séparément (cf. cloudinaryParsed) car il accepte deux
+  // formes de configuration (CLOUDINARY_URL OU les 3 variables séparées).
   { name: 'Geoapify — géolocalisation',         vars: ['GEOAPIFY_API_KEY'] },
   { name: 'Upstash Redis — cache / rate-limit', vars: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'] },
 ];
@@ -181,6 +192,11 @@ export function reportEnvReadiness(): void {
     if (missing.length > 0) {
       incomplete.push(`  • ${group.name} — variable(s) manquante(s) : ${missing.join(', ')}`);
     }
+  }
+
+  // Cloudinary : OK si les 3 variables séparées OU CLOUDINARY_URL sont fournies.
+  if (!cloudinaryParsed) {
+    incomplete.push('  • Cloudinary — stockage médias — variable(s) manquante(s) : CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET (ou CLOUDINARY_URL)');
   }
 
   if (incomplete.length === 0) {

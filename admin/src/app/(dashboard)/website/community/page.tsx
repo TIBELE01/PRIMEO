@@ -223,7 +223,7 @@ export default function CommunityPage() {
                         <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5">
-                              <User size={13} className="text-gray-400" />
+                              <User size={13} className="text-gray-400 dark:text-gray-500" />
                               <span className="font-semibold text-gray-900">{p.pseudo}</span>
                             </div>
                           </td>

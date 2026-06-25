@@ -149,7 +149,7 @@ export default function CareersJobsPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => toggleMut.mutate({ id: j.id, active: !j.active })}>
-                    {j.active ? <ToggleRight size={20} className="text-green-500" /> : <ToggleLeft size={20} className="text-gray-400" />}
+                    {j.active ? <ToggleRight size={20} className="text-green-500" /> : <ToggleLeft size={20} className="text-gray-400 dark:text-gray-500" />}
                   </button>
                   <button onClick={() => { setEditingId(j.id); setExpanded(j.id); }} className="text-xs px-2 py-1 border border-gray-200 rounded hover:bg-gray-50">Éditer</button>
                   <button onClick={() => { if (confirm('Supprimer ?')) deleteMut.mutate(j.id); }} className="text-red-500 hover:text-red-700"><Trash2 size={15} /></button>

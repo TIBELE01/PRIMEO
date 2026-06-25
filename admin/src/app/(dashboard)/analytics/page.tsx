@@ -362,7 +362,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <BarChart2 size={16} className="text-gray-400" />
+              <BarChart2 size={16} className="text-gray-400 dark:text-gray-500" />
               <CardTitle>Réservations vs Revenus</CardTitle>
             </div>
             <ChartExportBtn containerRef={dualAxisRef} filename="primeo-reservations-vs-revenus"
@@ -477,7 +477,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-gray-400" />
+              <MapPin size={16} className="text-gray-400 dark:text-gray-500" />
               <CardTitle>Répartition géographique</CardTitle>
             </div>
             <ChartExportBtn containerRef={geoChartRef} filename="primeo-reservations-villes"
@@ -623,7 +623,7 @@ export default function AnalyticsPage() {
       <Card padding={false}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 {['#', 'Partenaire', 'Réservations', 'CA généré (FCFA)'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
@@ -699,7 +699,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 {['#', 'Propriété', 'Ville', 'Type', 'Réservations', 'Note', 'Vues', 'Propriétaire'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>

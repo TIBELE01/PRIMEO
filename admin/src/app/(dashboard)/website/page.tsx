@@ -207,7 +207,7 @@ export default function WebsitePage() {
           {syncLog.map((r, i) => (
             <div key={i} className={
               r.status === 'seeded' ? 'text-green-400' :
-              r.status === 'ok'     ? 'text-gray-400' : 'text-red-400'
+              r.status === 'ok'     ? 'text-gray-400 dark:text-gray-500' : 'text-red-400'
             }>
               {r.status === 'seeded' ? '✓' : r.status === 'ok' ? '·' : '✗'} {r.section}{r.status === 'seeded' ? ' — importé' : r.status === 'error' ? ` — ${r.detail}` : ''}
             </div>

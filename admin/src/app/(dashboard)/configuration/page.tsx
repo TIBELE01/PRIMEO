@@ -97,7 +97,7 @@ export default function ConfigurationPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Clock size={16} className="text-gray-400" />
+            <Clock size={16} className="text-gray-400 dark:text-gray-500" />
             <CardTitle>Délai de grâce abonnements</CardTitle>
           </div>
         </CardHeader>
@@ -134,7 +134,7 @@ export default function ConfigurationPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CreditCard size={16} className="text-gray-400" />
+            <CreditCard size={16} className="text-gray-400 dark:text-gray-500" />
             <CardTitle>Frais Genius Pay</CardTitle>
           </div>
         </CardHeader>
@@ -179,7 +179,7 @@ export default function ConfigurationPage() {
                 <button
                   onClick={() => updateConfigKey('features', { ...config.features, [key]: !enabled })}
                   className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                    enabled ? 'text-green-700' : 'text-gray-400'
+                    enabled ? 'text-green-700' : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   {enabled

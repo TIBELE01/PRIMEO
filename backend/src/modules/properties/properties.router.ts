@@ -114,7 +114,7 @@ propertiesRouter.post(
 );
 
 // Media management (owner only — professionnels)
-// Upload fichier → Supabase Storage (prioritaire sur l'upload direct Cloudinary)
+// Upload fichier → Cloudinary (dossier primeo/properties/<propertyId>)
 propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload.single('file'), uploadMediaFile);
 // Type de média exclusif du bien — photos | video | threed (purge les autres types)
 propertiesRouter.put('/:id/media-type', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, setMediaType);

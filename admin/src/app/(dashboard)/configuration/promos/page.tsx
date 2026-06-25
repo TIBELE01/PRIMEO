@@ -78,7 +78,7 @@ export default function PromosPage() {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2">
-        <Filter size={14} className="text-gray-400" />
+        <Filter size={14} className="text-gray-400 dark:text-gray-500" />
         {(['all', 'active', 'inactive'] as FilterStatus[]).map((f) => (
           <button
             key={f}
@@ -143,7 +143,7 @@ export default function PromosPage() {
                     >
                       {promo.isActive
                         ? <ToggleRight size={20} className="text-green-600" />
-                        : <ToggleLeft size={20} className="text-gray-400" />}
+                        : <ToggleLeft size={20} className="text-gray-400 dark:text-gray-500" />}
                     </button>
                     <button
                       onClick={() => setDeleteTarget(promo)}
