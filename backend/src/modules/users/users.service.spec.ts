@@ -12,6 +12,12 @@ jest.mock('../../common/utils/mailer', () => ({
   sendEmail: jest.fn(async () => undefined),
 }));
 
+// Évite de charger cloudinary.config/env.config (validation env → process.exit)
+jest.mock('../../common/utils/s3-client', () => ({
+  renameCloudinaryAsset: jest.fn(async () => ({ url: '', publicId: '', format: '', bytes: 0 })),
+  setCloudinaryAssetFolder: jest.fn(async () => undefined),
+}));
+
 jest.mock('../../common/utils/totp', () => ({
   generateTotpSecret: jest.fn(() => 'SECRET123'),
   generateTotpUri: jest.fn(() => 'otpauth://totp/...'),

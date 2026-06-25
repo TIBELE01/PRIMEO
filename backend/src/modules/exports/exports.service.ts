@@ -9,7 +9,7 @@ import type { DataExport, ExportFormat, ExportType, Prisma } from '@prisma/clien
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
-import { cloudinaryConfig } from '../../config/cloudinary.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
 import { analyticsService } from '../analytics/analytics.service';
 import { logger } from '../../common/utils/logger';
@@ -297,7 +297,7 @@ export const exportsService = {
       // Téléversement en ressource brute (le fichier n'est pas une image)
       const uploaded = await uploadToCloudinary(
         buffer,
-        cloudinaryConfig.folders.exports,
+        cloudinaryPaths.systemExports(),
         filename,
         'raw',
       );

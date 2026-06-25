@@ -133,7 +133,7 @@ describe('exportsService', () => {
       expect(uploadMock).toHaveBeenCalledTimes(1);
       const [buffer, folder, filename, resourceType] = uploadMock.mock.calls[0] as unknown as [Buffer, string, string, string];
       const csv = buffer.toString('utf-8');
-      expect(folder).toBe('primeo/exports');
+      expect(folder).toBe('primeo/System/exports');
       expect(filename).toMatch(/^primeo-bookings-.*\.csv$/);
       expect(resourceType).toBe('raw');
       expect(csv).toContain('"Villa ""Les Palmiers"", Abidjan"'); // échappement guillemets+virgule

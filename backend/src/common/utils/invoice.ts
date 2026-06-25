@@ -1,7 +1,7 @@
 // PDFKit invoice generator — produces a binary PDF buffer for subscription invoices
 import PDFDocument from 'pdfkit';
 import { uploadToCloudinary } from './s3-client';
-import { cloudinaryConfig } from '../../config/cloudinary.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
 
 export interface InvoiceData {
   invoiceNumber: string;    // transaction ID or formatted ref
@@ -18,7 +18,7 @@ export interface InvoiceData {
 export async function generateAndUploadInvoice(data: InvoiceData): Promise<string> {
   const buffer = await buildPdfBuffer(data);
   const filename = `facture_${data.invoiceNumber}.pdf`;
-  const result = await uploadToCloudinary(buffer, cloudinaryConfig.folders.invoices, filename);
+  const result = await uploadToCloudinary(buffer, cloudinaryPaths.systemInvoices(), filename);
   return result.url;
 }
 
@@ -57,7 +57,7 @@ export interface BookingInvoiceData {
 export async function generateAndUploadBookingInvoice(data: BookingInvoiceData): Promise<string> {
   const buffer = await buildBookingPdfBuffer(data);
   const filename = `facture_reservation_${data.invoiceNumber}.pdf`;
-  const result = await uploadToCloudinary(buffer, cloudinaryConfig.folders.invoices, filename);
+  const result = await uploadToCloudinary(buffer, cloudinaryPaths.systemInvoices(), filename);
   return result.url;
 }
 

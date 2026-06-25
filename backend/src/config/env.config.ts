@@ -68,6 +68,8 @@ const envSchema = z.object({
   BREVO_SMTP_USER: z.string().optional(),
   BREVO_SMTP_PASS: z.string().optional(),
   BREVO_WEBHOOK_SECRET: z.string().optional(),
+  // Logo officiel affiché dans les emails transactionnels (URL Cloudinary)
+  EMAIL_LOGO_URL: z.string().optional(),
 
   // OneSignal (push notifications)
   ONESIGNAL_APP_ID: z.string().optional(),

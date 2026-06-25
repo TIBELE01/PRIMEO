@@ -82,7 +82,7 @@ export function Sidebar() {
         {!sidebarCollapsed && (
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Primeo" className="h-8 w-8 rounded-lg" />
+            <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/v1782345787/Logo_Primeo_1_gzcjq2.png" alt="Primeo" className="h-8 w-auto" />
             <p className="text-xs text-primary-400">Administration</p>
           </div>
         )}

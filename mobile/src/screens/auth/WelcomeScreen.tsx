@@ -9,6 +9,7 @@ const LottieView = require('lottie-react-native').default as React.ComponentType
   source: unknown; autoPlay?: boolean; loop?: boolean; style?: unknown; accessibilityLabel?: string;
 }>;
 import type { AuthScreenProps } from '../../navigation/types';
+import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
 
 const { width, height } = Dimensions.get('window');
 type Props = AuthScreenProps<'Welcome'>;
@@ -31,7 +32,7 @@ export function WelcomeScreen({ navigation }: Props) {
         {/* ── Top brand area ── */}
         <View style={s.brandArea}>
           {/* Logo */}
-          <Image source={require('../../../assets/logo.png')} style={s.logoImg} />
+          <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logoImg} />
 
           {/* Tagline */}
           <View style={s.taglineWrap}>
@@ -127,7 +128,7 @@ const s = StyleSheet.create({
     alignItems: 'center', paddingTop: 24, gap: 6,
   },
   logoImg: {
-    width: 80, height: 80, borderRadius: 22,
+    width: 160, height: 80,
     marginBottom: 10,
     shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 8 },

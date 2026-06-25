@@ -6,6 +6,27 @@ import { sendEmail } from '../../common/utils/mailer';
 import { logger } from '../../common/utils/logger';
 import { UpdateProfileInput, ChangePasswordInput, DeactivateInput, DeleteAccountInput } from './dto/users.dto';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
+import { renameCloudinaryAsset, setCloudinaryAssetFolder } from '../../common/utils/s3-client';
+import type { AccountType } from '@prisma/client';
+
+// Reclasse un avatar uploadé en staging vers Primeo/Users/<Type>/<userId>/profile.
+// Best-effort : en cas d'échec, on conserve l'URL d'origine (toujours valide).
+async function relocateAvatar(url: string, accountType: AccountType, userId: string): Promise<string> {
+  if (!url.includes('res.cloudinary.com')) return url;
+  const m = url.match(/\/upload\/(.+)$/);
+  const pid = m ? m[1].replace(/^v\d+\//, '').replace(/\.[^./]+$/, '') : null;
+  const target = cloudinaryPaths.userAvatar(accountType, userId);
+  if (!pid || pid.startsWith(`${target}/`)) return url;
+  try {
+    const moved = await renameCloudinaryAsset(pid, `${target}/${pid.split('/').pop()}`, 'image');
+    await setCloudinaryAssetFolder(moved.publicId, target, 'image').catch(() => {});
+    return moved.url;
+  } catch (err) {
+    logger.warn('Reclassement avatar Cloudinary échoué — URL d\'origine conservée', err);
+    return url;
+  }
+}
 
 // ── Aide audit log ─────────────────────────────────────────────────────────────
 
@@ -67,7 +88,9 @@ export const usersService = {
     if (input.phone !== undefined)      userFields.phone = input.phone;
     if (input.birthDate !== undefined)  userFields.birthDate = input.birthDate ? new Date(input.birthDate) : null;
     if (input.gender !== undefined)     userFields.gender = input.gender;
-    if (input.avatarUrl !== undefined)  userFields.avatarUrl = input.avatarUrl;
+    if (input.avatarUrl !== undefined)  userFields.avatarUrl = input.avatarUrl
+      ? await relocateAvatar(input.avatarUrl, user.accountType, id)
+      : input.avatarUrl;
 
     const isPro = PRO_TYPES.includes(user.accountType);
     const proFields: Record<string, unknown> = {};

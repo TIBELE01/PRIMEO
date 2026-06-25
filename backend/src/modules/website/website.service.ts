@@ -2,7 +2,7 @@
 import { prisma } from '../../database/prisma.service';
 import { redisGet, redisSet } from '../../common/utils/redis-client';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
-import { cloudinaryConfig } from '../../config/cloudinary.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
 import { HttpError } from '../../common/handlers/http-error.handler';
 function createHttpError(status: number, msg: string) { return new HttpError(status, msg); }
@@ -269,7 +269,7 @@ export const websiteService = {
   },
 
   async uploadHeroImage(fileBuffer: Buffer, filename: string, adminId: string) {
-    const result = await uploadToCloudinary(fileBuffer, cloudinaryConfig.folders.website, filename);
+    const result = await uploadToCloudinary(fileBuffer, cloudinaryPaths.websiteBanners(), filename);
     const existing = await prisma.websiteHero.findFirst();
     if (existing?.imagePublicId) {
       await deleteFromCloudinary(existing.imagePublicId).catch(() => null);
@@ -347,7 +347,7 @@ export const websiteService = {
   async uploadProductImage(id: string, fileBuffer: Buffer, filename: string) {
     const row = await this._requireProduct(id);
     if (row.imagePublicId) await deleteFromCloudinary(row.imagePublicId).catch(() => null);
-    const result = await uploadToCloudinary(fileBuffer, cloudinaryConfig.folders.website, filename);
+    const result = await uploadToCloudinary(fileBuffer, cloudinaryPaths.websiteBanners(), filename);
     return prisma.websiteProductCard.update({ where: { id }, data: { imageUrl: result.url, imagePublicId: result.publicId } });
   },
 
@@ -427,7 +427,7 @@ export const websiteService = {
   async uploadTestimonialPhoto(id: string, fileBuffer: Buffer, filename: string) {
     const row = await this._requireTestimonial(id);
     if (row.photoPublicId) await deleteFromCloudinary(row.photoPublicId).catch(() => null);
-    const result = await uploadToCloudinary(fileBuffer, cloudinaryConfig.folders.website, filename);
+    const result = await uploadToCloudinary(fileBuffer, cloudinaryPaths.websiteTestimonials(), filename);
     return prisma.websiteTestimonial.update({ where: { id }, data: { photoUrl: result.url, photoPublicId: result.publicId } });
   },
 
@@ -763,7 +763,7 @@ export const websiteService = {
     let cvUrl: string | undefined;
     let cvPublicId: string | undefined;
     if (data.cvBuffer && data.cvFilename) {
-      const result = await uploadToCloudinary(data.cvBuffer, 'careers/cv', data.cvFilename);
+      const result = await uploadToCloudinary(data.cvBuffer, cloudinaryPaths.careersCv(), data.cvFilename);
       cvUrl = result.url;
       cvPublicId = result.publicId;
     }
@@ -819,7 +819,7 @@ export const websiteService = {
     let photoPublicId: string | undefined;
     if (photoBuffer && photoFilename) {
       if (existing?.photoPublicId) await deleteFromCloudinary(existing.photoPublicId).catch(() => {});
-      const result = await uploadToCloudinary(photoBuffer, 'careers/team', photoFilename);
+      const result = await uploadToCloudinary(photoBuffer, cloudinaryPaths.careersTeam(), photoFilename);
       photoUrl = result.url;
       photoPublicId = result.publicId;
     }
@@ -1076,7 +1076,7 @@ export const websiteService = {
     const row = await prisma.aboutTeam.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Membre introuvable');
     if (row.photoPublicId) await deleteFromCloudinary(row.photoPublicId).catch(() => {});
-    const result = await uploadToCloudinary(buffer, 'about/team', filename);
+    const result = await uploadToCloudinary(buffer, cloudinaryPaths.websiteTeam(), filename);
     return prisma.aboutTeam.update({ where: { id }, data: { photoUrl: result.url, photoPublicId: result.publicId } });
   },
 
@@ -1110,7 +1110,7 @@ export const websiteService = {
     const row = await prisma.aboutPartner.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Partenaire introuvable');
     if (row.logoPublicId) await deleteFromCloudinary(row.logoPublicId).catch(() => {});
-    const result = await uploadToCloudinary(buffer, 'about/partners', filename);
+    const result = await uploadToCloudinary(buffer, cloudinaryPaths.websitePartners(), filename);
     return prisma.aboutPartner.update({ where: { id }, data: { logoUrl: result.url, logoPublicId: result.publicId } });
   },
 
@@ -1394,7 +1394,7 @@ export const websiteService = {
     const row = await prisma.blogPost.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Article introuvable');
     if (row.coverPublicId) await deleteFromCloudinary(row.coverPublicId).catch(() => {});
-    const result = await uploadToCloudinary(buffer, 'blog/covers', filename);
+    const result = await uploadToCloudinary(buffer, cloudinaryPaths.blogCover(id), filename);
     return prisma.blogPost.update({ where: { id }, data: { coverImageUrl: result.url, coverPublicId: result.publicId } });
   },
 

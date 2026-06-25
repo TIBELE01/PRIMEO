@@ -21,7 +21,8 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
-    "migrate:cloudinary": "tsx scripts/migrate-cloudinary.ts"
+    "migrate:cloudinary": "tsx scripts/migrate-cloudinary.ts",
+    "cleanup:cloudinary": "tsx scripts/cleanup-cloudinary-folders.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

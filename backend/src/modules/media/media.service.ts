@@ -8,10 +8,9 @@ import { cloudinaryConfig } from '../../config/cloudinary.config';
 import { HttpError } from '../../common/handlers/http-error.handler';
 
 export const mediaService = {
-  async upload(file: Express.Multer.File, folderKey: string) {
-    const folder = cloudinaryConfig.folders[folderKey as keyof typeof cloudinaryConfig.folders]
-      ?? cloudinaryConfig.folders.properties;
-
+  // `folder` est le chemin Cloudinary complet (cf. cloudinaryPaths). Les
+  // appelants déterminent le dossier selon le contexte (utilisateur, bien…).
+  async upload(file: Express.Multer.File, folder: string) {
     const isImage = (cloudinaryConfig.allowedImageMimes as readonly string[]).includes(file.mimetype);
     const isPdf = (cloudinaryConfig.allowedPdfMimes as readonly string[]).includes(file.mimetype);
     if (!isImage && !isPdf) {

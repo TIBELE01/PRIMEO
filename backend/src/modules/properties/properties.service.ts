@@ -6,7 +6,7 @@ import { HttpError } from '../../common/handlers/http-error.handler';
 import { geocodeAddress } from '../../common/utils/maps';
 import { cloudinaryConfig } from '../../config/cloudinary.config';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
-import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
+import { uploadToCloudinary, deleteFromCloudinary, renameCloudinaryAsset, setCloudinaryAssetFolder } from '../../common/utils/s3-client';
 import { searchService } from './services/search.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
@@ -528,8 +528,24 @@ export const propertiesService = {
       });
     }
 
+    // L'upload direct (mobile) dépose l'asset dans un dossier de staging. On le
+    // reclasse ici dans Primeo/Properties/<Type>/<propertyId>/{images|videos}.
+    let { url, publicId } = input;
+    const targetFolder = cloudinaryPaths.propertyMedia(property.propertyType, propertyId, input.mediaType);
+    const resourceType = input.mediaType === 'video' ? 'video' : 'image';
+    if (publicId && !publicId.startsWith(`${targetFolder}/`)) {
+      try {
+        const moved = await renameCloudinaryAsset(publicId, `${targetFolder}/${publicId.split('/').pop()}`, resourceType);
+        url = moved.url;
+        publicId = moved.publicId;
+        await setCloudinaryAssetFolder(publicId, targetFolder, resourceType).catch(() => {});
+      } catch (err) {
+        logger.warn('Reclassement média Cloudinary échoué — conservation de l\'URL d\'origine', err);
+      }
+    }
+
     return prisma.propertyMedia.create({
-      data: { propertyId, ...input, mediaType: input.mediaType as never },
+      data: { ...input, url, publicId, propertyId, mediaType: input.mediaType as never },
     });
   },
 
@@ -576,7 +592,7 @@ export const propertiesService = {
 
     // Stockage Cloudinary, rangé par type de bien + bien + type de média :
     // Primeo/Properties/<Type>/<propertyId>/{images|videos|3d}
-    const folder = cloudinaryPaths.propertyMedia(property.type, propertyId, opts.mediaType);
+    const folder = cloudinaryPaths.propertyMedia(property.propertyType, propertyId, opts.mediaType);
     const resourceType = opts.mediaType === 'video' ? 'video' : 'image';
     let uploaded;
     try {
@@ -636,7 +652,7 @@ export const propertiesService = {
     if (count >= 10) throw new HttpError(400, 'Limite de 10 photos 360° par propriété atteinte');
 
     // Stockage Cloudinary : Primeo/Properties/<Type>/<propertyId>/3d
-    const folder = cloudinaryPaths.property3d(property.type, propertyId);
+    const folder = cloudinaryPaths.property3d(property.propertyType, propertyId);
     let uploaded;
     try {
       uploaded = await uploadToCloudinary(file.buffer, folder, file.originalname, 'image');
@@ -744,9 +760,10 @@ export const propertiesService = {
       throw new HttpError(503, 'Service de stockage non configuré');
     }
 
-    const folder =
-      cloudinaryConfig.folders[folderKey as keyof typeof cloudinaryConfig.folders] ??
-      cloudinaryConfig.folders.properties;
+    // L'upload direct côté client dépose dans un dossier de staging ; le serveur
+    // reclasse ensuite l'asset dans son dossier définitif (addMedia / avatar).
+    void folderKey;
+    const folder = cloudinaryPaths.tempUploads();
 
     const timestamp = Math.floor(Date.now() / 1000);
     // Params sorted alphabetically as required by Cloudinary signature spec

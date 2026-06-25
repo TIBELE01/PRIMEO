@@ -31,7 +31,7 @@ describe('uploadMedia', () => {
     mockPrisma.review.findUnique.mockResolvedValue({ id: 'r1', authorId: 'u1' });
     mockPrisma.reviewMedia.count.mockResolvedValue(0);
     const res = await reviewsService.uploadMedia('r1', 'u1', fakeFile);
-    expect(mockUpload).toHaveBeenCalledWith(fakeFile, 'reviews');
+    expect(mockUpload).toHaveBeenCalledWith(fakeFile, 'primeo/Users/Clients/u1/reviews');
     expect(mockPrisma.reviewMedia.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ publicId: 'primeo/reviews/test' }) }),
     );

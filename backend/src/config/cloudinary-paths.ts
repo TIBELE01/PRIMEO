@@ -13,7 +13,9 @@
 //   └── Temporary/{uploads,conversions,archives}
 import type { AccountType, PropertyType, MediaType, DocumentType } from '@prisma/client';
 
-export const MEDIA_ROOT = 'Primeo';
+// Racine canonique de la médiathèque. Cloudinary normalise la casse des segments
+// de dossier sur l'existant : la racine historique est en minuscules ("primeo").
+export const MEDIA_ROOT = 'primeo';
 
 /** Segment Users/ correspondant au type de compte. */
 export function userSegment(accountType: AccountType): string {

@@ -4,7 +4,7 @@ import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { generateTotpSecret, generateTotpUri, generateQrCode, verifyTotp } from '../../common/utils/totp';
 import { uploadToCloudinary } from '../../common/utils/s3-client';
-import { cloudinaryConfig } from '../../config/cloudinary.config';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { logger } from '../../common/utils/logger';
 import { SubmitKycInput } from './dto/professional.dto';
 import { supabaseAdmin } from '../../config/supabase.config';
@@ -84,6 +84,10 @@ export const professionalService = {
           },
         });
 
+    // Type de compte (pour ranger le KYC sous le bon dossier professionnel)
+    const account = await prisma.user.findUnique({ where: { id: userId }, select: { accountType: true } });
+    const accountType = account?.accountType ?? 'professional_immobilier';
+
     // Téléverse chaque document fourni
     const uploaded: { type: DocumentType; url: string }[] = [];
     for (const [field, documentType] of Object.entries(KYC_DOCUMENT_FIELDS)) {
@@ -103,10 +107,11 @@ export const professionalService = {
           );
         }
 
-        // 'auto' permet de gérer indifféremment images et PDF
+        // 'auto' permet de gérer indifféremment images et PDF.
+        // Rangé sous Primeo/Users/Professionals/<Type>/<userId>/kyc/<docType>
         const result = await uploadToCloudinary(
           file.buffer,
-          cloudinaryConfig.folders.kyc,
+          cloudinaryPaths.kycDocument(accountType, userId, documentType),
           file.originalname,
           'auto',
         );

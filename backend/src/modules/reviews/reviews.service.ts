@@ -4,6 +4,7 @@ import { HttpError } from '../../common/handlers/http-error.handler';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
 import { mediaService } from '../media/media.service';
+import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { CreateReviewInput, UpdateReviewInput } from './dto/review.dto';
 
 const EDIT_WINDOW_DAYS = 7;
@@ -192,7 +193,7 @@ export const reviewsService = {
     const count = await prisma.reviewMedia.count({ where: { reviewId } });
     if (count >= 3) throw new HttpError(400, 'Maximum 3 photos par avis');
 
-    const result = await mediaService.upload(file, 'reviews');
+    const result = await mediaService.upload(file, cloudinaryPaths.clientReviews(authorId));
     return prisma.reviewMedia.create({ data: { reviewId, url: result.optimizedUrl, publicId: result.publicId } });
   },
 
