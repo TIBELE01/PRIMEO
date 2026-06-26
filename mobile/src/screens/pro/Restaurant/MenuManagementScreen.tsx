@@ -176,22 +176,31 @@ export default function MenuManagementScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const propRes   = await propertiesApi.getMyListings();
-      const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
-      const pid: string = listings[0]?.id ?? '';
-      setPropertyId(pid || null);
-      if (!pid) { setNoProperty(true); setLoading(false); return; }
-
-      // Vue gestion (tous les plats, incl. en attente). Repli sur la vue publique
-      // si la route /menu/all n'est pas encore déployée (ancien backend).
+      // Résolution du restaurant + plats via /api/restaurant (id déduit du compte) —
+      // ne dépend plus de getMyListings. Repli sur getMyListings + /properties/:id/menu.
+      let pid = '';
       let data: MenuItem[] = [];
       try {
-        const menuRes = await restaurantApi.getMenuItemsManage(pid);
-        data = menuRes.data?.data ?? menuRes.data ?? [];
+        const r = await restaurantApi.getMyRestaurant();
+        pid = (r.data?.data ?? r.data)?.id ?? '';
+        const m = await restaurantApi.getMyMenuManage();
+        data = m.data?.data ?? m.data ?? [];
       } catch {
-        const menuRes = await restaurantApi.getMenuItems(pid);
-        data = menuRes.data?.data ?? menuRes.data ?? [];
+        const propRes = await propertiesApi.getMyListings();
+        const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
+        pid = listings[0]?.id ?? '';
+        if (pid) {
+          try {
+            const m = await restaurantApi.getMenuItemsManage(pid);
+            data = m.data?.data ?? m.data ?? [];
+          } catch {
+            const m = await restaurantApi.getMenuItems(pid);
+            data = m.data?.data ?? m.data ?? [];
+          }
+        }
       }
+      setPropertyId(pid || null);
+      if (!pid) { setNoProperty(true); setLoading(false); return; }
       setItems(data);
     } catch {
       Alert.alert('Erreur', 'Impossible de charger le menu.');

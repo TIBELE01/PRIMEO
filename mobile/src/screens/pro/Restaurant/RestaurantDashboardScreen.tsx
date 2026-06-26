@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
+import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
 
@@ -75,7 +76,6 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
   const [stats,        setStats]        = useState<any>(null);
   const [propStats,    setPropStats]    = useState<any>(null);
   const [propertyName, setPropertyName] = useState('Mon restaurant');
-  const [loadFailed,   setLoadFailed]   = useState(false);
   const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -83,23 +83,20 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      // Nom du restaurant — avec ré-essais : le serveur (offre gratuite Render) peut
-      // mettre 30-50 s à redémarrer après inactivité. Le 1er appel peut échouer, le
-      // suivant réussit. Un échec n'empêche PAS l'affichage du tableau de bord.
-      let resolved = false;
-      for (let attempt = 0; attempt < 3 && !resolved; attempt++) {
+      // Nom du restaurant — résolu via /api/restaurant (id déduit du compte, route
+      // légère), repli sur getMyListings. Un échec n'empêche PAS l'affichage : on
+      // garde le nom par défaut, sans message bloquant.
+      try {
+        const r = await restaurantApi.getMyRestaurant();
+        const resto = r.data?.data ?? r.data;
+        if (resto?.title || resto?.name) setPropertyName(resto.title ?? resto.name);
+      } catch {
         try {
           const propRes = await propertiesApi.getMyListings();
           const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
-          if (listings.length > 0) {
-            setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
-          }
-          resolved = true;
-        } catch {
-          if (attempt < 2) await new Promise((r) => setTimeout(r, 2500)); // back-off (cold start)
-        }
+          if (listings.length > 0) setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
+        } catch { /* nom par défaut conservé */ }
       }
-      setLoadFailed(!resolved); // indicateur léger ; le tableau de bord s'affiche quand même
 
       const [bRes, pRes] = await Promise.allSettled([
         proDashboardApi.getBookingStats(),
@@ -192,14 +189,6 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
         </View>
 
         <View style={styles.body}>
-
-          {/* Bandeau non bloquant si le chargement réseau a échoué (cold start serveur) */}
-          {loadFailed && (
-            <TouchableOpacity style={styles.retryBanner} onPress={() => load()} accessibilityRole="button" accessibilityLabel="Actualiser">
-              <Ionicons name="refresh-outline" size={16} color="#92400E" />
-              <Text style={styles.retryBannerText}>Connexion lente au serveur. Touchez pour actualiser.</Text>
-            </TouchableOpacity>
-          )}
 
           {/* ── Barre statuts réservations ───────────────────────────────── */}
           <View style={styles.statusStrip}>
@@ -363,9 +352,6 @@ const styles = StyleSheet.create({
   centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
   loadingText: { fontSize: 14, fontWeight: '600' },
 
-  // Bandeau de ré-essai (non bloquant)
-  retryBanner:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF3C7', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
-  retryBannerText: { flex: 1, fontSize: 12, color: '#92400E', fontWeight: '600' },
 
   // Header coloré
   header: {
