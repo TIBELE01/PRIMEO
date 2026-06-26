@@ -55,6 +55,7 @@ import SpecialMenusScreen        from '../screens/pro/Restaurant/SpecialMenusScr
 import TimeSlotsScreen           from '../screens/pro/Restaurant/TimeSlotsScreen';
 import PromotionsScreen          from '../screens/pro/Restaurant/PromotionsScreen';
 import FoodOrdersScreen          from '../screens/pro/Restaurant/FoodOrdersScreen';
+import RestaurantTablesScreen    from '../screens/pro/Restaurant/RestaurantTablesScreen';
 
 // ─── Messaging (shared with client) ──────────────────────────────────────────
 import { ConversationsScreen } from '../screens/client/Messaging/ConversationsScreen';
@@ -247,9 +248,10 @@ export const ImmobilierStack = buildRoleNavigator(
 
 const restaurantScreens: ScreenDef[] = [
   { name: 'Dashboard',           component: RestaurantDashboardScreen, title: 'Tableau de bord', headerShown: false },
-  { name: 'AddProperty',         component: AddPropertyScreen,         title: 'Créer mon restaurant' },
-  { name: 'EditProperty',        component: AddPropertyScreen,         title: 'Modifier mon restaurant' },
-  { name: 'PropertyManagement',  component: PropertyManagementScreen,  title: 'Mon établissement' },
+  { name: 'AddProperty',         component: AddPropertyScreen,         title: 'Gérer mon restaurant' },
+  { name: 'EditProperty',        component: AddPropertyScreen,         title: 'Gérer mon restaurant' },
+  { name: 'PropertyManagement',  component: PropertyManagementScreen,  title: 'Mon restaurant' },
+  { name: 'Tables',              component: RestaurantTablesScreen,    title: 'Tables', headerShown: false },
   { name: 'Scene3dEditor',       component: Scene3dEditorScreen,       title: 'Visite 3D', headerShown: false },
   { name: 'IcalFeeds',           component: IcalFeedsScreen,           title: 'Import iCal', headerShown: false },
   { name: 'MenuManagement',      component: MenuManagementScreen,      title: 'Menu',            headerShown: false },

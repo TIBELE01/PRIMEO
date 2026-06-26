@@ -18,6 +18,28 @@ export const restaurantApi = {
   deleteTimeSlot: (propertyId: string, slotId: string) =>
     apiClient.delete(`/properties/${propertyId}/time-slots/${slotId}`),
 
+  // Restaurant unique du compte connecté (id auto-résolu côté serveur)
+  getMyRestaurant: () => apiClient.get('/restaurant'),
+
+  // Tables (gestion de salle : couverts, emplacement)
+  getTables: (propertyId: string) =>
+    apiClient.get(`/properties/${propertyId}/tables`),
+  createTable: (propertyId: string, data: {
+    name: string;
+    seats: number;
+    location?: string;
+    sortOrder?: number;
+  }) => apiClient.post(`/properties/${propertyId}/tables`, data),
+  updateTable: (propertyId: string, tableId: string, data: Partial<{
+    name: string;
+    seats: number;
+    location: string;
+    isActive: boolean;
+    sortOrder: number;
+  }>) => apiClient.patch(`/properties/${propertyId}/tables/${tableId}`, data),
+  deleteTable: (propertyId: string, tableId: string) =>
+    apiClient.delete(`/properties/${propertyId}/tables/${tableId}`),
+
   // Menu items (§8.4)
   getMenuItems: (propertyId: string) =>
     apiClient.get(`/properties/${propertyId}/menu`),

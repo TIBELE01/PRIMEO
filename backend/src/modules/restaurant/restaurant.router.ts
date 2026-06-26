@@ -102,6 +102,38 @@ restaurantRouter.delete('/menu/:itemId', ...ownerOnly, async (req: Request, res:
   } catch (err) { next(err); }
 });
 
+// ── Tables (gestion de salle) ─────────────────────────────────────────────────
+
+restaurantRouter.get('/tables', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await restaurantService.getTables(req.params.propertyId);
+    res.json({ data });
+  } catch (err) { next(err); }
+});
+
+restaurantRouter.post('/tables', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, seats, location, sortOrder } = req.body;
+    if (!name || seats === undefined) throw new HttpError(400, 'name et seats sont requis');
+    const data = await restaurantService.createTable(req.params.propertyId, req.user!.sub, { name, seats, location, sortOrder });
+    res.status(201).json({ data });
+  } catch (err) { next(err); }
+});
+
+restaurantRouter.patch('/tables/:tableId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await restaurantService.updateTable(req.params.propertyId, req.params.tableId, req.user!.sub, req.body);
+    res.json({ data });
+  } catch (err) { next(err); }
+});
+
+restaurantRouter.delete('/tables/:tableId', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await restaurantService.deleteTable(req.params.propertyId, req.params.tableId, req.user!.sub);
+    res.json({ message: 'Table supprimée' });
+  } catch (err) { next(err); }
+});
+
 // ── Special menus ─────────────────────────────────────────────────────────────
 
 restaurantRouter.get('/special-menus', async (req: Request, res: Response, next: NextFunction) => {

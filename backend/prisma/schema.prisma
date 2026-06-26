@@ -613,6 +613,7 @@ model Property {
   boosts            Boost[]
   menuItems      RestaurantMenuItem[]
   timeSlots      RestaurantTimeSlot[]
+  tables         RestaurantTable[]
   specialMenus   RestaurantSpecialMenu[]
   promotions     RestaurantPromotion[]
   foodOrders     FoodOrder[]
@@ -620,6 +621,9 @@ model Property {
   @@index([ownerId])
   @@index([status, propertyType])
   @@index([city, latitude, longitude])
+  // NB : un compte ne peut posséder qu'UN restaurant — index unique partiel
+  // `properties_owner_restaurant_unique` (ownerId WHERE propertyType='restaurant'),
+  // créé via migration SQL brute (Prisma ne modélise pas les index partiels).
   @@map("properties")
 }
 
@@ -1223,6 +1227,28 @@ model RestaurantTimeSlot {
 
   @@index([propertyId])
   @@map("restaurant_time_slots")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLES RESTAURANT — couverts, emplacement (gestion de salle)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RestaurantTable {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  name      String  // ex: "Table 1", "Terrasse 3"
+  seats     Int     // nombre de couverts
+  location  String? // ex: "Intérieur", "Terrasse", "Étage", "Privé"
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@map("restaurant_tables")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

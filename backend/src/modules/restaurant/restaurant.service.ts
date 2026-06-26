@@ -56,6 +56,64 @@ export const restaurantService = {
     await prisma.restaurantTimeSlot.delete({ where: { id: slotId } });
   },
 
+  // Tables (gestion de salle : couverts, emplacement)
+  async getTables(propertyId: string) {
+    return prisma.restaurantTable.findMany({
+      where: { propertyId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+  },
+
+  async createTable(
+    propertyId: string,
+    ownerId: string,
+    data: { name: string; seats: number; location?: string; sortOrder?: number },
+  ) {
+    await requireOwnership(propertyId, ownerId);
+    if (!data.name?.trim()) throw new HttpError(400, 'Le nom de la table est requis');
+    if (!Number.isInteger(data.seats) || data.seats < 1) throw new HttpError(400, 'Le nombre de couverts doit être au moins 1');
+    return prisma.restaurantTable.create({
+      data: {
+        propertyId,
+        name: data.name.trim(),
+        seats: data.seats,
+        location: data.location?.trim() || null,
+        sortOrder: data.sortOrder ?? 0,
+      },
+    });
+  },
+
+  async updateTable(
+    propertyId: string,
+    tableId: string,
+    ownerId: string,
+    data: Partial<{ name: string; seats: number; location: string; isActive: boolean; sortOrder: number }>,
+  ) {
+    await requireOwnership(propertyId, ownerId);
+    const table = await prisma.restaurantTable.findUnique({ where: { id: tableId } });
+    if (!table || table.propertyId !== propertyId) throw new HttpError(404, 'Table introuvable');
+    if (data.seats !== undefined && (!Number.isInteger(data.seats) || data.seats < 1)) {
+      throw new HttpError(400, 'Le nombre de couverts doit être au moins 1');
+    }
+    return prisma.restaurantTable.update({
+      where: { id: tableId },
+      data: {
+        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(data.seats !== undefined ? { seats: data.seats } : {}),
+        ...(data.location !== undefined ? { location: data.location?.trim() || null } : {}),
+        ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+      },
+    });
+  },
+
+  async deleteTable(propertyId: string, tableId: string, ownerId: string) {
+    await requireOwnership(propertyId, ownerId);
+    const table = await prisma.restaurantTable.findUnique({ where: { id: tableId } });
+    if (!table || table.propertyId !== propertyId) throw new HttpError(404, 'Table introuvable');
+    await prisma.restaurantTable.delete({ where: { id: tableId } });
+  },
+
   // Menu items (§8.4)
   async getMenuItems(propertyId: string) {
     return prisma.restaurantMenuItem.findMany({

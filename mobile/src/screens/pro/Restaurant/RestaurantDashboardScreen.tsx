@@ -170,14 +170,17 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
           </View>
           <Text style={styles.onboardTitle}>Bienvenue sur Primeo !</Text>
           <Text style={styles.onboardSub}>
-            Créez votre fiche restaurant pour gérer vos réservations, votre menu et vos créneaux.
+            Votre restaurant est en cours de configuration. Actualisez pour y accéder
+            et gérer vos menus, vos tables, vos créneaux et vos réservations.
           </Text>
           <TouchableOpacity
             style={[styles.onboardBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
+            onPress={() => load()}
+            accessibilityRole="button"
+            accessibilityLabel="Accéder à mon restaurant"
           >
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.onboardBtnText}>Créer mon restaurant</Text>
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.onboardBtnText}>Accéder à mon restaurant</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -354,6 +357,14 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
               <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('TimeSlots')}>
                 <Ionicons name="time-outline" size={24} color={PRIMARY} />
                 <Text style={styles.quickLabel}>Créneaux</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Tables')}>
+                <Ionicons name="grid-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Tables</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('PropertyManagement')}>
+                <Ionicons name="storefront-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Gérer mon restaurant</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Promotions')}>
                 <Ionicons name="pricetag-outline" size={24} color={PRIMARY} />

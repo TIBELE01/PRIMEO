@@ -48,6 +48,7 @@ import { foodOrdersRouter } from './modules/restaurant/food-orders.router';
 import { featureFlagsRouter } from './modules/feature-flags/feature-flags.router';
 import { exportsRouter } from './modules/exports/exports.router';
 import { downloadsRouter } from './modules/downloads/downloads.router';
+import { restaurantMeRouter } from './modules/restaurant/restaurant-me.router';
 import { payoutsRouter } from './modules/payouts/payouts.router';
 import { walletsRouter } from './modules/wallets/wallets.router';
 
@@ -131,6 +132,7 @@ export function createApp(): Application {
   app.use('/api/food-orders', foodOrdersRouter);
   app.use('/api/feature-flags', featureFlagsRouter);
   app.use('/api/exports', exportsRouter);
+  app.use('/api/restaurant', restaurantMeRouter); // compte = 1 restaurant (ID auto-résolu)
   app.use('/api/downloads', downloadsRouter);
   app.use('/api/payouts', payoutsRouter);
   app.use('/api/wallet', walletsRouter);

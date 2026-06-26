@@ -364,18 +364,18 @@ export default function MenuManagementScreen() {
           <View style={[styles.onboardingIcon, { backgroundColor: PRIMARY + '18' }]}>
             <Ionicons name="restaurant" size={56} color={PRIMARY} />
           </View>
-          <Text style={styles.onboardingTitle}>Créez votre restaurant</Text>
+          <Text style={styles.onboardingTitle}>Restaurant en préparation</Text>
           <Text style={styles.onboardingDesc}>
-            Ajoutez d'abord votre fiche restaurant pour pouvoir gérer votre menu.
+            Votre restaurant est en cours de configuration. Actualisez pour gérer votre menu.
           </Text>
           <TouchableOpacity
             style={[styles.onboardingBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => navigation.navigate('AddProperty', { initialType: 'restaurant' })}
+            onPress={() => load()}
             accessibilityRole="button"
-            accessibilityLabel="Créer mon restaurant"
+            accessibilityLabel="Actualiser"
           >
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.onboardingBtnText}>Créer mon restaurant</Text>
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.onboardingBtnText}>Actualiser</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

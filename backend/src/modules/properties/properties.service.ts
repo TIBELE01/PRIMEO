@@ -145,6 +145,22 @@ export const propertiesService = {
   },
 
   async create(ownerId: string, input: CreatePropertyInput) {
+    // Un compte ne peut posséder qu'UN SEUL restaurant : on bloque la création
+    // d'un second (la fiche est créée automatiquement à l'inscription / au 1er accès
+    // au tableau de bord). Le restaurateur gère ensuite menus, tables et créneaux.
+    if (input.propertyType === 'restaurant') {
+      const existing = await prisma.property.findFirst({
+        where: { ownerId, propertyType: 'restaurant' },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new HttpError(
+          409,
+          'Vous possédez déjà un restaurant. Un compte ne peut gérer qu\'un seul restaurant — modifiez-le depuis « Gérer mon restaurant ».',
+        );
+      }
+    }
+
     // Ensure a professional profile exists — auto-create with pending KYC if missing.
     let profile = await prisma.professionalProfile.findUnique({ where: { userId: ownerId } });
     if (!profile) {

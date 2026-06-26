@@ -22,6 +22,7 @@ jest.mock('../notifications/notifications.service', () => ({
 const mockPrisma = {
   property: {
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
@@ -127,6 +128,34 @@ describe('propertiesService.create — limite de publications', () => {
     expect(mockPrisma.professionalProfile.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ userId: OWNER_ID, verificationStatus: 'pending' }) }),
     );
+  });
+});
+
+describe('propertiesService.create — un compte = un seul restaurant', () => {
+  const restoInput: CreatePropertyInput = {
+    ...baseInput, title: 'Mon Resto', propertyType: 'restaurant', paymentOptions: ['zero_online'],
+  };
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPrisma.user.findUnique.mockResolvedValue({ accountType: 'restaurateur', firstName: 'Awa', lastName: 'K' });
+    mockPrisma.professionalProfile.findUnique.mockResolvedValue({ id: 'prof-1' });
+    mockPrisma.subscription.findUnique.mockResolvedValue(null);
+    mockPrisma.property.count.mockResolvedValue(0);
+    mockPrisma.property.create.mockResolvedValue({ id: 'resto-1', status: 'active' });
+  });
+
+  it('rejette (409) la création d\'un second restaurant', async () => {
+    mockPrisma.property.findFirst.mockResolvedValue({ id: 'resto-existant' });
+
+    await expect(propertiesService.create(OWNER_ID, restoInput)).rejects.toMatchObject({ statusCode: 409 });
+    expect(mockPrisma.property.create).not.toHaveBeenCalled();
+  });
+
+  it('autorise le premier restaurant (aucun existant)', async () => {
+    mockPrisma.property.findFirst.mockResolvedValue(null);
+
+    await expect(propertiesService.create(OWNER_ID, restoInput)).resolves.toMatchObject({ id: 'resto-1' });
+    expect(mockPrisma.property.create).toHaveBeenCalled();
   });
 });
 
