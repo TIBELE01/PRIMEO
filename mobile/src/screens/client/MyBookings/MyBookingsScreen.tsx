@@ -95,9 +95,9 @@ function getTab(b: BookingItem): TabKey {
 
 function BookingCard({ booking, onPress }: { booking: BookingItem; onPress: () => void }) {
   const nights = countNights(booking.startDate, booking.endDate);
-  const imageUrl = booking.property.media?.[0]?.url;
+  const imageUrl = booking.property?.media?.[0]?.url;
   const hasCashBalance = booking.remainingCashAmount > 0 && booking.status === 'confirmed';
-  const isRestaurant = booking.property.propertyType === 'restaurant';
+  const isRestaurant = booking.property?.propertyType === 'restaurant';
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
@@ -109,8 +109,8 @@ function BookingCard({ booking, onPress }: { booking: BookingItem; onPress: () =
             </View>}
 
         <View style={styles.cardContent}>
-          <Text style={styles.propertyName} numberOfLines={1}>{booking.property.title}</Text>
-          <Text style={styles.city}>📍 {booking.property.city}</Text>
+          <Text style={styles.propertyName} numberOfLines={1}>{booking.property?.title ?? 'Réservation'}</Text>
+          <Text style={styles.city}>📍 {booking.property?.city ?? '—'}</Text>
           {isRestaurant ? (
             <Text style={styles.dates}>
               {fmtDateShort(booking.startDate)}

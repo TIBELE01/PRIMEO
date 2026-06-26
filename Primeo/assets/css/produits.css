@@ -6,4 +6,15 @@
 .prod-benefits li::before{content:'✓';position:absolute;left:0;top:0;color:var(--color-cta);font-weight:800}
 .prod-audience{font-size:.82rem;color:var(--color-text-muted);margin-bottom:1.6rem;line-height:1.55}
 .prod-audience strong{color:var(--color-text);font-weight:600}
-@media (max-width:900px){.ads-card .ads-visual{order:-1}}
+@media (max-width:900px){.ads-card .ads-visual{order:-1}}/* Cartes produits — grandes ombres, image + contenu, alternées */
+.product-showcase-list{display:flex;flex-direction:column;gap:2.5rem}
+.product-showcase{display:grid;grid-template-columns:1fr 1fr;background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--color-border);box-shadow:0 24px 60px -15px rgba(16,24,40,.22),0 6px 16px rgba(16,24,40,.07);transition:box-shadow var(--transition),transform var(--transition)}
+.product-showcase:hover{box-shadow:0 30px 70px -15px rgba(16,24,40,.28),0 8px 20px rgba(16,24,40,.10);transform:translateY(-4px)}
+.product-showcase__media{position:relative;min-height:340px;background:var(--color-bg-alt)}
+.product-showcase__media img{width:100%;height:100%;object-fit:cover;display:block}
+.product-showcase__badge{position:absolute;top:16px;left:16px;background:#fff;color:var(--color-primary);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.35rem .8rem;border-radius:var(--radius-pill);box-shadow:var(--shadow-md)}
+.product-showcase__body{padding:2.75rem;display:flex;flex-direction:column;align-items:flex-start}
+.product-showcase__body h2{font-size:clamp(1.5rem,2.5vw,1.9rem);font-weight:800;margin-bottom:.85rem;letter-spacing:-.02em}
+.product-showcase__body>p{color:var(--color-text-muted);line-height:1.75;margin-bottom:1.5rem;font-size:.975rem}
+.product-showcase--reverse .product-showcase__media{order:2}
+@media (max-width:880px){.product-showcase,.product-showcase--reverse{grid-template-columns:1fr}.product-showcase--reverse .product-showcase__media{order:0}.product-showcase__media{min-height:240px}.product-showcase__body{padding:2rem 1.5rem}}

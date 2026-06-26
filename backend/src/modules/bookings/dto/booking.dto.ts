@@ -19,8 +19,11 @@ export const CreateBookingDto = z
     paymentOption: z.enum(['full_online', 'ten_percent_online', 'zero_online']),
     specialRequests: z.string().max(500).optional(),
     promoCode: z.string().max(50).trim().optional(),
-    // Heure de réservation — utilisée pour les restaurants (réservation de table)
-    reservationTime: z.string().max(20).trim().optional(),
+    // Heure de réservation — utilisée pour les restaurants (réservation de table).
+    // Peut contenir l'heure ET une demande spéciale ("19:30 — table en terrasse"),
+    // d'où une limite large : un plafond trop bas (20) rejetait toute réservation
+    // accompagnée d'une note (400) et bloquait le tunnel restaurant.
+    reservationTime: z.string().max(220).trim().optional(),
     // Message facultatif — utilisé pour les demandes d'intérêt immobilier
     interestMessage: z.string().max(500).trim().optional(),
     // Coordonnées du client (confirmées dans le tunnel de réservation) — mettent à jour le profil si fournies

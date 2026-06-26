@@ -20,12 +20,13 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 
 interface RestaurantBooking {
   id: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  // Statuts réels renvoyés par le backend (enum BookingStatus)
+  status: 'pending_payment' | 'confirmed' | 'completed' | 'cancelled_by_client' | 'cancelled_by_professional' | string;
   startDate: string;
   guests: number;
   specialRequests?: string;
-  property: { id: string; name: string };
-  client: { firstName: string; lastName: string };
+  property?: { id: string; title?: string; name?: string };
+  client?: { firstName?: string; lastName?: string };
   createdAt: string;
   timeSlot?: string;
   cancellationReason?: string;
@@ -52,16 +53,22 @@ function getInitials(first?: string | null, last?: string | null): string {
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'En attente',
+  pending_payment: 'En attente',
   confirmed: 'Confirmée',
   completed: 'Terminée',
   cancelled: 'Annulée',
+  cancelled_by_client: 'Annulée (client)',
+  cancelled_by_professional: 'Annulée',
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   pending:   { bg: '#FEF3C7', text: '#D97706' },
+  pending_payment: { bg: '#FEF3C7', text: '#D97706' },
   confirmed: { bg: '#D1FAE5', text: '#065F46' },
   completed: { bg: '#F3F4F6', text: '#6B7280' },
   cancelled: { bg: '#FEE2E2', text: '#DC2626' },
+  cancelled_by_client: { bg: '#FEE2E2', text: '#DC2626' },
+  cancelled_by_professional: { bg: '#FEE2E2', text: '#DC2626' },
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -156,7 +163,7 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
   const handleConfirm = () => {
     Alert.alert(
       'Confirmer la réservation',
-      `Confirmer la réservation de ${booking.client.firstName} ${booking.client.lastName} ?`,
+      `Confirmer la réservation de ${booking.client?.firstName ?? ''} ${booking.client?.lastName ?? ''} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -229,7 +236,7 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
     );
   };
 
-  const initials = getInitials(booking.client.firstName, booking.client.lastName);
+  const initials = getInitials(booking.client?.firstName, booking.client?.lastName);
   const specialReq = booking.specialRequests?.trim() ?? '';
   const truncatedReq = specialReq.length > 60 ? specialReq.slice(0, 60) + '…' : specialReq;
 
@@ -240,9 +247,9 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
         <Avatar initials={initials} />
         <View style={styles.cardHeaderInfo}>
           <Text style={styles.clientName}>
-            {booking.client.firstName} {booking.client.lastName}
+            {booking.client?.firstName ?? ''} {booking.client?.lastName ?? ''}
           </Text>
-          <Text style={styles.propertyName}>{booking.property.name}</Text>
+          <Text style={styles.propertyName}>{booking.property?.title ?? booking.property?.name ?? 'Restaurant'}</Text>
           {booking.timeSlot ? (
             <Text style={styles.timeSlotText}>{booking.timeSlot}</Text>
           ) : null}
@@ -273,7 +280,7 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
       )}
 
       {/* Cancellation reason (history) */}
-      {tab === 'history' && booking.status === 'cancelled' && booking.cancellationReason ? (
+      {tab === 'history' && booking.status.startsWith('cancelled') && booking.cancellationReason ? (
         <Text style={styles.cancellationReason}>
           Motif : {booking.cancellationReason}
         </Text>
@@ -345,41 +352,36 @@ export default function RestaurantBookingsScreen() {
   });
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchTab = useCallback(async (tab: TabKey, silent = false) => {
-    if (!silent) {
-      setLoading(prev => ({ ...prev, [tab]: true }));
-    }
-
-    const paramsByTab: Record<TabKey, Record<string, unknown>> = {
-      pending:   { role: 'host', status: 'pending' },
-      confirmed: { role: 'host', status: 'confirmed' },
-      history:   { role: 'host', status: 'completed,cancelled' },
-    };
-
+  // Une seule requête (toutes les réservations du restaurant), puis répartition
+  // par onglet côté client. Évite d'envoyer des `status` non conformes à l'enum
+  // backend (ex. "pending", "completed,cancelled") qui renvoyaient un 400 et
+  // laissaient les onglets « En attente » et « Historique » vides.
+  const fetchAll = useCallback(async (silent = false) => {
+    if (silent) setRefreshing(true);
+    else setLoading({ pending: true, confirmed: true, history: true });
     try {
-      const res = await bookingsApi.getMyBookings(paramsByTab[tab]);
-      const data: RestaurantBooking[] = res.data?.data ?? res.data ?? [];
-      setBookings(prev => ({ ...prev, [tab]: Array.isArray(data) ? data : [] }));
+      const res = await bookingsApi.getMyBookings({ role: 'host', limit: 100, page: 1 });
+      const raw = res.data?.data ?? res.data ?? [];
+      const list: RestaurantBooking[] = Array.isArray(raw) ? raw : [];
+      const buckets: Record<TabKey, RestaurantBooking[]> = { pending: [], confirmed: [], history: [] };
+      for (const b of list) {
+        if (b.status === 'pending' || b.status === 'pending_payment') buckets.pending.push(b);
+        else if (b.status === 'confirmed') buckets.confirmed.push(b);
+        else buckets.history.push(b); // completed, cancelled_by_*
+      }
+      setBookings(buckets);
     } catch {
-      // keep previous data
+      // garder l'état précédent
     } finally {
-      setLoading(prev => ({ ...prev, [tab]: false }));
+      setLoading({ pending: false, confirmed: false, history: false });
+      if (silent) setRefreshing(false);
     }
   }, []);
-
-  const fetchAll = useCallback(
-    async (silent = false) => {
-      if (silent) setRefreshing(true);
-      await Promise.allSettled(TABS.map(t => fetchTab(t.key, silent)));
-      if (silent) setRefreshing(false);
-    },
-    [fetchTab],
-  );
 
   useEffect(() => { fetchAll(false); }, [fetchAll]);
 
   const handleRefresh = useCallback(() => { fetchAll(true); }, [fetchAll]);
-  const handleTabRefresh = useCallback(() => { fetchTab(activeTab, true); }, [activeTab, fetchTab]);
+  const handleTabRefresh = useCallback(() => { fetchAll(true); }, [fetchAll]);
 
   const isLoading = loading[activeTab];
   const currentBookings = bookings[activeTab];

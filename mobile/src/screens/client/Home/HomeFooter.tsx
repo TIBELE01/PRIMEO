@@ -133,7 +133,7 @@ const s = StyleSheet.create({
   proCtaDesc:    { fontSize: 12, color: 'rgba(255,255,255,0.62)' },
   proCtaArrow:   { fontSize: 20, color: 'rgba(255,255,255,0.50)', fontWeight: '700' },
   footerBrand:    { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  footerLogoImg:  { width: 78, height: 42 },
+  footerLogoImg:  { width: 48, height: 48 },
   footerBrandSub: { fontSize: 11, color: 'rgba(255,255,255,0.55)' },
   footerDesc:       { fontSize: 12.5, color: 'rgba(255,255,255,0.65)', lineHeight: 19, marginBottom: 4 },
   footerSep:        { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: 18 },

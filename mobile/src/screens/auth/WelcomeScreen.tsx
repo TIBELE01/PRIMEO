@@ -128,7 +128,7 @@ const s = StyleSheet.create({
     alignItems: 'center', paddingTop: 24, gap: 6,
   },
   logoImg: {
-    width: 160, height: 80,
+    width: 112, height: 112,
     marginBottom: 10,
     shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 8 },

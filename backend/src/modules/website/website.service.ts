@@ -28,9 +28,9 @@ const DEFAULT_SOLUTIONS = [
 ];
 
 const DEFAULT_PRODUCTS = [
-  { id: 'default-1', title: "Formules d'abonnement", description: "Choisissez la formule adaptée à votre activité — Essentiel, Prestige ou Premium. Commencez gratuitement et évoluez selon vos besoins.", imageUrl: null, badge: null, link: '/produits', sortOrder: 0 },
-  { id: 'default-2', title: "Boosts d'annonce", description: "Propulsez vos annonces en tête des résultats de recherche. Les boosts sont disponibles à la carte et leur effet est immédiat.", imageUrl: null, badge: 'Populaire', link: '/produits', sortOrder: 1 },
-  { id: 'default-3', title: 'Visite 3D', description: "Offrez à vos clients une immersion virtuelle de votre bien. Les visites 3D augmentent les taux de conversion de 40%.", imageUrl: null, badge: 'Nouveau', link: '/produits', sortOrder: 2 },
+  { id: 'default-1', title: 'Shooting Photo', description: 'Photos haute définition et panoramiques 360° pour sublimer vos biens et booster vos réservations.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg', badge: null, link: '/produits/#shooting-photo', sortOrder: 0 },
+  { id: 'default-2', title: 'PrimeoPay', description: 'Paiement en ligne sécurisé : Mobile Money (Orange, MTN, Wave) et carte bancaire, avec reversements automatiques.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433599/primeo/Website/products/primeopay.jpg', badge: 'Sécurisé', link: '/produits/#primeopay', sortOrder: 1 },
+  { id: 'default-3', title: 'Formation', description: 'Formations en ligne pour optimiser vos annonces, gérer vos réservations et développer votre activité.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433604/primeo/Website/products/formation.jpg', badge: null, link: '/produits/#formation', sortOrder: 2 },
 ];
 
 const DEFAULT_WHY = [
