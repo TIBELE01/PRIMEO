@@ -1,15 +1,37 @@
 // MenuSection (restaurant) — menu items grouped by category, with photo + price.
-import React, { useMemo } from 'react';
+// Affiche les vrais plats VALIDÉS (API) ; repli sur un menu indicatif si aucun.
+import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import type { Property } from '@/types/property';
 import { useCurrency } from '../../../../hooks/useCurrency';
 import { menuFor } from '../detailContent';
+import { restaurantApi } from '../../../../services/api/endpoints/restaurantApi';
 
 interface Props { property: Property; color?: string; }
 
 export function MenuSection({ property, color = '#DC2626' }: Props) {
   const { formatPrice } = useCurrency();
-  const items = useMemo(() => menuFor(property), [property]);
+  const [apiItems, setApiItems] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!property?.id) return;
+    restaurantApi.getMenuItems(property.id)
+      .then((res) => { if (alive) setApiItems((res.data as any)?.data ?? []); })
+      .catch(() => { if (alive) setApiItems([]); });
+    return () => { alive = false; };
+  }, [property?.id]);
+
+  const staticItems = useMemo(() => menuFor(property), [property]);
+  const items = useMemo(() => {
+    if (apiItems && apiItems.length > 0) {
+      return apiItems.map((i) => ({
+        id: i.id, category: i.section, name: i.name,
+        description: i.description, price: i.price, imageUrl: i.photoUrl,
+      })) as typeof staticItems;
+    }
+    return staticItems;
+  }, [apiItems, staticItems]);
 
   // Group by category, preserving insertion order
   const groups = useMemo(() => {

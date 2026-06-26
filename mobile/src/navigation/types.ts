@@ -56,6 +56,7 @@ export type ClientStackParamList = {
   SupportChatbot: undefined;
   SupportTickets: undefined;
   SupportTicketDetail: { ticketId: string };
+  RestaurantMenu: { propertyId?: string } | undefined;
   RestaurantOrderCart: { propertyId: string; propertyName: string };
   RestaurantOrderTracking: { orderId: string };
   MyRestaurantOrders: undefined;

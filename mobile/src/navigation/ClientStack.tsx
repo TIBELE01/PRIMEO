@@ -31,6 +31,7 @@ import SupportChatbotScreen from '../screens/common/SupportScreen';
 import SupportTicketsScreen from '../screens/common/SupportTicketsScreen';
 import SupportTicketDetailScreen from '../screens/common/SupportTicketDetailScreen';
 import { CategoryScreen } from '../screens/client/Category/CategoryScreen';
+import RestaurantMenuScreen from '../screens/client/Restaurant/RestaurantMenuScreen';
 import RestaurantOrderCartScreen from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
@@ -80,6 +81,7 @@ export function ClientStack() {
       <Stack.Screen name="SupportChatbot" component={SupportChatbotScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SupportTickets" component={SupportTicketsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SupportTicketDetail" component={SupportTicketDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="RestaurantMenu" component={RestaurantMenuScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RestaurantOrderCart" component={RestaurantOrderCartScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RestaurantOrderTracking" component={RestaurantOrderTrackingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyRestaurantOrders" component={MyRestaurantOrdersScreen} options={{ headerShown: false }} />

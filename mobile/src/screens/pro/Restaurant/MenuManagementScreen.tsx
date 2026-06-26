@@ -182,8 +182,16 @@ export default function MenuManagementScreen() {
       setPropertyId(pid || null);
       if (!pid) { setNoProperty(true); setLoading(false); return; }
 
-      const menuRes = await restaurantApi.getMenuItemsManage(pid);
-      const data: MenuItem[] = menuRes.data?.data ?? menuRes.data ?? [];
+      // Vue gestion (tous les plats, incl. en attente). Repli sur la vue publique
+      // si la route /menu/all n'est pas encore déployée (ancien backend).
+      let data: MenuItem[] = [];
+      try {
+        const menuRes = await restaurantApi.getMenuItemsManage(pid);
+        data = menuRes.data?.data ?? menuRes.data ?? [];
+      } catch {
+        const menuRes = await restaurantApi.getMenuItems(pid);
+        data = menuRes.data?.data ?? menuRes.data ?? [];
+      }
       setItems(data);
     } catch {
       Alert.alert('Erreur', 'Impossible de charger le menu.');
