@@ -176,31 +176,36 @@ export default function MenuManagementScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Résolution du restaurant + plats via /api/restaurant (id déduit du compte) —
-      // ne dépend plus de getMyListings. Repli sur getMyListings + /properties/:id/menu.
+      // 1) Résoudre l'ID du restaurant du compte (auth) — /api/restaurant, repli getMyListings.
       let pid = '';
-      let data: MenuItem[] = [];
       try {
         const r = await restaurantApi.getMyRestaurant();
         pid = (r.data?.data ?? r.data)?.id ?? '';
-        const m = await restaurantApi.getMyMenuManage();
-        data = m.data?.data ?? m.data ?? [];
-      } catch {
-        const propRes = await propertiesApi.getMyListings();
-        const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
-        pid = listings[0]?.id ?? '';
-        if (pid) {
-          try {
-            const m = await restaurantApi.getMenuItemsManage(pid);
-            data = m.data?.data ?? m.data ?? [];
-          } catch {
-            const m = await restaurantApi.getMenuItems(pid);
-            data = m.data?.data ?? m.data ?? [];
-          }
-        }
+      } catch { /* repli ci-dessous */ }
+      if (!pid) {
+        try {
+          const propRes = await propertiesApi.getMyListings();
+          const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
+          pid = listings[0]?.id ?? '';
+        } catch { /* pid reste vide */ }
       }
       setPropertyId(pid || null);
       if (!pid) { setNoProperty(true); setLoading(false); return; }
+      setNoProperty(false);
+
+      // 2) Charger les plats : vue gestion (TOUS les statuts) → repli sur la vue
+      // publique (validés) — c'est le chemin qui fonctionne côté client, donc
+      // les plats validés s'affichent toujours, même si /menu/all échoue.
+      let data: MenuItem[] = [];
+      try {
+        const m = await restaurantApi.getMenuItemsManage(pid);
+        data = m.data?.data ?? m.data ?? [];
+      } catch {
+        try {
+          const m = await restaurantApi.getMenuItems(pid);
+          data = m.data?.data ?? m.data ?? [];
+        } catch { /* data vide */ }
+      }
       setItems(data);
     } catch {
       Alert.alert('Erreur', 'Impossible de charger le menu.');

@@ -288,7 +288,7 @@ export function HomeScreen() {
           onPressResidence={() => navigation.navigate('ResidencesCategory', { category: 'residence' })}
           onPressHotel={() => navigation.navigate('HotelsCategory', { category: 'hotel' })}
           onPressImmobilier={() => navigation.navigate('ImmobilierCategory', { category: 'immobilier' })}
-          onPressRestaurant={() => navigation.navigate('RestaurantMenu')}
+          onPressRestaurant={() => navigation.navigate('RestaurantsCategory', { category: 'restaurant' })}
         />
 
         {/* ── Pour vous ── */}

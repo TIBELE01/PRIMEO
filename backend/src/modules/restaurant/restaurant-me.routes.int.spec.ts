@@ -27,6 +27,7 @@ jest.mock('../properties/properties.service', () => ({
 jest.mock('./restaurant.service', () => ({
   restaurantService: {
     getMenuItems: jest.fn(async () => [{ id: 'm1' }]),
+    getMenuItemsForOwner: jest.fn(async () => [{ id: 'm1', status: 'pending' }, { id: 'm2', status: 'approved' }]),
     getTables: jest.fn(async () => [{ id: 't1', name: 'Table 1', seats: 4 }]),
     getTimeSlots: jest.fn(async () => []),
   },
@@ -55,5 +56,12 @@ describe('/api/restaurant — ID auto-résolu depuis le compte', () => {
     const res = await request(app).get('/api/restaurant/tables');
     expect(res.status).toBe(200);
     expect(restaurantService.getTables).toHaveBeenCalledWith('resto-xyz');
+  });
+
+  it('GET /api/restaurant/menu/all (vue pro) résout l\'ID et renvoie tous les plats', async () => {
+    const res = await request(app).get('/api/restaurant/menu/all');
+    expect(res.status).toBe(200);
+    expect(restaurantService.getMenuItemsForOwner).toHaveBeenCalledWith('resto-xyz', 'owner-1');
+    expect(res.body.data).toHaveLength(2);
   });
 });
