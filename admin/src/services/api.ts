@@ -47,6 +47,12 @@ export const propertiesService = {
   deleteProperty: (id: string) => api.delete(`/admin/properties/${id}`),
 };
 
+export const menuItemsService = {
+  getPending: () => api.get<any>('/admin/menu-items/pending'),
+  approve: (id: string) => api.post(`/admin/menu-items/${id}/approve`),
+  reject: (id: string, reason: string) => api.post(`/admin/menu-items/${id}/reject`, { reason }),
+};
+
 export const bookingsService = {
   list: (params?: object) => api.get<any>('/admin/bookings', params),
   getBookings: (params?: object) => api.get<any>('/admin/bookings', params),

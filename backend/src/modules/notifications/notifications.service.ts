@@ -166,6 +166,16 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: 'Annonce refusée',
         body: `Votre annonce "${String(data['propertyTitle'] ?? '')}" a été refusée${data['reason'] ? ` : ${String(data['reason'])}` : ''}.`,
       };
+    case 'menu_approved':
+      return {
+        title: 'Plat validé',
+        body: `Votre plat "${String(data['menuItemName'] ?? '')}" est maintenant visible par les clients.`,
+      };
+    case 'menu_rejected':
+      return {
+        title: 'Plat refusé',
+        body: `Votre plat "${String(data['menuItemName'] ?? '')}" a été refusé${data['reason'] ? ` : ${String(data['reason'])}` : ''}.`,
+      };
     case 'property_modifications_requested':
       return {
         title: 'Modifications demandées',

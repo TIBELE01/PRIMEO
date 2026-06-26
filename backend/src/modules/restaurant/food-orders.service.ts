@@ -3,6 +3,7 @@ import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { getSocketServer } from '../messaging/socket.server';
 import { sendPushNotification } from '../../common/utils/push';
+import { sendEmail } from '../../common/utils/mailer';
 import { logger } from '../../common/utils/logger';
 import { FoodOrderStatus, FoodOrderDeliveryType } from '@prisma/client';
 
@@ -43,7 +44,7 @@ export const foodOrdersService = {
       where: { id: data.propertyId },
       select: {
         id: true, ownerId: true, propertyType: true, status: true, title: true,
-        owner: { select: { id: true, onesignalPlayerId: true, firstName: true } },
+        owner: { select: { id: true, onesignalPlayerId: true, firstName: true, email: true } },
       },
     });
     if (!property) throw new HttpError(404, 'Restaurant introuvable');
@@ -55,11 +56,12 @@ export const foodOrdersService = {
 
     const menuItemIds = [...new Set(data.items.map(i => i.menuItemId))];
     const menuItems = await prisma.restaurantMenuItem.findMany({
-      where: { id: { in: menuItemIds }, propertyId: data.propertyId },
+      // status:'approved' → on ne peut commander qu'un plat validé par l'admin
+      where: { id: { in: menuItemIds }, propertyId: data.propertyId, status: 'approved' },
     });
 
     if (menuItems.length !== menuItemIds.length) {
-      throw new HttpError(400, 'Certains articles du menu sont introuvables ou n\'appartiennent pas à ce restaurant');
+      throw new HttpError(400, 'Certains articles sont introuvables, non validés ou n\'appartiennent pas à ce restaurant');
     }
     const unavailable = menuItems.filter(m => !m.isAvailable);
     if (unavailable.length > 0) {
@@ -89,7 +91,7 @@ export const foodOrdersService = {
       },
       include: {
         items: { include: { menuItem: { select: { name: true, section: true, photoUrl: true } } } },
-        client: { select: { firstName: true, lastName: true, phone: true } },
+        client: { select: { firstName: true, lastName: true, phone: true, email: true } },
         property: { select: { title: true } },
       },
     });
@@ -114,6 +116,34 @@ export const foodOrdersService = {
         data: { type: 'new_food_order', orderId: order.id, propertyId: data.propertyId },
         priority: 10,
       }).catch(e => logger.warn('Push notification new_food_order failed', e));
+    }
+
+    // Notification in-app (pro) — apparaît dans la liste des notifications
+    prisma.notification.create({
+      data: {
+        userId: property.ownerId,
+        type: 'new_food_order',
+        title: 'Nouvelle commande',
+        body: `${order.client.firstName} a passé une commande (${totalAmount.toLocaleString('fr-CI')} FCFA).`,
+        data: { type: 'new_food_order', orderId: order.id, propertyId: data.propertyId } as never,
+      },
+    }).catch(e => logger.warn('In-app notification new_food_order failed', e));
+
+    // Emails de confirmation (pro + client) — best effort
+    const itemsLines = order.items.map(it => `${it.quantity}× ${it.menuItem.name}`).join(', ');
+    if (property.owner.email) {
+      sendEmail({
+        to: [{ email: property.owner.email, name: property.owner.firstName }],
+        subject: `🍽️ Nouvelle commande — ${property.title}`,
+        htmlContent: `<p>Bonjour ${property.owner.firstName},</p><p>Nouvelle commande de <strong>${order.client.firstName} ${order.client.lastName}</strong> : ${itemsLines}.</p><p>Total : <strong>${totalAmount.toLocaleString('fr-CI')} FCFA</strong> — ${data.deliveryType === 'delivery' ? 'Livraison' : 'Sur place / à emporter'}.</p><p>Retrouvez-la dans votre tableau de bord, onglet « Commandes ».</p>`,
+      }).catch(e => logger.warn('Email new_food_order (pro) failed', e));
+    }
+    if (order.client.email) {
+      sendEmail({
+        to: [{ email: order.client.email, name: order.client.firstName }],
+        subject: `Confirmation de commande — ${property.title}`,
+        htmlContent: `<p>Bonjour ${order.client.firstName},</p><p>Votre commande chez <strong>${property.title}</strong> a bien été transmise : ${itemsLines}.</p><p>Total : <strong>${totalAmount.toLocaleString('fr-CI')} FCFA</strong>.</p><p>Le restaurant la prépare. Merci !</p>`,
+      }).catch(e => logger.warn('Email new_food_order (client) failed', e));
     }
 
     return order;

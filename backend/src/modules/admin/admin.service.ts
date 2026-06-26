@@ -895,6 +895,88 @@ export const adminService = {
     }).catch((err) => logger.warn('notify property rejected failed', err));
   },
 
+  // ── Modération des plats (menus restaurant) ──────────────────────────────────
+  async listPendingMenuItems(query: { page?: string; limit?: string }) {
+    const page = parseInt(query.page ?? '1');
+    const limit = parseInt(query.limit ?? '20');
+    const where = { status: 'pending' as const };
+    const [data, total] = await Promise.all([
+      prisma.restaurantMenuItem.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          property: {
+            select: {
+              id: true, title: true, ownerId: true,
+              owner: { select: { firstName: true, lastName: true, email: true } },
+            },
+          },
+        },
+      }),
+      prisma.restaurantMenuItem.count({ where }),
+    ]);
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+  },
+
+  async approveMenuItem(itemId: string, adminId: string) {
+    const item = await prisma.restaurantMenuItem.findUnique({
+      where: { id: itemId },
+      include: { property: { select: { ownerId: true, title: true } } },
+    });
+    if (!item) throw new HttpError(404, 'Plat introuvable');
+    if (item.status === 'approved') throw new HttpError(400, 'Le plat est déjà validé');
+
+    await prisma.restaurantMenuItem.update({
+      where: { id: itemId },
+      data: { status: 'approved', rejectionReason: null },
+    });
+
+    await createAudit({
+      adminId,
+      action: 'admin.menu.approve',
+      targetType: 'menu_item',
+      targetId: itemId,
+      description: `Validation du plat « ${item.name} »`,
+      metadata: { old: { status: item.status }, new: { status: 'approved' } },
+    });
+
+    notificationsService.notify({
+      type: 'menu_approved',
+      recipientId: item.property.ownerId,
+      data: { menuItemName: item.name, propertyTitle: item.property.title },
+    }).catch((err) => logger.warn('notify menu approved failed', err));
+  },
+
+  async rejectMenuItem(itemId: string, adminId: string, reason: string) {
+    const item = await prisma.restaurantMenuItem.findUnique({
+      where: { id: itemId },
+      include: { property: { select: { ownerId: true, title: true } } },
+    });
+    if (!item) throw new HttpError(404, 'Plat introuvable');
+
+    await prisma.restaurantMenuItem.update({
+      where: { id: itemId },
+      data: { status: 'rejected', rejectionReason: reason || null },
+    });
+
+    await createAudit({
+      adminId,
+      action: 'admin.menu.reject',
+      targetType: 'menu_item',
+      targetId: itemId,
+      description: `Rejet du plat « ${item.name} » — raison : ${reason}`,
+      metadata: { old: { status: item.status }, new: { status: 'rejected', reason } },
+    });
+
+    notificationsService.notify({
+      type: 'menu_rejected',
+      recipientId: item.property.ownerId,
+      data: { menuItemName: item.name, propertyTitle: item.property.title, reason },
+    }).catch((err) => logger.warn('notify menu rejected failed', err));
+  },
+
   async requestPropertyModifications(propertyId: string, adminId: string, feedback: string) {
     const property = await prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) throw new HttpError(404, 'Propriété introuvable');

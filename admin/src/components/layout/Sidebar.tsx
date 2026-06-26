@@ -8,6 +8,7 @@ import type { AdminRole } from '@/types/user';
 import {
   LayoutDashboard, Users, Building2, Calendar, AlertTriangle,
   Settings, FileText, LifeBuoy, BarChart3, ChevronLeft, ChevronRight, Globe, ShieldCheck, CreditCard,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,6 +26,7 @@ const nav: NavItem[] = [
   { href: '/moderation',    icon: ShieldCheck,     label: 'Modération',      roles: ['super_admin', 'moderateur'], badgeKey: 'pendingModeration' },
   { href: '/users',         icon: Users,           label: 'Utilisateurs',    roles: ['super_admin', 'moderateur', 'support'], badgeKey: 'pendingKyc' },
   { href: '/properties',    icon: Building2,       label: 'Propriétés',      roles: ['super_admin', 'moderateur'], badgeKey: 'pendingProperties' },
+  { href: '/menus/pending', icon: UtensilsCrossed, label: 'Plats (modération)', roles: ['super_admin', 'moderateur'] },
   { href: '/bookings',      icon: Calendar,        label: 'Réservations',    roles: ['super_admin', 'moderateur'] },
   { href: '/disputes',       icon: AlertTriangle,   label: 'Litiges',         roles: ['super_admin', 'moderateur'], badgeKey: 'openDisputes' },
   { href: '/subscriptions',  icon: CreditCard,      label: 'Abonnements',     roles: ['super_admin', 'moderateur'] },

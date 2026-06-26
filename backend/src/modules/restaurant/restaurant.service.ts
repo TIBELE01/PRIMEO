@@ -115,11 +115,22 @@ export const restaurantService = {
   },
 
   // Menu items (§8.4)
-  async getMenuItems(propertyId: string) {
+  // includeAll=true : vue propriétaire (tous statuts). false : vue client
+  // (uniquement les plats validés `approved` et disponibles).
+  async getMenuItems(propertyId: string, includeAll = false) {
     return prisma.restaurantMenuItem.findMany({
-      where: { propertyId },
+      where: {
+        propertyId,
+        ...(includeAll ? {} : { status: 'approved', isAvailable: true }),
+      },
       orderBy: [{ section: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
+  },
+
+  // Vue gestion : tous les plats du restaurant, après vérification de propriété.
+  async getMenuItemsForOwner(propertyId: string, ownerId: string) {
+    await requireOwnership(propertyId, ownerId);
+    return restaurantService.getMenuItems(propertyId, true);
   },
 
   async createMenuItem(

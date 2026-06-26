@@ -8,6 +8,7 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+  restaurantMenuItem: { findMany: jest.fn() },
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
@@ -66,5 +67,32 @@ describe('restaurantService — tables', () => {
     mockPrisma.restaurantTable.delete.mockResolvedValue({});
     await restaurantService.deleteTable(PID, 't1', OWNER);
     expect(mockPrisma.restaurantTable.delete).toHaveBeenCalledWith({ where: { id: 't1' } });
+  });
+});
+
+describe('restaurantService — visibilité des plats (modération)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPrisma.restaurantMenuItem.findMany.mockResolvedValue([]);
+  });
+
+  it('vue CLIENT : ne renvoie que les plats validés (approved) et disponibles', async () => {
+    await restaurantService.getMenuItems(PID);
+    expect(mockPrisma.restaurantMenuItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { propertyId: PID, status: 'approved', isAvailable: true } }),
+    );
+  });
+
+  it('vue PROPRIÉTAIRE : renvoie tous les plats après vérification de propriété', async () => {
+    mockPrisma.property.findUnique.mockResolvedValue({ ownerId: OWNER });
+    await restaurantService.getMenuItemsForOwner(PID, OWNER);
+    expect(mockPrisma.restaurantMenuItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { propertyId: PID } }),
+    );
+  });
+
+  it('vue PROPRIÉTAIRE : refuse un non-propriétaire (403)', async () => {
+    mockPrisma.property.findUnique.mockResolvedValue({ ownerId: 'autre' });
+    await expect(restaurantService.getMenuItemsForOwner(PID, OWNER)).rejects.toMatchObject({ statusCode: 403 });
   });
 });

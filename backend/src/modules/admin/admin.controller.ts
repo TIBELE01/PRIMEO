@@ -220,6 +220,35 @@ export async function rejectProperty(req: Request, res: Response, next: NextFunc
   }
 }
 
+// ── Menu items moderation ──────────────────────────────────────────────────────
+
+export async function listPendingMenuItems(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await adminService.listPendingMenuItems(req.query as never);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function approveMenuItem(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await adminService.approveMenuItem(req.params['id']!, req.user!.sub);
+    res.json({ message: 'Plat validé' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function rejectMenuItem(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await adminService.rejectMenuItem(req.params['id']!, req.user!.sub, req.body.reason);
+    res.json({ message: 'Plat refusé' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function requestPropertyModifications(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     await adminService.requestPropertyModifications(req.params['id']!, req.user!.sub, req.body.feedback);

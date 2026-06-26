@@ -24,6 +24,8 @@ interface MenuItem {
   isAvailable: boolean;
   sortOrder: number;
   photoUrl?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string | null;
 }
 
 const SECTIONS = ['Entrées', 'Plats principaux', 'Desserts', 'Boissons', 'Snacks', 'Menus'];
@@ -89,6 +91,15 @@ function MenuItemCard({
             <Text style={[styles.itemName, !item.isAvailable && { color: '#9CA3AF' }]}>
               {item.name}
             </Text>
+            {item.status && item.status !== 'approved' ? (
+              <View style={[styles.statusPill, item.status === 'rejected' ? styles.statusRejected : styles.statusPending]}>
+                <Text style={styles.statusPillText}>
+                  {item.status === 'rejected'
+                    ? `✕ Refusé${item.rejectionReason ? ` — ${item.rejectionReason}` : ''}`
+                    : '⏳ En attente de validation'}
+                </Text>
+              </View>
+            ) : null}
             {item.description ? (
               <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
             ) : null}
@@ -171,7 +182,7 @@ export default function MenuManagementScreen() {
       setPropertyId(pid || null);
       if (!pid) { setNoProperty(true); setLoading(false); return; }
 
-      const menuRes = await restaurantApi.getMenuItems(pid);
+      const menuRes = await restaurantApi.getMenuItemsManage(pid);
       const data: MenuItem[] = menuRes.data?.data ?? menuRes.data ?? [];
       setItems(data);
     } catch {
@@ -825,6 +836,10 @@ const styles = StyleSheet.create({
   itemTopRow:  { flexDirection: 'row', gap: 8, marginBottom: 8 },
   itemName:    { fontSize: 15, fontWeight: '700', color: '#111827' },
   itemDesc:    { fontSize: 12, color: '#6B7280', lineHeight: 17, marginTop: 2 },
+  statusPill:     { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginTop: 2 },
+  statusPending:  { backgroundColor: '#FEF3C7' },
+  statusRejected: { backgroundColor: '#FEE2E2' },
+  statusPillText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
   itemActions: { flexDirection: 'row', gap: 4 },
   actionBtn:   { padding: 6, borderRadius: 8, backgroundColor: '#F9FAFB' },
   itemBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

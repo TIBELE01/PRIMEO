@@ -25,6 +25,9 @@ import {
   listPendingProperties,
   approveProperty,
   rejectProperty,
+  listPendingMenuItems,
+  approveMenuItem,
+  rejectMenuItem,
   requestPropertyModifications,
   suspendProperty,
   deleteProperty,
@@ -129,6 +132,11 @@ adminRouter.post('/properties/:id/request-modifications', parseId, validate(Requ
 adminRouter.post('/properties/:id/suspend', parseId, validate(SuspendPropertyDto), suspendProperty);
 adminRouter.post('/properties/:id/reactivate', parseId, reactivateProperty);
 adminRouter.delete('/properties/:id', parseId, deleteProperty);
+
+// ── Modération des plats (menus restaurant) ───────────────────────────────────
+adminRouter.get('/menu-items/pending', listPendingMenuItems);
+adminRouter.post('/menu-items/:id/approve', parseId, approveMenuItem);
+adminRouter.post('/menu-items/:id/reject', parseId, rejectMenuItem);
 
 // ── Bookings ───────────────────────────────────────────────────────────────────
 adminRouter.get('/bookings', listBookings);

@@ -41,8 +41,12 @@ export const restaurantApi = {
     apiClient.delete(`/properties/${propertyId}/tables/${tableId}`),
 
   // Menu items (§8.4)
+  // Vue client : plats validés (approved) uniquement.
   getMenuItems: (propertyId: string) =>
     apiClient.get(`/properties/${propertyId}/menu`),
+  // Vue gestion (pro) : tous les plats, incl. en attente de validation.
+  getMenuItemsManage: (propertyId: string) =>
+    apiClient.get(`/properties/${propertyId}/menu/all`),
   createMenuItem: (propertyId: string, data: {
     section: string;
     name: string;

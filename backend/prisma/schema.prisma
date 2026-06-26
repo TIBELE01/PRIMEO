@@ -1183,6 +1183,13 @@ model PromoCode {
 // §8.4 — MENU DES RESTAURANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Validation des plats par l'admin (comme les propriétés) avant visibilité client.
+enum MenuItemStatus {
+  pending
+  approved
+  rejected
+}
+
 model RestaurantMenuItem {
   id         String   @id @default(cuid())
   propertyId String
@@ -1198,12 +1205,17 @@ model RestaurantMenuItem {
   isAvailable Boolean  @default(true)
   sortOrder   Int      @default(0)
 
+  // Modération : un plat n'est visible côté client qu'une fois `approved`.
+  status          MenuItemStatus @default(pending)
+  rejectionReason String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   orderItems FoodOrderItem[]
 
   @@index([propertyId])
+  @@index([status])
   @@map("restaurant_menu_items")
 }
 

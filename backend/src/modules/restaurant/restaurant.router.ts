@@ -65,9 +65,19 @@ restaurantRouter.delete('/time-slots/:slotId', ...ownerOnly, async (req: Request
 
 // ── Menu items ────────────────────────────────────────────────────────────────
 
+// Vue CLIENT : uniquement les plats validés (approved) et disponibles.
 restaurantRouter.get('/menu', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await restaurantService.getMenuItems(req.params.propertyId);
+    res.json({ data });
+  } catch (err) { next(err); }
+});
+
+// Vue PROPRIÉTAIRE : tous les plats (incl. pending/rejected) pour la gestion.
+// Pas de KYC requis pour consulter ses propres plats — la propriété est vérifiée en service.
+restaurantRouter.get('/menu/all', authenticate, authorize('restaurateur', 'professional_hebergement', 'professional_hotel', 'professional_immobilier', 'admin'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await restaurantService.getMenuItemsForOwner(req.params.propertyId, req.user!.sub);
     res.json({ data });
   } catch (err) { next(err); }
 });

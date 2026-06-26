@@ -75,7 +75,6 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
   const [stats,        setStats]        = useState<any>(null);
   const [propStats,    setPropStats]    = useState<any>(null);
   const [propertyName, setPropertyName] = useState('Mon restaurant');
-  const [noProperty,   setNoProperty]   = useState(false);
   const [loadFailed,   setLoadFailed]   = useState(false);
   const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -84,22 +83,23 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      // Nom du restaurant — on distingue « aucun restaurant » (réponse vide) d'un
-      // échec réseau (ex : démarrage à froid du serveur). Un échec ne doit JAMAIS
-      // afficher l'onboarding « Créer mon restaurant » : le restaurateur en a déjà un.
-      try {
-        const propRes = await propertiesApi.getMyListings();
-        const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
-        setLoadFailed(false);
-        if (listings.length > 0) {
-          setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
-          setNoProperty(false);
-        } else {
-          setNoProperty(true);
+      // Nom du restaurant — avec ré-essais : le serveur (offre gratuite Render) peut
+      // mettre 30-50 s à redémarrer après inactivité. Le 1er appel peut échouer, le
+      // suivant réussit. Un échec n'empêche PAS l'affichage du tableau de bord.
+      let resolved = false;
+      for (let attempt = 0; attempt < 3 && !resolved; attempt++) {
+        try {
+          const propRes = await propertiesApi.getMyListings();
+          const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
+          if (listings.length > 0) {
+            setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
+          }
+          resolved = true;
+        } catch {
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 2500)); // back-off (cold start)
         }
-      } catch {
-        setLoadFailed(true);
       }
+      setLoadFailed(!resolved); // indicateur léger ; le tableau de bord s'affiche quand même
 
       const [bRes, pRes] = await Promise.allSettled([
         proDashboardApi.getBookingStats(),
@@ -127,61 +127,6 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={PRIMARY} />
           <Text style={[styles.loadingText, { color: PRIMARY }]}>Chargement…</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Échec de chargement (réseau / serveur en cours de démarrage) : on propose de
-  // réessayer plutôt que d'afficher l'onboarding par erreur.
-  if (loadFailed) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.centered}>
-          <View style={[styles.onboardIcon, { backgroundColor: PRIMARY + '18' }]}>
-            <Ionicons name="cloud-offline-outline" size={48} color={PRIMARY} />
-          </View>
-          <Text style={styles.onboardTitle}>Connexion au serveur…</Text>
-          <Text style={styles.onboardSub}>
-            Impossible de charger votre restaurant pour le moment. Le serveur démarre
-            peut-être — patientez quelques secondes puis réessayez.
-          </Text>
-          <TouchableOpacity
-            style={[styles.onboardBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => load()}
-            accessibilityRole="button"
-            accessibilityLabel="Réessayer"
-          >
-            <Ionicons name="refresh-outline" size={20} color="#fff" />
-            <Text style={styles.onboardBtnText}>Réessayer</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Onboarding : aucun restaurant
-  if (noProperty) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.centered}>
-          <View style={[styles.onboardIcon, { backgroundColor: PRIMARY + '18' }]}>
-            <Ionicons name="restaurant" size={48} color={PRIMARY} />
-          </View>
-          <Text style={styles.onboardTitle}>Bienvenue sur Primeo !</Text>
-          <Text style={styles.onboardSub}>
-            Votre restaurant est en cours de configuration. Actualisez pour y accéder
-            et gérer vos menus, vos tables, vos créneaux et vos réservations.
-          </Text>
-          <TouchableOpacity
-            style={[styles.onboardBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => load()}
-            accessibilityRole="button"
-            accessibilityLabel="Accéder à mon restaurant"
-          >
-            <Ionicons name="refresh-outline" size={20} color="#fff" />
-            <Text style={styles.onboardBtnText}>Accéder à mon restaurant</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -247,6 +192,14 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
         </View>
 
         <View style={styles.body}>
+
+          {/* Bandeau non bloquant si le chargement réseau a échoué (cold start serveur) */}
+          {loadFailed && (
+            <TouchableOpacity style={styles.retryBanner} onPress={() => load()} accessibilityRole="button" accessibilityLabel="Actualiser">
+              <Ionicons name="refresh-outline" size={16} color="#92400E" />
+              <Text style={styles.retryBannerText}>Connexion lente au serveur. Touchez pour actualiser.</Text>
+            </TouchableOpacity>
+          )}
 
           {/* ── Barre statuts réservations ───────────────────────────────── */}
           <View style={styles.statusStrip}>
@@ -410,12 +363,9 @@ const styles = StyleSheet.create({
   centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
   loadingText: { fontSize: 14, fontWeight: '600' },
 
-  // Onboarding
-  onboardIcon:    { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center' },
-  onboardTitle:   { fontSize: 22, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  onboardSub:     { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
-  onboardBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
-  onboardBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  // Bandeau de ré-essai (non bloquant)
+  retryBanner:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF3C7', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  retryBannerText: { flex: 1, fontSize: 12, color: '#92400E', fontWeight: '600' },
 
   // Header coloré
   header: {
