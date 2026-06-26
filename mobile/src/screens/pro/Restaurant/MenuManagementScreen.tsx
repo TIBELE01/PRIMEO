@@ -143,7 +143,6 @@ function MenuItemCard({
 export default function MenuManagementScreen() {
   const navigation = useNavigation<any>();
   const [propertyId,  setPropertyId]  = useState<string | null>(null);
-  const [noProperty,  setNoProperty]  = useState(false);
   const [items,       setItems]       = useState<MenuItem[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [activeSection, setActiveSection] = useState<string>('Tout');
@@ -176,39 +175,44 @@ export default function MenuManagementScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // 1) Résoudre l'ID du restaurant du compte (auth) — /api/restaurant, repli getMyListings.
+      // 1) Résoudre l'ID du restaurant du compte (auto-résolu via /api/restaurant,
+      // repli getMyListings) avec ré-essais : le serveur (offre gratuite Render)
+      // peut redémarrer à froid (30-50 s) et faire échouer le 1er appel.
       let pid = '';
-      try {
-        const r = await restaurantApi.getMyRestaurant();
-        pid = (r.data?.data ?? r.data)?.id ?? '';
-      } catch { /* repli ci-dessous */ }
-      if (!pid) {
+      for (let i = 0; i < 3 && !pid; i++) {
         try {
-          const propRes = await propertiesApi.getMyListings();
-          const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
-          pid = listings[0]?.id ?? '';
-        } catch { /* pid reste vide */ }
+          const r = await restaurantApi.getMyRestaurant();
+          pid = (r.data?.data ?? r.data)?.id ?? '';
+        } catch { /* repli ci-dessous */ }
+        if (!pid) {
+          try {
+            const propRes = await propertiesApi.getMyListings();
+            const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
+            pid = listings[0]?.id ?? '';
+          } catch { /* pid reste vide */ }
+        }
+        if (!pid && i < 2) await new Promise((r) => setTimeout(r, 2000));
       }
       setPropertyId(pid || null);
-      if (!pid) { setNoProperty(true); setLoading(false); return; }
-      setNoProperty(false);
 
       // 2) Charger les plats : vue gestion (TOUS les statuts) → repli sur la vue
       // publique (validés) — c'est le chemin qui fonctionne côté client, donc
       // les plats validés s'affichent toujours, même si /menu/all échoue.
       let data: MenuItem[] = [];
-      try {
-        const m = await restaurantApi.getMenuItemsManage(pid);
-        data = m.data?.data ?? m.data ?? [];
-      } catch {
+      if (pid) {
         try {
-          const m = await restaurantApi.getMenuItems(pid);
+          const m = await restaurantApi.getMenuItemsManage(pid);
           data = m.data?.data ?? m.data ?? [];
-        } catch { /* data vide */ }
+        } catch {
+          try {
+            const m = await restaurantApi.getMenuItems(pid);
+            data = m.data?.data ?? m.data ?? [];
+          } catch { /* data vide */ }
+        }
       }
       setItems(data);
     } catch {
-      Alert.alert('Erreur', 'Impossible de charger le menu.');
+      /* erreur silencieuse — l'écran affiche l'état vide avec bouton d'ajout */
     } finally {
       setLoading(false);
     }
@@ -388,33 +392,6 @@ export default function MenuManagementScreen() {
     }
   };
 
-  // ── Écran onboarding ──────────────────────────────────────────────────────────
-
-  if (!loading && noProperty) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.onboardingWrap}>
-          <View style={[styles.onboardingIcon, { backgroundColor: PRIMARY + '18' }]}>
-            <Ionicons name="restaurant" size={56} color={PRIMARY} />
-          </View>
-          <Text style={styles.onboardingTitle}>Restaurant en préparation</Text>
-          <Text style={styles.onboardingDesc}>
-            Votre restaurant est en cours de configuration. Actualisez pour gérer votre menu.
-          </Text>
-          <TouchableOpacity
-            style={[styles.onboardingBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => load()}
-            accessibilityRole="button"
-            accessibilityLabel="Actualiser"
-          >
-            <Ionicons name="refresh-outline" size={20} color="#fff" />
-            <Text style={styles.onboardingBtnText}>Actualiser</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -462,9 +439,13 @@ export default function MenuManagementScreen() {
         {visibleItems.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="restaurant-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>Aucun article dans cette section</Text>
+            <Text style={styles.emptyText}>
+              {items.length === 0
+                ? 'Aucun menu pour l\'instant. Ajoutez votre premier plat !'
+                : 'Aucun article dans cette section'}
+            </Text>
             <TouchableOpacity style={[styles.emptyBtn, { borderColor: PRIMARY }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
-              <Text style={[styles.emptyBtnText, { color: PRIMARY }]}>Ajouter un article</Text>
+              <Text style={[styles.emptyBtnText, { color: PRIMARY }]}>Ajouter un plat</Text>
             </TouchableOpacity>
           </View>
         ) : (

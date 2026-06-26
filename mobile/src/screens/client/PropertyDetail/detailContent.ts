@@ -241,15 +241,35 @@ export function cancellationFor(p: Property): { title: string; lines: string[] }
   };
 }
 
+/**
+ * Formate les horaires d'ouverture en chaîne SÛRE pour le rendu.
+ * `openingHours` peut être une chaîne ("12h–23h") OU un objet jour→horaire
+ * ({ lundi: "12h-23h", … }) renvoyé par le backend. Rendre l'objet directement
+ * provoquait « Objects are not valid as a React child ».
+ */
+function formatOpeningHours(oh: unknown): string {
+  if (!oh) return '12h–23h';
+  if (typeof oh === 'string') return oh.trim() || '12h–23h';
+  if (typeof oh === 'object') {
+    const vals = Object.values(oh as Record<string, unknown>)
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+    if (vals.length === 0) return '12h–23h';
+    // Horaires uniformes → une seule valeur ; sinon, on affiche la plus fréquente.
+    const uniq = [...new Set(vals)];
+    return uniq.length === 1 ? uniq[0] : vals[0];
+  }
+  return '12h–23h';
+}
+
 /** Main characteristics — adapted per type, returned as icon/value/label cards. */
 export function characteristicsFor(p: Property): { icon: string; value: string; label: string }[] {
   const k = kindOf(p.propertyType ?? p.type);
   const out: { icon: string; value: string; label: string }[] = [];
 
   if (k === 'restaurant') {
-    if (p.cuisineType) out.push({ icon: '🍲', value: p.cuisineType, label: 'Cuisine' });
+    if (p.cuisineType) out.push({ icon: '🍲', value: String(p.cuisineType), label: 'Cuisine' });
     out.push({ icon: '👥', value: String(p.capacity ?? p.maxGuests ?? 40), label: 'Couverts' });
-    out.push({ icon: '🕐', value: p.openingHours ?? '12h–23h', label: 'Horaires' });
+    out.push({ icon: '🕐', value: formatOpeningHours(p.openingHours), label: 'Horaires' });
     return out;
   }
 
