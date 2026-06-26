@@ -193,6 +193,18 @@ export default function ProSettingsScreen() {
           <ProfileActionRow icon="pause-circle-outline" label="Désactiver mon compte" color={accent} last danger onPress={() => { setDeactivateDuration(null); setDeactivateModalVisible(true); }} />
         </ProfileAccordion>
 
+        {/* ── 2bis. Gérer mon activité (modules métier — accès garanti tous rôles) ── */}
+        <ProfileAccordion
+          title="Gérer mon activité" icon="briefcase-outline" color={accent}
+          open={openKey === 'activite'} onToggle={() => toggle('activite')}
+        >
+          <ProfileActionRow icon="card-outline" label="Mon abonnement" color={accent} onPress={() => safeNavigate('Subscriptions', 'Les abonnements seront bientôt disponibles.')} />
+          <ProfileActionRow icon="flash-outline" label="Boosts d'annonce" color={accent} onPress={() => safeNavigate('Boosts', 'Les boosts seront bientôt disponibles.')} />
+          <ProfileActionRow icon="stats-chart-outline" label="Statistiques" color={accent} onPress={() => safeNavigate('Analytics', 'Les statistiques seront bientôt disponibles.')} />
+          <ProfileActionRow icon="wallet-outline" label="Reversements" color={accent} onPress={() => safeNavigate('Payouts', 'Les reversements seront bientôt disponibles.')} />
+          <ProfileActionRow icon="download-outline" label="Exporter mes données" color={accent} last onPress={() => safeNavigate('DataExports', 'L\'export de données sera bientôt disponible.')} />
+        </ProfileAccordion>
+
         {/* ── 3. Avis et évaluations ── */}
         <ProfileAccordion
           title="Avis et évaluations" icon="star-outline" color={accent}

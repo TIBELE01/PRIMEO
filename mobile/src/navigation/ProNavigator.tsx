@@ -10,7 +10,8 @@
 // navigation.navigate('X') call resolves within the active tab without having
 // to touch any screen component.
 import React from 'react';
-import { Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -123,17 +124,23 @@ function buildRoleNavigator(screens: ScreenDef[], tabs: TabDef[], themeColor = '
   }
 
   return function RoleTabs() {
+    const insets = useSafeAreaInsets();
     return (
       <RoleTab.Navigator
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: themeColor,
           tabBarInactiveTintColor: '#9CA3AF',
+          // Hauteur = contenu (56) + marge système (insets.bottom) afin que la
+          // barre ne chevauche JAMAIS la barre de navigation du téléphone
+          // (gestes / 3 boutons Android, home indicator iOS). Sans cette marge,
+          // le bas de la barre passe sous la nav système → onglets intappables.
           tabBarStyle: {
-            height: Platform.OS === 'ios' ? 84 : 64,
-            paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+            height: 56 + insets.bottom,
+            paddingBottom: Math.max(insets.bottom, 8),
             paddingTop: 8,
             borderTopColor: '#E5E7EB',
+            borderTopWidth: StyleSheet.hairlineWidth,
           },
           tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         }}
@@ -255,6 +262,7 @@ const restaurantScreens: ScreenDef[] = [
   { name: 'RateClient',          component: RateClientScreen,          title: 'Évaluer le client' },
   { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',    headerShown: false },
   { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
+  { name: 'Payouts',             component: PayoutsScreen,             title: 'Reversements',     headerShown: false },
   { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },
   { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
   { name: 'Subscriptions',       component: SubscriptionsScreen,       title: 'Abonnement' },
