@@ -76,6 +76,7 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
   const [propStats,    setPropStats]    = useState<any>(null);
   const [propertyName, setPropertyName] = useState('Mon restaurant');
   const [noProperty,   setNoProperty]   = useState(false);
+  const [loadFailed,   setLoadFailed]   = useState(false);
   const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -83,14 +84,21 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      // Nom du restaurant
-      const propRes = await propertiesApi.getMyListings().catch(() => null);
-      const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
-      if (listings.length > 0) {
-        setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
-        setNoProperty(false);
-      } else {
-        setNoProperty(true);
+      // Nom du restaurant — on distingue « aucun restaurant » (réponse vide) d'un
+      // échec réseau (ex : démarrage à froid du serveur). Un échec ne doit JAMAIS
+      // afficher l'onboarding « Créer mon restaurant » : le restaurateur en a déjà un.
+      try {
+        const propRes = await propertiesApi.getMyListings();
+        const listings: any[] = propRes?.data?.data ?? propRes?.data ?? [];
+        setLoadFailed(false);
+        if (listings.length > 0) {
+          setPropertyName(listings[0].title ?? listings[0].name ?? 'Mon restaurant');
+          setNoProperty(false);
+        } else {
+          setNoProperty(true);
+        }
+      } catch {
+        setLoadFailed(true);
       }
 
       const [bRes, pRes] = await Promise.allSettled([
@@ -119,6 +127,34 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={PRIMARY} />
           <Text style={[styles.loadingText, { color: PRIMARY }]}>Chargement…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Échec de chargement (réseau / serveur en cours de démarrage) : on propose de
+  // réessayer plutôt que d'afficher l'onboarding par erreur.
+  if (loadFailed) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.centered}>
+          <View style={[styles.onboardIcon, { backgroundColor: PRIMARY + '18' }]}>
+            <Ionicons name="cloud-offline-outline" size={48} color={PRIMARY} />
+          </View>
+          <Text style={styles.onboardTitle}>Connexion au serveur…</Text>
+          <Text style={styles.onboardSub}>
+            Impossible de charger votre restaurant pour le moment. Le serveur démarre
+            peut-être — patientez quelques secondes puis réessayez.
+          </Text>
+          <TouchableOpacity
+            style={[styles.onboardBtn, { backgroundColor: PRIMARY }]}
+            onPress={() => load()}
+            accessibilityRole="button"
+            accessibilityLabel="Réessayer"
+          >
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.onboardBtnText}>Réessayer</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

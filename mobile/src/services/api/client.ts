@@ -14,7 +14,10 @@ const getAuthStore = () =>
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_URL}/api`,
-  timeout: 15_000,
+  // 45 s : le backend (offre gratuite Render) peut mettre 30-50 s à redémarrer
+  // après une période d'inactivité (cold start). Un timeout trop court faisait
+  // échouer le 1er appel et affichait à tort l'onboarding « Créer mon restaurant ».
+  timeout: 45_000,
   headers: { 'Content-Type': 'application/json' },
 });
 
