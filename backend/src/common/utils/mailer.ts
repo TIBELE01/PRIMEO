@@ -202,6 +202,35 @@ export async function sendPasswordResetEmail(opts: {
   });
 }
 
+// Code OTP de vérification (inscription professionnelle) — envoyé par email
+// car le canal SMS (Orange) n'est pas encore configuré.
+export async function sendOtpEmail(opts: {
+  to: EmailRecipient[];
+  firstName: string;
+  code: string;
+  expiresInMinutes: number;
+}): Promise<void> {
+  const html = renderEmail({
+    title: 'Code de vérification Primeo',
+    accent: 'primary',
+    preheader: `Votre code de vérification Primeo : ${opts.code}`,
+    body:
+      heading('🔐 Vérification de votre compte') +
+      greeting(opts.firstName) +
+      paragraph('Voici votre code de vérification pour activer votre compte professionnel Primeo :') +
+      `<div style="text-align:center;margin:24px 0;">
+         <span style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:10px;color:#0055FF;background:#EFF4FF;border:1px solid #D6E2FF;border-radius:12px;padding:16px 28px;">${opts.code}</span>
+       </div>` +
+      muted(`⏱ Ce code est valable <strong>${opts.expiresInMinutes} minutes</strong>. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.`),
+  });
+
+  await sendEmail({
+    to: opts.to,
+    subject: 'Votre code de vérification Primeo',
+    htmlContent: html,
+  });
+}
+
 export async function sendWelcomeEmail(opts: {
   to: EmailRecipient[];
   firstName: string;

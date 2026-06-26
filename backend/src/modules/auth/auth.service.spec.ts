@@ -27,6 +27,7 @@ jest.mock('../../common/utils/sms', () => ({
 
 jest.mock('../../common/utils/mailer', () => ({
   sendPasswordResetEmail: jest.fn(async () => undefined),
+  sendOtpEmail: jest.fn(async () => undefined),
 }));
 
 jest.mock('../../common/utils/totp', () => ({
@@ -87,6 +88,7 @@ import { authService } from './auth.service';
 import { redisSet } from '../../common/utils/redis-client';
 import { encryptSecret, decryptSecret } from '../../common/utils/secret-crypto';
 import { generateOtp, sendSms } from '../../common/utils/sms';
+import { sendOtpEmail } from '../../common/utils/mailer';
 import { AccountType, UserStatus } from '@prisma/client';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -180,10 +182,15 @@ describe('authService.register', () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
     });
 
-    it('returns a pending message and sends SMS', async () => {
+    it('returns a pending message and sends the OTP by email', async () => {
       const result = await authService.register(mkInput('+2250707002001'));
       expect(result.message).toMatch(/code de vérification/i);
-      expect(sendSms).toHaveBeenCalledTimes(1);
+      expect(result.message).toMatch(/email/i);
+      expect(sendOtpEmail).toHaveBeenCalledTimes(1);
+      expect(sendOtpEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: [expect.objectContaining({ email: PRO_REGISTER.email })],
+        code: '123456',
+      }));
     });
 
     it('stores pending user encrypted in Redis (password never in clear)', async () => {
@@ -205,8 +212,8 @@ describe('authService.register', () => {
       expect(redisSet).toHaveBeenCalledWith(`otp:${phone}`, '654321', 300);
     });
 
-    it('does not throw when SMS fails (degraded mode)', async () => {
-      (sendSms as jest.Mock).mockRejectedValueOnce(new Error('SMS provider down'));
+    it('does not throw when email sending fails (degraded mode)', async () => {
+      (sendOtpEmail as jest.Mock).mockRejectedValueOnce(new Error('email provider down'));
       await expect(authService.register(mkInput('+2250707002004'))).resolves.toBeDefined();
     });
 
@@ -265,12 +272,12 @@ describe('authService.register', () => {
       expect(mockPrisma.property.create).not.toHaveBeenCalled();
     });
 
-    it('ignore le bypass en production : passe par le flux OTP (envoi SMS, pas de tokens)', async () => {
+    it('ignore le bypass en production : passe par le flux OTP (envoi email, pas de tokens)', async () => {
       envMock.NODE_ENV = 'production'; // SKIP reste true mais doit être neutralisé
       const result = await authService.register({ ...PRO_REGISTER, phone: '+2250707002777' });
       expect(result.accessToken).toBeUndefined();
       expect(result.message).toMatch(/code de vérification/i);
-      expect(sendSms).toHaveBeenCalledTimes(1);
+      expect(sendOtpEmail).toHaveBeenCalledTimes(1);
     });
 
     it('throws 500 when Supabase user creation fails', async () => {
@@ -539,10 +546,13 @@ describe('authService.resendOtp', () => {
     expect(redisStore.get(`otp:${phone}`)).toBe('888888');
   });
 
-  it('sends SMS with new OTP', async () => {
-    redisStore.set(`pending:${phone}`, JSON.stringify({ email: 'x@test.ci' }));
+  it('sends the new OTP by email', async () => {
+    redisStore.set(`pending:${phone}`, JSON.stringify({ email: 'x@test.ci', firstName: 'X', lastName: 'Y' }));
     await authService.resendOtp(phone);
-    expect(sendSms).toHaveBeenCalledTimes(1);
+    expect(sendOtpEmail).toHaveBeenCalledTimes(1);
+    expect(sendOtpEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: [expect.objectContaining({ email: 'x@test.ci' })],
+    }));
   });
 
   it('in bypass mode, stores BYPASS_OTP without calling SMS', async () => {

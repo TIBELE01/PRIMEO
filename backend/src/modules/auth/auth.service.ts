@@ -4,7 +4,7 @@ import { generateOtp, sendSms } from '../../common/utils/sms';
 import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
 import { redisSet, redisGet, redisDel, getRedisClient } from '../../common/utils/redis-client';
 import { encryptSecret, decryptSecret } from '../../common/utils/secret-crypto';
-import { sendPasswordResetEmail } from '../../common/utils/mailer';
+import { sendPasswordResetEmail, sendOtpEmail } from '../../common/utils/mailer';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
 import {
@@ -306,15 +306,24 @@ export const authService = {
     otpMemory.set(input.phone, otp);
     setTimeout(() => otpMemory.delete(input.phone), OTP_TTL * 1000);
 
-    const message = `Votre code de vérification PRIMEO est : ${otp}. Valable ${OTP_TTL / 60} minutes.`;
+    const ttlMin = Math.round(OTP_TTL / 60);
+    // Canal principal : EMAIL (Brevo) — le SMS Orange n'est pas encore configuré.
     try {
-      await sendSms(input.phone, message, { isOtp: true });
+      await sendOtpEmail({
+        to: [{ email: input.email, name: `${input.firstName} ${input.lastName}`.trim() }],
+        firstName: input.firstName,
+        code: otp,
+        expiresInMinutes: ttlMin,
+      });
     } catch (err) {
       // Le code OTP n'est JAMAIS loggué — seul l'échec d'envoi est tracé.
-      logger.error('Échec envoi OTP SMS', { phone: input.phone, error: (err as Error).message });
+      logger.error('Échec envoi OTP email', { email: input.email, error: (err as Error).message });
     }
+    // Best-effort SMS (si Orange est configuré un jour) — n'échoue jamais le flux.
+    void sendSms(input.phone, `Votre code de vérification PRIMEO est : ${otp}. Valable ${ttlMin} minutes.`, { isOtp: true })
+      .catch((err) => logger.debug('OTP SMS non envoyé (best-effort)', { error: (err as Error).message }));
 
-    return { message: 'Un code de vérification a été envoyé par SMS. Valable 5 minutes.' };
+    return { message: 'Un code de vérification a été envoyé par email. Valable 5 minutes.' };
   },
 
   // ── Vérification OTP → activation du compte ──────────────────────────────
@@ -469,13 +478,33 @@ export const authService = {
     otpMemory.set(phone, otp);
     setTimeout(() => otpMemory.delete(phone), OTP_TTL * 1000);
 
-    const message = `Votre nouveau code PRIMEO est : ${otp}. Valable ${OTP_TTL / 60} minutes.`;
+    // Récupère l'email depuis l'inscription en cours (payload chiffré) pour l'envoi.
+    let email = '';
+    let firstName = '';
+    let lastName = '';
     try {
-      await sendSms(phone, message, { isOtp: true });
-    } catch (err) {
-      // Le code OTP n'est JAMAIS loggué — seul l'échec d'envoi est tracé.
-      logger.error('Échec renvoi OTP', { phone, error: (err as Error).message });
+      let raw: string;
+      try { raw = decryptSecret(pending); } catch { raw = pending; } // repli : payload non chiffré (legacy)
+      const p = JSON.parse(raw) as PendingUser;
+      email = p.email; firstName = p.firstName; lastName = p.lastName;
+    } catch { /* payload illisible — on tentera quand même le SMS best-effort */ }
+
+    const ttlMin = Math.round(OTP_TTL / 60);
+    if (email) {
+      try {
+        await sendOtpEmail({
+          to: [{ email, name: `${firstName} ${lastName}`.trim() }],
+          firstName,
+          code: otp,
+          expiresInMinutes: ttlMin,
+        });
+      } catch (err) {
+        logger.error('Échec renvoi OTP email', { error: (err as Error).message });
+      }
     }
+    // Best-effort SMS (si Orange est configuré un jour).
+    void sendSms(phone, `Votre nouveau code PRIMEO est : ${otp}. Valable ${ttlMin} minutes.`, { isOtp: true })
+      .catch((err) => logger.debug('Renvoi OTP SMS non envoyé (best-effort)', { error: (err as Error).message }));
   },
 
   // ── Connexion ────────────────────────────────────────────────────────────────

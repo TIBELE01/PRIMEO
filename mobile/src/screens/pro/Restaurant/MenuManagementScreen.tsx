@@ -335,8 +335,21 @@ export default function MenuManagementScreen() {
   };
 
   const handleSave = async () => {
-    if (!propertyId) {
-      Alert.alert('Erreur', 'Aucun établissement trouvé.');
+    // Résout l'ID du restaurant à la volée si le chargement initial ne l'a pas
+    // encore fixé (cold start serveur) — évite le blocage « Aucun établissement trouvé ».
+    let pid = propertyId;
+    if (!pid) {
+      try { pid = (await restaurantApi.getMyRestaurant()).data?.data?.id ?? null; } catch { /* repli */ }
+      if (!pid) {
+        try {
+          const p = await propertiesApi.getMyListings();
+          pid = ((p.data?.data ?? p.data ?? []) as any[])[0]?.id ?? null;
+        } catch { /* ignore */ }
+      }
+      if (pid) setPropertyId(pid);
+    }
+    if (!pid) {
+      Alert.alert('Erreur', 'Restaurant introuvable. Patientez quelques secondes puis réessayez.');
       return;
     }
     const trimName = formName.trim();
@@ -363,7 +376,7 @@ export default function MenuManagementScreen() {
           isAvailable: formAvailable,
           ...(formPhoto.trim() ? { photoUrl: formPhoto.trim() } : {}),
         };
-        const res = await restaurantApi.updateMenuItem(propertyId, editingItem.id, data);
+        const res = await restaurantApi.updateMenuItem(pid, editingItem.id, data);
         const updated: MenuItem = res.data?.data ?? res.data ?? { ...editingItem, ...data };
         setItems(prev => prev.map(i => i.id === editingItem.id ? updated : i));
       } else {
@@ -376,7 +389,7 @@ export default function MenuManagementScreen() {
           isAvailable: formAvailable,
           ...(formPhoto.trim() ? { photoUrl: formPhoto.trim() } : {}),
         };
-        const res = await restaurantApi.createMenuItem(propertyId, payload);
+        const res = await restaurantApi.createMenuItem(pid, payload);
         const created: MenuItem = res.data?.data ?? res.data;
         if (created) setItems(prev => [...prev, created]);
       }
@@ -506,7 +519,10 @@ export default function MenuManagementScreen() {
               </View>
             ) : null}
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
+            {/* flexShrink (et non flex:1) : la feuille est dimensionnée par son contenu
+                (maxHeight 92%). flex:1 (flexBasis 0) réduisait la ScrollView à une
+                hauteur nulle → les champs (nom, prix…) devenaient invisibles. */}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flexGrow: 0, flexShrink: 1 }}>
 
               {/* ─ Étape 1 : Catégorie & Nom ─ */}
               {formStep === 1 && (
