@@ -88,6 +88,10 @@ interface PendingUser {
   lastName: string;
   accountType: AccountType;
   referralCode?: string;
+  businessName?: string;
+  businessAddress?: string;
+  rccm?: string;
+  taxNumber?: string;
 }
 
 interface SafeUser {
@@ -105,6 +109,33 @@ interface SafeUser {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Auto-création du restaurant à l'inscription d'un restaurateur : la fiche est
+// créée immédiatement (statut actif) avec les informations déjà fournies, ce qui
+// supprime l'étape manuelle « Créer mon restaurant ». Idempotent : ne recrée pas
+// si une fiche restaurant existe déjà pour ce propriétaire.
+async function autoCreateRestaurantForOwner(ownerId: string, businessName: string, address?: string | null): Promise<void> {
+  try {
+    const existing = await prisma.property.count({ where: { ownerId, propertyType: 'restaurant' } });
+    if (existing > 0) return;
+    const name = businessName?.trim() || 'Mon restaurant';
+    await prisma.property.create({
+      data: {
+        ownerId,
+        propertyType: 'restaurant',
+        title: name,
+        description: `Bienvenue chez ${name}. Découvrez notre carte et réservez votre table.`,
+        city: address?.trim() || 'Abidjan',
+        street: address?.trim() || null,
+        capacity: 30,
+        status: 'active',
+      },
+    });
+    logger.info('Restaurant auto-créé à l\'inscription', { ownerId });
+  } catch (err) {
+    logger.warn('Auto-création restaurant échouée', err);
+  }
+}
 
 async function createUserAndSession(input: RegisterInput): Promise<{ message: string; accessToken: string; refreshToken: string; user: SafeUser }> {
   const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -150,6 +181,11 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
         verificationStatus: 'pending',
       },
     }).catch((err) => logger.warn('Erreur création ProfessionalProfile (inscription)', err));
+
+    // Restaurant : la fiche est créée automatiquement (plus d'étape manuelle).
+    if (input.accountType === 'restaurateur') {
+      await autoCreateRestaurantForOwner(user.id, businessName, input.businessAddress);
+    }
   }
 
   if (input.referralCode) {
@@ -254,6 +290,10 @@ export const authService = {
       lastName: input.lastName,
       accountType: input.accountType as AccountType,
       referralCode: input.referralCode,
+      businessName: input.businessName,
+      businessAddress: input.businessAddress,
+      rccm: input.rccm,
+      taxNumber: input.taxNumber,
     };
     // Chiffré avant stockage : le payload contient le mot de passe en clair
     const pendingJson = encryptSecret(JSON.stringify(pending));
@@ -338,12 +378,27 @@ export const authService = {
       },
     });
 
-    // Créer le profil professionnel dès la vérification OTP pour les comptes pro
+    // Créer le profil professionnel dès la vérification OTP pour les comptes pro,
+    // avec les informations métier saisies à l'inscription (nom, adresse, RCCM…).
     if (pending.accountType !== 'client') {
-      const businessName = `${pending.firstName} ${pending.lastName}`.trim() || 'Professionnel';
+      const businessName = pending.businessName?.trim()
+        || `${pending.firstName} ${pending.lastName}`.trim()
+        || 'Professionnel';
       await prisma.professionalProfile.create({
-        data: { userId: user.id, businessName, verificationStatus: 'pending' },
+        data: {
+          userId: user.id,
+          businessName,
+          street: pending.businessAddress?.trim() || null,
+          rccm: pending.rccm?.trim() || null,
+          taxId: pending.taxNumber?.trim() || null,
+          verificationStatus: 'pending',
+        },
       }).catch((err) => logger.warn('Erreur création ProfessionalProfile (OTP)', err));
+
+      // Restaurant : fiche créée automatiquement (plus d'étape manuelle).
+      if (pending.accountType === 'restaurateur') {
+        await autoCreateRestaurantForOwner(user.id, businessName, pending.businessAddress);
+      }
     }
 
     // Parrainage — ne bloque pas la création si erreur

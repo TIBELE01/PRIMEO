@@ -1,15 +1,17 @@
 // Exports service — génération asynchrone de rapports professionnels (CSV/PDF).
 //
 // Flux : createExport() crée un enregistrement `pending` et lance le traitement
-// en arrière-plan (setImmediate). processExport() rassemble les données, génère
-// le fichier, le téléverse sur Cloudinary, passe le statut à `ready`, puis envoie
-// un email contenant un lien de téléchargement sécurisé (à durée de vie limitée).
+// en arrière-plan (setImmediate). processExport() valide les données et passe le
+// statut à `ready` avec un lien de téléchargement signé. Le fichier n'est PAS
+// stocké : il est régénéré à la volée par la route /api/downloads à partir des
+// paramètres de l'export (type, période), ce qui évite toute dépendance à la
+// livraison de fichiers par un CDN tiers.
 import PDFDocument from 'pdfkit';
 import type { DataExport, ExportFormat, ExportType, Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
-import { cloudinaryPaths } from '../../config/cloudinary-paths';
+import { env } from '../../config/env.config';
+import { createDownloadToken } from '../../common/utils/download-token';
 import { sendEmail } from '../../common/utils/mailer';
 import { analyticsService } from '../analytics/analytics.service';
 import { logger } from '../../common/utils/logger';
@@ -281,34 +283,14 @@ export const exportsService = {
       const to = record.periodTo ?? new Date();
       const dataset = await buildDataset(record.type, record.userId, from, to);
 
-      const stamp = new Date().toISOString().slice(0, 10);
-      const baseName = `primeo-${record.type}-${stamp}-${record.id.slice(0, 6)}`;
-
-      let buffer: Buffer;
-      let filename: string;
-      if (record.format === 'pdf') {
-        buffer = await generatePdfBuffer(dataset, { from, to });
-        filename = `${baseName}.pdf`;
-      } else {
-        buffer = Buffer.from(toCsv(dataset.headers, dataset.rows), 'utf-8');
-        filename = `${baseName}.csv`;
-      }
-
-      // Téléversement en ressource brute (le fichier n'est pas une image)
-      const uploaded = await uploadToCloudinary(
-        buffer,
-        cloudinaryPaths.systemExports(),
-        filename,
-        'raw',
-      );
-
+      // On construit le jeu de données pour valider l'accès et compter les lignes ;
+      // le fichier lui-même est régénéré à la demande (cf. regenerate()).
       const expiresAt = new Date(Date.now() + EXPORT_TTL_DAYS * 24 * 60 * 60 * 1000);
       const ready = await prisma.dataExport.update({
         where: { id: exportId },
         data: {
           status: 'ready',
-          fileUrl: uploaded.url,
-          filePublicId: uploaded.publicId,
+          fileUrl: exportsService._downloadUrl(exportId, expiresAt),
           rowCount: dataset.rows.length,
           completedAt: new Date(),
           expiresAt,
@@ -363,6 +345,13 @@ export const exportsService = {
     return record;
   },
 
+  // Construit le lien de téléchargement signé d'un export (jeton chiffré, expiration alignée).
+  _downloadUrl(exportId: string, expiresAt: Date): string {
+    const ttlMs = Math.max(60_000, expiresAt.getTime() - Date.now());
+    const token = createDownloadToken({ k: 'exp', id: exportId }, ttlMs);
+    return `${env.PUBLIC_URL}/api/downloads/export?t=${token}`;
+  },
+
   // Renvoie l'URL de téléchargement après contrôle d'accès et de validité.
   async getDownloadUrl(userId: string, exportId: string): Promise<{ url: string; expiresAt: Date | null }> {
     const record = await exportsService.getExport(userId, exportId);
@@ -375,30 +364,42 @@ export const exportsService = {
     return { url: record.fileUrl, expiresAt: record.expiresAt };
   },
 
-  // Purge des exports expirés (appelée par le cron de nettoyage) : supprime le
-  // fichier Cloudinary et marque l'enregistrement comme `expired`.
-  async purgeExpired(): Promise<number> {
-    const expired = await prisma.dataExport.findMany({
-      where: { status: 'ready', expiresAt: { lt: new Date() } },
-      select: { id: true, filePublicId: true },
-    });
-
-    let purged = 0;
-    for (const exp of expired) {
-      try {
-        if (exp.filePublicId) {
-          await deleteFromCloudinary(exp.filePublicId, 'raw').catch(() => undefined);
-        }
-        await prisma.dataExport.update({
-          where: { id: exp.id },
-          data: { status: 'expired', fileUrl: null },
-        });
-        purged++;
-      } catch (err) {
-        logger.warn(`Purge export ${exp.id} échouée`, err);
-      }
+  // Régénère le fichier d'un export à la volée (appelé par la route de téléchargement
+  // signée). L'autorisation est portée par le jeton ; on revalide juste l'expiration.
+  async regenerate(exportId: string): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    const record = await prisma.dataExport.findUnique({ where: { id: exportId } });
+    if (!record) throw new HttpError(404, 'Export introuvable');
+    if (record.expiresAt && record.expiresAt < new Date()) {
+      throw new HttpError(410, 'Le lien de téléchargement a expiré. Relancez l\'export.');
     }
-    return purged;
+    const from = record.periodFrom ?? new Date(0);
+    const to = record.periodTo ?? new Date();
+    const dataset = await buildDataset(record.type, record.userId, from, to);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const baseName = `primeo-${record.type}-${stamp}-${record.id.slice(0, 6)}`;
+    if (record.format === 'pdf') {
+      return {
+        buffer: await generatePdfBuffer(dataset, { from, to }),
+        filename: `${baseName}.pdf`,
+        contentType: 'application/pdf',
+      };
+    }
+    return {
+      buffer: Buffer.from(toCsv(dataset.headers, dataset.rows), 'utf-8'),
+      filename: `${baseName}.csv`,
+      contentType: 'text/csv; charset=utf-8',
+    };
+  },
+
+  // Purge des exports expirés (appelée par le cron de nettoyage) : invalide le lien
+  // et marque l'enregistrement comme `expired`. Aucun fichier à supprimer (régénéré
+  // à la demande, jamais stocké).
+  async purgeExpired(): Promise<number> {
+    const { count } = await prisma.dataExport.updateMany({
+      where: { status: 'ready', expiresAt: { lt: new Date() } },
+      data: { status: 'expired', fileUrl: null },
+    });
+    return count;
   },
 };
 

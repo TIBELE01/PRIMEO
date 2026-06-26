@@ -43,6 +43,10 @@ const mockPrisma = {
   professionalProfile: {
     create: jest.fn(async () => ({})),
   },
+  property: {
+    count: jest.fn(async () => 0),
+    create: jest.fn(async () => ({})),
+  },
   referral: {
     create: jest.fn(async () => ({})),
   },
@@ -124,6 +128,8 @@ function resetMocks() {
   // Restore persistent mock defaults that clearAllMocks would leave as no-ops
   mockPrisma.user.findFirst.mockImplementation(async () => null);
   mockPrisma.professionalProfile.create.mockImplementation(async () => ({}));
+  mockPrisma.property.count.mockImplementation(async () => 0);
+  mockPrisma.property.create.mockImplementation(async () => ({}));
   mockPrisma.referral.create.mockImplementation(async () => ({}));
   mockSupabaseAdmin.auth.admin.updateUserById.mockImplementation(async () => ({ error: null }));
   // 2FA lu depuis Supabase user_metadata — désactivé par défaut
@@ -232,6 +238,31 @@ describe('authService.register', () => {
     it('does NOT create professional profile for client account', async () => {
       await authService.register(CLIENT_REGISTER);
       expect(mockPrisma.professionalProfile.create).not.toHaveBeenCalled();
+    });
+
+    it('crée automatiquement le restaurant pour un compte restaurateur (actif)', async () => {
+      mockPrisma.user.create.mockResolvedValueOnce({ ...prismaUser, accountType: AccountType.restaurateur });
+      await authService.register({
+        ...PRO_REGISTER,
+        accountType: 'restaurateur' as const,
+        businessName: 'Chez Tantie',
+        businessAddress: 'Cocody, Abidjan',
+      });
+      expect(mockPrisma.property.create).toHaveBeenCalledTimes(1);
+      const calls = mockPrisma.property.create.mock.calls as unknown as Array<[{ data: Record<string, unknown> }]>;
+      const data = calls[0][0].data;
+      expect(data).toMatchObject({
+        propertyType: 'restaurant',
+        title: 'Chez Tantie',
+        city: 'Cocody, Abidjan',
+        status: 'active',
+      });
+    });
+
+    it('ne crée PAS de restaurant pour un pro hébergement', async () => {
+      mockPrisma.user.create.mockResolvedValueOnce({ ...prismaUser, accountType: AccountType.professional_hebergement });
+      await authService.register(PRO_REGISTER);
+      expect(mockPrisma.property.create).not.toHaveBeenCalled();
     });
 
     it('ignore le bypass en production : passe par le flux OTP (envoi SMS, pas de tokens)', async () => {

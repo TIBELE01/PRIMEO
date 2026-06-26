@@ -1,6 +1,13 @@
-// Mock des dépendances lourdes (Cloudinary) pour tester le pur formatage du numéro.
-jest.mock('./s3-client', () => ({ uploadToCloudinary: jest.fn(async () => ({ url: 'https://cdn/x.pdf' })) }));
-jest.mock('../../config/cloudinary.config', () => ({ cloudinaryConfig: { folders: { invoices: 'invoices' } } }));
+// Variables d'environnement minimales injectées AVANT l'import (invoice.ts charge
+// env.config — qui ferait process.exit — et le chiffrement des jetons de téléchargement).
+process.env['NODE_ENV'] = 'test';
+process.env['DATABASE_URL'] = 'postgresql://u:p@localhost:5432/test?schema=public';
+process.env['DIRECT_URL'] = 'postgresql://u:p@localhost:5432/test?schema=public';
+process.env['SUPABASE_URL'] = 'https://test.supabase.co';
+process.env['SUPABASE_ANON_KEY'] = 'anon-key-test';
+process.env['SUPABASE_SERVICE_ROLE_KEY'] = 'service-role-key-test';
+process.env['PUBLIC_URL'] = 'http://localhost:4000';
+process.env['BACKEND_URL'] = 'http://localhost:4000';
 
 import { formatBookingInvoiceRef } from './invoice';
 

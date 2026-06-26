@@ -46,11 +46,18 @@ describe('ensureBookingInvoice', () => {
     expect(mockPrisma.booking.update).toHaveBeenCalledWith(expect.objectContaining({ data: { invoiceUrl: 'https://cdn/invoice.pdf' } }));
     expect(url).toBe('https://cdn/invoice.pdf');
   });
-  it('court-circuite si la facture existe déjà', async () => {
+  it('court-circuite si un lien de téléchargement signé existe déjà', async () => {
+    const signed = 'https://api.test/api/downloads/invoice?t=abc';
+    mockPrisma.booking.findUnique.mockResolvedValue({ ...bk, invoiceUrl: signed });
+    const url = await ensureBookingInvoice('bk-1');
+    expect(url).toBe(signed);
+    expect(generateAndUploadBookingInvoice).not.toHaveBeenCalled();
+  });
+  it('régénère si l\'URL stockée pointe vers un ancien CDN', async () => {
     mockPrisma.booking.findUnique.mockResolvedValue({ ...bk, invoiceUrl: 'https://cdn/existing.pdf' });
     const url = await ensureBookingInvoice('bk-1');
-    expect(url).toBe('https://cdn/existing.pdf');
-    expect(generateAndUploadBookingInvoice).not.toHaveBeenCalled();
+    expect(generateAndUploadBookingInvoice).toHaveBeenCalled();
+    expect(url).toBe('https://cdn/invoice.pdf'); // valeur renvoyée par le mock
   });
   it('restaurant : description « réservation de table »', async () => {
     mockPrisma.booking.findUnique.mockResolvedValue({ ...bk, property: { title: 'Resto', propertyType: 'restaurant' } });

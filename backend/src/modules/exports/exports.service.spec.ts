@@ -8,7 +8,12 @@ jest.mock('../../common/utils/logger', () => ({
 }));
 
 jest.mock('../../config/env.config', () => ({
-  env: { BACKEND_URL: 'http://localhost:3000', FRONTEND_URL: '' },
+  env: {
+    BACKEND_URL: 'http://localhost:3000',
+    FRONTEND_URL: '',
+    PUBLIC_URL: 'http://localhost:4000',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-key-test',
+  },
   cloudinaryParsed: { cloudName: 'test', apiKey: 'k', apiSecret: 's' },
 }));
 
@@ -44,6 +49,7 @@ const mockPrisma = {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   booking: { findMany: jest.fn() },
   property: { findMany: jest.fn() },
@@ -129,21 +135,48 @@ describe('exportsService', () => {
 
       await exportsService.processExport('exp-1');
 
-      // Upload appelé avec un buffer CSV contenant la ligne et l'échappement RFC 4180
-      expect(uploadMock).toHaveBeenCalledTimes(1);
-      const [buffer, folder, filename, resourceType] = uploadMock.mock.calls[0] as unknown as [Buffer, string, string, string];
-      const csv = buffer.toString('utf-8');
-      expect(folder).toBe('primeo/System/exports');
-      expect(filename).toMatch(/^primeo-bookings-.*\.csv$/);
-      expect(resourceType).toBe('raw');
-      expect(csv).toContain('"Villa ""Les Palmiers"", Abidjan"'); // échappement guillemets+virgule
-      expect(csv).toContain('100000');
-
-      // Statut final ready + email envoyé
+      // Statut final ready avec lien de téléchargement signé + email envoyé.
+      // (Le fichier n'est plus téléversé : il est régénéré à la demande.)
+      expect(uploadMock).not.toHaveBeenCalled();
       const updates = mockPrisma.dataExport.update.mock.calls.map((c: unknown[]) => (c[0] as { data: { status?: string } }).data.status);
       expect(updates).toContain('processing');
       expect(updates).toContain('ready');
+      const readyCall = mockPrisma.dataExport.update.mock.calls.find(
+        (c: unknown[]) => (c[0] as { data: { status?: string } }).data.status === 'ready',
+      ) as unknown[];
+      const readyData = (readyCall[0] as { data: { fileUrl: string; rowCount: number } }).data;
+      expect(readyData.fileUrl).toContain('/api/downloads/export?t=');
+      expect(readyData.rowCount).toBe(1);
       expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('regenerate() produit un CSV avec échappement RFC 4180', async () => {
+      mockPrisma.dataExport.findUnique.mockResolvedValue({
+        ...pendingRecord, status: 'ready', expiresAt: new Date(Date.now() + 86_400_000),
+      });
+      mockPrisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'bk-1',
+          property: { title: 'Villa "Les Palmiers", Abidjan', propertyType: 'residence' },
+          client: { firstName: 'Awa', lastName: 'Koffi' },
+          startDate: new Date('2026-04-01'),
+          endDate: new Date('2026-04-05'),
+          guests: 2,
+          totalAmount: 100000,
+          onlinePaidAmount: 10000,
+          remainingCashAmount: 90000,
+          commissionAmount: 5000,
+          status: 'confirmed',
+          createdAt: new Date('2026-03-20'),
+        },
+      ]);
+
+      const { buffer, filename, contentType } = await exportsService.regenerate('exp-1');
+      const csv = buffer.toString('utf-8');
+      expect(filename).toMatch(/^primeo-bookings-.*\.csv$/);
+      expect(contentType).toContain('text/csv');
+      expect(csv).toContain('"Villa ""Les Palmiers"", Abidjan"'); // échappement guillemets+virgule
+      expect(csv).toContain('100000');
     });
 
     it('passe le statut à failed si la génération échoue', async () => {
@@ -201,15 +234,12 @@ describe('exportsService', () => {
   });
 
   describe('purgeExpired', () => {
-    it('supprime le fichier Cloudinary et marque expired', async () => {
-      mockPrisma.dataExport.findMany.mockResolvedValue([
-        { id: 'exp-1', filePublicId: 'primeo/exports/old' },
-      ]);
+    it('marque les exports expirés (aucun fichier à supprimer, régénéré à la demande)', async () => {
+      mockPrisma.dataExport.updateMany.mockResolvedValue({ count: 1 });
       const purged = await exportsService.purgeExpired();
       expect(purged).toBe(1);
-      expect(deleteMock).toHaveBeenCalledWith('primeo/exports/old', 'raw');
-      expect(mockPrisma.dataExport.update).toHaveBeenCalledWith({
-        where: { id: 'exp-1' },
+      expect(mockPrisma.dataExport.updateMany).toHaveBeenCalledWith({
+        where: { status: 'ready', expiresAt: { lt: expect.any(Date) } },
         data: { status: 'expired', fileUrl: null },
       });
     });

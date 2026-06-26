@@ -21,8 +21,10 @@ function countNights(start: Date, end: Date): number {
   return diff > 0 ? diff : 1;
 }
 
-// Génère (si absente) la facture PDF d'une réservation, la stocke sur Cloudinary et renvoie son URL
-export async function ensureBookingInvoice(bookingId: string): Promise<string | null> {
+// Génère (si absent) le lien de facture signé d'une réservation et le stocke.
+// `force` régénère un lien neuf (utile pour les réservations dont l'URL stockée
+// pointe encore vers un ancien CDN, et pour rafraîchir un jeton expiré).
+export async function ensureBookingInvoice(bookingId: string, force = false): Promise<string | null> {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
@@ -31,7 +33,7 @@ export async function ensureBookingInvoice(bookingId: string): Promise<string | 
     },
   });
   if (!booking) return null;
-  if (booking.invoiceUrl) return booking.invoiceUrl;
+  if (booking.invoiceUrl && booking.invoiceUrl.includes('/api/downloads/') && !force) return booking.invoiceUrl;
 
   const isRestaurant = booking.property.propertyType === 'restaurant';
   const nights = countNights(booking.startDate, booking.endDate);

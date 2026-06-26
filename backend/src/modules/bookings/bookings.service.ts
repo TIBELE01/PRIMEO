@@ -378,7 +378,9 @@ export const bookingsService = {
       throw new HttpError(400, 'La facture est disponible une fois la réservation confirmée');
     }
 
-    const invoiceUrl = booking.invoiceUrl ?? (await ensureBookingInvoice(id));
+    // Régénère systématiquement un lien de téléchargement signé et valide
+    // (le PDF est produit à la volée par /api/downloads/invoice).
+    const invoiceUrl = await ensureBookingInvoice(id, true);
     if (!invoiceUrl) throw new HttpError(500, 'Impossible de générer la facture pour le moment');
 
     return { invoiceUrl };

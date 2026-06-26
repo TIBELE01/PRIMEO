@@ -1,7 +1,18 @@
-// PDFKit invoice generator — produces a binary PDF buffer for subscription invoices
+// PDFKit invoice generator — produit un buffer PDF binaire pour les factures.
+// La livraison se fait par un lien de téléchargement signé (route /api/downloads)
+// qui régénère le PDF à la volée : aucun fichier n'est stocké sur un CDN, ce qui
+// contourne le blocage de livraison des PDF par défaut côté Cloudinary.
 import PDFDocument from 'pdfkit';
-import { uploadToCloudinary } from './s3-client';
-import { cloudinaryPaths } from '../../config/cloudinary-paths';
+import { env } from '../../config/env.config';
+import { createDownloadToken } from './download-token';
+
+// Validité des liens de facture : couvre le clic différé depuis l'email.
+const INVOICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function invoiceDownloadUrl(payload: { k: 'binv' | 'sinv'; d: unknown }): string {
+  const token = createDownloadToken(payload, INVOICE_TTL_MS);
+  return `${env.PUBLIC_URL}/api/downloads/invoice?t=${token}`;
+}
 
 export interface InvoiceData {
   invoiceNumber: string;    // transaction ID or formatted ref
@@ -15,11 +26,14 @@ export interface InvoiceData {
   isPaid: boolean;
 }
 
+// Renvoie un lien de téléchargement signé (le PDF est régénéré à la demande).
 export async function generateAndUploadInvoice(data: InvoiceData): Promise<string> {
-  const buffer = await buildPdfBuffer(data);
-  const filename = `facture_${data.invoiceNumber}.pdf`;
-  const result = await uploadToCloudinary(buffer, cloudinaryPaths.systemInvoices(), filename);
-  return result.url;
+  return invoiceDownloadUrl({ k: 'sinv', d: data });
+}
+
+// Génère le buffer PDF d'une facture d'abonnement (utilisé par la route de téléchargement).
+export function generateSubscriptionInvoiceBuffer(data: InvoiceData): Promise<Buffer> {
+  return buildPdfBuffer(data);
 }
 
 // ── Factures de réservation ────────────────────────────────────────────────
@@ -54,11 +68,14 @@ export interface BookingInvoiceData {
   sectionLabel?: string; // surcharge de l'étiquette « Séjour » dans les métadonnées
 }
 
+// Renvoie un lien de téléchargement signé (le PDF est régénéré à la demande).
 export async function generateAndUploadBookingInvoice(data: BookingInvoiceData): Promise<string> {
-  const buffer = await buildBookingPdfBuffer(data);
-  const filename = `facture_reservation_${data.invoiceNumber}.pdf`;
-  const result = await uploadToCloudinary(buffer, cloudinaryPaths.systemInvoices(), filename);
-  return result.url;
+  return invoiceDownloadUrl({ k: 'binv', d: data });
+}
+
+// Génère le buffer PDF d'une facture de réservation (utilisé par la route de téléchargement).
+export function generateBookingInvoiceBuffer(data: BookingInvoiceData): Promise<Buffer> {
+  return buildBookingPdfBuffer(data);
 }
 
 function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
