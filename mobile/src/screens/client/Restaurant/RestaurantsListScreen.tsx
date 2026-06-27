@@ -18,8 +18,9 @@ interface Resto {
   cuisineType?: string;
   mainImageUrl?: string | null;
   images?: Array<{ url: string }>;
-  rating?: number;
-  reviewsSummary?: { average?: number; count?: number };
+  rating?: number | string;          // Prisma Decimal → peut arriver en chaîne
+  reviewCount?: number;
+  reviewsSummary?: { average?: number | string; count?: number };
   reviewsCount?: number;
   tableReservationEnabled?: boolean;
 }
@@ -64,8 +65,10 @@ export default function RestaurantsListScreen({ navigation }: Props) {
   const renderCard = ({ item }: { item: Resto }) => {
     const name = item.title ?? item.name ?? 'Restaurant';
     const img = item.mainImageUrl ?? item.images?.[0]?.url ?? null;
-    const rating = item.rating ?? item.reviewsSummary?.average ?? 0;
-    const reviews = item.reviewsCount ?? item.reviewsSummary?.count ?? 0;
+    // rating peut être un nombre, une chaîne (Decimal sérialisé), null ou undefined.
+    const ratingNum = Number(item.rating ?? item.reviewsSummary?.average ?? 0);
+    const hasRating = Number.isFinite(ratingNum) && ratingNum > 0;
+    const reviews = Number(item.reviewCount ?? item.reviewsCount ?? item.reviewsSummary?.count ?? 0) || 0;
     return (
       <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={() => openMenu(item)}>
         {img ? (
@@ -77,7 +80,7 @@ export default function RestaurantsListScreen({ navigation }: Props) {
           <Text style={styles.cardName} numberOfLines={1}>{name}</Text>
           <View style={styles.cardMetaRow}>
             <Ionicons name="star" size={14} color="#F59E0B" />
-            <Text style={styles.cardMeta}>{rating ? rating.toFixed(1) : 'Nouveau'}{reviews ? ` (${reviews})` : ''}</Text>
+            <Text style={styles.cardMeta}>{hasRating ? ratingNum.toFixed(1) : 'Nouveau'}{reviews ? ` (${reviews})` : ''}</Text>
             {item.cuisineType ? <Text style={styles.cardDot}>·</Text> : null}
             {item.cuisineType ? <Text style={styles.cardMeta} numberOfLines={1}>🍲 {item.cuisineType}</Text> : null}
           </View>
