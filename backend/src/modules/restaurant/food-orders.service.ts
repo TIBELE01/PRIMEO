@@ -146,6 +146,24 @@ export const foodOrdersService = {
       }).catch(e => logger.warn('Email new_food_order (client) failed', e));
     }
 
+    // Ouverture d'une conversation automatique client ↔ restaurant (comme pour
+    // les réservations) : un 1er message structuré est envoyé au restaurateur.
+    const deliveryLabel = data.deliveryType === 'delivery' ? 'Livraison'
+      : data.deliveryType === 'takeaway' ? 'À emporter' : 'Sur place';
+    prisma.message.create({
+      data: {
+        senderId: clientId,
+        receiverId: property.ownerId,
+        content: [
+          `🍽️ Nouvelle commande #${order.id.slice(0, 8).toUpperCase()}`,
+          itemsLines,
+          `Total : ${totalAmount.toLocaleString('fr-CI')} FCFA · ${deliveryLabel}`,
+          data.deliveryAddress ? `Adresse : ${data.deliveryAddress}` : '',
+          data.specialInstructions ? `Instructions : ${data.specialInstructions}` : '',
+        ].filter(Boolean).join('\n'),
+      },
+    }).catch(e => logger.warn('Auto-conversation commande échouée', e));
+
     return order;
   },
 

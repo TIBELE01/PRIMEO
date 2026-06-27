@@ -49,7 +49,11 @@ import { CategoryScreen }           from '../screens/client/Category/CategoryScr
 import SupportChatbotScreen         from '../screens/common/SupportScreen';
 import SupportTicketsScreen         from '../screens/common/SupportTicketsScreen';
 import SupportTicketDetailScreen    from '../screens/common/SupportTicketDetailScreen';
+import RestaurantsListScreen        from '../screens/client/Restaurant/RestaurantsListScreen';
 import RestaurantMenuScreen         from '../screens/client/Restaurant/RestaurantMenuScreen';
+import DishDetailScreen             from '../screens/client/Restaurant/DishDetailScreen';
+import DishOrderScreen              from '../screens/client/Restaurant/DishOrderScreen';
+import TableReservationScreen       from '../screens/client/Restaurant/TableReservationScreen';
 import RestaurantOrderCartScreen    from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen     from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
@@ -94,7 +98,11 @@ function HomeTabStack() {
       <HomeStack.Screen name="HotelsCategory"        component={CategoryScreen} initialParams={{ category: 'hotel' }} />
       <HomeStack.Screen name="ImmobilierCategory"    component={CategoryScreen} initialParams={{ category: 'immobilier' }} />
       <HomeStack.Screen name="RestaurantsCategory"   component={CategoryScreen} initialParams={{ category: 'restaurant' }} />
+      <HomeStack.Screen name="RestaurantsList"       component={sc(RestaurantsListScreen)} options={{ headerShown: false }} />
       <HomeStack.Screen name="RestaurantMenu"        component={sc(RestaurantMenuScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="DishDetail"            component={sc(DishDetailScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="DishOrder"             component={sc(DishOrderScreen)} options={{ headerShown: false }} />
+      <HomeStack.Screen name="TableReservation"      component={sc(TableReservationScreen)} options={{ headerShown: false }} />
       {/* Legacy sector screen kept for backward compatibility */}
       <HomeStack.Screen name="SectorScreen"          component={SectorScreen} />
       <HomeStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
@@ -114,7 +122,11 @@ function SearchTabStack() {
   return (
     <SearchStack.Navigator screenOptions={{ headerShown: false }}>
       <SearchStack.Screen name="Search"              component={SearchScreen} />
+      <SearchStack.Screen name="RestaurantsList"       component={sc(RestaurantsListScreen)} options={{ headerShown: false }} />
       <SearchStack.Screen name="RestaurantMenu"        component={sc(RestaurantMenuScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="DishDetail"            component={sc(DishDetailScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="DishOrder"             component={sc(DishOrderScreen)} options={{ headerShown: false }} />
+      <SearchStack.Screen name="TableReservation"      component={sc(TableReservationScreen)} options={{ headerShown: false }} />
       <SearchStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
       <SearchStack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
       <SearchStack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />
@@ -157,7 +169,11 @@ function FavoritesTabStack() {
   return (
     <FavoritesStack.Navigator screenOptions={{ headerShown: false }}>
       <FavoritesStack.Screen name="Favorites"               component={sc(FavoritesScreen)} />
+      <FavoritesStack.Screen name="RestaurantsList"         component={sc(RestaurantsListScreen)} options={{ headerShown: false }} />
       <FavoritesStack.Screen name="RestaurantMenu"          component={sc(RestaurantMenuScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="DishDetail"              component={sc(DishDetailScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="DishOrder"               component={sc(DishOrderScreen)} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="TableReservation"        component={sc(TableReservationScreen)} options={{ headerShown: false }} />
       <FavoritesStack.Screen name="PropertyDetail"          component={PropertyDetailScreen} />
       <FavoritesStack.Screen name="VirtualTour"             component={sc(VirtualTourScreen)} />
       <FavoritesStack.Screen name="Booking"                 component={sc(BookingScreen)} options={{ headerShown: false }} />

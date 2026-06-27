@@ -56,11 +56,28 @@ export type ClientStackParamList = {
   SupportChatbot: undefined;
   SupportTickets: undefined;
   SupportTicketDetail: { ticketId: string };
-  RestaurantMenu: { propertyId?: string } | undefined;
+  // ── Parcours restaurant client (4 étapes) ──
+  RestaurantsList: undefined;                                              // Étape 1 : liste des restaurants
+  RestaurantMenu: { propertyId: string; restaurantName?: string; tableReservationEnabled?: boolean }; // Étape 2 : menus d'un restaurant
+  DishDetail: { dish: RestaurantDish; propertyId: string; restaurantName?: string; tableReservationEnabled?: boolean }; // Étape 3 : détail d'un plat
+  DishOrder: { dish: RestaurantDish; propertyId: string; restaurantName?: string };  // Étape 4 : commande (sans paiement)
+  TableReservation: { propertyId: string; restaurantName?: string };       // Étape 4 bis : réservation de table (sans paiement)
   RestaurantOrderCart: { propertyId: string; propertyName: string };
   RestaurantOrderTracking: { orderId: string };
   MyRestaurantOrders: undefined;
 };
+
+// Plat passé en paramètre de navigation entre les écrans du parcours restaurant.
+export interface RestaurantDish {
+  id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  section?: string;
+  photoUrl?: string | null;
+  allergens?: string[];
+  isAvailable?: boolean;
+}
 
 // ─── Professional Stacks ──────────────────────────────────────────────────────
 export type ResidenceStackParamList = {
