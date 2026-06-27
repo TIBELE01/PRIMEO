@@ -1,9 +1,9 @@
 // Étape 2 du parcours restaurant (client) : tous les menus (plats validés) d'UN
-// restaurant, sous forme de cartes, avec filtre par catégorie. Chaque carte mène
-// au détail du plat (étape 3). Robuste contre les données manquantes (pas de crash).
+// restaurant, présentés en GRILLE 2 colonnes avec des cartes au design IDENTIQUE
+// à celui des cartes de propriétés (PropertyCard) — mêmes coins, ombres, polices.
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image,
+  View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,8 @@ import { useCurrency } from '../../../hooks/useCurrency';
 
 const PRIMARY = '#DC2626';
 const ALL = 'Tout';
+const SCREEN_W = Dimensions.get('window').width;
+const GRID_CARD_W = (SCREEN_W - 48) / 2;
 type Props = ClientScreenProps<'RestaurantMenu'>;
 
 const pickArray = (res: any): any[] => {
@@ -53,25 +55,27 @@ export default function RestaurantMenuScreen({ navigation, route }: Props) {
   };
 
   const renderCard = ({ item }: { item: RestaurantDish }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={() => openDish(item)}>
-      {item.photoUrl ? (
-        <Image source={{ uri: item.photoUrl }} style={styles.cardImg} resizeMode="cover" />
-      ) : (
-        <View style={[styles.cardImg, styles.cardImgFallback]}><Text style={{ fontSize: 30 }}>🍽️</Text></View>
-      )}
-      <View style={styles.cardBody}>
+    <TouchableOpacity style={[styles.card, { width: GRID_CARD_W }]} activeOpacity={0.9} onPress={() => openDish(item)}>
+      {/* Image + overlays (badge catégorie, prix) — comme une carte de propriété */}
+      <View style={styles.imgWrap}>
+        {item.photoUrl ? (
+          <Image source={{ uri: item.photoUrl }} style={styles.img} resizeMode="cover" />
+        ) : (
+          <View style={[styles.img, styles.imgFallback]}><Text style={{ fontSize: 34 }}>🍽️</Text></View>
+        )}
+        <View style={styles.grad1} />
+        <View style={styles.grad2} />
         {item.section ? (
-          <View style={styles.badge}><Text style={styles.badgeText}>{item.section}</Text></View>
+          <View style={styles.badges}><View style={styles.badge}><Text style={styles.badgeTxt}>{item.section}</Text></View></View>
         ) : null}
-        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-        {item.description ? <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text> : null}
-        <View style={styles.cardFooter}>
-          <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
-          <View style={styles.detailBtn}>
-            <Text style={styles.detailBtnText}>Voir le détail</Text>
-            <Ionicons name="chevron-forward" size={14} color={PRIMARY} />
-          </View>
-        </View>
+        <View style={styles.priceWrap}><Text style={styles.priceOnImg}>{formatPrice(item.price)}</Text></View>
+      </View>
+
+      {/* Infos sous l'image */}
+      <View style={styles.info}>
+        <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+        {item.description ? <Text style={styles.desc} numberOfLines={2}>{item.description}</Text> : <Text style={styles.desc} numberOfLines={2}> </Text>}
+        <Text style={styles.detailLink}>Voir le détail ›</Text>
       </View>
     </TouchableOpacity>
   );
@@ -113,7 +117,9 @@ export default function RestaurantMenuScreen({ navigation, route }: Props) {
           data={visible}
           keyExtractor={(d) => d.id}
           renderItem={renderCard}
-          contentContainerStyle={styles.list}
+          numColumns={2}
+          columnWrapperStyle={styles.gridRow}
+          contentContainerStyle={styles.gridContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.centered}>
@@ -143,17 +149,25 @@ const styles = StyleSheet.create({
   chips: { gap: 8, paddingHorizontal: 16, paddingVertical: 10 },
   chip: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
   chipText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  list: { padding: 16, gap: 14, paddingBottom: 32 },
-  card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
-  cardImg: { width: 104, height: '100%', minHeight: 104 },
-  cardImgFallback: { backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' },
-  cardBody: { flex: 1, padding: 12, gap: 4 },
-  badge: { alignSelf: 'flex-start', backgroundColor: '#FEE2E2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  badgeText: { fontSize: 10, fontWeight: '800', color: PRIMARY, textTransform: 'uppercase', letterSpacing: 0.3 },
-  cardName: { fontSize: 15, fontWeight: '800', color: '#111827' },
-  cardDesc: { fontSize: 12, color: '#6B7280', lineHeight: 16 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  cardPrice: { fontSize: 15, fontWeight: '800', color: PRIMARY },
-  detailBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  detailBtnText: { fontSize: 13, fontWeight: '700', color: PRIMARY },
+
+  /* Grille 2 colonnes — mêmes espacements que CategoryScreen */
+  gridContent: { paddingTop: 14, paddingBottom: 32 },
+  gridRow: { paddingHorizontal: 16, gap: 16, marginBottom: 16 },
+
+  /* Carte — design identique à PropertyCard */
+  card: { borderRadius: 20, backgroundColor: '#fff', overflow: 'hidden', shadowColor: '#0F1729', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 20, elevation: 8 },
+  imgWrap: { height: 140, borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' },
+  img: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
+  imgFallback: { backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' },
+  grad1: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, backgroundColor: 'rgba(0,0,0,0.42)' },
+  grad2: { position: 'absolute', bottom: 30, left: 0, right: 0, height: 40, backgroundColor: 'rgba(0,0,0,0.20)' },
+  badges: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  badge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', backgroundColor: 'rgba(220,38,38,0.90)' },
+  badgeTxt: { fontSize: 10, fontWeight: '700', color: '#fff', letterSpacing: 0.2 },
+  priceWrap: { position: 'absolute', bottom: 10, left: 12 },
+  priceOnImg: { fontSize: 15, fontWeight: '800', color: '#fff', textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  info: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
+  name: { fontSize: 14, fontWeight: '700', color: '#0F1729', marginBottom: 3, letterSpacing: 0.1 },
+  desc: { fontSize: 12, color: '#64748B', marginBottom: 6, fontWeight: '500', lineHeight: 16, minHeight: 32 },
+  detailLink: { fontSize: 12.5, fontWeight: '800', color: PRIMARY },
 });

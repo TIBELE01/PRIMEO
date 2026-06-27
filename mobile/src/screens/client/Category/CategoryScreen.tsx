@@ -534,7 +534,21 @@ export function CategoryScreen() {
   const chips = useMemo(() => buildChips(filters, config, patch), [filters, config, patch]);
   const activeCount = countActive(filters, config);
 
-  const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
+  // Pour les restaurants, le tap sur une carte ouvre le MENU du restaurant
+  // (parcours dédié) au lieu de la fiche propriété générique. Le design de la
+  // liste reste strictement identique aux autres types de biens.
+  const goProperty = (id: string) => {
+    if (categoryKey === 'restaurant') {
+      const it = results.find(r => r.id === id) ?? config.demo.find(d => d.id === id);
+      navigation.navigate('RestaurantMenu', {
+        propertyId: id,
+        restaurantName: it?.name ?? (it as any)?.title ?? 'Restaurant',
+        tableReservationEnabled: !!(it as any)?.tableReservationEnabled,
+      });
+      return;
+    }
+    navigation.navigate('PropertyDetail', { propertyId: id });
+  };
   const loadMore = () => { if (!loading && !usingDemo && results.length < total) load(page + 1); };
 
   // Carousels

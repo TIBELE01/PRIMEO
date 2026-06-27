@@ -56,8 +56,7 @@ export type ClientStackParamList = {
   SupportChatbot: undefined;
   SupportTickets: undefined;
   SupportTicketDetail: { ticketId: string };
-  // ── Parcours restaurant client (4 étapes) ──
-  RestaurantsList: undefined;                                              // Étape 1 : liste des restaurants
+  // ── Parcours restaurant client (étape 1 = liste via RestaurantsCategory/CategoryScreen) ──
   RestaurantMenu: { propertyId: string; restaurantName?: string; tableReservationEnabled?: boolean }; // Étape 2 : menus d'un restaurant
   DishDetail: { dish: RestaurantDish; propertyId: string; restaurantName?: string; tableReservationEnabled?: boolean }; // Étape 3 : détail d'un plat
   DishOrder: { dish: RestaurantDish; propertyId: string; restaurantName?: string };  // Étape 4 : commande (sans paiement)
