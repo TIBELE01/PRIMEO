@@ -323,7 +323,7 @@ export const authService = {
     void sendSms(input.phone, `Votre code de vérification PRIMEO est : ${otp}. Valable ${ttlMin} minutes.`, { isOtp: true })
       .catch((err) => logger.debug('OTP SMS non envoyé (best-effort)', { error: (err as Error).message }));
 
-    return { message: 'Un code de vérification a été envoyé par email. Valable 5 minutes.' };
+    return { message: `Un code de vérification a été envoyé par email. Valable ${ttlMin} minutes.` };
   },
 
   // ── Vérification OTP → activation du compte ──────────────────────────────
@@ -338,10 +338,12 @@ export const authService = {
       // Mode normal (incluant TOUTE la production) : validation réelle du code stocké.
       // Aucun code (y compris 000000) n'est accepté sans correspondance exacte non expirée.
       const storedOtp = (await redisGet(OTP_KEY(input.phone))) ?? otpMemory.get(input.phone) ?? null;
-      if (!storedOtp) {
+      if (storedOtp === null || storedOtp === undefined) {
         throw new HttpError(400, 'Code OTP expiré. Demandez-en un nouveau.');
       }
-      if (storedOtp !== input.otp) {
+      // Comparaison robuste : coercition en chaîne + trim (insensible au type
+      // renvoyé par le cache et aux espaces éventuels autour du code saisi).
+      if (String(storedOtp).trim() !== String(input.otp).trim()) {
         throw new HttpError(400, 'Code OTP incorrect');
       }
     }

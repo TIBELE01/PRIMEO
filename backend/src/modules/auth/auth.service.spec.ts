@@ -79,7 +79,7 @@ const envMock = { SKIP_OTP_VERIFICATION: false, NODE_ENV: 'test', SUPABASE_SERVI
 jest.mock('../../config/env.config', () => ({ env: envMock }));
 
 jest.mock('../../config/orange-sms.config', () => ({
-  orangeSmsConfig: { otpExpiresInSeconds: 300 },
+  orangeSmsConfig: { otpExpiresInSeconds: 600 },
 }));
 
 // ── Actual imports (after mock declarations) ──────────────────────────────────
@@ -209,7 +209,7 @@ describe('authService.register', () => {
       const phone = '+2250707002003';
       (generateOtp as jest.Mock).mockReturnValueOnce('654321');
       await authService.register(mkInput(phone));
-      expect(redisSet).toHaveBeenCalledWith(`otp:${phone}`, '654321', 300);
+      expect(redisSet).toHaveBeenCalledWith(`otp:${phone}`, '654321', 600);
     });
 
     it('does not throw when email sending fails (degraded mode)', async () => {
