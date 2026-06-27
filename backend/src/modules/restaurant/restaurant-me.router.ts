@@ -7,6 +7,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { propertiesService } from '../properties/properties.service';
+import { restaurantService } from './restaurant.service';
 import { restaurantRouter } from './restaurant.router';
 
 interface ReqWithResto extends Request {
@@ -36,6 +37,16 @@ restaurantMeRouter.use(async (req: ReqWithResto, _res: Response, next: NextFunct
 // GET /api/restaurant -> la fiche du restaurant du compte connecté
 restaurantMeRouter.get('/', (req: ReqWithResto, res: Response) => {
   res.json({ data: req._resto });
+});
+
+// PATCH /api/restaurant -> configuration (ex: activation réservation de tables)
+restaurantMeRouter.patch('/', async (req: ReqWithResto, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const updated = await restaurantService.updateSettings(req._restoId!, req.user!.sub, req.body);
+    res.json({ data: updated });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Injecte l'ID résolu comme segment d'URL : le sous-routeur (mergeParams) le

@@ -436,16 +436,28 @@ export function PropertyDetailScreen() {
               <Text style={styles.priceUnit}>Prix sur demande</Text>
             )}
           </View>
-          <View style={kind === 'restaurant' ? styles.restaurantActions : undefined}>
+          {kind === 'restaurant' ? (
+            property.tableReservationEnabled ? (
+              // Réservation de tables activée → « Réserver une table » + « Commander »
+              <View style={styles.restaurantActions}>
+                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.color }]} onPress={handleAction} activeOpacity={0.88}>
+                  <Text style={styles.actionBtnText}>Réserver une table</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.orderBtn, { borderColor: theme.color }]} onPress={handleOrder} activeOpacity={0.88}>
+                  <Text style={[styles.orderBtnText, { color: theme.color }]}>🛒 Commander</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // Réservation désactivée → seul « Commander » (pleine largeur)
+              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.color }]} onPress={handleOrder} activeOpacity={0.88}>
+                <Text style={styles.actionBtnText}>🛒 Commander</Text>
+              </TouchableOpacity>
+            )
+          ) : (
             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.color }]} onPress={handleAction} activeOpacity={0.88}>
               <Text style={styles.actionBtnText}>{actionLabel(property.type)}</Text>
             </TouchableOpacity>
-            {kind === 'restaurant' && (
-              <TouchableOpacity style={[styles.orderBtn, { borderColor: theme.color }]} onPress={handleOrder} activeOpacity={0.88}>
-                <Text style={[styles.orderBtnText, { color: theme.color }]}>🛒 Commander</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
         </View>
 
         {/* ── 1. Présentation ── */}
@@ -488,8 +500,8 @@ export function PropertyDetailScreen() {
           </Accordion>
         )}
 
-        {/* ── 6. Disponibilités & calendrier (sauf immobilier) ── */}
-        {kind !== 'real_estate' && (
+        {/* ── 6. Disponibilités & calendrier (sauf immobilier ; restaurant : si réservation activée) ── */}
+        {kind !== 'real_estate' && (kind !== 'restaurant' || property.tableReservationEnabled) && (
           <Accordion
             title={kind === 'restaurant' ? 'Réserver une table' : 'Disponibilités'}
             icon="📅"
@@ -584,22 +596,28 @@ export function PropertyDetailScreen() {
           </View>
         )}
         {kind === 'restaurant' ? (
-          <>
-            <TouchableOpacity
-              style={[styles.stickyCta, { flex: 1, marginRight: 8, backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.color }]}
-              onPress={handleAction}
-              activeOpacity={0.88}
-            >
-              <Text style={[styles.stickyCtaText, { color: theme.color }]}>🪑 Réserver</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.stickyCta, { flex: 1, backgroundColor: theme.color }]}
-              onPress={handleOrder}
-              activeOpacity={0.88}
-            >
+          property.tableReservationEnabled ? (
+            <>
+              <TouchableOpacity
+                style={[styles.stickyCta, { flex: 1, marginRight: 8, backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.color }]}
+                onPress={handleAction}
+                activeOpacity={0.88}
+              >
+                <Text style={[styles.stickyCtaText, { color: theme.color }]}>🪑 Réserver</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.stickyCta, { flex: 1, backgroundColor: theme.color }]}
+                onPress={handleOrder}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.stickyCtaText}>🛒 Commander</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={[styles.stickyCta, { backgroundColor: theme.color }]} onPress={handleOrder} activeOpacity={0.88}>
               <Text style={styles.stickyCtaText}>🛒 Commander</Text>
             </TouchableOpacity>
-          </>
+          )
         ) : (
           <TouchableOpacity testID="cta-reserve" style={[styles.stickyCta, { backgroundColor: theme.color }]} onPress={handleAction} activeOpacity={0.88}>
             <Text style={styles.stickyCtaText}>{actionLabel(property.type)}</Text>

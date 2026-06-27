@@ -6,8 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { uploadToCloudinary } from '../../../services/cloudinary';
 import { PageHeader } from '../../../components/layout/PageHeader';
 
 // Couleur principale restaurant
@@ -163,6 +165,7 @@ export default function MenuManagementScreen() {
   // Étape 4 : Prix + Photo
   const [formPrice,         setFormPrice]          = useState('');
   const [formPhoto,         setFormPhoto]          = useState('');
+  const [uploadingPhoto,    setUploadingPhoto]     = useState(false);
   // Étape 5 : Allergènes + Conseils santé + Disponibilité
   const [formAllergens,     setFormAllergens]      = useState<string[]>([]);
   const [formHealthTips,    setFormHealthTips]     = useState<string[]>([]);
@@ -332,6 +335,41 @@ export default function MenuManagementScreen() {
   const handlePrevStep = () => {
     setFormError(null);
     setFormStep(s => Math.max(s - 1, 1));
+  };
+
+  // Upload direct de la photo du plat vers Cloudinary (galerie ou appareil photo),
+  // même logique que les autres types de comptes.
+  const pickAndUpload = async (source: 'library' | 'camera') => {
+    try {
+      const perm = source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permission requise', source === 'camera'
+          ? "Autorisez l'accès à l'appareil photo dans les réglages."
+          : "Autorisez l'accès à vos photos dans les réglages.");
+        return;
+      }
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      setUploadingPhoto(true);
+      const { url } = await uploadToCloudinary(result.assets[0].uri, `plat-${Date.now()}.jpg`, 'properties');
+      setFormPhoto(url);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'uploader la photo. Réessayez.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handlePickPhoto = () => {
+    Alert.alert('Photo du plat', 'Choisissez la source', [
+      { text: 'Galerie', onPress: () => pickAndUpload('library') },
+      { text: 'Appareil photo', onPress: () => pickAndUpload('camera') },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
   };
 
   const handleSave = async () => {
@@ -663,23 +701,38 @@ export default function MenuManagementScreen() {
                     </View>
                   </View>
                   <View style={styles.field}>
-                    <Text style={styles.fieldLabel}>Photo du plat <Text style={styles.optional}>(URL optionnelle)</Text></Text>
-                    <TextInput
-                      style={styles.input}
-                      value={formPhoto}
-                      onChangeText={setFormPhoto}
-                      placeholder="https://…"
-                      placeholderTextColor="#9CA3AF"
-                      autoCapitalize="none"
-                      keyboardType="url"
-                    />
-                    <Text style={styles.fieldHint}>Collez un lien direct vers une image (jpg, png…)</Text>
+                    <Text style={styles.fieldLabel}>Photo du plat <Text style={styles.optional}>(optionnelle)</Text></Text>
+                    {formPhoto.trim().length > 0 ? (
+                      <View style={styles.photoPreviewWrap}>
+                        <Image source={{ uri: formPhoto.trim() }} style={styles.photoPreview} resizeMode="cover" />
+                        <View style={styles.photoActions}>
+                          <TouchableOpacity style={styles.photoActionBtn} onPress={handlePickPhoto} disabled={uploadingPhoto}>
+                            <Ionicons name="camera-outline" size={16} color={PRIMARY} />
+                            <Text style={[styles.photoActionText, { color: PRIMARY }]}>Changer</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.photoActionBtn} onPress={() => setFormPhoto('')} disabled={uploadingPhoto}>
+                            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                            <Text style={[styles.photoActionText, { color: '#EF4444' }]}>Retirer</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.uploadBtn}
+                        onPress={handlePickPhoto}
+                        disabled={uploadingPhoto}
+                        accessibilityRole="button"
+                        accessibilityLabel="Ajouter une photo du plat"
+                      >
+                        {uploadingPhoto ? (
+                          <><ActivityIndicator color={PRIMARY} /><Text style={styles.uploadBtnText}>Upload en cours…</Text></>
+                        ) : (
+                          <><Ionicons name="camera-outline" size={22} color={PRIMARY} /><Text style={styles.uploadBtnText}>Ajouter une photo</Text></>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.fieldHint}>Galerie ou appareil photo — l'image est uploadée automatiquement.</Text>
                   </View>
-                  {formPhoto.trim().length > 0 && (
-                    <View style={styles.photoPreviewWrap}>
-                      <Image source={{ uri: formPhoto.trim() }} style={styles.photoPreview} resizeMode="cover" />
-                    </View>
-                  )}
                 </>
               )}
 
@@ -930,8 +983,13 @@ const styles = StyleSheet.create({
   fieldHint: { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
 
   // Aperçu photo
-  photoPreviewWrap: { alignItems: 'center', marginBottom: 16 },
+  photoPreviewWrap: { alignItems: 'center', marginBottom: 8 },
   photoPreview: { width: '100%', height: 160, borderRadius: 12 },
+  photoActions: { flexDirection: 'row', gap: 16, marginTop: 8 },
+  photoActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  photoActionText: { fontSize: 13, fontWeight: '700' },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: PRIMARY, borderStyle: 'dashed', borderRadius: 12, paddingVertical: 22 },
+  uploadBtnText: { fontSize: 15, fontWeight: '700', color: PRIMARY },
 
   // Sélection allergènes
   allergenSummary: { marginTop: 8, backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },

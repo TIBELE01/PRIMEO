@@ -1,6 +1,6 @@
 // Tests unitaires — gestion des tables de restaurant (couverts, emplacement).
 const mockPrisma = {
-  property: { findUnique: jest.fn() },
+  property: { findUnique: jest.fn(), update: jest.fn() },
   restaurantTable: {
     findMany: jest.fn(),
     create: jest.fn(),
@@ -94,5 +94,25 @@ describe('restaurantService — visibilité des plats (modération)', () => {
   it('vue PROPRIÉTAIRE : refuse un non-propriétaire (403)', async () => {
     mockPrisma.property.findUnique.mockResolvedValue({ ownerId: 'autre' });
     await expect(restaurantService.getMenuItemsForOwner(PID, OWNER)).rejects.toMatchObject({ statusCode: 403 });
+  });
+});
+
+describe('restaurantService — updateSettings (réservation de tables)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('met à jour tableReservationEnabled après vérification de propriété', async () => {
+    mockPrisma.property.findUnique.mockResolvedValue({ ownerId: OWNER });
+    mockPrisma.property.update.mockResolvedValue({ id: PID, tableReservationEnabled: true });
+    await restaurantService.updateSettings(PID, OWNER, { tableReservationEnabled: true });
+    expect(mockPrisma.property.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PID }, data: { tableReservationEnabled: true } }),
+    );
+  });
+
+  it('refuse un non-propriétaire (403)', async () => {
+    mockPrisma.property.findUnique.mockResolvedValue({ ownerId: 'autre' });
+    await expect(restaurantService.updateSettings(PID, OWNER, { tableReservationEnabled: true }))
+      .rejects.toMatchObject({ statusCode: 403 });
+    expect(mockPrisma.property.update).not.toHaveBeenCalled();
   });
 });

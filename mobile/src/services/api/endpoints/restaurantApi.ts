@@ -20,6 +20,9 @@ export const restaurantApi = {
 
   // Restaurant unique du compte connecté (id auto-résolu côté serveur)
   getMyRestaurant: () => apiClient.get('/restaurant'),
+  // Configuration du restaurant (ex : activation de la réservation de tables)
+  updateMyRestaurant: (data: { tableReservationEnabled?: boolean }) =>
+    apiClient.patch('/restaurant', data),
   // Menus du compte connecté (id auto-résolu) — vue gestion (tous statuts) / publique
   getMyMenuManage: () => apiClient.get('/restaurant/menu/all'),
   getMyMenu: () => apiClient.get('/restaurant/menu'),

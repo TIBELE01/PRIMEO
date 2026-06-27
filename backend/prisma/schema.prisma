@@ -555,6 +555,8 @@ model Property {
   // Spécifique restaurants (§8.3, §8.4)
   cuisineType  String?
   openingHours Json? // { lun: ["12:00-14:00","19:00-22:00"], ... }
+  // Réservation de tables activable par le restaurateur (désactivée par défaut).
+  tableReservationEnabled Boolean @default(false)
 
   // Spécifique immobilier — date de disponibilité estimée
   availableFrom DateTime?

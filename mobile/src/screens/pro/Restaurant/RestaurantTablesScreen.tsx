@@ -24,6 +24,7 @@ export default function RestaurantTablesScreen() {
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [reservationEnabled, setReservationEnabled] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState<RestaurantTable | null>(null);
@@ -35,10 +36,19 @@ export default function RestaurantTablesScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Un échec réseau ne doit pas être confondu avec « aucune table ».
-      const propRes = await propertiesApi.getMyListings();
-      const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
-      const pid: string = listings[0]?.id ?? '';
+      // Résout le restaurant + son paramètre de réservation via /api/restaurant
+      // (repli getMyListings). Un échec réseau ne vaut pas « aucune table ».
+      let pid = '';
+      try {
+        const r = await restaurantApi.getMyRestaurant();
+        const resto: any = r.data?.data ?? r.data;
+        pid = resto?.id ?? '';
+        setReservationEnabled(!!resto?.tableReservationEnabled);
+      } catch {
+        const propRes = await propertiesApi.getMyListings();
+        const listings: any[] = propRes.data?.data ?? propRes.data ?? [];
+        pid = listings[0]?.id ?? '';
+      }
       setPropertyId(pid || null);
       setLoadFailed(false);
       if (!pid) { setTables([]); setLoading(false); return; }
@@ -50,6 +60,16 @@ export default function RestaurantTablesScreen() {
       setLoading(false);
     }
   }, []);
+
+  const handleToggleReservation = async (value: boolean) => {
+    setReservationEnabled(value); // optimiste
+    try {
+      await restaurantApi.updateMyRestaurant({ tableReservationEnabled: value });
+    } catch {
+      setReservationEnabled(!value); // revert
+      Alert.alert('Erreur', 'Impossible de mettre à jour le paramètre.');
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -138,6 +158,17 @@ export default function RestaurantTablesScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageHeader title="Tables" />
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Configuration : activer la réservation de tables (désactivée par défaut) */}
+        <View style={styles.configCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.configTitle}>Activer la réservation de tables</Text>
+            <Text style={styles.configSub}>
+              Si activé, les clients peuvent réserver une table depuis votre fiche. Sinon, seul « Commander » est proposé.
+            </Text>
+          </View>
+          <Switch value={reservationEnabled} onValueChange={handleToggleReservation} trackColor={{ true: PRIMARY }} />
+        </View>
+
         <View style={styles.summary}>
           <Text style={styles.summaryText}>{tables.length} table{tables.length > 1 ? 's' : ''}</Text>
           <Text style={styles.summaryText}>{totalSeats} couverts actifs</Text>
@@ -205,6 +236,9 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   summary: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingHorizontal: 4 },
   summaryText: { fontSize: 14, fontWeight: '700', color: '#374151' },
+  configCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0' },
+  configTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  configSub: { fontSize: 12, color: '#6B7280', marginTop: 2, lineHeight: 16 },
   emptyText: { color: '#6B7280', textAlign: 'center', fontSize: 15 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#F0F0F0' },
   cardInactive: { opacity: 0.55 },

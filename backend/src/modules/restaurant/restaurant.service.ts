@@ -114,6 +114,19 @@ export const restaurantService = {
     await prisma.restaurantTable.delete({ where: { id: tableId } });
   },
 
+  // Configuration du restaurant (ex : activation de la réservation de tables).
+  // Désactiver n'annule PAS les réservations existantes — c'est seulement
+  // l'affichage du bouton côté client qui est conditionné.
+  async updateSettings(propertyId: string, ownerId: string, data: { tableReservationEnabled?: boolean }) {
+    await requireOwnership(propertyId, ownerId);
+    return prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        ...(data.tableReservationEnabled !== undefined ? { tableReservationEnabled: data.tableReservationEnabled } : {}),
+      },
+    });
+  },
+
   // Menu items (§8.4)
   // includeAll=true : vue propriétaire (tous statuts). false : vue client
   // (uniquement les plats validés `approved` et disponibles).

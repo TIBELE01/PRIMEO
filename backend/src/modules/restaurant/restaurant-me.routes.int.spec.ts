@@ -30,6 +30,7 @@ jest.mock('./restaurant.service', () => ({
     getMenuItemsForOwner: jest.fn(async () => [{ id: 'm1', status: 'pending' }, { id: 'm2', status: 'approved' }]),
     getTables: jest.fn(async () => [{ id: 't1', name: 'Table 1', seats: 4 }]),
     getTimeSlots: jest.fn(async () => []),
+    updateSettings: jest.fn(async () => ({ id: 'resto-xyz', tableReservationEnabled: true })),
   },
 }));
 
@@ -63,5 +64,12 @@ describe('/api/restaurant — ID auto-résolu depuis le compte', () => {
     expect(res.status).toBe(200);
     expect(restaurantService.getMenuItemsForOwner).toHaveBeenCalledWith('resto-xyz', 'owner-1');
     expect(res.body.data).toHaveLength(2);
+  });
+
+  it('PATCH /api/restaurant met à jour la config (réservation de tables)', async () => {
+    const res = await request(app).patch('/api/restaurant').send({ tableReservationEnabled: true });
+    expect(res.status).toBe(200);
+    expect(restaurantService.updateSettings).toHaveBeenCalledWith('resto-xyz', 'owner-1', { tableReservationEnabled: true });
+    expect(res.body.data).toMatchObject({ tableReservationEnabled: true });
   });
 });

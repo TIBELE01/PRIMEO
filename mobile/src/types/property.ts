@@ -63,6 +63,7 @@ export interface Property {
   cuisineType?: string;          // restaurant
   openingHours?: string;         // restaurant
   capacity?: number;             // restaurant — seats
+  tableReservationEnabled?: boolean; // restaurant — réservation de tables activée
   menu?: MenuItem[];             // restaurant
   documents?: RealEstateDocument[]; // real_estate (legacy)
   subType?: 'rent' | 'buy_house' | 'buy_land'; // real_estate

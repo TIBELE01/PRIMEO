@@ -16,7 +16,7 @@ import { RestaurantReservationModal } from '../PropertyDetail/components/Restaur
 const PRIMARY = '#DC2626';
 type Props = ClientScreenProps<'RestaurantMenu'>;
 
-interface Resto { id: string; name?: string; title?: string; city?: string; capacity?: number; maxGuests?: number; cuisineType?: string }
+interface Resto { id: string; name?: string; title?: string; city?: string; capacity?: number; maxGuests?: number; cuisineType?: string; tableReservationEnabled?: boolean }
 interface MenuItem { id: string; section: string; name: string; description?: string | null; price: number; photoUrl?: string | null }
 interface Table { id: string; name: string; seats: number; location?: string | null; isActive: boolean }
 
@@ -189,10 +189,13 @@ export default function RestaurantMenuScreen({ navigation, route }: Props) {
 
       {/* ── Barre d'actions ───────────────────────────────────────── */}
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.footerBtn, styles.reserveBtn]} onPress={() => setShowReserve(true)}>
-          <Ionicons name="calendar-outline" size={18} color={PRIMARY} />
-          <Text style={[styles.footerBtnText, { color: PRIMARY }]}>Réserver une table</Text>
-        </TouchableOpacity>
+        {/* « Réserver une table » uniquement si le restaurant l'a activé */}
+        {selected?.tableReservationEnabled && (
+          <TouchableOpacity style={[styles.footerBtn, styles.reserveBtn]} onPress={() => setShowReserve(true)}>
+            <Ionicons name="calendar-outline" size={18} color={PRIMARY} />
+            <Text style={[styles.footerBtnText, { color: PRIMARY }]}>Réserver une table</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={[styles.footerBtn, styles.orderBtn]} onPress={goOrder} disabled={menus.length === 0}>
           <Ionicons name="cart-outline" size={18} color="#fff" />
           <Text style={[styles.footerBtnText, { color: '#fff' }]}>Commander</Text>
