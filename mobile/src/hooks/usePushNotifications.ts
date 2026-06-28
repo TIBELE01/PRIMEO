@@ -1,5 +1,6 @@
 // usePushNotifications — registers for push on login, wires up notification listeners.
 import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { notificationsService } from '../services/notifications/onesignal';
 import { useAuthStore } from '../store/authStore';
@@ -12,6 +13,10 @@ export const usePushNotifications = (): void => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    // expo-notifications n'est PAS supporté sur le web (react-native-web) :
+    // getLastNotificationResponseAsync & co. sont undefined → crash au login.
+    // Le push n'existe pas sur web, on neutralise tout le hook.
+    if (Platform.OS === 'web') return;
 
     // Register device token and send to backend
     notificationsService
