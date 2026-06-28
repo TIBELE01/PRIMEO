@@ -1,6 +1,6 @@
 // Zustand auth store — session state, silent restore, secure token management
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from '../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { STORAGE_KEYS } from '../constants/storageKeys';

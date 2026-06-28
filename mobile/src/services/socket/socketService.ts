@@ -1,6 +1,6 @@
 // Socket.io client — real-time messaging with /chat namespace and JWT auth
 import { io, Socket } from 'socket.io-client';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from '../secureStorage';
 import Constants from 'expo-constants';
 import { useChatStore } from '../../store/chatStore';
 

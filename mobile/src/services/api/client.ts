@@ -1,6 +1,6 @@
 // Axios instance — JWT injection, queue-based 401 refresh, automatic logout on failure
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from '../secureStorage';
 import { API_URL } from '../../constants/config';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 

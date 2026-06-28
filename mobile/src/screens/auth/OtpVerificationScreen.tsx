@@ -4,7 +4,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from '../../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/authStore';

@@ -11,7 +11,7 @@
 //   4. Les tokens sont stockés comme pour un login classique (SecureStore).
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from './secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SUPABASE_URL } from '../constants/config';
 import { STORAGE_KEYS } from '../constants/storageKeys';

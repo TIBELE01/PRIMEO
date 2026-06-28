@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as SecureStore from 'expo-secure-store';
+import { secureStore as SecureStore } from '../../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api/endpoints/auth';
