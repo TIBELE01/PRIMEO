@@ -213,7 +213,7 @@ export function HomeScreen() {
       if (popRes.status  === 'fulfilled') { const d = normalizeProperties(popRes.value.data?.data?.properties ?? popRes.value.data?.data ?? []); setPopular(d); AsyncStorage.setItem(CACHE_POPULAR, JSON.stringify(d)).catch(() => null); }
       if (newRes.status  === 'fulfilled') { const d = normalizeProperties(newRes.value.data?.data?.properties ?? newRes.value.data?.data ?? []); setNewest(d);  AsyncStorage.setItem(CACHE_NEWEST,  JSON.stringify(d)).catch(() => null); }
       if (forRes.status  === 'fulfilled') { const d = normalizeProperties(forRes.value.data?.data?.properties ?? forRes.value.data?.data ?? []); setForYou(d);  AsyncStorage.setItem(CACHE_FOR_YOU, JSON.stringify(d)).catch(() => null); }
-      if (statRes.status === 'fulfilled') { const st = (statRes.value.data as any)?.data ?? DEFAULT_STATS; setStats(st); AsyncStorage.setItem(CACHE_STATS, JSON.stringify(st)).catch(() => null); }
+      if (statRes.status === 'fulfilled') { const body = statRes.value.data as any; const st = (body?.data ?? body) ?? DEFAULT_STATS; setStats(st); AsyncStorage.setItem(CACHE_STATS, JSON.stringify(st)).catch(() => null); }
       else setStats(DEFAULT_STATS);
     } else {
       const [cp, cn, cf, cs] = await Promise.all([AsyncStorage.getItem(CACHE_POPULAR), AsyncStorage.getItem(CACHE_NEWEST), AsyncStorage.getItem(CACHE_FOR_YOU), AsyncStorage.getItem(CACHE_STATS)]);
@@ -275,7 +275,7 @@ export function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={s.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6FB" />
 
       <ScrollView
@@ -318,7 +318,7 @@ export function HomeScreen() {
             {statCards.map(card => (
               <View key={card.label} style={s.statCard}>
                 <Text style={s.statIcon}>{card.icon}</Text>
-                <Text style={s.statValue}>{(card.value ?? 0).toLocaleString('fr-FR')}+</Text>
+                <Text style={s.statValue}>{(card.value ?? 0).toLocaleString('fr-FR')}</Text>
                 <Text style={s.statLabel}>{card.label}</Text>
               </View>
             ))}
@@ -515,19 +515,24 @@ const s = StyleSheet.create({
   secTitleTextOrange: { fontSize: 13, fontWeight: '800', color: '#fff', letterSpacing: 1.0 },
   seeAll: { fontSize: 12.5, color: '#1056E0', fontWeight: '700' },
 
-  /* ── Stats ── */
-  statsSection: { backgroundColor: '#03154A', paddingVertical: 32, marginBottom: 44 },
+  /* ── Stats (fond blanc + ombre/bordure pour le démarquer) ── */
+  statsSection: {
+    backgroundColor: '#fff',
+    paddingVertical: 28, marginBottom: 44,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#EEF0F3',
+    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
+  },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 },
   statCard: {
     width: '47%',
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: '#EEF0F3',
     borderRadius: 16, padding: 16, alignItems: 'center', gap: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 10,
+    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   statIcon:  { fontSize: 28 },
-  statValue: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  statLabel: { fontSize: 11, color: '#93C5FD', textAlign: 'center' },
+  statValue: { fontSize: 22, fontWeight: '900', color: '#1056E0' },
+  statLabel: { fontSize: 11, color: '#6B7280', textAlign: 'center', fontWeight: '600' },
 
   /* ── Innovations ── */
   innovGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },

@@ -220,7 +220,7 @@ export function MyBookingsScreen() {
   const tabData = bookings.filter(b => getTab(b) === activeTab);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <NetworkStatus />
       <PageHeader title="Mes réservations" />
       {isFromCache && (

@@ -227,7 +227,7 @@ export function SearchScreen() {
   const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={s.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" />
       <NetworkStatus />
 

@@ -181,7 +181,7 @@ export function FavoritesScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <PageHeader title="Favoris" />
         <View style={styles.centered}><ActivityIndicator size="large" color="#1056E0" /></View>
       </SafeAreaView>
@@ -189,7 +189,7 @@ export function FavoritesScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <PageHeader title="Favoris" />
       <Text style={styles.count}>{favorites.length} propriété{favorites.length !== 1 ? 's' : ''}</Text>
 

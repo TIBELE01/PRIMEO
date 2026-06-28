@@ -1,26 +1,32 @@
-﻿// Login screen — email + password, 2FA redirect, auto-session on success
+// Login screen — design premium harmonisé avec WelcomeScreen : hero sombre de
+// marque (logo + message d'accueil), carte de formulaire blanche arrondie, champs
+// avec icônes, boutons aux couleurs Primeo. Logique inchangée (2FA, Google, session).
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
+  ActivityIndicator, ScrollView, Image, Dimensions, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme, type Theme } from '../../theme/ThemeProvider';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api/endpoints/auth';
 import { signInWithGoogle } from '../../services/googleAuth';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
+import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
 
 type Props = AuthScreenProps<'Login'>;
 
+const { height } = Dimensions.get('window');
+const BRAND_BLUE = '#1056E0';
+const DARK = '#040C1F';
+
 export function LoginScreen({ navigation }: Props) {
-  const { theme } = useTheme();
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);
-  const s = makeStyles(theme);
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +55,6 @@ export function LoginScreen({ navigation }: Props) {
 
       setTokens(data.accessToken as string, data.refreshToken as string);
       setUser(data.user);
-      // Statistique anonyme (rôle générique uniquement, soumis au consentement)
       trackEvent('login', undefined, (data.user as { accountType?: string })?.accountType === 'client' ? 'client' : 'professional');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string; message?: string } } };
@@ -60,61 +65,74 @@ export function LoginScreen({ navigation }: Props) {
     }
   };
 
-  // Connexion Google (Supabase OAuth) — réservée aux comptes clients ;
-  // le backend refuse les comptes professionnels avec un message explicite.
   const handleGoogleLogin = async () => {
     setError(null);
     setGoogleLoading(true);
     try {
       const result = await signInWithGoogle();
       if (result.status === 'error') setError(result.message);
-      // 'success' : le store est mis à jour, la navigation bascule automatiquement.
-      // 'cancelled' : l'utilisateur a fermé le navigateur, rien à faire.
     } finally {
       setGoogleLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <View style={s.container}>
+      <StatusBar barStyle="light-content" backgroundColor={DARK} />
+      {/* Glows ambiants (mêmes que la page d'atterrissage) */}
+      <View style={s.glowTop} />
+      <View style={s.glowMid} />
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          <View style={s.header}>
-            <Text style={s.title}>Connexion</Text>
-            <Text style={s.subtitle}>Bienvenue sur Primeo</Text>
-          </View>
+          {/* ── Hero de marque ── */}
+          <SafeAreaView edges={['top']} style={s.heroArea}>
+            <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logo} />
+            <Text style={s.welcome}>Bienvenue sur Primeo</Text>
+            <Text style={s.welcomeSub}>La plateforme de confiance pour vos réservations</Text>
+          </SafeAreaView>
 
-          <View style={s.form}>
+          {/* ── Carte formulaire ── */}
+          <View style={s.card}>
+            <View style={s.cardHandle} />
+            <Text style={s.cardTitle}>Connexion</Text>
+            <Text style={s.cardSub}>Heureux de vous revoir 👋</Text>
+
             {error && (
               <View style={s.errorBox} accessibilityLiveRegion="polite">
+                <Ionicons name="alert-circle" size={18} color="#DC2626" />
                 <Text style={s.errorText}>{error}</Text>
               </View>
             )}
 
             <View style={s.field}>
               <Text style={s.label}>Adresse e-mail</Text>
-              <TextInput
-                style={s.input}
-                placeholder="vous@exemple.ci"
-                placeholderTextColor={theme.colors.textDisabled}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                textContentType="emailAddress"
-                autoComplete="email"
-                value={email}
-                onChangeText={setEmail}
-                accessibilityLabel="Champ e-mail"
-              />
+              <View style={s.inputRow}>
+                <Ionicons name="mail-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
+                <TextInput
+                  style={s.input}
+                  placeholder="vous@exemple.ci"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  textContentType="emailAddress"
+                  autoComplete="email"
+                  value={email}
+                  onChangeText={setEmail}
+                  accessibilityLabel="Champ e-mail"
+                />
+              </View>
             </View>
 
             <View style={s.field}>
               <Text style={s.label}>Mot de passe</Text>
-              <View style={s.pwRow}>
+              <View style={s.inputRow}>
+                <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
                 <TextInput
-                  style={[s.input, { flex: 1 }]}
+                  style={s.input}
                   placeholder="••••••••"
-                  placeholderTextColor={theme.colors.textDisabled}
+                  placeholderTextColor="#9CA3AF"
                   secureTextEntry={!showPw}
                   textContentType="password"
                   autoComplete="password"
@@ -130,7 +148,7 @@ export function LoginScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
-                  <Text style={s.eyeText}>{showPw ? '🙈' : '👁'}</Text>
+                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color="#6B7280" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -138,20 +156,18 @@ export function LoginScreen({ navigation }: Props) {
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} accessibilityRole="link">
               <Text style={s.forgotLink}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
-          </View>
 
-          <View style={s.footer}>
             <TouchableOpacity
-              style={[s.submitBtn, (!canSubmit || loading) && s.btnDisabled]}
+              style={[s.primaryBtn, (!canSubmit || loading) && s.btnDisabled]}
               onPress={handleLogin}
               disabled={!canSubmit || loading}
               accessibilityRole="button"
               accessibilityLabel="Se connecter"
+              activeOpacity={0.88}
             >
               {loading
                 ? <ActivityIndicator color="#FFFFFF" />
-                : <Text style={s.submitBtnText}>Se connecter</Text>
-              }
+                : <Text style={s.primaryBtnText}>Se connecter</Text>}
             </TouchableOpacity>
 
             <View style={s.dividerRow}>
@@ -166,19 +182,19 @@ export function LoginScreen({ navigation }: Props) {
               disabled={googleLoading || loading}
               accessibilityRole="button"
               accessibilityLabel="Se connecter avec Google"
+              activeOpacity={0.88}
             >
               {googleLoading
-                ? <ActivityIndicator color={theme.colors.text} />
+                ? <ActivityIndicator color="#0F1729" />
                 : (
                   <>
                     <Text style={s.googleIcon}>G</Text>
-                    <Text style={s.googleBtnText}>Se connecter avec Google</Text>
+                    <Text style={s.googleBtnText}>Continuer avec Google</Text>
                   </>
-                )
-              }
+                )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register', { role: 'client' })} accessibilityRole="link">
+            <TouchableOpacity onPress={() => navigation.navigate('Register', { role: 'client' })} accessibilityRole="link" style={s.registerWrap}>
               <Text style={s.registerLink}>
                 Pas encore de compte ?{' '}
                 <Text style={s.registerLinkBold}>Créer un compte</Text>
@@ -191,47 +207,73 @@ export function LoginScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel="Inscription professionnelle"
               accessibilityHint="Ouvre le formulaire d'inscription pour les professionnels"
+              activeOpacity={0.88}
             >
-              <Text style={s.proBtnText}>🏢 Inscription professionnelle</Text>
+              <Ionicons name="briefcase-outline" size={17} color={BRAND_BLUE} />
+              <Text style={s.proBtnText}>Inscription professionnelle</Text>
             </TouchableOpacity>
           </View>
 
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function makeStyles(t: Theme) {
-  return StyleSheet.create({
-    safe:             { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    scroll:           { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24, justifyContent: 'space-between', gap: 32 },
-    header:           { gap: 4 },
-    title:            { fontSize: 28, fontWeight: '800', color: t.colors.text },
-    subtitle:         { fontSize: 16, color: t.colors.textSecondary },
-    form:             { gap: 16 },
-    field:            { gap: 6 },
-    label:            { fontSize: 14, fontWeight: '600', color: t.colors.text },
-    input:            { borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: t.colors.text, backgroundColor: t.colors.surface },
-    pwRow:            { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    eyeBtn:           { padding: 8 },
-    eyeText:          { fontSize: 18 },
-    forgotLink:       { color: t.colors.primary, fontSize: 14, textAlign: 'right', marginTop: 4 },
-    errorBox:         { backgroundColor: t.colors.errorLight, borderRadius: 10, padding: 12 },
-    errorText:        { color: t.colors.error, fontSize: 14 },
-    footer:           { gap: 16 },
-    submitBtn:        { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
-    btnDisabled:      { opacity: 0.5 },
-    submitBtnText:    { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-    registerLink:     { textAlign: 'center', color: t.colors.textSecondary, fontSize: 14 },
-    registerLinkBold: { color: t.colors.primary, fontWeight: '700' },
-    proBtn:           { borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-    proBtnText:       { fontSize: 15, fontWeight: '600', color: t.colors.text },
-    dividerRow:       { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    dividerLine:      { flex: 1, height: 1, backgroundColor: t.colors.border },
-    dividerText:      { fontSize: 13, color: t.colors.textSecondary, fontWeight: '600' },
-    googleBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, backgroundColor: t.colors.surface },
-    googleIcon:       { fontSize: 18, fontWeight: '900', color: '#4285F4' },
-    googleBtnText:    { fontSize: 15, fontWeight: '600', color: t.colors.text },
-  });
-}
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: DARK },
+  scroll: { flexGrow: 1 },
+
+  glowTop: { position: 'absolute', width: 380, height: 380, borderRadius: 190, top: -120, left: -60, backgroundColor: 'rgba(16,86,224,0.18)' },
+  glowMid: { position: 'absolute', width: 260, height: 260, borderRadius: 130, top: height * 0.18, right: -80, backgroundColor: 'rgba(16,86,224,0.10)' },
+
+  // ── Hero ──
+  heroArea: { alignItems: 'center', paddingTop: 24, paddingBottom: 18 },
+  logo: { width: 96, height: 96, marginBottom: 10, shadowColor: BRAND_BLUE, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.55, shadowRadius: 16, elevation: 10 },
+  welcome: { fontSize: 22, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.3 },
+  welcomeSub: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, textAlign: 'center', paddingHorizontal: 24 },
+
+  // ── Carte ──
+  card: {
+    flex: 1, backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    paddingTop: 14, paddingHorizontal: 24, paddingBottom: 32,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 20,
+  },
+  cardHandle: { width: 38, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB', alignSelf: 'center', marginBottom: 18 },
+  cardTitle: { fontSize: 24, fontWeight: '900', color: '#0F1729', letterSpacing: -0.3 },
+  cardSub: { fontSize: 14, color: '#64748B', marginTop: 4, marginBottom: 20 },
+
+  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 12, padding: 12, marginBottom: 14 },
+  errorText: { color: '#DC2626', fontSize: 13.5, flex: 1 },
+
+  field: { marginBottom: 14 },
+  label: { fontSize: 13.5, fontWeight: '700', color: '#374151', marginBottom: 7 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, backgroundColor: '#F9FAFB', paddingHorizontal: 12 },
+  inputIcon: { marginRight: 8 },
+  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: '#0F1729' },
+  eyeBtn: { padding: 6 },
+  forgotLink: { color: BRAND_BLUE, fontSize: 13.5, fontWeight: '600', textAlign: 'right', marginTop: 2, marginBottom: 18 },
+
+  primaryBtn: {
+    backgroundColor: BRAND_BLUE, paddingVertical: 17, borderRadius: 16, alignItems: 'center',
+    shadowColor: BRAND_BLUE, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
+  },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
+  btnDisabled: { opacity: 0.5 },
+
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
+  dividerText: { fontSize: 13, color: '#9CA3AF', fontWeight: '600' },
+
+  googleBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 16, paddingVertical: 15, backgroundColor: '#fff' },
+  googleIcon: { fontSize: 18, fontWeight: '900', color: '#4285F4' },
+  googleBtnText: { fontSize: 15, fontWeight: '700', color: '#0F1729' },
+
+  registerWrap: { marginTop: 20, marginBottom: 4 },
+  registerLink: { textAlign: 'center', color: '#64748B', fontSize: 14 },
+  registerLinkBold: { color: BRAND_BLUE, fontWeight: '800' },
+
+  proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 2, borderColor: BRAND_BLUE, borderRadius: 16, paddingVertical: 14, marginTop: 14 },
+  proBtnText: { fontSize: 15, fontWeight: '700', color: BRAND_BLUE },
+});

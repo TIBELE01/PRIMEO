@@ -190,7 +190,7 @@ const DEFAULT_FAQ = [
 ];
 
 const STATS_CACHE_KEY = 'website:stats';
-const STATS_TTL = 3600; // 1 heure
+const STATS_TTL = 60; // 60 s — stats quasi temps réel (rafraîchies à chaque ouverture)
 
 // ── Public read methods ───────────────────────────────────────────────────────
 

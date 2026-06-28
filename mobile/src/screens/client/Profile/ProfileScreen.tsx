@@ -116,7 +116,7 @@ export function ProfileScreen({ navigation }: Props) {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <ActivityIndicator color={ACCENT} style={{ marginTop: 60 }} />
       </SafeAreaView>
     );
@@ -221,7 +221,7 @@ export function ProfileScreen({ navigation }: Props) {
   // ── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#1056E0" />
       <PageHeader title="Mon profil" />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
