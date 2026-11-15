@@ -5,6 +5,12 @@ jest.mock('../utils/logger', () => ({
 }));
 jest.mock('@sentry/node', () => ({ captureMessage: jest.fn(), setUser: jest.fn() }));
 
+const mockIsSessionVerified = jest.fn();
+jest.mock('../utils/two-factor', () => ({
+  isTwoFactorEnforced: (u: { app_metadata?: { twoFactorEnabled?: boolean } }) => u?.app_metadata?.twoFactorEnabled === true,
+  isSessionVerified: (...a: unknown[]) => mockIsSessionVerified(...a),
+}));
+
 const mockGetUser = jest.fn();
 jest.mock('../../config/supabase.config', () => ({
   supabaseAdmin: { auth: { getUser: (...a: unknown[]) => mockGetUser(...a) } },
@@ -94,5 +100,36 @@ describe('authenticate — statut du compte', () => {
 
   it('refuse (401) sans en-tête Authorization', async () => {
     expect(await run(makeReq({ headers: {} as Request['headers'] }))).toMatchObject({ statusCode: 401 });
+  });
+
+  // ── 2FA : session ouverte sans second facteur ───────────────────────────────
+
+  describe('compte avec 2FA actif', () => {
+    beforeEach(() => {
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: 'u1', email: 'a@b.ci', app_metadata: { role: 'client', twoFactorEnabled: true } } },
+        error: null,
+      });
+      mockFindUnique.mockResolvedValue({ accountType: 'client', status: 'active', suspendedByAdmin: false });
+    });
+
+    it('refuse (401) une session qui n\'a pas passé le second facteur', async () => {
+      mockIsSessionVerified.mockResolvedValue(false);
+      const req = makeReq();
+      expect(await run(req)).toMatchObject({ statusCode: 401, details: { code: 'TWO_FACTOR_REQUIRED' } });
+      expect(req.user).toBeUndefined();
+    });
+
+    it('accepte une session ayant passé le second facteur', async () => {
+      mockIsSessionVerified.mockResolvedValue(true);
+      expect(await run(makeReq())).toBeUndefined();
+      expect(mockIsSessionVerified).toHaveBeenCalledWith('tok');
+    });
+  });
+
+  it('ne consulte pas les sessions vérifiées pour un compte sans 2FA', async () => {
+    mockFindUnique.mockResolvedValue({ accountType: 'client', status: 'active', suspendedByAdmin: false });
+    expect(await run(makeReq())).toBeUndefined();
+    expect(mockIsSessionVerified).not.toHaveBeenCalled();
   });
 });

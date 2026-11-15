@@ -36,4 +36,4 @@ professionalRouter.post('/kyc', kycFields, validate(SubmitKycDto), submitKyc);
 professionalRouter.get('/kyc/status', getKycStatus);
 professionalRouter.post('/totp/setup', setupTotp);
 professionalRouter.post('/totp/confirm', validate(ConfirmTotpDto), confirmTotp);
-professionalRouter.delete('/totp', disableTotp);
+professionalRouter.delete('/totp', validate(ConfirmTotpDto), disableTotp);

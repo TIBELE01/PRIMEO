@@ -7,6 +7,7 @@ import { prisma } from '../../database/prisma.service';
 import { logger } from '../utils/logger';
 import { UserRole } from '../constants/roles';
 import { getAccountBlock } from '../utils/account-status';
+import { isTwoFactorEnforced, isSessionVerified } from '../utils/two-factor';
 
 // Seule route accessible à un compte désactivé volontairement : sa réactivation.
 const SELF_REACTIVATE_PATH = '/api/users/me/reactivate';
@@ -88,6 +89,15 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       if (!isSelfReactivation) {
         return next(new HttpError(403, block.message, { code: block.code }));
       }
+    }
+
+    // 2FA actif : seule une session ayant passé le second facteur est acceptée.
+    // Une session ouverte en appelant Supabase directement (mot de passe seul)
+    // possède un jeton valide mais n'a jamais validé de code TOTP.
+    if (isTwoFactorEnforced(user) && !(await isSessionVerified(token))) {
+      return next(
+        new HttpError(401, 'Vérification en deux étapes requise. Reconnectez-vous.', { code: 'TWO_FACTOR_REQUIRED' }),
+      );
     }
 
     const role = dbUser.accountType as UserRole;

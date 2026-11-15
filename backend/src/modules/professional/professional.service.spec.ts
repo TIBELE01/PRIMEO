@@ -42,6 +42,13 @@ const mockSupabaseAdmin = {
 };
 jest.mock('../../config/supabase.config', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 
+const mockTwoFactorService = {
+  setup: jest.fn(async () => ({ secret: 'SECRET123', qrCode: 'data:image/png;base64,abc123' })),
+  confirm: jest.fn(async () => undefined),
+  disable: jest.fn(async () => undefined),
+};
+jest.mock('../auth/two-factor.service', () => ({ twoFactorService: mockTwoFactorService }));
+
 jest.mock('../../common/utils/totp', () => ({
   generateTotpSecret: jest.fn(() => 'JBSWY3DPEHPK3PXP'),
   generateTotpUri: jest.fn(() => 'otpauth://totp/Primeo:u@test.ci?secret=JBSWY3DPEHPK3PXP'),
@@ -150,93 +157,24 @@ describe('professionalService.getKycStatus', () => {
   });
 });
 
-// ── setupTotp() ───────────────────────────────────────────────────────────────
+// ── 2FA : délégation au service central (modules/auth/two-factor.service) ─────
 
-describe('professionalService.setupTotp', () => {
+describe('professionalService — 2FA', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('generates a TOTP secret and QR code, stores secret in Supabase user_metadata', async () => {
-    const { generateTotpSecret, generateQrCode } = jest.requireMock('../../common/utils/totp') as Record<string, jest.Mock>;
-    mockPrisma.user.findUnique.mockResolvedValueOnce({ id: 'user-1', email: 'u@test.ci' });
-
+  it('setupTotp délègue au service 2FA', async () => {
     const result = await professionalService.setupTotp('user-1');
-
-    expect(result.secret).toBe('JBSWY3DPEHPK3PXP');
-    expect(result.qrCode).toBe('data:image/png;base64,abc123');
-    expect(generateTotpSecret).toHaveBeenCalled();
-    expect(generateQrCode).toHaveBeenCalled();
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
-      user_metadata: { twoFactorSecret: 'JBSWY3DPEHPK3PXP', twoFactorEnabled: false },
-    });
+    expect(result.secret).toBe('SECRET123');
+    expect(mockTwoFactorService.setup).toHaveBeenCalledWith('user-1');
   });
 
-  it('throws 404 when user not found in DB', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockPrisma.user.findUnique.mockResolvedValueOnce(null as any);
-    await expect(professionalService.setupTotp('ghost')).rejects.toMatchObject({ statusCode: 404 });
-  });
-});
-
-// ── confirmTotp() ─────────────────────────────────────────────────────────────
-
-describe('professionalService.confirmTotp', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('enables 2FA in Supabase user_metadata when code is valid', async () => {
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
-      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET', twoFactorEnabled: false } } },
-      error: null,
-    });
-
-    await professionalService.confirmTotp('user-1', '123456');
-
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
-      user_metadata: { twoFactorSecret: 'SECRET', twoFactorEnabled: true },
-    });
+  it('confirmTotp transmet le code et le jeton de la session courante', async () => {
+    await professionalService.confirmTotp('user-1', '123456', 'access-token');
+    expect(mockTwoFactorService.confirm).toHaveBeenCalledWith('user-1', '123456', 'access-token');
   });
 
-  it('throws 400 when TOTP setup has not been started (no secret)', async () => {
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
-      data: { user: { id: 'user-1', user_metadata: {} } },
-      error: null,
-    });
-    await expect(professionalService.confirmTotp('user-1', '123456')).rejects.toMatchObject({ statusCode: 400 });
-  });
-
-  it('throws 400 when TOTP code is invalid', async () => {
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
-      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET' } } },
-      error: null,
-    });
-    const { verifyTotp } = jest.requireMock('../../common/utils/totp') as { verifyTotp: jest.Mock };
-    verifyTotp.mockReturnValueOnce(false);
-
-    await expect(professionalService.confirmTotp('user-1', '000000')).rejects.toMatchObject({ statusCode: 400 });
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
-  });
-
-  it('throws 404 when Supabase user not found', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({ data: { user: null }, error: { message: 'not found' } } as any);
-    await expect(professionalService.confirmTotp('ghost', '123456')).rejects.toMatchObject({ statusCode: 404 });
-  });
-});
-
-// ── disableTotp() ─────────────────────────────────────────────────────────────
-
-describe('professionalService.disableTotp', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('clears twoFactorEnabled and twoFactorSecret in Supabase', async () => {
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
-      data: { user: { id: 'user-1', user_metadata: { twoFactorEnabled: true, twoFactorSecret: 'SEC', otherField: 'x' } } },
-      error: null,
-    });
-
-    await professionalService.disableTotp('user-1');
-
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
-      user_metadata: { otherField: 'x', twoFactorEnabled: false, twoFactorSecret: null },
-    });
+  it('disableTotp transmet le code TOTP exigé pour la désactivation', async () => {
+    await professionalService.disableTotp('user-1', '654321');
+    expect(mockTwoFactorService.disable).toHaveBeenCalledWith('user-1', '654321');
   });
 });

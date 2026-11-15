@@ -8,7 +8,7 @@ import {
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { validate } from '../../common/validators/validation.middleware';
-import { UpdateProfileDto, ChangePasswordDto, Confirm2faDto, DeactivateDto, DeleteAccountDto } from './dto/users.dto';
+import { UpdateProfileDto, ChangePasswordDto, Confirm2faDto, Disable2faDto, DeactivateDto, DeleteAccountDto } from './dto/users.dto';
 import { parseId } from '../../common/validators/parse-id.middleware';
 
 export const usersRouter = Router();
@@ -28,7 +28,7 @@ usersRouter.delete('/me',               validate(DeleteAccountDto), deleteAccoun
 // 2FA
 usersRouter.post('/me/2fa/setup',       setup2fa);
 usersRouter.post('/me/2fa/confirm',     validate(Confirm2faDto), confirm2fa);
-usersRouter.delete('/me/2fa',           disable2fa);
+usersRouter.delete('/me/2fa',           validate(Disable2faDto), disable2fa);
 
 // Admin
 usersRouter.get('/:id',                 authorize('admin'), parseId, getUserById);

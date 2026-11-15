@@ -20,6 +20,15 @@ import { env } from '../../config/env.config';
 import { orangeSmsConfig } from '../../config/orange-sms.config';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 import { getAccountBlock } from '../../common/utils/account-status';
+import {
+  readTwoFactor,
+  writeTwoFactor,
+  isTwoFactorEnforced,
+  markSessionVerified,
+  isSessionVerified,
+} from '../../common/utils/two-factor';
+import { getFailedAttempts, recordFailedAttempt, clearFailedAttempts } from '../../common/utils/attempt-limiter';
+import { TOTP_MAX_ATTEMPTS, TOTP_ATTEMPT_WINDOW_SECONDS } from './two-factor.service';
 
 // ─── Redis key helpers ────────────────────────────────────────────────────────
 
@@ -71,6 +80,12 @@ async function assertOtpRateLimit(phone: string): Promise<void> {
   if (entry.count > OTP_RATE_LIMIT) throw tooMany;
 }
 
+// Essais de code OTP autorisés par numéro avant invalidation du code
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_ATTEMPT_SCOPE = 'otp';
+// Essais de code TOTP à la connexion (par compte)
+const TOTP_LOGIN_SCOPE = 'totp_login';
+
 const BYPASS_OTP = '000000'; // code accepté UNIQUEMENT en développement quand le bypass est actif
 
 // Défense en profondeur : le bypass OTP n'est JAMAIS actif en production, même si
@@ -107,6 +122,8 @@ interface SafeUser {
   /** Statut KYC du profil professionnel (pending | approved | rejected). Null pour les clients. */
   kycStatus: string | null;
   kycRejectionReason?: string | null;
+  /** 2FA actif — renseigné quand l'information est disponible sans appel supplémentaire. */
+  twoFactorEnabled?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -356,9 +373,19 @@ export const authService = {
       }
       // Comparaison robuste : coercition en chaîne + trim (insensible au type
       // renvoyé par le cache et aux espaces éventuels autour du code saisi).
+      // Nombre d'essais borné par numéro : un code à 6 chiffres ne doit pas
+      // pouvoir être deviné par essais successifs, quelle que soit l'IP.
       if (String(storedOtp).trim() !== String(input.otp).trim()) {
+        const attempts = await recordFailedAttempt(OTP_ATTEMPT_SCOPE, input.phone, OTP_TTL);
+        if (attempts >= OTP_MAX_ATTEMPTS) {
+          await redisDel(OTP_KEY(input.phone));
+          otpMemory.delete(input.phone);
+          await clearFailedAttempts(OTP_ATTEMPT_SCOPE, input.phone);
+          throw new HttpError(429, 'Trop de codes incorrects. Demandez un nouveau code.');
+        }
         throw new HttpError(400, 'Code OTP incorrect');
       }
+      await clearFailedAttempts(OTP_ATTEMPT_SCOPE, input.phone);
     }
 
     const pendingRaw = (await redisGet(PENDING_USER_KEY(input.phone))) ?? pendingUserMemory.get(input.phone) ?? null;
@@ -568,10 +595,16 @@ export const authService = {
 
     // TOTP obligatoire si activé — stocker le refresh token Supabase en Redis
     const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
-    const twoFactorEnabled = sbUser?.user_metadata?.twoFactorEnabled as boolean | undefined;
-    const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
+    const twoFactor = readTwoFactor(sbUser);
 
-    if (twoFactorEnabled && twoFactorSecret) {
+    // Reprise des comptes configurés avant le passage à app_metadata : on déplace
+    // le secret (chiffré) hors de user_metadata, modifiable par l'utilisateur.
+    if (twoFactor.enabled && twoFactor.legacy && sbUser) {
+      await writeTwoFactor(sbUser, { enabled: true, secret: twoFactor.secret })
+        .catch((err) => logger.warn('Migration 2FA vers app_metadata échouée', { userId: user.id, error: (err as Error).message }));
+    }
+
+    if (twoFactor.enabled) {
       // Refresh token chiffré (AES-256-GCM) avant stockage en Redis,
       // et supprimé immédiatement après usage dans verifyTotp.
       await redisSet(
@@ -585,7 +618,7 @@ export const authService = {
     return {
       accessToken: signInData.session.access_token,
       refreshToken: signInData.session.refresh_token,
-      user: toSafeUser(user),
+      user: { ...toSafeUser(user), twoFactorEnabled: false },
     };
   },
 
@@ -676,10 +709,16 @@ export const authService = {
         .catch((err) => logger.warn('googleAuth: impossible de fixer app_metadata.role', { userId: sbUser.id, error: (err as Error).message }));
     }
 
+    // Compte client avec 2FA actif : l'identité Google fait office de second
+    // facteur (le mot de passe seul ne permet pas d'ouvrir une session OAuth).
+    // On enregistre la session, sinon elle serait refusée par l'API.
+    const twoFactorEnabled = isTwoFactorEnforced(sbUser);
+    if (twoFactorEnabled) await markSessionVerified(input.accessToken);
+
     return {
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
-      user: toSafeUser(user),
+      user: { ...toSafeUser(user), twoFactorEnabled },
       isNewUser,
     };
   },
@@ -694,18 +733,30 @@ export const authService = {
 
     const { supabaseRefreshToken } = JSON.parse(decryptSecret(pendingRaw)) as { supabaseRefreshToken: string };
 
-    // Lire le secret TOTP depuis Supabase user_metadata
+    // Essais bornés par compte (indépendamment de l'IP) : au-delà, la session en
+    // attente est détruite et il faut repasser par le mot de passe.
+    if ((await getFailedAttempts(TOTP_LOGIN_SCOPE, input.userId)) >= TOTP_MAX_ATTEMPTS) {
+      await redisDel(TOTP_PENDING_KEY(input.userId));
+      throw new HttpError(429, 'Trop de codes incorrects. Reconnectez-vous dans 15 minutes.');
+    }
+
     const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(input.userId);
-    const twoFactorSecret = sbUser?.user_metadata?.twoFactorSecret as string | undefined;
+    const twoFactorSecret = readTwoFactor(sbUser).secret;
     if (!twoFactorSecret) {
       throw new HttpError(400, 'Utilisateur introuvable ou 2FA non configuré');
     }
 
     const isValid = verifyTotpCode(twoFactorSecret, input.token);
     if (!isValid) {
+      const attempts = await recordFailedAttempt(TOTP_LOGIN_SCOPE, input.userId, TOTP_ATTEMPT_WINDOW_SECONDS);
+      if (attempts >= TOTP_MAX_ATTEMPTS) {
+        await redisDel(TOTP_PENDING_KEY(input.userId));
+        throw new HttpError(429, 'Trop de codes incorrects. Reconnectez-vous dans 15 minutes.');
+      }
       throw new HttpError(401, 'Code TOTP incorrect ou expiré');
     }
 
+    await clearFailedAttempts(TOTP_LOGIN_SCOPE, input.userId);
     await redisDel(TOTP_PENDING_KEY(input.userId));
 
     // Rafraîchir la session Supabase en attente pour obtenir de nouveaux tokens
@@ -723,10 +774,13 @@ export const authService = {
     });
     if (!user) throw new HttpError(400, 'Utilisateur introuvable');
 
+    // Cette session a passé le second facteur : elle seule sera acceptée par l'API.
+    await markSessionVerified(refreshData.session.access_token);
+
     return {
       accessToken: refreshData.session.access_token,
       refreshToken: refreshData.session.refresh_token,
-      user: toSafeUser(user),
+      user: { ...toSafeUser(user), twoFactorEnabled: true },
     };
   },
 
@@ -756,6 +810,16 @@ export const authService = {
     } catch (err) {
       logger.warn('refreshToken: impossible de charger le profil utilisateur', err);
     }
+
+    // Compte avec 2FA actif : seule une session ayant passé le second facteur
+    // peut être prolongée (une session ouverte directement auprès de Supabase,
+    // sans TOTP, est révoquée).
+    const twoFactorEnabled = isTwoFactorEnforced(data.session.user);
+    if (twoFactorEnabled && !(await isSessionVerified(data.session.access_token))) {
+      await supabaseAdmin.auth.admin.signOut(data.session.access_token).catch(() => null);
+      throw new HttpError(401, 'Vérification en deux étapes requise. Reconnectez-vous.', { code: 'TWO_FACTOR_REQUIRED' });
+    }
+    if (safeUser) safeUser.twoFactorEnabled = twoFactorEnabled;
 
     // Un compte banni, suspendu ou désactivé ne prolonge pas sa session : on
     // révoque la session fraîchement émise et on force une reconnexion.

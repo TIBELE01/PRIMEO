@@ -1,7 +1,7 @@
 // Users service — gestion complète du profil, désactivation, suppression
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { generateTotpSecret, generateTotpUri, generateQrCode, verifyTotp } from '../../common/utils/totp';
+import { twoFactorService } from '../auth/two-factor.service';
 import { sendEmail } from '../../common/utils/mailer';
 import { logger } from '../../common/utils/logger';
 import { UpdateProfileInput, ChangePasswordInput, DeactivateInput, DeleteAccountInput } from './dto/users.dto';
@@ -276,44 +276,17 @@ export const usersService = {
     }).catch(() => null);
   },
 
-  // ── 2FA (TOTP) — secrets stockés dans Supabase user_metadata ──────────────
+  // ── 2FA (TOTP) — voir modules/auth/two-factor.service.ts ──────────────────
 
   async setup2fa(userId: string): Promise<{ secret: string; qrCode: string }> {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-
-    const secret = generateTotpSecret();
-    // Stocker temporairement le secret (non encore confirmé) dans Supabase user_metadata
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { twoFactorSecret: secret, twoFactorEnabled: false },
-    });
-
-    const uri = generateTotpUri(secret, user.email);
-    const qrCode = await generateQrCode(uri);
-    return { secret, qrCode };
+    return twoFactorService.setup(userId);
   },
 
-  async confirm2fa(userId: string, token: string): Promise<void> {
-    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (error || !sbUser) throw new HttpError(404, 'Utilisateur introuvable');
-
-    const secret = sbUser.user_metadata?.twoFactorSecret as string | undefined;
-    if (!secret) throw new HttpError(400, 'Configuration 2FA non initialisée. Appelez d\'abord /2fa/setup.');
-    if (!verifyTotp(secret, token)) throw new HttpError(400, 'Code TOTP incorrect ou expiré');
-
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: true },
-    });
+  async confirm2fa(userId: string, token: string, accessToken?: string): Promise<void> {
+    return twoFactorService.confirm(userId, token, accessToken);
   },
 
-  async disable2fa(userId: string): Promise<void> {
-    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (error || !sbUser) throw new HttpError(404, 'Utilisateur introuvable');
-
-    if (!sbUser.user_metadata?.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
-
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
-    });
+  async disable2fa(userId: string, token: string | undefined): Promise<void> {
+    return twoFactorService.disable(userId, token);
   },
 };

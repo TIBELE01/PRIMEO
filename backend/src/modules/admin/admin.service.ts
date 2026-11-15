@@ -9,6 +9,7 @@ import { sendEmail, sendTestEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { setSupabaseBan } from '../../common/utils/account-status';
+import { twoFactorService } from '../auth/two-factor.service';
 import { supabaseAdmin } from '../../config/supabase.config';
 import { syncSupabaseRole } from '../../common/utils/role-sync';
 import { getMaintenanceState, invalidateMaintenanceCache } from '../../common/middleware/maintenance.middleware';
@@ -628,13 +629,7 @@ export const adminService = {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
-    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (error || !sbUser) throw new HttpError(404, 'Utilisateur Supabase introuvable');
-    if (!sbUser.user_metadata?.twoFactorEnabled) throw new HttpError(400, 'Le 2FA n\'est pas activé sur ce compte');
-
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
-    });
+    await twoFactorService.revokeByAdmin(userId);
 
     await createAudit({
       adminId,

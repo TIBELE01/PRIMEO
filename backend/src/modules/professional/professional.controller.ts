@@ -41,7 +41,7 @@ export async function setupTotp(req: Request, res: Response, next: NextFunction)
 
 export async function confirmTotp(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await professionalService.confirmTotp(req.user!.sub, req.body.token);
+    await professionalService.confirmTotp(req.user!.sub, req.body.token, req.headers.authorization?.split(' ')[1]);
     res.json({ message: '2FA enabled' });
   } catch (err) {
     next(err);
@@ -50,7 +50,7 @@ export async function confirmTotp(req: Request, res: Response, next: NextFunctio
 
 export async function disableTotp(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await professionalService.disableTotp(req.user!.sub);
+    await professionalService.disableTotp(req.user!.sub, req.body?.token);
     res.json({ message: '2FA disabled' });
   } catch (err) {
     next(err);

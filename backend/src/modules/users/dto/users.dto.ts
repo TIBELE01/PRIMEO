@@ -36,6 +36,11 @@ export const Confirm2faDto = z.object({
   token: z.string().length(6, 'Le code TOTP doit contenir exactement 6 chiffres'),
 });
 
+// Désactivation du 2FA : le code TOTP courant est exigé
+export const Disable2faDto = z.object({
+  token: z.string().length(6, 'Le code TOTP doit contenir exactement 6 chiffres'),
+});
+
 export const DeleteAccountDto = z.object({
   password: z.string(),
   reason:   z.string().max(500).optional(),

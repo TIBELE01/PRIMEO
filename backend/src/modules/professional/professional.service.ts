@@ -2,12 +2,11 @@
 import type { DocumentType } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
-import { generateTotpSecret, generateTotpUri, generateQrCode, verifyTotp } from '../../common/utils/totp';
+import { twoFactorService } from '../auth/two-factor.service';
 import { uploadToCloudinary } from '../../common/utils/s3-client';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { logger } from '../../common/utils/logger';
 import { SubmitKycInput } from './dto/professional.dto';
-import { supabaseAdmin } from '../../config/supabase.config';
 
 // Mapping nom de champ multipart → type de document KYC en base
 const KYC_DOCUMENT_FIELDS: Record<string, DocumentType> = {
@@ -160,40 +159,17 @@ export const professionalService = {
     return profile;
   },
 
+  // ── 2FA (TOTP) — voir modules/auth/two-factor.service.ts ──────────────────
+
   async setupTotp(userId: string) {
-    const secret = generateTotpSecret();
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new HttpError(404, 'User not found');
-
-    // Store secret temporarily in Supabase user_metadata (not enabled until confirmed)
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { twoFactorSecret: secret, twoFactorEnabled: false },
-    });
-
-    const uri = generateTotpUri(secret, user.email);
-    const qrCode = await generateQrCode(uri);
-    return { secret, qrCode };
+    return twoFactorService.setup(userId);
   },
 
-  async confirmTotp(userId: string, token: string) {
-    const { data: { user: sbUser }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (error || !sbUser) throw new HttpError(404, 'User not found');
-
-    const secret = sbUser.user_metadata?.twoFactorSecret as string | undefined;
-    if (!secret) throw new HttpError(400, 'TOTP setup not started');
-
-    const isValid = verifyTotp(secret, token);
-    if (!isValid) throw new HttpError(400, 'Invalid TOTP token');
-
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { ...sbUser.user_metadata, twoFactorEnabled: true },
-    });
+  async confirmTotp(userId: string, token: string, accessToken?: string) {
+    return twoFactorService.confirm(userId, token, accessToken);
   },
 
-  async disableTotp(userId: string) {
-    const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { ...sbUser?.user_metadata, twoFactorEnabled: false, twoFactorSecret: null },
-    });
+  async disableTotp(userId: string, token: string | undefined) {
+    return twoFactorService.disable(userId, token);
   },
 };

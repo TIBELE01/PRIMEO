@@ -10,5 +10,6 @@ export const usersApi = {
   deleteAccount:  (data: { password: string; reason?: string }) => apiClient.delete('/users/me', { data }),
   setup2fa:       ()                                    => apiClient.post('/users/me/2fa/setup', {}),
   confirm2fa:     (token: string)                       => apiClient.post('/users/me/2fa/confirm', { token }),
-  disable2fa:     ()                                    => apiClient.delete('/users/me/2fa'),
+  // Le code TOTP courant est exigé par le serveur pour désactiver le 2FA
+  disable2fa:     (token: string)                       => apiClient.delete('/users/me/2fa', { data: { token } }),
 };

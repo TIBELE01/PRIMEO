@@ -18,6 +18,13 @@ jest.mock('../../common/utils/s3-client', () => ({
   setCloudinaryAssetFolder: jest.fn(async () => undefined),
 }));
 
+const mockTwoFactorService = {
+  setup: jest.fn(async () => ({ secret: 'SECRET123', qrCode: 'data:image/png;base64,abc123' })),
+  confirm: jest.fn(async () => undefined),
+  disable: jest.fn(async () => undefined),
+};
+jest.mock('../auth/two-factor.service', () => ({ twoFactorService: mockTwoFactorService }));
+
 jest.mock('../../common/utils/totp', () => ({
   generateTotpSecret: jest.fn(() => 'SECRET123'),
   generateTotpUri: jest.fn(() => 'otpauth://totp/...'),
@@ -203,26 +210,20 @@ describe('usersService.deleteAccount', () => {
 });
 
 describe('usersService.2FA', () => {
-  it('setup2fa génère un secret, un QR code et stocke le secret dans Supabase user_metadata', async () => {
-    mockPrisma.user.findUnique.mockResolvedValueOnce(CLIENT);
+  // La logique 2FA vit dans modules/auth/two-factor.service (testée à part).
+  it('setup2fa délègue au service 2FA', async () => {
     const res = await usersService.setup2fa('user-1');
     expect(res.secret).toBe('SECRET123');
-    expect(res.qrCode).toContain('data:image');
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
-      'user-1',
-      { user_metadata: { twoFactorSecret: 'SECRET123', twoFactorEnabled: false } },
-    );
+    expect(mockTwoFactorService.setup).toHaveBeenCalledWith('user-1');
   });
 
-  it('confirm2fa active le 2FA dans Supabase user_metadata quand le code est valide', async () => {
-    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValueOnce({
-      data: { user: { id: 'user-1', user_metadata: { twoFactorSecret: 'SECRET123' } } },
-      error: null,
-    });
-    await usersService.confirm2fa('user-1', '123456');
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
-      'user-1',
-      { user_metadata: { twoFactorSecret: 'SECRET123', twoFactorEnabled: true } },
-    );
+  it('confirm2fa transmet le code et le jeton de la session courante', async () => {
+    await usersService.confirm2fa('user-1', '123456', 'access-token');
+    expect(mockTwoFactorService.confirm).toHaveBeenCalledWith('user-1', '123456', 'access-token');
+  });
+
+  it('disable2fa transmet le code TOTP exigé pour la désactivation', async () => {
+    await usersService.disable2fa('user-1', '654321');
+    expect(mockTwoFactorService.disable).toHaveBeenCalledWith('user-1', '654321');
   });
 });

@@ -60,14 +60,14 @@ export async function setup2fa(req: Request, res: Response, next: NextFunction):
 
 export async function confirm2fa(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await usersService.confirm2fa(req.user!.sub, req.body.token);
+    await usersService.confirm2fa(req.user!.sub, req.body.token, req.headers.authorization?.split(' ')[1]);
     res.json({ message: 'Double authentification activée' });
   } catch (err) { next(err); }
 }
 
 export async function disable2fa(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await usersService.disable2fa(req.user!.sub);
+    await usersService.disable2fa(req.user!.sub, req.body?.token);
     res.json({ message: 'Double authentification désactivée' });
   } catch (err) { next(err); }
 }

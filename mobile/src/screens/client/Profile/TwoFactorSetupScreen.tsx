@@ -78,8 +78,12 @@ export default function TwoFactorSetupScreen() {
     }
   };
 
-  /** Désactive le 2FA */
+  /** Désactive le 2FA — le serveur exige le code courant de l'application d'authentification */
   const handleDisable = () => {
+    if (totpCode.length !== 6) {
+      setError('Saisissez le code à 6 chiffres de votre application pour désactiver la 2FA.');
+      return;
+    }
     Alert.alert(
       'Désactiver la 2FA',
       'Êtes-vous sûr de vouloir désactiver l\'authentification à deux facteurs ? Votre compte sera moins sécurisé.',
@@ -92,7 +96,8 @@ export default function TwoFactorSetupScreen() {
             setLoading(true);
             setError('');
             try {
-              await usersApi.disable2fa();
+              await usersApi.disable2fa(totpCode);
+              setTotpCode('');
               if (user) setUser({ ...user, twoFactorEnabled: false });
               Alert.alert('2FA désactivé', 'L\'authentification à deux facteurs a été désactivée.', [
                 { text: 'OK', onPress: () => navigation.goBack() },
@@ -249,6 +254,20 @@ export default function TwoFactorSetupScreen() {
             >
               <Text style={styles.helpLinkText}>Aide — Application d'authentification →</Text>
             </TouchableOpacity>
+
+            <Text style={styles.setupInstructions}>
+              Pour désactiver la 2FA, saisissez le code à 6 chiffres affiché par votre application d'authentification.
+            </Text>
+            <TextInput
+              style={styles.otpInput}
+              value={totpCode}
+              onChangeText={(v) => { setTotpCode(v.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+              placeholder="000000"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              maxLength={6}
+              textAlign="center"
+            />
 
             {!!error && <Text style={styles.errorText}>{error}</Text>}
 

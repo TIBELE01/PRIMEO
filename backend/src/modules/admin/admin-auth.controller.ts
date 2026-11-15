@@ -8,6 +8,12 @@ import { verifyTotp as verifyTotpCode } from '../../common/utils/totp';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
 import { AccountType, UserStatus } from '@prisma/client';
+import { readTwoFactor, writeTwoFactor, markSessionVerified } from '../../common/utils/two-factor';
+import { getFailedAttempts, recordFailedAttempt, clearFailedAttempts } from '../../common/utils/attempt-limiter';
+import { TOTP_MAX_ATTEMPTS, TOTP_ATTEMPT_WINDOW_SECONDS } from '../auth/two-factor.service';
+import { getAccountBlock } from '../../common/utils/account-status';
+
+const TOTP_LOGIN_SCOPE = 'totp_login';
 
 const TOTP_PENDING_TTL = 300;
 const TOTP_PENDING_KEY = (userId: string) => `totp_pending:${userId}`;
@@ -61,6 +67,13 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
       }
     }
 
+    // Compte administrateur désactivé par un super-admin → refus
+    const block = getAccountBlock(user);
+    if (block) {
+      await supabaseAdmin.auth.admin.signOut(signInData.session.access_token).catch(() => null);
+      return next(new HttpError(403, block.message, { code: block.code }));
+    }
+
     return continueLogin(signInData, user, res, next);
   } catch (err) {
     next(err);
@@ -75,10 +88,15 @@ async function continueLogin(
 ): Promise<void> {
   // Lire les données 2FA depuis Supabase user_metadata
   const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(signInData.user.id);
-  const twoFactorEnabled = sbUser?.user_metadata?.twoFactorEnabled as boolean | undefined;
-  const twoFactorSecret  = sbUser?.user_metadata?.twoFactorSecret  as string  | undefined;
+  const twoFactor = readTwoFactor(sbUser);
 
-  if (twoFactorEnabled && twoFactorSecret) {
+  // Reprise des comptes configurés avant le passage à app_metadata
+  if (twoFactor.enabled && twoFactor.legacy && sbUser) {
+    await writeTwoFactor(sbUser, { enabled: true, secret: twoFactor.secret })
+      .catch((err) => logger.warn('Migration 2FA admin vers app_metadata échouée', { userId: user.id, error: (err as Error).message }));
+  }
+
+  if (twoFactor.enabled) {
     // Refresh token chiffré (AES-256-GCM) avant stockage en Redis,
     // et supprimé immédiatement après usage dans adminVerifyTotp.
     await redisSet(
@@ -104,23 +122,39 @@ export async function adminVerifyTotp(req: Request, res: Response, next: NextFun
 
     const { supabaseRefreshToken } = JSON.parse(decryptSecret(pendingRaw)) as { supabaseRefreshToken: string };
 
-    // Lire le secret TOTP depuis Supabase user_metadata
+    // Essais bornés par compte, indépendamment de l'IP
+    if ((await getFailedAttempts(TOTP_LOGIN_SCOPE, userId)) >= TOTP_MAX_ATTEMPTS) {
+      await redisDel(TOTP_PENDING_KEY(userId));
+      return next(new HttpError(429, 'Trop de codes incorrects. Reconnectez-vous dans 15 minutes.'));
+    }
+
     const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const twoFactorSecret = sbUser?.user_metadata?.twoFactorSecret as string | undefined;
+    const twoFactorSecret = readTwoFactor(sbUser).secret;
     if (!twoFactorSecret) return next(new HttpError(400, 'Utilisateur introuvable'));
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return next(new HttpError(400, 'Utilisateur introuvable'));
 
     const isValid = verifyTotpCode(twoFactorSecret, token);
-    if (!isValid) return next(new HttpError(401, 'Code TOTP incorrect ou expiré'));
+    if (!isValid) {
+      const attempts = await recordFailedAttempt(TOTP_LOGIN_SCOPE, userId, TOTP_ATTEMPT_WINDOW_SECONDS);
+      if (attempts >= TOTP_MAX_ATTEMPTS) {
+        await redisDel(TOTP_PENDING_KEY(userId));
+        return next(new HttpError(429, 'Trop de codes incorrects. Reconnectez-vous dans 15 minutes.'));
+      }
+      return next(new HttpError(401, 'Code TOTP incorrect ou expiré'));
+    }
 
+    await clearFailedAttempts(TOTP_LOGIN_SCOPE, userId);
     await redisDel(TOTP_PENDING_KEY(userId));
 
     const { data: refreshData, error: refreshError } = await supabaseAuth.auth.refreshSession({
       refresh_token: supabaseRefreshToken,
     });
     if (refreshError || !refreshData.session) return next(new HttpError(401, 'Session expirée. Reconnectez-vous.'));
+
+    // Cette session a passé le second facteur : elle seule sera acceptée par l'API.
+    await markSessionVerified(refreshData.session.access_token);
 
     logger.info('Admin TOTP verified', { userId: user.id });
     res.json({ accessToken: refreshData.session.access_token, admin: adminProfile(user) });

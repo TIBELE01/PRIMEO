@@ -337,6 +337,20 @@ describe('authService.verifyPhone', () => {
         .rejects.toMatchObject({ statusCode: 400 });
     });
 
+    it('invalide le code après trop d\'essais incorrects (429), même si le bon code suit', async () => {
+      // Un code à 6 chiffres ne doit pas pouvoir être deviné par essais successifs.
+      let lastStatus = 0;
+      for (let i = 0; i < 5 && lastStatus !== 429; i++) {
+        await authService.verifyPhone({ phone, otp: '000000' }).catch((e: { statusCode: number }) => {
+          lastStatus = e.statusCode;
+        });
+      }
+      expect(lastStatus).toBe(429);
+      // Le code stocké a été détruit : le bon code n'est plus accepté.
+      await expect(authService.verifyPhone({ phone, otp: '999999' }))
+        .rejects.toMatchObject({ statusCode: 400 });
+    });
+
     it('returns tokens on correct OTP', async () => {
       const result = await authService.verifyPhone({ phone, otp: '999999' });
       expect(result.accessToken).toBe('acc');
@@ -591,6 +605,33 @@ describe('authService.resendOtp', () => {
 
 describe('authService.verifyTotp', () => {
   beforeEach(resetMocks);
+
+  it('bloque (429) après 5 codes incorrects et détruit la session en attente', async () => {
+    const { verifyTotp: mockVerify } = jest.requireMock('../../common/utils/totp') as { verifyTotp: jest.Mock };
+    const { encryptSecret } = jest.requireActual<typeof import('../../common/utils/secret-crypto')>(
+      '../../common/utils/secret-crypto',
+    );
+    const userId = 'u-bruteforce';
+    redisStore.set(`totp_pending:${userId}`, encryptSecret(JSON.stringify({ supabaseRefreshToken: 'r' })));
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
+      data: { user: { id: userId, user_metadata: { twoFactorEnabled: true, twoFactorSecret: 'JBSWY3DPEHPK3PXP' } } },
+      error: null,
+    });
+    mockVerify.mockReturnValue(false);
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      await authService.verifyTotp({ userId, token: '000000' }).catch((e: { statusCode: number }) => {
+        statuses.push(e.statusCode);
+      });
+    }
+    expect(statuses).toEqual([401, 401, 401, 401, 429]);
+    expect(redisStore.has(`totp_pending:${userId}`)).toBe(false);
+
+    // Même avec un code valide, il faut repasser par le mot de passe.
+    mockVerify.mockReturnValue(true);
+    await expect(authService.verifyTotp({ userId, token: '123456' })).rejects.toMatchObject({ statusCode: 400 });
+  });
 
   it('throws 400 when TOTP session not found in Redis', async () => {
     await expect(authService.verifyTotp({ userId: 'u-not-found', token: '123456' }))

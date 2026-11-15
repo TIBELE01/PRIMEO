@@ -11,6 +11,7 @@ import { logger } from '../../common/utils/logger';
 import { env } from '../../config/env.config';
 import { prisma } from '../../database/prisma.service';
 import { getAccountBlock } from '../../common/utils/account-status';
+import { isTwoFactorEnforced, isSessionVerified } from '../../common/utils/two-factor';
 
 // Augment socket.data with typed fields
 interface SocketData {
@@ -91,6 +92,9 @@ export function initSocketServer(httpServer: HttpServer): typeof io {
       if (!dbUser) return next(new Error('Compte introuvable'));
       const block = getAccountBlock(dbUser);
       if (block) return next(new Error(block.message));
+      if (isTwoFactorEnforced(user) && !(await isSessionVerified(token))) {
+        return next(new Error('Vérification en deux étapes requise'));
+      }
 
       socket.data.userId = user.id;
       socket.data.role = (user.app_metadata?.role as string) ?? 'client';
