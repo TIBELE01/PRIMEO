@@ -4,6 +4,9 @@
 
 // ── Mocks (tous les imports du service) ───────────────────────────────────────
 
+// Prix de base par plage de dates (par défaut : même prix pour toutes les plages)
+const mockComputeBasePrice = jest.fn();
+
 jest.mock('../../common/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
@@ -26,7 +29,10 @@ jest.mock('./services/availability.service', () => ({
   availabilityService: { checkDatesAvailable: jest.fn(), checkRestaurantCapacity: jest.fn() },
 }));
 jest.mock('./services/pricing.service', () => ({
-  pricingService: { compute: jest.fn() },
+  pricingService: {
+    compute: jest.fn(),
+    computeBasePrice: (...args: unknown[]) => mockComputeBasePrice(...args),
+  },
 }));
 jest.mock('./services/cancellation.service', () => ({
   cancellationService: { computeRefund: jest.fn() },
@@ -94,7 +100,7 @@ function makeConfirmedBooking(overrides: Record<string, unknown> = {}) {
 }
 
 const FUTURE_START = '2026-09-10';
-const FUTURE_END   = '2026-09-15';
+const FUTURE_END   = '2026-09-14'; // 4 nuits, comme la réservation d'origine
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -102,6 +108,7 @@ describe('bookingsService.updateDates', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFindOverlapping.mockResolvedValue([]);           // pas de chevauchement
+    mockComputeBasePrice.mockResolvedValue({ nights: 4, basePrice: 100_000 }); // même prix partout
     mockAvailabilityFindUnique.mockResolvedValue(null);  // dates libres dans le calendrier
     mockBookingFindUnique
       .mockResolvedValueOnce(makeConfirmedBooking())     // première lecture (chargement)
@@ -124,12 +131,12 @@ describe('bookingsService.updateDates', () => {
   it('retourne « Dates inchangées » si les dates sont identiques', async () => {
     mockBookingFindUnique.mockReset();
     mockBookingFindUnique.mockResolvedValueOnce(
-      makeConfirmedBooking({ startDate: new Date('2026-09-10'), endDate: new Date('2026-09-15') }),
+      makeConfirmedBooking({ startDate: new Date('2026-09-10'), endDate: new Date('2026-09-14') }),
     );
 
     const result = await bookingsService.updateDates(BOOKING_ID, CLIENT_ID, {
       startDate: '2026-09-10',
-      endDate: '2026-09-15',
+      endDate: '2026-09-14',
     });
 
     expect(result.message).toBe('Dates inchangées');
@@ -151,7 +158,7 @@ describe('bookingsService.updateDates', () => {
 
     const result2 = await bookingsService.updateDates(BOOKING_ID, CLIENT_ID, {
       startDate: '2026-10-01',
-      endDate: '2026-10-07',
+      endDate: '2026-10-05',
     });
     expect(result2.message).toBe('Dates mises à jour');
     expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
@@ -240,5 +247,43 @@ describe('bookingsService.updateDates', () => {
       new Date(FUTURE_END),
       BOOKING_ID,
     );
+  });
+  // ── Prix : une modification de dates ne doit jamais donner plus que ce qui a été payé ──
+
+  it('lève 400 si le nombre de nuits augmente (séjour allongé sans paiement)', async () => {
+    await expect(
+      bookingsService.updateDates(BOOKING_ID, CLIENT_ID, { startDate: '2026-09-10', endDate: '2026-10-10' }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('lève 400 si le nombre de nuits diminue', async () => {
+    await expect(
+      bookingsService.updateDates(BOOKING_ID, CLIENT_ID, { startDate: '2026-09-10', endDate: '2026-09-12' }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('lève 400 si les nouvelles nuits coûtent plus cher que les anciennes', async () => {
+    mockComputeBasePrice
+      .mockResolvedValueOnce({ nights: 4, basePrice: 100_000 })  // plage d'origine
+      .mockResolvedValueOnce({ nights: 4, basePrice: 160_000 }); // nouvelle plage (haute saison)
+
+    await expect(
+      bookingsService.updateDates(BOOKING_ID, CLIENT_ID, { startDate: FUTURE_START, endDate: FUTURE_END }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('accepte des nouvelles nuits moins chères ou au même prix', async () => {
+    mockComputeBasePrice
+      .mockResolvedValueOnce({ nights: 4, basePrice: 100_000 })
+      .mockResolvedValueOnce({ nights: 4, basePrice: 80_000 });
+
+    const result = await bookingsService.updateDates(BOOKING_ID, CLIENT_ID, {
+      startDate: FUTURE_START,
+      endDate: FUTURE_END,
+    });
+    expect(result.message).toBe('Dates mises à jour');
   });
 });

@@ -530,6 +530,34 @@ export const bookingsService = {
       return { message: 'Dates inchangées', booking };
     }
 
+    // Le prix a été fixé (et payé) pour la plage d'origine : une modification de
+    // dates ne doit jamais donner plus que ce qui a été réservé.
+    //   1. Même nombre de nuits — allonger ou raccourcir passe par une annulation
+    //      et une nouvelle réservation (nouveau calcul de prix, nouveau paiement).
+    //   2. Les nouvelles nuits ne doivent pas coûter plus cher que les anciennes
+    //      aux tarifs actuels (tarifs saisonniers / priceOverride).
+    const DAY_MS = 86_400_000;
+    const oldNights = Math.round((oldEnd.getTime() - oldStart.getTime()) / DAY_MS);
+    const newNights = Math.round((newEnd.getTime() - newStart.getTime()) / DAY_MS);
+    if (newNights !== oldNights) {
+      throw new HttpError(
+        400,
+        `La durée du séjour (${oldNights} nuit${oldNights > 1 ? 's' : ''}) ne peut pas être modifiée. ` +
+          'Pour changer la durée, annulez cette réservation et créez-en une nouvelle.',
+      );
+    }
+    const [oldPrice, newPrice] = await Promise.all([
+      pricingService.computeBasePrice(booking.propertyId, oldStart, oldEnd),
+      pricingService.computeBasePrice(booking.propertyId, newStart, newEnd),
+    ]);
+    if (newPrice.basePrice > oldPrice.basePrice) {
+      throw new HttpError(
+        400,
+        'Les nouvelles dates sont à un tarif plus élevé que votre réservation. ' +
+          'Annulez cette réservation et créez-en une nouvelle pour ces dates.',
+      );
+    }
+
     // Vérifier l'absence de chevauchement avec d'autres réservations (hors réservation courante)
     const overlapping = await bookingRepository.findOverlapping(booking.propertyId, newStart, newEnd, id);
     if (overlapping.length > 0) throw new HttpError(409, 'Ces dates ne sont pas disponibles');
