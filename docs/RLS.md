@@ -3,7 +3,7 @@
 Dernière mise à jour : 2026-06-12
 
 Ce document décrit la stratégie RLS de la base PostgreSQL gérée par Supabase
-(projet `qaiplagtbnxvctvpofuh`) et justifie les choix de configuration. Il
+(projet `kgpwtnetqwygtvgxqubs`) et justifie les choix de configuration. Il
 constitue la référence d'audit demandée par l'advisor Supabase
 `rls_enabled_no_policy`.
 
@@ -112,7 +112,7 @@ Management API :
   strength* élevé).
 - **Management API** :
   ```bash
-  curl -X PATCH "https://api.supabase.com/v1/projects/qaiplagtbnxvctvpofuh/config/auth" \
+  curl -X PATCH "https://api.supabase.com/v1/projects/kgpwtnetqwygtvgxqubs/config/auth" \
     -H "Authorization: Bearer <SUPABASE_ACCESS_TOKEN>" \
     -H "Content-Type: application/json" \
     -d '{ "password_hibp_enabled": true }'

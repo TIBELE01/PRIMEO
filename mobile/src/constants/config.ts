@@ -12,7 +12,7 @@ export const SOCKET_URL: string =
 
 // Supabase Auth — utilisé uniquement pour le flux OAuth Google (clients).
 export const SUPABASE_URL: string =
-  Constants.expoConfig?.extra?.supabaseUrl ?? 'https://qaiplagtbnxvctvpofuh.supabase.co';
+  Constants.expoConfig?.extra?.supabaseUrl ?? 'https://kgpwtnetqwygtvgxqubs.supabase.co';
 
 export const SUPPORTED_CURRENCIES = [
   { code: 'XOF', name: 'Franc CFA (UEMOA)', symbol: 'CFA' },

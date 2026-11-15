@@ -8,21 +8,21 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     },
     "staging": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     },
     "production": {
       "distribution": "store",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://primeo-api-xhef.onrender.com",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://qaiplagtbnxvctvpofuh.supabase.co"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     }
   },

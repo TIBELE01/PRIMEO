@@ -2,7 +2,7 @@
 
 ## État actuel (juin 2026)
 
-Le projet Supabase (`qaiplagtbnxvctvpofuh`, région `eu-west-1`) est sur le **plan Free**.
+Le projet Supabase (`kgpwtnetqwygtvgxqubs`, région `eu-central-1`) est sur le **plan Free**.
 
 | Fonctionnalité | Plan Free | Plan Pro |
 |---|---|---|
@@ -18,7 +18,7 @@ Pour atteindre une rétention de 30 jours, il faut passer au **plan Pro (25 $/mo
 ## Vérifier les sauvegardes actives
 
 1. Connectez-vous à [app.supabase.com](https://app.supabase.com)
-2. Sélectionnez le projet **Primeo** (`qaiplagtbnxvctvpofuh`)
+2. Sélectionnez le projet **Primeo** (`kgpwtnetqwygtvgxqubs`)
 3. Allez dans **Settings → Database → Backups**
 4. Vérifiez que les sauvegardes quotidiennes sont listées et que la dernière date d'hier
 
@@ -39,7 +39,7 @@ Pour compenser la limite de 7 jours, planifier un export hebdomadaire via `pg_du
 ```bash
 # Variables
 export PGPASSWORD="<DB_PASSWORD>"
-DB_HOST="db.qaiplagtbnxvctvpofuh.supabase.co"
+DB_HOST="db.kgpwtnetqwygtvgxqubs.supabase.co"
 DB_NAME="postgres"
 DB_USER="postgres"
 BACKUP_FILE="primeo_$(date +%Y%m%d_%H%M%S).sql.gz"
@@ -69,7 +69,7 @@ Stocker le fichier dans un bucket Supabase Storage ou sur un service externe (S3
 ```bash
 export PGPASSWORD="<DB_PASSWORD>"
 pg_restore \
-  -h "db.qaiplagtbnxvctvpofuh.supabase.co" \
+  -h "db.kgpwtnetqwygtvgxqubs.supabase.co" \
   -U postgres \
   -d postgres \
   --clean --no-owner --no-acl \

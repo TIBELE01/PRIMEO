@@ -63,7 +63,7 @@ module.exports = ({ config }) => ({
   },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://qaiplagtbnxvctvpofuh.supabase.co',
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://kgpwtnetqwygtvgxqubs.supabase.co',
     onesignalAppId: process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID ?? '',
     eas: {
       projectId: process.env.EAS_PROJECT_ID ?? '',

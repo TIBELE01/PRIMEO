@@ -89,7 +89,7 @@ JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE, BCRYPT_SALT
 ### 4.2 Variables actives requises
 
 ```
-SUPABASE_URL=https://qaiplagtbnxvctvpofuh.supabase.co
+SUPABASE_URL=https://kgpwtnetqwygtvgxqubs.supabase.co
 SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ```
