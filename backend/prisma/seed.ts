@@ -57,6 +57,9 @@ async function ensureSupabaseUser(
       phone,
       email_confirm: true,
       phone_confirm: true,
+      // Le rôle doit être (re)posé aussi sur un compte déjà existant : sans lui,
+      // le backend refuse la connexion (rôle Supabase ≠ rôle en base).
+      app_metadata: { ...(existing.app_metadata ?? {}), role: accountType },
     });
     return existing.id;
   }
@@ -1100,15 +1103,20 @@ async function main() {
 
   // ── 13. PARRAINAGE ────────────────────────────────────────────────────────
 
-  await prisma.referral.upsert({
-    where: { referralCode: koffi.referralCode },
-    update: {},
-    create: {
-      referralCode: koffi.referralCode,
-      referrerId: koffi.id,
-      status: 'pending',
-    },
+  // referralCode n'est plus unique (un parrain a plusieurs filleuls) : on ne
+  // peut plus faire d'upsert dessus. Idempotence par recherche préalable.
+  const existingReferral = await prisma.referral.findFirst({
+    where: { referrerId: koffi.id, refereeId: null },
   });
+  if (!existingReferral) {
+    await prisma.referral.create({
+      data: {
+        referralCode: koffi.referralCode,
+        referrerId: koffi.id,
+        status: 'pending',
+      },
+    });
+  }
 
   // ── 14. FAVORIS ───────────────────────────────────────────────────────────
 

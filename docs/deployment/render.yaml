@@ -43,12 +43,6 @@ services:
       - key: DIRECT_URL      # connexion directe (port 5432) — requise par `prisma migrate deploy`
         sync: false
 
-      # ── Auth / JWT ───────────────────────────────────────────────────────────
-      - key: JWT_SECRET
-        sync: false
-      - key: JWT_REFRESH_SECRET
-        sync: false
-
       # ── URLs applicatives ────────────────────────────────────────────────────
       - key: FRONTEND_URL
         sync: false
