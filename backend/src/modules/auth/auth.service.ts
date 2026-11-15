@@ -94,6 +94,41 @@ const BYPASS_OTP = '000000'; // code accepté UNIQUEMENT en développement quand
 const isOtpBypassEnabled = (): boolean =>
   env.SKIP_OTP_VERIFICATION === true && env.NODE_ENV !== 'production';
 
+// ── Session de récupération ───────────────────────────────────────────────────
+// Un jeton Supabase porte la revendication `amr` : la liste des méthodes ayant
+// authentifié la session, horodatées. Un lien de réinitialisation ouvre une
+// session de méthode « recovery » ou « otp » (lien à usage unique) ; une
+// connexion ordinaire est « password » ou « oauth ».
+const RECOVERY_AMR_METHODS = new Set(['recovery', 'otp']);
+const RECOVERY_MAX_AGE_SECONDS = 60 * 60; // durée de validité annoncée dans l'email
+
+/** Vrai si le jeton (déjà validé auprès de Supabase) provient d'un lien de récupération récent. */
+function isRecoverySession(accessToken: string): boolean {
+  const parts = accessToken.split('.');
+  if (parts.length !== 3) return false;
+  let amr: unknown;
+  try {
+    amr = (JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as { amr?: unknown }).amr;
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(amr)) return false;
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  return amr.some((entry) => {
+    // Forme { method, timestamp } ; anciennes versions : simple chaîne (sans date → refus)
+    if (!entry || typeof entry !== 'object') return false;
+    const { method, timestamp } = entry as { method?: unknown; timestamp?: unknown };
+    return (
+      typeof method === 'string' &&
+      RECOVERY_AMR_METHODS.has(method) &&
+      typeof timestamp === 'number' &&
+      nowSeconds - timestamp <= RECOVERY_MAX_AGE_SECONDS &&
+      nowSeconds - timestamp >= -60
+    );
+  });
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface PendingUser {
@@ -893,6 +928,14 @@ export const authService = {
       throw new HttpError(400, 'Lien de réinitialisation invalide ou expiré');
     }
 
+    // Le jeton doit provenir d'un lien de récupération récent, et non d'une
+    // session ordinaire : sans ce contrôle, n'importe quel jeton d'accès valide
+    // (ex. volé) permettait de changer le mot de passe sans connaître l'ancien.
+    if (!isRecoverySession(input.recoveryToken)) {
+      logger.warn('resetPassword : jeton refusé (session non issue d\'un lien de récupération)', { userId: sbUser.id });
+      throw new HttpError(400, 'Lien de réinitialisation invalide ou expiré');
+    }
+
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(sbUser.id, {
       password: input.password,
     });
@@ -901,6 +944,12 @@ export const authService = {
       logger.error('Erreur maj mot de passe Supabase', { userId: sbUser.id, error: updateError.message });
       throw new HttpError(500, 'Erreur lors de la réinitialisation du mot de passe');
     }
+
+    // Le mot de passe vient de changer : toutes les sessions existantes sont
+    // fermées (y compris celle du lien, à usage unique de fait).
+    await supabaseAdmin.auth.admin.signOut(input.recoveryToken, 'global').catch((err) =>
+      logger.warn('resetPassword : fermeture des sessions échouée', { userId: sbUser.id, error: (err as Error).message }),
+    );
 
     logger.info('Mot de passe réinitialisé', { userId: sbUser.id });
   },

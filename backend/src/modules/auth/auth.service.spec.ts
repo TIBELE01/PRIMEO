@@ -915,10 +915,65 @@ describe('authService.resetPassword', () => {
       .rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it('met à jour le mot de passe via Supabase quand le token est valide', async () => {
+  // Jeton factice au format JWT : seul le payload (amr) est lu, la signature
+  // étant vérifiée par Supabase (getUser, mocké ici).
+  const tokenWithAmr = (amr: unknown) =>
+    `h.${Buffer.from(JSON.stringify({ sub: 'supa-uid-001', amr })).toString('base64url')}.s`;
+  const now = () => Math.floor(Date.now() / 1000);
+
+  it('met à jour le mot de passe et ferme toutes les sessions avec un jeton de récupération', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
-    await authService.resetPassword({ recoveryToken: 'good', password: 'New#Pass123' });
+    const token = tokenWithAmr([{ method: 'recovery', timestamp: now() - 30 }]);
+
+    await authService.resetPassword({ recoveryToken: token, password: 'New#Pass123' });
+
     expect(mockSupabaseAdmin.auth.admin.updateUserById)
       .toHaveBeenCalledWith('supa-uid-001', { password: 'New#Pass123' });
+    expect(mockSupabaseAdmin.auth.admin.signOut).toHaveBeenCalledWith(token, 'global');
+  });
+
+  it('accepte une session ouverte par lien à usage unique (amr otp)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await authService.resetPassword({
+      recoveryToken: tokenWithAmr([{ method: 'otp', timestamp: now() - 30 }]),
+      password: 'New#Pass123',
+    });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalled();
+  });
+
+  it('refuse (400) un jeton de session ordinaire (connexion par mot de passe)', async () => {
+    // Un jeton d'accès valide mais non issu d'un lien de récupération ne doit
+    // pas permettre de changer le mot de passe.
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await expect(authService.resetPassword({
+      recoveryToken: tokenWithAmr([{ method: 'password', timestamp: now() - 30 }]),
+      password: 'New#Pass123',
+    })).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('refuse (400) une session Google (amr oauth)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await expect(authService.resetPassword({
+      recoveryToken: tokenWithAmr([{ method: 'oauth', timestamp: now() - 30 }]),
+      password: 'New#Pass123',
+    })).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('refuse (400) un jeton de récupération de plus d\'une heure', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await expect(authService.resetPassword({
+      recoveryToken: tokenWithAmr([{ method: 'recovery', timestamp: now() - 2 * 3600 }]),
+      password: 'New#Pass123',
+    })).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('refuse (400) un jeton sans revendication amr', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'supa-uid-001' } }, error: null });
+    await expect(authService.resetPassword({ recoveryToken: 'good', password: 'New#Pass123' }))
+      .rejects.toMatchObject({ statusCode: 400 });
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 });
