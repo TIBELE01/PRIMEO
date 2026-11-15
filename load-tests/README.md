@@ -30,7 +30,7 @@ docker run --rm -i grafana/k6 run - < load-tests/search.load.js
 k6 run load-tests/search.load.js
 
 # Contre un environnement déployé
-k6 run --env BASE_URL=https://primeo-api-sszr.onrender.com load-tests/search.load.js
+k6 run --env BASE_URL=https://api-primeo.onrender.com load-tests/search.load.js
 ```
 
 Le test échoue (code de sortie ≠ 0) si un seuil n'est pas respecté

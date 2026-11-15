@@ -223,7 +223,7 @@ render logs -r <service-id>    # logs en direct
 
 | Service | Domaine suggéré | CNAME → |
 |---|---|---|
-| primeo-api | `api.primeo.ci` | `primeo-api.onrender.com` |
+| primeo-api | `api.primeo.ci` | `api-primeo.onrender.com` |
 | primeo-vitrine | `primeo.ci` / `www.primeo.ci` | `primeo-vitrine.onrender.com` |
 | primeo-legal | `legal.primeo.ci` | `primeo-legal.onrender.com` |
 | primeo-admin | `admin.primeo.ci` | `primeo-admin.onrender.com` |

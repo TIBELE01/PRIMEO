@@ -6,7 +6,7 @@
  *
  * Exécution locale :
  *   k6 run load-tests/search.load.js
- *   k6 run --env BASE_URL=https://primeo-api-sszr.onrender.com load-tests/search.load.js
+ *   k6 run --env BASE_URL=https://api-primeo.onrender.com load-tests/search.load.js
  *
  * Voir load-tests/README.md pour l'installation de k6 et l'exécution en CI.
  */

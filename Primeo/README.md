@@ -5,7 +5,7 @@ Chaque page charge son contenu dynamiquement depuis le backend Primeo, avec un
 repli (fallback) sur des fichiers JSON locaux si l'API est indisponible.
 
 - **Production vitrine** : https://primeo.ci · (Render : https://primeo-vitrine.onrender.com)
-- **Backend API** : https://primeo-api.onrender.com
+- **Backend API** : https://api-primeo.onrender.com
 - **Admin** : https://primeo-admin.onrender.com
 
 ---
@@ -38,11 +38,11 @@ dans cet ordre de priorité :
 
 1. **Balise meta** dans le `<head>` de la page :
    ```html
-   <meta name="api-url" content="https://primeo-api.onrender.com">
+   <meta name="api-url" content="https://api-primeo.onrender.com">
    ```
 2. **Variable globale** `window.PRIMEO_API_URL` (ex. injectée par un
    `assets/js/config.js` généré au build — voir ci-dessous).
-3. **Valeur par défaut** : `https://primeo-api.onrender.com`.
+3. **Valeur par défaut** : `https://api-primeo.onrender.com`.
 
 ### Générer un `config.js` au build (optionnel)
 
@@ -51,7 +51,7 @@ générer un petit fichier `assets/js/config.js` et l'inclure avant `api.js` :
 
 ```bash
 # Build command (Static Site Render)
-echo "window.PRIMEO_API_URL='${API_BASE_URL:-https://primeo-api.onrender.com}';" > assets/js/config.js
+echo "window.PRIMEO_API_URL='${API_BASE_URL:-https://api-primeo.onrender.com}';" > assets/js/config.js
 ```
 
 ```html
@@ -68,7 +68,7 @@ toutes les pages dynamiques.
 
 | Variable            | Où                         | Rôle                                                        |
 |---------------------|----------------------------|-------------------------------------------------------------|
-| `API_BASE_URL`      | build → `config.js` (opt.) | URL du backend. Défaut : `https://primeo-api.onrender.com`. |
+| `API_BASE_URL`      | build → `config.js` (opt.) | URL du backend. Défaut : `https://api-primeo.onrender.com`. |
 | Clé **Geoapify**    | **côté backend**           | Servie au front via `GET /api/website/public-config` (`geoapifyKey`). N'est **jamais** stockée en clair dans le front. |
 
 La page **Contact** récupère la clé Geoapify via `public-config` pour afficher la
@@ -98,7 +98,7 @@ Les fichiers JSON sont une photographie du contenu courant. Pour les rafraîchir
 on interroge le backend et on enregistre la réponse, par ex. :
 
 ```bash
-BASE=https://primeo-api.onrender.com
+BASE=https://api-primeo.onrender.com
 curl -s $BASE/api/website/solutions/blocs   > data/_blocs.json
 curl -s $BASE/api/website/products/subscriptions > data/_subs.json
 # …puis recomposer les fichiers data/*.json selon la structure attendue par chaque page.

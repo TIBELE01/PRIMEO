@@ -1,6 +1,6 @@
 # API publique Primeo — endpoints consommés par le site vitrine
 
-Base URL (production) : `https://primeo-api.onrender.com`
+Base URL (production) : `https://api-primeo.onrender.com`
 Toutes les routes publiques sont préfixées par `/api/website`.
 
 Réponses : JSON. Les routes `GET` renvoient le contenu géré depuis l'admin

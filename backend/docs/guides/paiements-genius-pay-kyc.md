@@ -75,7 +75,7 @@ L'endpoint `POST /api/webhooks/genius-pay` applique le pipeline (`webhooks.servi
 > étape n'a pas été exécutée automatiquement et nécessite votre validation.
 
 1. Dans le dashboard Genius Pay, configurer le webhook :
-   `https://primeo-api.onrender.com/api/webhooks/genius-pay`.
+   `https://api-primeo.onrender.com/api/webhooks/genius-pay`.
 2. Créer une réservation de test à faible montant (ex. 100 FCFA).
 3. Vérifier que `POST /payments` renvoie une `checkout_url`.
 4. Régler via la page de checkout (Mobile Money).

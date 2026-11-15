@@ -3,7 +3,7 @@
 // environnement ayant accès réseau à l'API Primeo et à Supabase.
 //
 // Usage :
-//   API_URL=https://primeo-api.onrender.com \
+//   API_URL=https://api-primeo.onrender.com \
 //   SUPABASE_URL=https://<projet>.supabase.co \
 //   SUPABASE_SERVICE_ROLE_KEY=<service_role> \
 //   node scripts/validate-auth.mjs

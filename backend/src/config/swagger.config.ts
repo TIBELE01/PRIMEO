@@ -17,7 +17,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       { url: env.BACKEND_URL, description: 'Serveur courant' },
-      { url: 'https://primeo-api.onrender.com', description: 'Production' },
+      { url: 'https://api-primeo.onrender.com', description: 'Production' },
       { url: 'http://localhost:4000', description: 'Développement local' },
     ],
     components: {

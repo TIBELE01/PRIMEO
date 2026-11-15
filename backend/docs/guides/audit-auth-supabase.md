@@ -85,7 +85,7 @@ déclarer le login Google opérationnel (voir §5).
   déclenché), forgot-password et rejet de JWT invalide, puis supprime les
   comptes de test. À lancer depuis un poste avec accès réseau :
   ```bash
-  API_URL=https://primeo-api.onrender.com \
+  API_URL=https://api-primeo.onrender.com \
   SUPABASE_URL=https://kgpwtnetqwygtvgxqubs.supabase.co \
   SUPABASE_SERVICE_ROLE_KEY=*** \
   node backend/scripts/validate-auth.mjs
