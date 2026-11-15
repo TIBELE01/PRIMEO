@@ -2,16 +2,20 @@
 import { bookingRepository } from '../../../database/repositories/booking.repository';
 import { prisma } from '../../../database/prisma.service';
 import { HttpError } from '../../../common/handlers/http-error.handler';
+import type { Prisma, PrismaClient } from '@prisma/client';
+
+// Client Prisma global ou transactionnel (pour revérifier sous verrou)
+type Db = PrismaClient | Prisma.TransactionClient;
 
 export const availabilityService = {
-  async checkDatesAvailable(propertyId: string, startDate: Date, endDate: Date): Promise<void> {
-    const overlapping = await bookingRepository.findOverlapping(propertyId, startDate, endDate);
+  async checkDatesAvailable(propertyId: string, startDate: Date, endDate: Date, db: Db = prisma): Promise<void> {
+    const overlapping = await bookingRepository.findOverlapping(propertyId, startDate, endDate, undefined, db);
     if (overlapping.length > 0) throw new HttpError(409, 'Selected dates are not available');
 
     // Verify each date is marked available in the calendar
     const current = new Date(startDate);
     while (current < endDate) {
-      const avail = await prisma.availability.findUnique({
+      const avail = await db.availability.findUnique({
         where: { propertyId_date: { propertyId, date: new Date(current) } },
       });
       if (avail && avail.status !== 'available') {
@@ -29,6 +33,7 @@ export const availabilityService = {
     date: Date,
     requestedGuests: number,
     capacity: number | null,
+    db: Db = prisma,
   ): Promise<void> {
     if (!capacity || capacity <= 0) return; // capacité non renseignée → pas de limite
 
@@ -37,7 +42,7 @@ export const availabilityService = {
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayEnd.getDate() + 1);
 
-    const sameDay = await prisma.booking.findMany({
+    const sameDay = await db.booking.findMany({
       where: {
         propertyId,
         status: { in: ['confirmed', 'completed'] },

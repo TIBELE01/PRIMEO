@@ -14,6 +14,8 @@ import { analyticsService } from '../../analytics/analytics.service';
 import { generateAndUploadBookingInvoice, formatBookingInvoiceRef } from '../../../common/utils/invoice';
 import { messagingService } from '../../messaging/messaging.service';
 import { bookingCreditsService } from '../../bookings/services/booking-credits.service';
+import { bookingRepository } from '../../../database/repositories/booking.repository';
+import { walletService } from '../../wallets/wallets.service';
 
 // ── Génération de facture ─────────────────────────────────────────────────────
 
@@ -284,6 +286,55 @@ async function notifyBookingCancelled(bookingId: string): Promise<void> {
   }).catch((err) => logger.warn('Push cancellation to client failed', err));
 }
 
+// Prévient le client que son paiement a été encaissé mais que la réservation n'a
+// pas pu être confirmée, et que le montant est disponible sur son portefeuille.
+async function notifyPaymentRecredited(bookingId: string, amount: number, reason: string): Promise<void> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      client: { select: { id: true, firstName: true, email: true } },
+      property: { select: { title: true } },
+    },
+  });
+  if (!booking) return;
+
+  const amountStr = `${amount.toLocaleString('fr-CI')} FCFA`;
+  const body = `${reason}. Les ${amountStr} payés ont été recrédités sur votre portefeuille Primeo.`;
+
+  await prisma.notification
+    .create({
+      data: {
+        userId: booking.clientId,
+        type: 'booking_cancelled',
+        title: 'Réservation non confirmée — paiement recrédité',
+        body: `${booking.property.title} : ${body}`,
+        data: { bookingId, type: 'booking_cancelled' } as never,
+      },
+    })
+    .catch((err) => logger.warn('In-app notification (paiement recrédité) failed', err));
+
+  await sendTemplateEmail(
+    [{ email: booking.client.email, name: booking.client.firstName }],
+    brevoConfig.templates.bookingCancellation,
+    {
+      firstName: booking.client.firstName,
+      propertyTitle: booking.property.title,
+      startDate: booking.startDate.toLocaleDateString('fr-CI'),
+      reason: body,
+    },
+  ).catch((err) => logger.warn('Email paiement recrédité failed', err));
+
+  await sendPushNotification({
+    externalUserIds: [booking.clientId],
+    headings: { en: 'Booking not confirmed', fr: 'Réservation non confirmée' },
+    contents: {
+      en: `${booking.property.title}: your payment of ${amountStr} was credited back to your wallet.`,
+      fr: `${booking.property.title} : ${body}`,
+    },
+    data: { type: 'booking_cancelled', bookingId },
+  }).catch((err) => logger.warn('Push paiement recrédité failed', err));
+}
+
 // ── Traitement partagé (webhook + réconciliation par sondage) ──────────────────
 
 // Applique un paiement réussi de manière idempotente : transaction, réservation,
@@ -298,9 +349,21 @@ export async function processSuccessfulPayment(
     return;
   }
 
+  // Issue du traitement, décidée dans la transaction :
+  //   confirmed  → réservation confirmée (ou paiement hors réservation appliqué)
+  //   recredited → réservation non confirmable, montant payé recrédité au client
+  //   duplicate  → paiement déjà traité par un autre appel (webhook / sondage / cron)
+  let outcome: 'confirmed' | 'recredited' | 'duplicate' = 'confirmed';
+  let recreditReason = '';
+
   await prisma.$transaction(async (p) => {
-    await p.transaction.update({
-      where: { id: tx.id },
+    // Prise atomique de la transaction : le webhook, le sondage côté client et les
+    // jobs de rattrapage peuvent traiter le même paiement en même temps. Seul
+    // celui qui fait passer le statut à « success » poursuit ; les autres
+    // s'arrêtent (l'ancien contrôle sur un statut lu avant l'appel laissait
+    // passer les deux : double confirmation, double notification, double boost).
+    const claimed = await p.transaction.updateMany({
+      where: { id: tx.id, status: { not: 'success' } },
       data: {
         status: 'success',
         completedAt: new Date(),
@@ -308,30 +371,121 @@ export async function processSuccessfulPayment(
         ...(data ? { webhookPayload: data as never } : {}),
       },
     });
+    if (claimed.count !== 1) {
+      outcome = 'duplicate';
+      return;
+    }
 
-    if (tx.bookingId) {
-      await p.booking.update({
-        where: { id: tx.bookingId },
-        data: {
-          status: 'confirmed',
-          confirmedAt: new Date(),
-          onlinePaidAmount: paidAmount,
-        },
-      });
+    if (!tx.bookingId) return;
 
-      // Incrémenter bookingsCount sur la propriété
-      const booking = await p.booking.findUnique({
-        where: { id: tx.bookingId },
-        select: { propertyId: true },
-      });
-      if (booking) {
-        await p.property.update({
-          where: { id: booking.propertyId },
-          data: { bookingsCount: { increment: 1 } },
+    const booking = await p.booking.findUnique({
+      where: { id: tx.bookingId },
+      select: {
+        clientId: true,
+        propertyId: true,
+        startDate: true,
+        endDate: true,
+        property: { select: { propertyType: true } },
+      },
+    });
+    if (!booking) return;
+
+    // Verrou par propriété : deux paiements simultanés pour les mêmes dates sont
+    // traités l'un après l'autre ; le second voit la confirmation du premier.
+    await bookingRepository.lockPropertyCalendar(booking.propertyId, p);
+
+    // Statut relu sous verrou (la réservation a pu être annulée ou confirmée entre-temps)
+    const current = await p.booking.findUnique({ where: { id: tx.bookingId }, select: { status: true } });
+    const status = current?.status ?? 'pending_payment';
+
+    if (status === 'confirmed' || status === 'completed') {
+      // Déjà confirmée (ex. validée à la main par le professionnel) : on enregistre
+      // simplement le montant réellement payé en ligne.
+      await p.booking.update({ where: { id: tx.bookingId }, data: { onlinePaidAmount: paidAmount } });
+      return;
+    }
+
+    const propertyType = booking.property?.propertyType ?? '';
+    const isStay = propertyType !== 'restaurant' && !propertyType.startsWith('immobilier');
+    const conflicts = isStay
+      ? await bookingRepository.findOverlapping(booking.propertyId, booking.startDate, booking.endDate, tx.bookingId, p)
+      : [];
+
+    if (status !== 'pending_payment' || conflicts.length > 0) {
+      // La réservation ne peut pas être confirmée :
+      //   - dates prises entre-temps par une autre réservation confirmée, ou
+      //   - réservation annulée avant l'arrivée du paiement (expiration, annulation).
+      // Le paiement, lui, a bien été encaissé : on le recrédite au client.
+      recreditReason =
+        conflicts.length > 0
+          ? 'Ces dates ont été réservées par un autre client pendant votre paiement'
+          : 'Votre paiement est arrivé après l\'annulation de la réservation';
+
+      if (status === 'pending_payment') {
+        await p.booking.update({
+          where: { id: tx.bookingId },
+          data: {
+            status: 'cancelled_by_client',
+            cancelledAt: new Date(),
+            cancellationReason: 'Dates déjà réservées au moment du paiement — montant recrédité',
+            cancelledBy: 'system',
+          },
+        });
+        await bookingCreditsService.release(tx.bookingId, p);
+      }
+
+      if (paidAmount > 0) {
+        await walletService.credit(booking.clientId, paidAmount, p);
+        await p.transaction.create({
+          data: {
+            userId: booking.clientId,
+            bookingId: tx.bookingId,
+            type: 'refund',
+            amount: paidAmount,
+            fee: 0,
+            netAmount: paidAmount,
+            status: 'success',
+            completedAt: new Date(),
+            notes: `Paiement recrédité sur le portefeuille — ${recreditReason} (transaction ${tx.id})`,
+          },
         });
       }
+      outcome = 'recredited';
+      return;
     }
+
+    await p.booking.update({
+      where: { id: tx.bookingId },
+      data: {
+        status: 'confirmed',
+        confirmedAt: new Date(),
+        onlinePaidAmount: paidAmount,
+      },
+    });
+    // Incrémenter bookingsCount sur la propriété
+    await p.property.update({
+      where: { id: booking.propertyId },
+      data: { bookingsCount: { increment: 1 } },
+    });
   });
+
+  // TypeScript ne suit pas les affectations faites dans la fonction de transaction
+  const finalOutcome = outcome as 'confirmed' | 'recredited' | 'duplicate';
+
+  if (finalOutcome === 'duplicate') {
+    logger.info(`Paiement déjà traité (appel concurrent) : tx=${tx.id}`);
+    return;
+  }
+
+  if (finalOutcome === 'recredited') {
+    logger.warn(`Paiement encaissé mais réservation non confirmable — recrédité : tx=${tx.id} booking=${tx.bookingId} (${recreditReason})`);
+    if (tx.bookingId) {
+      await notifyPaymentRecredited(tx.bookingId, paidAmount, recreditReason).catch((err) =>
+        logger.warn('Notification de paiement recrédité échouée', err),
+      );
+    }
+    return;
+  }
 
   // Effets de bord post-succès (best-effort, non critiques)
   if (tx.bookingId) {

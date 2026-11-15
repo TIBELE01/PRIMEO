@@ -118,6 +118,18 @@ export const bookingsService = {
     const initialStatus = nothingToPayOnline ? 'confirmed' : 'pending_payment';
 
     const booking = await prisma.$transaction(async (tx) => {
+      // Réservation confirmée dès la création (cash, restaurant, montant couvert) :
+      // on revérifie la disponibilité SOUS VERROU. Le contrôle fait plus haut n'est
+      // qu'un filtre rapide — deux demandes simultanées le passaient toutes les deux.
+      if (initialStatus === 'confirmed') {
+        await bookingRepository.lockPropertyCalendar(input.propertyId, tx);
+        if (isRestaurant) {
+          await availabilityService.checkRestaurantCapacity(input.propertyId, startDate, input.guests, property.capacity, tx);
+        } else {
+          await availabilityService.checkDatesAvailable(input.propertyId, startDate, endDate, tx);
+        }
+      }
+
       // Deduct wallet balance if used (table wallets + walletBalance, atomique)
       if (pricing.walletDeduction > 0) {
         await walletService.debit(clientId, pricing.walletDeduction, tx);
@@ -607,6 +619,12 @@ export const bookingsService = {
     }
 
     await prisma.$transaction(async (tx) => {
+      // Revérification sous verrou : une autre réservation a pu être confirmée
+      // sur ces dates depuis le contrôle ci-dessus.
+      await bookingRepository.lockPropertyCalendar(booking.propertyId, tx);
+      const conflict = await bookingRepository.findOverlapping(booking.propertyId, newStart, newEnd, id, tx);
+      if (conflict.length > 0) throw new HttpError(409, 'Ces dates ne sont pas disponibles');
+
       await tx.booking.update({ where: { id }, data: { startDate: newStart, endDate: newEnd } });
 
       // Libérer les anciennes disponibilités « booked »
@@ -649,7 +667,7 @@ export const bookingsService = {
   async confirm(id: string, professionalId: string) {
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { property: { select: { ownerId: true } } },
+      include: { property: { select: { ownerId: true, propertyType: true } } },
     });
     if (!booking) throw new HttpError(404, 'Réservation introuvable');
     if (booking.property.ownerId !== professionalId) throw new HttpError(403, 'Accès non autorisé');
@@ -657,9 +675,29 @@ export const bookingsService = {
       throw new HttpError(400, 'Seules les réservations en attente de paiement peuvent être confirmées');
     }
 
-    const updated = await prisma.booking.update({
-      where: { id },
-      data: { status: 'confirmed', confirmedAt: new Date() },
+    // Confirmation manuelle par le professionnel : mêmes garanties que la
+    // confirmation par paiement — verrou, puis contrôle des chevauchements.
+    const isStay =
+      booking.property.propertyType !== 'restaurant' && !booking.property.propertyType.startsWith('immobilier');
+    const updated = await prisma.$transaction(async (tx) => {
+      if (isStay) {
+        await bookingRepository.lockPropertyCalendar(booking.propertyId, tx);
+        const conflict = await bookingRepository.findOverlapping(
+          booking.propertyId, booking.startDate, booking.endDate, id, tx,
+        );
+        if (conflict.length > 0) {
+          throw new HttpError(409, 'Ces dates sont déjà occupées par une autre réservation confirmée');
+        }
+      }
+      // Mise à jour conditionnelle : la réservation doit toujours être en attente
+      const claimed = await tx.booking.updateMany({
+        where: { id, status: 'pending_payment' },
+        data: { status: 'confirmed', confirmedAt: new Date() },
+      });
+      if (claimed.count !== 1) {
+        throw new HttpError(409, 'Cette réservation vient d\'être modifiée. Rechargez-la.');
+      }
+      return tx.booking.findUnique({ where: { id } });
     });
 
     // Filleul client : récompense de parrainage à la première réservation confirmée

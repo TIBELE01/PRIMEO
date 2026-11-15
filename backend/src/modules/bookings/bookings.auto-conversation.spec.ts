@@ -31,6 +31,15 @@ jest.mock('../wallets/wallets.service', () => ({
   walletService: { getBalance: jest.fn(async () => 0), debit: jest.fn(), credit: jest.fn() },
 }));
 
+// Verrou par propriété et contrôle des chevauchements : neutres par défaut
+const mockFindOverlapping = jest.fn(async (..._a: unknown[]) => [] as unknown[]);
+jest.mock('../../database/repositories/booking.repository', () => ({
+  bookingRepository: {
+    findOverlapping: (...a: unknown[]) => mockFindOverlapping(...a),
+    lockPropertyCalendar: jest.fn(async () => undefined),
+  },
+}));
+
 const mockPrisma: Record<string, any> = {
   user:    { findUnique: jest.fn(), update: jest.fn(async (a: any) => ({ id: 'client-1', ...a.data })) },
   property:{ findUnique: jest.fn() },

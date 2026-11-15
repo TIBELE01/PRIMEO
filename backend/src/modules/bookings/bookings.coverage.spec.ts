@@ -17,6 +17,15 @@ jest.mock('../../common/handlers/http-error.handler', () => ({
   HttpError: class HttpError extends Error { statusCode: number; constructor(s: number, m: string) { super(m); this.statusCode = s; } },
 }));
 
+// Verrou par propriété et contrôle des chevauchements : neutres par défaut
+const mockFindOverlapping = jest.fn(async (..._a: unknown[]) => [] as unknown[]);
+jest.mock('../../database/repositories/booking.repository', () => ({
+  bookingRepository: {
+    findOverlapping: (...a: unknown[]) => mockFindOverlapping(...a),
+    lockPropertyCalendar: jest.fn(async () => undefined),
+  },
+}));
+
 const mockPrisma: Record<string, any> = {
   user: { findUnique: jest.fn(), update: jest.fn(async (a: any) => ({ id: 'c1', ...a.data })) },
   property: { findUnique: jest.fn() },
@@ -24,8 +33,13 @@ const mockPrisma: Record<string, any> = {
   transaction: { findFirst: jest.fn(), create: jest.fn(async () => ({})) },
 };
 mockPrisma.$transaction = jest.fn(async (cb: any) => cb({
-  booking: { create: jest.fn(async () => ({ id: 'bk-new' })), update: jest.fn(async () => ({})) },
-  transaction: { create: jest.fn(async () => ({})) },
+  booking: {
+    create: jest.fn(async () => ({ id: 'bk-new' })),
+    update: jest.fn(async () => ({})),
+    updateMany: jest.fn(async () => ({ count: 1 })),
+    findUnique: jest.fn(async () => ({ id: 'bk-1', status: 'confirmed' })),
+  },
+  transaction: { create: jest.fn(async () => ({})), updateMany: jest.fn(async () => ({ count: 1 })) },
 }));
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
@@ -95,8 +109,11 @@ describe('confirm / complete / markCashReceived', () => {
     await expect(bookingsService.confirm('bk-1', 'autre')).rejects.toMatchObject({ statusCode: 403 });
   });
   it('confirm : succès → statut confirmed', async () => {
-    mockPrisma.booking.findUnique.mockResolvedValue({ clientId: 'c1', status: 'pending_payment', property: { ownerId: 'o1' } });
-    mockPrisma.booking.update.mockResolvedValue({ id: 'bk-1', status: 'confirmed' });
+    mockPrisma.booking.findUnique.mockResolvedValue({
+      clientId: 'c1', propertyId: 'p1', status: 'pending_payment',
+      startDate: new Date('2026-09-01'), endDate: new Date('2026-09-04'),
+      property: { ownerId: 'o1', propertyType: 'residence' },
+    });
     const r = await bookingsService.confirm('bk-1', 'o1');
     expect(r).toMatchObject({ status: 'confirmed' });
   });

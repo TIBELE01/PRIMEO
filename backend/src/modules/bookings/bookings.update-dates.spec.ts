@@ -50,7 +50,10 @@ jest.mock('../webhooks/handlers/genius-pay.handler', () => ({
 // bookingRepository.findOverlapping est utilisé par updateDates
 const mockFindOverlapping = jest.fn();
 jest.mock('../../database/repositories/booking.repository', () => ({
-  bookingRepository: { findOverlapping: (...args: unknown[]) => mockFindOverlapping(...args) },
+  bookingRepository: {
+    findOverlapping: (...args: unknown[]) => mockFindOverlapping(...args),
+    lockPropertyCalendar: jest.fn(async () => undefined),
+  },
 }));
 
 // ── Prisma mock ───────────────────────────────────────────────────────────────

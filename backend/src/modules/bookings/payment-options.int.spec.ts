@@ -23,6 +23,15 @@ jest.mock('../subscriptions/subscriptions.service', () => ({ subscriptionsServic
 jest.mock('../analytics/analytics.service', () => ({ analyticsService: { generateMarketReport: jest.fn() } }));
 jest.mock('../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/i.pdf') }));
 
+// Verrou par propriété et contrôle des chevauchements : neutres par défaut
+const mockFindOverlapping = jest.fn(async (..._a: unknown[]) => [] as unknown[]);
+jest.mock('../../database/repositories/booking.repository', () => ({
+  bookingRepository: {
+    findOverlapping: (...a: unknown[]) => mockFindOverlapping(...a),
+    lockPropertyCalendar: jest.fn(async () => undefined),
+  },
+}));
+
 const mockReleaseCredits = jest.fn(async () => ({ walletRefunded: 0, promoReleased: false }));
 jest.mock('./services/booking-credits.service', () => ({
   bookingCreditsService: { release: (...a: unknown[]) => mockReleaseCredits(...(a as [])) },
@@ -37,11 +46,24 @@ const mockPrisma: Record<string, any> = {
   notification: { create: jest.fn(async () => ({})) },
 };
 // $transaction : forme callback (create()) ET forme tableau non utilisée ici
-mockPrisma.$transaction = jest.fn(async (cb: any) => cb({
-  booking: { create: jest.fn(async () => ({ id: 'bk-confirmed' })), update: jest.fn(async () => ({})), findUnique: jest.fn(async () => ({ propertyId: 'p1' })) },
-  transaction: { create: jest.fn(async () => ({})), update: jest.fn(async () => ({})) },
+const defaultTxClient = () => ({
+  booking: {
+    create: jest.fn(async () => ({ id: 'bk-confirmed' })),
+    update: jest.fn(async () => ({})),
+    findUnique: jest.fn(async () => ({
+      clientId: 'c1', propertyId: 'p1', status: 'pending_payment',
+      startDate: new Date('2026-09-01'), endDate: new Date('2026-09-04'),
+      property: { propertyType: 'residence' },
+    })),
+  },
+  transaction: {
+    create: jest.fn(async () => ({})),
+    update: jest.fn(async () => ({})),
+    updateMany: jest.fn(async () => ({ count: 1 })),
+  },
   property: { update: jest.fn(async () => ({})) },
-}));
+});
+mockPrisma.$transaction = jest.fn(async (cb: any) => cb(defaultTxClient()));
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 import { bookingsService } from './bookings.service';

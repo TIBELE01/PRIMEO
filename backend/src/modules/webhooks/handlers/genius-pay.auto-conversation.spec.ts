@@ -41,6 +41,15 @@ const fullBooking = {
   invoiceUrl: null,
 };
 
+// Verrou par propriété et contrôle des chevauchements : neutres par défaut
+const mockFindOverlapping = jest.fn(async (..._a: unknown[]) => [] as unknown[]);
+jest.mock('../../../database/repositories/booking.repository', () => ({
+  bookingRepository: {
+    findOverlapping: (...a: unknown[]) => mockFindOverlapping(...a),
+    lockPropertyCalendar: jest.fn(async () => undefined),
+  },
+}));
+
 const mockPrisma: Record<string, any> = {
   transaction: { update: jest.fn(async () => ({})) },
   booking: {
@@ -55,8 +64,15 @@ const mockPrisma: Record<string, any> = {
 };
 mockPrisma.$transaction = jest.fn(async (cb: any) =>
   cb({
-    transaction: { update: jest.fn(async () => ({})) },
-    booking: { update: jest.fn(async () => ({})), findUnique: jest.fn(async () => ({ propertyId: 'prop-1' })) },
+    transaction: { update: jest.fn(async () => ({})), updateMany: jest.fn(async () => ({ count: 1 })) },
+    booking: {
+      update: jest.fn(async () => ({})),
+      findUnique: jest.fn(async () => ({
+        clientId: 'client-1', propertyId: 'prop-1', status: 'pending_payment',
+        startDate: new Date('2026-09-01'), endDate: new Date('2026-09-04'),
+        property: { propertyType: 'residence' },
+      })),
+    },
     property: { update: jest.fn(async () => ({})) },
   }),
 );
