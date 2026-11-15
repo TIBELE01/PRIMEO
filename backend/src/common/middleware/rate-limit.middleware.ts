@@ -1,16 +1,51 @@
-// Rate limiting via express-rate-limit + store Upstash Redis (partagé inter-instances)
+// Rate limiting via express-rate-limit + store Upstash Redis (partagé inter-instances),
+// avec repli sur un compteur en mémoire quand Redis est absent ou indisponible.
 import { Application, Request, Response } from 'express';
 import { rateLimit, Store, IncrementResponse } from 'express-rate-limit';
 import { getRedisClient } from '../utils/redis-client';
 import { redisConfig } from '../../config/redis.config';
 import { logger } from '../utils/logger';
 
+// ─── Compteur en mémoire (repli) ──────────────────────────────────────────────
+//
+// Utilisé quand Redis n'est pas configuré ou ne répond pas. Limite par instance
+// (non partagée), mais une limite réelle : l'ancien repli renvoyait toujours
+// « 1 requête », ce qui désactivait entièrement le rate limiting sans Redis.
+
+const memoryHits = new Map<string, { count: number; resetAt: number }>();
+const MEMORY_SWEEP_INTERVAL_MS = 60_000;
+
+const sweepTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of memoryHits) {
+    if (entry.resetAt <= now) memoryHits.delete(key);
+  }
+}, MEMORY_SWEEP_INTERVAL_MS);
+sweepTimer.unref(); // ne retient pas le processus (arrêt propre, tests)
+
+function memoryIncrement(key: string, windowMs: number): IncrementResponse {
+  const now = Date.now();
+  const entry = memoryHits.get(key);
+  if (!entry || entry.resetAt <= now) {
+    const fresh = { count: 1, resetAt: now + windowMs };
+    memoryHits.set(key, fresh);
+    return { totalHits: 1, resetTime: new Date(fresh.resetAt) };
+  }
+  entry.count += 1;
+  return { totalHits: entry.count, resetTime: new Date(entry.resetAt) };
+}
+
+function memoryDecrement(key: string): void {
+  const entry = memoryHits.get(key);
+  if (entry && entry.count > 0) entry.count -= 1;
+}
+
 // ─── Store Upstash Redis pour express-rate-limit ──────────────────────────────
 //
-// Utilise une fenêtre fixe (fixed window) avec INCR + EXPIREAT.
-// Si Redis est indisponible, repli sur l'autorisation (fail open).
+// Fenêtre fixe (fixed window) avec INCR + EXPIRE, partagée entre instances.
+// Si Redis est absent ou indisponible, repli sur le compteur en mémoire.
 
-class UpstashRedisStore implements Store {
+export class UpstashRedisStore implements Store {
   readonly prefix: string;
   private windowMs: number;
 
@@ -24,13 +59,9 @@ class UpstashRedisStore implements Store {
   }
 
   async increment(rawKey: string): Promise<IncrementResponse> {
-    const client = getRedisClient();
-    if (!client) {
-      // Pas de Redis configuré — autoriser (fail open)
-      return { totalHits: 1, resetTime: undefined };
-    }
-
     const key = this.key(rawKey);
+    const client = getRedisClient();
+    if (!client) return memoryIncrement(key, this.windowMs);
 
     try {
       // INCR incrémente atomiquement; renvoie la nouvelle valeur
@@ -47,32 +78,38 @@ class UpstashRedisStore implements Store {
 
       return { totalHits, resetTime };
     } catch (err) {
-      logger.warn('Upstash rate-limit store error — fail open', {
+      logger.warn('Upstash rate-limit store error — repli sur le compteur en mémoire', {
         error: (err as Error).message,
       });
-      return { totalHits: 1, resetTime: undefined };
+      return memoryIncrement(key, this.windowMs);
     }
   }
 
   async decrement(rawKey: string): Promise<void> {
+    const key = this.key(rawKey);
     const client = getRedisClient();
-    if (!client) return;
+    if (!client) {
+      memoryDecrement(key);
+      return;
+    }
     try {
-      const key = this.key(rawKey);
       const current = await client.get(key) as number | null;
-      if (current !== null && current > 0) {
+      if (current !== null && Number(current) > 0) {
         await client.decr(key);
       }
     } catch (err) {
       logger.warn('Upstash rate-limit decrement error', { error: (err as Error).message });
+      memoryDecrement(key);
     }
   }
 
   async resetKey(rawKey: string): Promise<void> {
+    const key = this.key(rawKey);
+    memoryHits.delete(key);
     const client = getRedisClient();
     if (!client) return;
     try {
-      await client.del(this.key(rawKey));
+      await client.del(key);
     } catch (err) {
       logger.warn('Upstash rate-limit resetKey error', { error: (err as Error).message });
     }
@@ -110,12 +147,11 @@ export const authRateLimit = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,        // Ne compte que les échecs
   message: { error: 'Trop de tentatives. Réessayez dans 15 minutes.' },
-  keyGenerator: (req: Request) => {
-    // Utiliser le vrai IP même derrière un proxy (Render)
-    const forwarded = req.headers['x-forwarded-for'];
-    const ip = Array.isArray(forwarded) ? forwarded[0] : (forwarded?.split(',')[0] ?? req.ip ?? 'unknown');
-    return ip.trim();
-  },
+  // req.ip est fiable grâce à « trust proxy » (app.ts) : Express ne retient que
+  // l'adresse ajoutée par le proxy de confiance. Lire soi-même le premier
+  // élément de X-Forwarded-For laissait le client choisir sa clé — donc
+  // contourner la limite en changeant l'en-tête à chaque requête.
+  keyGenerator: (req: Request) => req.ip ?? req.socket?.remoteAddress ?? 'unknown',
   handler: (_req: Request, res: Response) => {
     res.status(429).json({
       error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.',

@@ -78,6 +78,8 @@ services:
         sync: false          # mettre: false
       - key: SKIP_OTP_VERIFICATION
         sync: false          # mettre: false
+      - key: TRUST_PROXY
+        sync: false          # mettre: 1 (nombre de proxys devant l'API — voir GET /api/admin/client-ip)
       - key: MAINTENANCE_MODE
         sync: false          # mettre: false
 

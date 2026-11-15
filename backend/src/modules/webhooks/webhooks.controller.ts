@@ -5,13 +5,8 @@ import { handleBrevoEvent, verifyBrevoSignature } from './handlers/brevo.handler
 import { handleOrangeSmsDelivery, verifyOrangeSmsWebhook } from './handlers/orange-sms.handler';
 import { logger } from '../../common/utils/logger';
 
-// Extracts the real client IP, preferring X-Forwarded-For (Render / Cloudflare proxies)
+// IP du client pour la journalisation — req.ip tient compte de « trust proxy »
 function clientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',')[0].trim();
-    if (first) return first;
-  }
   return req.ip ?? req.socket?.remoteAddress ?? 'unknown';
 }
 

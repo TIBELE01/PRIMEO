@@ -994,13 +994,10 @@ const CommChallengeSchema = zComm.object({
   isActive:    zComm.boolean().default(true),
 });
 
+// req.ip tient compte de « trust proxy » (app.ts) : contrairement au premier
+// élément de X-Forwarded-For, il ne peut pas être choisi par le client.
 function getIp(req: Request): string {
-  return (
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
-    ?? (req as any).socket?.remoteAddress
-    ?? req.ip
-    ?? 'unknown'
-  );
+  return req.ip ?? req.socket?.remoteAddress ?? 'unknown';
 }
 
 export async function getCommunityPosts(req: Request, res: Response, next: NextFunction): Promise<void> {

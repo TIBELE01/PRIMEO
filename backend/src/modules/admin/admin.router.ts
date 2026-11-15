@@ -190,5 +190,16 @@ adminRouter.get('/feature-flags', getAllFlags);
 adminRouter.put('/feature-flags/:key', upsertFlag);
 adminRouter.delete('/feature-flags/:key', deleteFlag);
 
+// ── Diagnostic « trust proxy » ────────────────────────────────────────────────
+// Doit renvoyer l'IP publique de l'appelant. Si c'est une IP de l'hébergeur,
+// augmenter TRUST_PROXY ; le rate limiting s'appuie sur cette valeur.
+adminRouter.get('/client-ip', (req, res) => {
+  res.json({
+    ip: req.ip,
+    forwardedFor: req.headers['x-forwarded-for'] ?? null,
+    trustProxy: req.app.get('trust proxy'),
+  });
+});
+
 // ── Monitoring dashboard ───────────────────────────────────────────────────────
 adminRouter.get('/monitoring', getMonitoringDashboard);

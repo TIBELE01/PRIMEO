@@ -55,6 +55,12 @@ import { walletsRouter } from './modules/wallets/wallets.router';
 export function createApp(): Application {
   const app = express();
 
+  // Derrière le proxy de l'hébergeur, req.ip doit refléter le client réel et non
+  // l'adresse du proxy : sinon tous les utilisateurs partagent un seul quota de
+  // rate limiting. Le nombre de sauts de confiance est borné (jamais `true`),
+  // pour qu'un client ne puisse pas choisir son IP via X-Forwarded-For.
+  app.set('trust proxy', env.TRUST_PROXY ?? 1);
+
   // Request ID first so all subsequent middleware/logs can reference it
   applyRequestId(app);
 

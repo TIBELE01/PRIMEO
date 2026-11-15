@@ -21,6 +21,13 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
   PORT: z.coerce.number().default(4000),
 
+  // Nombre de proxys de confiance devant l'API (Express « trust proxy »).
+  // Détermine req.ip, donc la clé du rate limiting : trop bas, tous les clients
+  // partagent l'IP du proxy ; trop haut, un client peut usurper son IP via
+  // X-Forwarded-For. 1 = un proxy (cas de Render). Vérifiable une fois déployé
+  // avec GET /api/admin/client-ip (doit renvoyer votre IP publique).
+  TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(1),
+
   // Database (Supabase PostgreSQL)
   DATABASE_URL: z.string().min(1),
   DIRECT_URL: z.string().min(1).optional(),
