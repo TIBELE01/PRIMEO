@@ -172,7 +172,7 @@ export const usersService = {
 
     await prisma.user.update({
       where: { id },
-      data: { status: 'suspended', deactivatedUntil } as any,
+      data: { status: 'suspended', suspendedByAdmin: false, deactivatedUntil } as any,
     });
 
     await writeAudit(id, 'user.deactivated', { duration: input.duration, reason: input.reason });
@@ -194,6 +194,12 @@ export const usersService = {
   async reactivate(id: string) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
+    // Seule une désactivation volontaire est réactivable par l'utilisateur :
+    // une suspension admin ou un bannissement ne se lève que côté administration.
+    if (user.status === 'banned' || (user.status === 'suspended' && user.suspendedByAdmin)) {
+      throw new HttpError(403, 'Ce compte ne peut être réactivé que par le support.');
+    }
+    if (user.status !== 'suspended') return; // déjà actif — rien à faire
     await prisma.user.update({ where: { id }, data: { status: 'active', deactivatedUntil: null } as any });
     await writeAudit(id, 'user.reactivated');
     sendEmail({

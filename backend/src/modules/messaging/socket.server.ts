@@ -9,6 +9,8 @@ import { disputesService } from '../disputes/disputes.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
 import { env } from '../../config/env.config';
+import { prisma } from '../../database/prisma.service';
+import { getAccountBlock } from '../../common/utils/account-status';
 
 // Augment socket.data with typed fields
 interface SocketData {
@@ -79,6 +81,17 @@ export function initSocketServer(httpServer: HttpServer): typeof io {
     try {
       const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
       if (error || !user) return next(new Error('Token invalide ou expiré'));
+
+      // Même règle que l'API REST : un compte banni, suspendu ou désactivé
+      // ne peut pas ouvrir de connexion temps réel.
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { status: true, suspendedByAdmin: true },
+      });
+      if (!dbUser) return next(new Error('Compte introuvable'));
+      const block = getAccountBlock(dbUser);
+      if (block) return next(new Error(block.message));
+
       socket.data.userId = user.id;
       socket.data.role = (user.app_metadata?.role as string) ?? 'client';
       next();

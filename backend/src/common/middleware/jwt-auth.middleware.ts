@@ -6,6 +6,10 @@ import { supabaseAdmin } from '../../config/supabase.config';
 import { prisma } from '../../database/prisma.service';
 import { logger } from '../utils/logger';
 import { UserRole } from '../constants/roles';
+import { getAccountBlock } from '../utils/account-status';
+
+// Seule route accessible à un compte désactivé volontairement : sa réactivation.
+const SELF_REACTIVATE_PATH = '/api/users/me/reactivate';
 
 export interface TokenPayload {
   sub: string;
@@ -44,7 +48,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     // signifie une élévation de privilège potentielle → accès refusé + incident loggué.
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { accountType: true },
+      select: { accountType: true, status: true, suspendedByAdmin: true },
     });
 
     if (!dbUser) {
@@ -71,6 +75,19 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
         extra: { userId: user.id, supabaseRole, databaseRole: dbUser.accountType, path: req.path },
       });
       return next(new HttpError(403, 'Incohérence de compte détectée. Contactez le support.'));
+    }
+
+    // Statut du compte : un compte banni ou suspendu ne peut plus utiliser l'API,
+    // même avec un jeton encore valide. Exception : un compte désactivé
+    // volontairement peut appeler sa propre réactivation.
+    const block = getAccountBlock(dbUser);
+    if (block) {
+      const fullPath = `${req.baseUrl ?? ''}${req.path ?? ''}`.replace(/\/+$/, '');
+      const isSelfReactivation =
+        block.code === 'ACCOUNT_DEACTIVATED' && req.method === 'POST' && fullPath === SELF_REACTIVATE_PATH;
+      if (!isSelfReactivation) {
+        return next(new HttpError(403, block.message, { code: block.code }));
+      }
     }
 
     const role = dbUser.accountType as UserRole;

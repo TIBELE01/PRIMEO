@@ -281,6 +281,9 @@ model User {
   adminRole   String?
   status      UserStatus  @default(pending)
   deactivatedUntil  DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
+  // true = suspension décidée par un administrateur (seul un admin peut la lever).
+  // false + status=suspended = désactivation volontaire (réactivable par l'utilisateur).
+  suspendedByAdmin  Boolean   @default(false)
 
   // Portefeuille et parrainage
   // walletBalance : conservé pour compatibilité ; la source de vérité est désormais

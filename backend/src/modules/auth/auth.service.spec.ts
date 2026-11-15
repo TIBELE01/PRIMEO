@@ -44,6 +44,9 @@ const mockPrisma = {
   professionalProfile: {
     create: jest.fn(async () => ({})),
   },
+  auditLog: {
+    create: jest.fn(async () => ({})),
+  },
   property: {
     count: jest.fn(async () => 0),
     create: jest.fn(async () => ({})),
@@ -453,8 +456,27 @@ describe('authService.login', () => {
       data: { session: { access_token: 't', refresh_token: 'r' }, user: supabaseUser },
       error: null,
     });
-    mockPrisma.user.findUnique.mockResolvedValueOnce({ ...prismaUser, status: UserStatus.suspended });
-    await expect(authService.login(creds)).rejects.toMatchObject({ statusCode: 403 });
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      ...prismaUser, status: UserStatus.suspended, suspendedByAdmin: true,
+    });
+    await expect(authService.login(creds)).rejects.toMatchObject({
+      statusCode: 403, details: { code: 'ACCOUNT_SUSPENDED' },
+    });
+  });
+
+  it('réactive un compte désactivé volontairement à la reconnexion', async () => {
+    mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({
+      data: { session: { access_token: 't', refresh_token: 'r' }, user: supabaseUser },
+      error: null,
+    });
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      ...prismaUser, status: UserStatus.suspended, suspendedByAdmin: false,
+    });
+    const result = await authService.login(creds);
+    expect(mockPrisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: UserStatus.active }) }),
+    );
+    expect(result).toMatchObject({ accessToken: 't', user: { status: UserStatus.active } });
   });
 
   it('throws 403 for banned user', async () => {
@@ -676,6 +698,19 @@ describe('authService.refreshToken', () => {
 
     await expect(authService.refreshToken('bad-token')).rejects.toMatchObject({ statusCode: 401 });
   });
+
+  it('refuse de prolonger la session d\'un compte banni (401) et révoque la session émise', async () => {
+    mockSupabaseAuth.auth.refreshSession.mockResolvedValueOnce({
+      data: { session: { access_token: 'new-acc', refresh_token: 'new-ref', user: { id: prismaUser.id } } },
+      error: null,
+    });
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ ...prismaUser, status: UserStatus.banned });
+
+    await expect(authService.refreshToken('valid-refresh')).rejects.toMatchObject({
+      statusCode: 401, details: { code: 'ACCOUNT_BANNED' },
+    });
+    expect(mockSupabaseAdmin.auth.admin.signOut).toHaveBeenCalledWith('new-acc');
+  });
 });
 
 // ── logout() ──────────────────────────────────────────────────────────────────
@@ -780,6 +815,7 @@ describe('authService.googleAuth', () => {
     mockPrisma.user.findUnique.mockResolvedValue({
       id: googleSbUser.id, email: googleSbUser.email, phone: null,
       firstName: 'Ama', lastName: 'Google', accountType: 'client', status: 'suspended',
+      suspendedByAdmin: true,
       professionalProfile: null,
     });
     await expect(authService.googleAuth({ accessToken: 't', refreshToken: 'r' }))

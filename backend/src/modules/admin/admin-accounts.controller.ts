@@ -7,6 +7,7 @@ import { prisma } from '../../database/prisma.service';
 import { supabaseAdmin } from '../../config/supabase.config';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
+import { setSupabaseBan } from '../../common/utils/account-status';
 import { createAudit } from './admin.service';
 
 const ADMIN_ROLES = ['super_admin', 'moderateur', 'support', 'analyste'] as const;
@@ -122,17 +123,23 @@ export async function updateAdminAccount(req: Request, res: Response, next: Next
     const target = await prisma.user.findUnique({ where: { id }, select: { accountType: true } });
     if (!target || target.accountType !== AccountType.admin) throw new HttpError(404, 'Compte administrateur introuvable');
 
-    const data: { adminRole?: string; status?: UserStatus } = {};
+    const data: { adminRole?: string; status?: UserStatus; suspendedByAdmin?: boolean } = {};
     if (role !== undefined) {
       if (!ADMIN_ROLES.includes(role as AdminRole)) throw new HttpError(400, 'Rôle invalide');
       data.adminRole = role;
     }
     if (isActive !== undefined) {
       data.status = isActive ? UserStatus.active : UserStatus.suspended;
+      data.suspendedByAdmin = !isActive;
     }
     if (Object.keys(data).length === 0) throw new HttpError(400, 'Aucune modification fournie');
 
     const updated = await prisma.user.update({ where: { id }, data, select: ADMIN_SELECT });
+
+    // Désactivation / réactivation : répercutée côté Supabase Auth
+    if (isActive !== undefined) {
+      await setSupabaseBan(id, !isActive);
+    }
 
     // Synchronise le sous-rôle dans Supabase app_metadata (best-effort, non bloquant)
     if (data.adminRole) {

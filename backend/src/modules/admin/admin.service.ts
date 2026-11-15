@@ -8,6 +8,7 @@ import { geniusPayService } from '../payments/services/genius-pay.service';
 import { sendEmail, sendTestEmail } from '../../common/utils/mailer';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
+import { setSupabaseBan } from '../../common/utils/account-status';
 import { supabaseAdmin } from '../../config/supabase.config';
 import { syncSupabaseRole } from '../../common/utils/role-sync';
 import { getMaintenanceState, invalidateMaintenanceCache } from '../../common/middleware/maintenance.middleware';
@@ -383,7 +384,9 @@ export const adminService = {
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
     if (user.status === 'banned') throw new HttpError(400, 'L\'utilisateur est banni, pas suspendu');
 
-    await prisma.user.update({ where: { id }, data: { status: 'suspended' } });
+    await prisma.user.update({ where: { id }, data: { status: 'suspended', suspendedByAdmin: true } });
+    // Coupe aussi la session côté Supabase (connexion et rafraîchissement refusés)
+    await setSupabaseBan(id, true);
 
     await createAudit({
       adminId,
@@ -406,7 +409,11 @@ export const adminService = {
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
     if (user.status === 'banned') throw new HttpError(400, 'Impossible de réactiver un utilisateur banni');
 
-    await prisma.user.update({ where: { id }, data: { status: 'active' } });
+    await prisma.user.update({
+      where: { id },
+      data: { status: 'active', suspendedByAdmin: false, deactivatedUntil: null },
+    });
+    await setSupabaseBan(id, false);
 
     await createAudit({
       adminId,
@@ -423,6 +430,8 @@ export const adminService = {
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
 
     await prisma.user.update({ where: { id }, data: { status: 'banned' } });
+    // Coupe aussi la session côté Supabase (connexion et rafraîchissement refusés)
+    await setSupabaseBan(id, true);
 
     await createAudit({
       adminId,

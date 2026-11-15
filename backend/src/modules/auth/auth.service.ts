@@ -19,6 +19,7 @@ import { AccountType, UserStatus } from '@prisma/client';
 import { env } from '../../config/env.config';
 import { orangeSmsConfig } from '../../config/orange-sms.config';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
+import { getAccountBlock } from '../../common/utils/account-status';
 
 // ─── Redis key helpers ────────────────────────────────────────────────────────
 
@@ -135,6 +136,18 @@ async function autoCreateRestaurantForOwner(ownerId: string, businessName: strin
   } catch (err) {
     logger.warn('Auto-création restaurant échouée', err);
   }
+}
+
+// Réactive un compte désactivé volontairement (à la reconnexion).
+async function reactivateSelfDeactivated(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { status: UserStatus.active, deactivatedUntil: null, suspendedByAdmin: false },
+  });
+  await prisma.auditLog
+    .create({ data: { userId, action: 'user.reactivated', description: 'Réactivation à la reconnexion' } })
+    .catch((err) => logger.warn('Audit log non créé', err));
+  logger.info('Compte réactivé à la reconnexion', { userId });
 }
 
 async function createUserAndSession(input: RegisterInput): Promise<{ message: string; accessToken: string; refreshToken: string; user: SafeUser }> {
@@ -541,14 +554,16 @@ export const authService = {
       throw new HttpError(401, 'Email ou mot de passe incorrect');
     }
 
-    if (user.status === UserStatus.suspended) {
+    // Compte banni ou suspendu par un admin → refus. Compte désactivé
+    // volontairement → la reconnexion le réactive (comportement annoncé à
+    // l'utilisateur dans l'email de désactivation).
+    const block = getAccountBlock(user);
+    if (block?.code === 'ACCOUNT_DEACTIVATED') {
+      await reactivateSelfDeactivated(user.id);
+      user.status = UserStatus.active;
+    } else if (block) {
       await supabaseAdmin.auth.admin.signOut(signInData.session.access_token).catch(() => null);
-      throw new HttpError(403, 'Votre compte est suspendu. Contactez le support.');
-    }
-
-    if (user.status === UserStatus.banned) {
-      await supabaseAdmin.auth.admin.signOut(signInData.session.access_token).catch(() => null);
-      throw new HttpError(403, 'Votre compte a été désactivé.');
+      throw new HttpError(403, block.message, { code: block.code });
     }
 
     // TOTP obligatoire si activé — stocker le refresh token Supabase en Redis
@@ -613,13 +628,13 @@ export const authService = {
         await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
         throw new HttpError(403, 'La connexion Google est réservée aux comptes clients. Utilisez votre email et mot de passe.');
       }
-      if (user.status === UserStatus.suspended) {
+      const block = getAccountBlock(user);
+      if (block?.code === 'ACCOUNT_DEACTIVATED') {
+        await reactivateSelfDeactivated(user.id);
+        user.status = UserStatus.active;
+      } else if (block) {
         await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
-        throw new HttpError(403, 'Votre compte est suspendu. Contactez le support.');
-      }
-      if (user.status === UserStatus.banned) {
-        await supabaseAdmin.auth.admin.signOut(input.accessToken).catch(() => null);
-        throw new HttpError(403, 'Votre compte a été désactivé.');
+        throw new HttpError(403, block.message, { code: block.code });
       }
     } else {
       // Cohérence : un compte applicatif avec le même email mais un autre UUID
@@ -727,15 +742,26 @@ export const authService = {
     // Inclure le user dans la réponse pour que le store mobile puisse
     // détecter les changements de statut (ex : approbation KYC admin)
     let safeUser: SafeUser | undefined;
+    let block: ReturnType<typeof getAccountBlock> = null;
     try {
       const userId = data.session.user.id;
       const user = await prisma.user.findUnique({
         where: { id: userId },
         include: { professionalProfile: { select: { verificationStatus: true, verificationNotes: true } } },
       });
-      if (user) safeUser = toSafeUser(user);
+      if (user) {
+        safeUser = toSafeUser(user);
+        block = getAccountBlock(user);
+      }
     } catch (err) {
       logger.warn('refreshToken: impossible de charger le profil utilisateur', err);
+    }
+
+    // Un compte banni, suspendu ou désactivé ne prolonge pas sa session : on
+    // révoque la session fraîchement émise et on force une reconnexion.
+    if (block) {
+      await supabaseAdmin.auth.admin.signOut(data.session.access_token).catch(() => null);
+      throw new HttpError(401, block.message, { code: block.code });
     }
 
     return {
