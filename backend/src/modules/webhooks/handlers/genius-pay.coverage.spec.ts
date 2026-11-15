@@ -13,11 +13,18 @@ jest.mock('../../analytics/analytics.service', () => ({ analyticsService: { gene
 jest.mock('../../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/invoice.pdf'), formatBookingInvoiceRef: jest.fn(() => 'FAC-2026-06-TEST') }));
 jest.mock('../../messaging/messaging.service', () => ({ messagingService: { saveMessage: jest.fn(), saveAutoBookingMessage: jest.fn(async () => ({ id: 'msg-auto' })) } }));
 
+const mockReleaseCredits = jest.fn(async () => ({ walletRefunded: 0, promoReleased: false }));
+jest.mock('../../bookings/services/booking-credits.service', () => ({
+  bookingCreditsService: { release: (...a: unknown[]) => mockReleaseCredits(...(a as [])) },
+}));
+
 const mockPrisma: Record<string, any> = {
   booking: { findUnique: jest.fn(), update: jest.fn(async () => ({})) },
   transaction: { findFirst: jest.fn(), update: jest.fn(async () => ({})) },
   notification: { create: jest.fn(async () => ({})) },
 };
+// $transaction (forme callback) : le client transactionnel est le mock lui-même
+mockPrisma.$transaction = jest.fn(async (cb: any) => cb(mockPrisma));
 jest.mock('../../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 import {
@@ -87,6 +94,8 @@ describe('processFailedPayment', () => {
     expect(mockPrisma.booking.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: 'cancelled_by_client', cancelledBy: 'system' }),
     }));
+    // Le crédit portefeuille et le code promo prélevés à la création sont rendus
+    expect(mockReleaseCredits).toHaveBeenCalledWith('bk-1', mockPrisma);
     expect(sendTemplateEmail).toHaveBeenCalled();
     expect(sendPushNotification).toHaveBeenCalledWith(expect.objectContaining({ externalUserIds: ['c1'] }));
   });

@@ -13,6 +13,7 @@ import { referralsService } from '../../referrals/referrals.service';
 import { analyticsService } from '../../analytics/analytics.service';
 import { generateAndUploadBookingInvoice, formatBookingInvoiceRef } from '../../../common/utils/invoice';
 import { messagingService } from '../../messaging/messaging.service';
+import { bookingCreditsService } from '../../bookings/services/booking-credits.service';
 
 // ── Génération de facture ─────────────────────────────────────────────────────
 
@@ -419,14 +420,20 @@ export async function processFailedPayment(
       select: { status: true },
     });
     if (booking && booking.status === 'pending_payment') {
-      await prisma.booking.update({
-        where: { id: tx.bookingId },
-        data: {
-          status: 'cancelled_by_client',
-          cancelledAt: new Date(),
-          cancellationReason: 'Paiement refusé par Genius Pay',
-          cancelledBy: 'system',
-        },
+      const bookingId = tx.bookingId;
+      // Annulation + restitution du crédit portefeuille et du code promo prélevés
+      // à la création, dans la même transaction.
+      await prisma.$transaction(async (p) => {
+        await p.booking.update({
+          where: { id: bookingId },
+          data: {
+            status: 'cancelled_by_client',
+            cancelledAt: new Date(),
+            cancellationReason: 'Paiement refusé par Genius Pay',
+            cancelledBy: 'system',
+          },
+        });
+        await bookingCreditsService.release(bookingId, p);
       });
 
       await notifyBookingCancelled(tx.bookingId).catch((err) =>

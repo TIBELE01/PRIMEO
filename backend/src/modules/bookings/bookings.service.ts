@@ -20,6 +20,7 @@ import { notificationsService } from '../notifications/notifications.service';
 import { messagingService } from '../messaging/messaging.service';
 import { referralsService } from '../referrals/referrals.service';
 import { walletService } from '../wallets/wallets.service';
+import { bookingCreditsService } from './services/booking-credits.service';
 
 export const bookingsService = {
   async create(clientId: string, input: CreateBookingInput) {
@@ -109,8 +110,12 @@ export const bookingsService = {
       ? `Réservation de table à ${input.reservationTime}${input.specialRequests ? ` — ${input.specialRequests}` : ''}`
       : input.specialRequests;
 
-    // Determine initial status — confirmé immédiatement pour cash intégral et restaurant
-    const initialStatus = effectivePaymentOption === 'zero_online' ? 'confirmed' : 'pending_payment';
+    // Statut initial — confirmé immédiatement quand il n'y a rien à payer en ligne :
+    // cash intégral, restaurant, ou montant entièrement couvert par le portefeuille
+    // et/ou un code promo. (Dans ce dernier cas la réservation restait bloquée en
+    // « pending_payment » sans paiement possible, puis expirait en perdant le crédit.)
+    const nothingToPayOnline = effectivePaymentOption === 'zero_online' || pricing.onlinePaidAmount <= 0;
+    const initialStatus = nothingToPayOnline ? 'confirmed' : 'pending_payment';
 
     const booking = await prisma.$transaction(async (tx) => {
       // Deduct wallet balance if used (table wallets + walletBalance, atomique)
@@ -138,6 +143,9 @@ export const bookingsService = {
           paymentOption: effectivePaymentOption,
           commissionAmount: pricing.commissionAmount,
           remainingCashAmount: pricing.remainingCashAmount,
+          // Tracés pour pouvoir les restituer si la réservation n'aboutit pas
+          walletDeduction: pricing.walletDeduction,
+          promoCodeId: pricing.validatedPromoCodeId ?? null,
           status: initialStatus,
           specialRequests,
           ...(initialStatus === 'confirmed' ? { confirmedAt: new Date() } : {}),
@@ -223,10 +231,14 @@ export const bookingsService = {
           payment: { checkoutUrl: payment.checkoutUrl, reference: payment.reference },
         };
       } catch (payErr: unknown) {
-        // Annuler la réservation pour éviter les orphelins
-        await prisma.booking.update({
-          where: { id: booking.id },
-          data: { status: 'cancelled_by_client', cancelledAt: new Date(), cancellationReason: 'Échec initiation paiement' },
+        // Annuler la réservation pour éviter les orphelins, et rendre au client le
+        // crédit portefeuille et le code promo prélevés à la création.
+        await prisma.$transaction(async (tx) => {
+          await tx.booking.update({
+            where: { id: booking.id },
+            data: { status: 'cancelled_by_client', cancelledAt: new Date(), cancellationReason: 'Échec initiation paiement', cancelledBy: 'system' },
+          });
+          await bookingCreditsService.release(booking.id, tx);
         });
 
         // Extraire le message d'erreur réel pour aider au débogage
@@ -451,7 +463,14 @@ export const bookingsService = {
     const cancelledBy = isClient ? 'client' : isOwner ? 'professional' : 'admin';
     const newStatus = isClient ? 'cancelled_by_client' : 'cancelled_by_professional';
 
-    const { refundAmount } = cancellationService.computeRefund(booking);
+    const { refundAmount, refundPercent } = cancellationService.computeRefund(booking);
+    // Réservation jamais payée : rien n'a été encaissé, le crédit portefeuille et
+    // le code promo prélevés à la création sont rendus intégralement.
+    const wasUnpaid = booking.status === 'pending_payment';
+    // Réservation confirmée : la part réglée par portefeuille suit le même barème
+    // d'annulation que la part payée en ligne.
+    const walletDeduction = booking.walletDeduction ?? 0;
+    const walletRefund = wasUnpaid ? 0 : Math.floor((walletDeduction * (refundPercent ?? 0)) / 100);
 
     await prisma.$transaction(async (tx) => {
       await tx.booking.update({
@@ -488,6 +507,12 @@ export const bookingsService = {
         // Credit wallet for immediate refund (Genius Pay refund handled via webhook)
         await walletService.credit(booking.clientId, refundAmount, tx);
       }
+
+      if (wasUnpaid) {
+        await bookingCreditsService.release(id, tx);
+      } else if (walletRefund > 0) {
+        await walletService.credit(booking.clientId, walletRefund, tx);
+      }
     });
 
     // Notifier les DEUX parties de l'annulation (in-app + email + push — non bloquant)
@@ -502,7 +527,10 @@ export const bookingsService = {
       notificationsService.notify({ type: 'booking_cancelled', recipientId: booking.property.ownerId, data: cancelData }),
     ]).catch(() => { /* best-effort */ });
 
-    return { message: 'Réservation annulée', refundAmount };
+    return {
+      message: 'Réservation annulée',
+      refundAmount: refundAmount + (wasUnpaid ? walletDeduction : walletRefund),
+    };
   },
 
   async updateDates(id: string, clientId: string, input: UpdateBookingDatesInput) {

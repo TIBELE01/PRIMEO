@@ -8,6 +8,7 @@ import {
   processFailedPayment,
 } from '../modules/webhooks/handlers/genius-pay.handler';
 import { notificationsService } from '../modules/notifications/notifications.service';
+import { bookingCreditsService } from '../modules/bookings/services/booking-credits.service';
 
 // Délai de grâce : 2 heures après la création de la réservation
 const GRACE_PERIOD_MS = 2 * 60 * 60 * 1000;
@@ -152,6 +153,8 @@ async function forceCancelBooking(
         data: { status: 'failed' },
       });
     }
+    // Rendre au client le crédit portefeuille et le code promo prélevés à la création
+    await bookingCreditsService.release(booking.id, p);
   });
 
   // Notification au client (email + push + in-app) — fire-and-forget

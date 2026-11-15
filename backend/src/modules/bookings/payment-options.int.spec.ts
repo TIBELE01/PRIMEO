@@ -23,6 +23,11 @@ jest.mock('../subscriptions/subscriptions.service', () => ({ subscriptionsServic
 jest.mock('../analytics/analytics.service', () => ({ analyticsService: { generateMarketReport: jest.fn() } }));
 jest.mock('../../common/utils/invoice', () => ({ generateAndUploadBookingInvoice: jest.fn(async () => 'https://cdn/i.pdf') }));
 
+const mockReleaseCredits = jest.fn(async () => ({ walletRefunded: 0, promoReleased: false }));
+jest.mock('./services/booking-credits.service', () => ({
+  bookingCreditsService: { release: (...a: unknown[]) => mockReleaseCredits(...(a as [])) },
+}));
+
 const mockPrisma: Record<string, any> = {
   user: { findUnique: jest.fn(), update: jest.fn(async (a: any) => ({ id: 'c1', ...a.data })) },
   property: { findUnique: jest.fn() },
@@ -108,9 +113,13 @@ describe('Option 2 — 10 % en ligne → webhook échec → ANNULÉE', () => {
         startDate: new Date('2026-09-01'),
       });
     const tx = { id: 'tx-2', status: 'initiated', type: 'client_payment', bookingId: 'bk-2', amount: 16500, webhookReceived: false } as never;
+    // L'annulation et la restitution des crédits se font dans une même transaction
+    mockPrisma.$transaction.mockImplementationOnce(async (cb: any) => cb(mockPrisma));
 
     await processFailedPayment(tx, { reference: 'GP-REF' });
     await flush();
+
+    expect(mockReleaseCredits).toHaveBeenCalledWith('bk-2', mockPrisma);
 
     expect(mockPrisma.booking.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'bk-2' },
@@ -138,3 +147,62 @@ describe('Option 3 — 0 % en ligne → CONFIRMATION IMMÉDIATE (sans webhook)',
     expect(messagingService.saveAutoBookingMessage).toHaveBeenCalledWith('bk-confirmed');
   });
 });
+
+describe('Portefeuille et code promo — restitution et couverture intégrale', () => {
+  it('montant entièrement couvert par le portefeuille → confirmée tout de suite, sans Genius Pay', async () => {
+    // 100 % en ligne demandé, mais le portefeuille couvre tout : il ne reste rien à payer.
+    (pricingService.compute as jest.Mock).mockResolvedValue({
+      totalAmount: 0, onlinePaidAmount: 0, commissionAmount: 0, remainingCashAmount: 0,
+      walletDeduction: 55000, validatedPromoCodeId: null,
+    });
+    let createdData: Record<string, unknown> | undefined;
+    mockPrisma.$transaction.mockImplementationOnce(async (cb: any) => cb({
+      booking: {
+        create: jest.fn(async (args: { data: Record<string, unknown> }) => {
+          createdData = args.data;
+          return { id: 'bk-wallet', ...args.data };
+        }),
+      },
+      transaction: { create: jest.fn(async () => ({})) },
+      promoCode: { update: jest.fn(async () => ({})) },
+    }));
+
+    const res = await bookingsService.create(CLIENT, {
+      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'full_online',
+    } as never);
+    await flush();
+
+    expect(createdData).toMatchObject({ status: 'confirmed', walletDeduction: 55000 });
+    expect(geniusPayService.initiatePayment).not.toHaveBeenCalled();
+    expect((res as any).payment).toBeUndefined();
+    // Confirmée à la création → les deux parties sont notifiées
+    expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'booking_confirmed' }));
+  });
+
+  it('échec d\'initiation du paiement → réservation annulée et crédits restitués', async () => {
+    (pricingService.compute as jest.Mock).mockResolvedValue({
+      totalAmount: 100000, onlinePaidAmount: 100000, commissionAmount: 0, remainingCashAmount: 0,
+      walletDeduction: 10000, validatedPromoCodeId: 'promo-1',
+    });
+    (geniusPayService.initiatePayment as jest.Mock).mockRejectedValueOnce(new Error('GP indisponible'));
+    // 1re transaction : création ; 2e : annulation + restitution
+    mockPrisma.$transaction
+      .mockImplementationOnce(async (cb: any) => cb({
+        booking: { create: jest.fn(async () => ({ id: 'bk-fail' })) },
+        transaction: { create: jest.fn(async () => ({})) },
+        promoCode: { update: jest.fn(async () => ({})) },
+      }))
+      .mockImplementationOnce(async (cb: any) => cb(mockPrisma));
+
+    await expect(bookingsService.create(CLIENT, {
+      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'full_online',
+    } as never)).rejects.toMatchObject({ statusCode: 502 });
+
+    expect(mockPrisma.booking.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'bk-fail' },
+      data: expect.objectContaining({ status: 'cancelled_by_client' }),
+    }));
+    expect(mockReleaseCredits).toHaveBeenCalledWith('bk-fail', mockPrisma);
+  });
+});
+

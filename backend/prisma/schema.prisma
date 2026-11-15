@@ -729,6 +729,9 @@ model Booking {
   paymentOption       PaymentOption
   commissionAmount    Int           @default(0) // FCFA — part Primeo
   remainingCashAmount Int           @default(0) // FCFA — solde à payer en cash
+  // Prélevé à la création, restitué si le paiement échoue/expire ou à l'annulation
+  walletDeduction     Int           @default(0) // FCFA — débité du portefeuille du client
+  promoCodeId         String? // code promo dont une utilisation a été consommée
 
   // Statut (§3.6)
   status             BookingStatus @default(pending_payment)

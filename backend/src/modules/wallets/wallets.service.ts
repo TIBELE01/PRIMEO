@@ -45,16 +45,20 @@ export const walletService = {
   },
 
   // Débite le portefeuille (déduction lors d'une réservation). Refuse un solde négatif.
+  // Le contrôle du solde et le débit se font en UNE requête conditionnelle : deux
+  // réservations simultanées ne peuvent pas dépenser deux fois le même crédit
+  // (un « lire puis décrémenter » laissait passer les deux et rendait le solde négatif).
   async debit(userId: string, amount: number, db: Db = prisma): Promise<number> {
     if (amount <= 0) throw new HttpError(400, 'Le montant à débiter doit être positif');
-    const { balance } = await walletService.getOrCreate(userId, db);
-    if (balance < amount) throw new HttpError(422, 'Solde de portefeuille insuffisant');
-
-    const wallet = await db.wallet.update({
-      where: { userId },
+    await walletService.getOrCreate(userId, db);
+    const debited = await db.wallet.updateMany({
+      where: { userId, balance: { gte: amount } },
       data: { balance: { decrement: amount } },
     });
-    await db.user.update({ where: { id: userId }, data: { walletBalance: wallet.balance } });
-    return wallet.balance;
+    if (debited.count !== 1) throw new HttpError(422, 'Solde de portefeuille insuffisant');
+    const wallet = await db.wallet.findUnique({ where: { userId } });
+    const balance = wallet?.balance ?? 0;
+    await db.user.update({ where: { id: userId }, data: { walletBalance: balance } });
+    return balance;
   },
 };

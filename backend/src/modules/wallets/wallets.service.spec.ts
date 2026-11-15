@@ -4,7 +4,7 @@ jest.mock('../../common/handlers/http-error.handler', () => ({
 }));
 
 const mockPrisma: Record<string, any> = {
-  wallet: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+  wallet: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
   user: { findUnique: jest.fn(), update: jest.fn(async () => ({})) },
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
@@ -61,16 +61,35 @@ describe('walletService.credit', () => {
 });
 
 describe('walletService.debit', () => {
-  it('débite si le solde est suffisant', async () => {
-    mockPrisma.wallet.findUnique.mockResolvedValue({ balance: 5000, currency: 'XOF' });
-    mockPrisma.wallet.update.mockResolvedValue({ balance: 2000 });
+  it('débite en une requête conditionnelle si le solde est suffisant', async () => {
+    mockPrisma.wallet.findUnique
+      .mockResolvedValueOnce({ balance: 5000, currency: 'XOF' }) // getOrCreate
+      .mockResolvedValueOnce({ balance: 2000, currency: 'XOF' }); // solde après débit
+    mockPrisma.wallet.updateMany.mockResolvedValue({ count: 1 });
+
     const bal = await walletService.debit('u1', 3000);
-    expect(mockPrisma.wallet.update).toHaveBeenCalledWith({ where: { userId: 'u1' }, data: { balance: { decrement: 3000 } } });
+
+    // Contrôle du solde et débit dans la même requête (pas de « lire puis écrire »)
+    expect(mockPrisma.wallet.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', balance: { gte: 3000 } },
+      data: { balance: { decrement: 3000 } },
+    });
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { walletBalance: 2000 } });
     expect(bal).toBe(2000);
   });
 
-  it('refuse si solde insuffisant (422)', async () => {
+  it('refuse si solde insuffisant (422) — aucune ligne débitée', async () => {
     mockPrisma.wallet.findUnique.mockResolvedValue({ balance: 1000, currency: 'XOF' });
+    mockPrisma.wallet.updateMany.mockResolvedValue({ count: 0 });
+    await expect(walletService.debit('u1', 3000)).rejects.toMatchObject({ statusCode: 422 });
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('refuse (422) quand un débit concurrent a déjà consommé le solde', async () => {
+    // Le solde lu au départ semblait suffisant, mais la requête conditionnelle
+    // ne trouve plus de ligne éligible : pas de solde négatif.
+    mockPrisma.wallet.findUnique.mockResolvedValue({ balance: 5000, currency: 'XOF' });
+    mockPrisma.wallet.updateMany.mockResolvedValue({ count: 0 });
     await expect(walletService.debit('u1', 3000)).rejects.toMatchObject({ statusCode: 422 });
   });
 
