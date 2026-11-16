@@ -126,9 +126,9 @@ function AppTopBar() {
 }
 
 /* ── Bannière de titre uniforme (pleine largeur, bleue, arrondie) ── */
-function SectionTitle({ text, onSeeAll, strongShadow }: { text: string; onSeeAll?: () => void; strongShadow?: boolean }) {
+function SectionTitle({ text, onSeeAll }: { text: string; onSeeAll?: () => void }) {
   return (
-    <View style={strongShadow ? [s.secTitleBox, CARD_SHADOW] : s.secTitleBox}>
+    <View style={s.secTitleBox}>
       <Text style={s.secTitleText}>{text.toUpperCase()}</Text>
       {onSeeAll && (
         <TouchableOpacity onPress={onSeeAll} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -299,7 +299,7 @@ export function HomeScreen() {
 
         {/* ── Pour vous ── */}
         <View style={[s.section, { marginTop: 32 }]}>
-          <SectionTitle text="Pour vous" strongShadow onSeeAll={() => goSearch()} />
+          <SectionTitle text="Pour vous" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
               {forYouList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} onFavorite={() => toggleFavorite(p.id)} isFavorite={favoriteIds.has(p.id)} />)}
@@ -309,7 +309,7 @@ export function HomeScreen() {
 
         {/* ── Populaires ── */}
         <View style={s.section}>
-          <SectionTitle text="Populaires dans votre région" strongShadow onSeeAll={() => goSearch()} />
+          <SectionTitle text="Populaires dans votre région" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
               {popularList.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} onFavorite={() => toggleFavorite(p.id)} isFavorite={favoriteIds.has(p.id)} />)}
@@ -319,7 +319,7 @@ export function HomeScreen() {
 
         {/* ── Primeo en chiffres ── */}
         <View style={s.statsSection}>
-          <SectionTitle text="Primeo en chiffres" strongShadow />
+          <SectionTitle text="Primeo en chiffres" />
           <View style={s.statsGrid}>
             {statCards.map(card => (
               <View key={card.label} style={s.statCard}>
@@ -507,7 +507,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16, paddingVertical: 13,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
+    ...CARD_SHADOW,
   },
   secTitleBoxOnOrange: {
     backgroundColor: 'rgba(255,255,255,0.22)',
