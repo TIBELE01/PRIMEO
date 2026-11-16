@@ -54,6 +54,7 @@ export interface Property {
   images: PropertyImage[]; amenities: PropertyAmenity[];
   rating: number; reviewCount: number; isBoosted: boolean; isPublished: boolean;
   maxGuests: number; bedrooms: number; bathrooms: number;
+  paymentOptions?: string[];
   owner: PropertyOwner; virtualTour?: VirtualTourData;
   isSuperHost?: boolean; reviewsSummary?: ReviewsSummary;
   area?: number; // m² — for real_estate

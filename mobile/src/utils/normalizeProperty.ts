@@ -126,6 +126,8 @@ export function normalizeProperty(raw: any): Property {
     longitude:     numOrNull(raw.longitude),
     // capacity en BDD → maxGuests côté front
     maxGuests:     num(raw.maxGuests ?? raw.capacity, 0),
+    // Modes de paiement acceptés par la propriété (full_online, ten_percent_online, zero_online)
+    paymentOptions: Array.isArray(raw.paymentOptions) ? raw.paymentOptions.filter((o: unknown) => typeof o === 'string') : undefined,
     bedrooms:      num(raw.bedrooms, 0),
     bathrooms:     num(raw.bathrooms, 0),
     // surface en BDD → area côté front

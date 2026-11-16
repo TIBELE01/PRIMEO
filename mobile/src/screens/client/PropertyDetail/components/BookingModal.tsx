@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Property } from '@/types/property';
-import { PaymentOptionsSelector } from '../../Booking/PaymentOptionsSelector';
+import { PaymentOptionsSelector, type PaymentChoice } from '../../Booking/PaymentOptionsSelector';
 import { todayStr, addDaysStr, countNights, formatShortDateFR } from '../../../../utils/dates';
 import { DarkCalendarModal } from '../../../../components/common/DarkCalendarModal';
 
@@ -26,7 +26,13 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
   const [checkIn, setCheckIn] = useState(todayStr());
   const [checkOut, setCheckOut] = useState(addDays(todayStr(), 3));
   const [guests, setGuests] = useState(1);
-  const [paymentOption, setPaymentOption] = useState<'full_online' | 'ten_percent_online' | 'zero_online'>('ten_percent_online');
+  // Seuls les modes acceptés par la propriété sont proposés (sinon l'API refuse la réservation)
+  const allowed = (property.paymentOptions ?? []).filter((o): o is PaymentChoice =>
+    o === 'full_online' || o === 'ten_percent_online' || o === 'zero_online');
+  const allowedList = allowed.length > 0 ? allowed : undefined;
+  const [paymentOption, setPaymentOption] = useState<PaymentChoice>(
+    !allowedList || allowedList.includes('ten_percent_online') ? 'ten_percent_online' : allowedList[0],
+  );
   const [showCheckinCal, setShowCheckinCal] = useState(false);
   const [showCheckoutCal, setShowCheckoutCal] = useState(false);
 
@@ -111,6 +117,7 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
             totalAmount={totalAmount}
             selected={paymentOption}
             onSelect={setPaymentOption}
+            allowed={allowedList}
           />
         </ScrollView>
 
