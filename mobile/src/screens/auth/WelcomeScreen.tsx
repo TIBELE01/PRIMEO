@@ -2,7 +2,7 @@
 // abstraites, logo en carte flottante, boutons pilule). Navigation inchangée.
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image,
+  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -10,7 +10,8 @@ const LottieView = require('lottie-react-native').default as React.ComponentType
   source: unknown; autoPlay?: boolean; loop?: boolean; style?: unknown; accessibilityLabel?: string;
 }>;
 import type { AuthScreenProps } from '../../navigation/types';
-import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
+const AUTH_LOGO_URL =
+  'https://res.cloudinary.com/dlnnxvepd/image/upload/v1782345787/Logo_Primeo_1_gzcjq2.png';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthBackground, AuthButtonGradient, Neu, useAuthPalette, BLUE, ORANGE, type AuthPalette } from './authDesign';
 
@@ -27,6 +28,7 @@ export function WelcomeScreen({ navigation }: Props) {
       <AuthBackground />
 
       <SafeAreaView style={s.safe}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} bounces={false}>
         {/* Bouton thème */}
         <View style={s.topBar}>
           <TouchableOpacity
@@ -44,7 +46,7 @@ export function WelcomeScreen({ navigation }: Props) {
         {/* Logo en carte flottante */}
         <View style={s.brandArea}>
           <Neu radius={46} depth={1.4} innerStyle={s.logoInner}>
-            <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logoImg} accessibilityLabel="Logo Primeo" />
+            <Image source={{ uri: AUTH_LOGO_URL }} resizeMode="contain" style={s.logoImg} accessibilityLabel="Logo Primeo" />
           </Neu>
           <Text style={s.tagline}>RÉSERVEZ · ACHETEZ · VIVEZ</Text>
         </View>
@@ -113,6 +115,7 @@ export function WelcomeScreen({ navigation }: Props) {
             <Text style={s.legalLink}>Politique de confidentialité</Text>
           </Text>
         </Neu>
+      </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -121,7 +124,8 @@ export function WelcomeScreen({ navigation }: Props) {
 function makeStyles(P: AuthPalette) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
-    safe: { flex: 1, paddingTop: 8, justifyContent: 'space-between', width: '100%', maxWidth: 520, alignSelf: 'center' },
+    safe: { flex: 1, paddingTop: 8, width: '100%', maxWidth: 520, alignSelf: 'center' },
+    scroll: { flexGrow: 1, justifyContent: 'space-between', paddingBottom: 56 },
 
     topBar: { alignItems: 'flex-end', paddingHorizontal: 24 },
     roundInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
@@ -131,8 +135,8 @@ function makeStyles(P: AuthPalette) {
     logoImg: { width: 92, height: 92 },
     tagline: { fontSize: 12, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
 
-    animArea: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 120 },
-    lottie: { width: Math.min(width * 0.55, 240), height: Math.min(width * 0.55, 240) },
+    animArea: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 90 },
+    lottie: { width: Math.min(width * 0.45, 200), height: Math.min(width * 0.45, 200) },
 
     cardWrap: { marginHorizontal: 16, marginBottom: 12 },
     card: { paddingTop: 24, paddingHorizontal: 22, paddingBottom: 20 },

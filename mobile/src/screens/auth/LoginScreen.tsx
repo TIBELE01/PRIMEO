@@ -17,7 +17,8 @@ import { signInWithGoogle } from '../../services/googleAuth';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
-import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
+const AUTH_LOGO_URL =
+  'https://res.cloudinary.com/dlnnxvepd/image/upload/v1782345787/Logo_Primeo_1_gzcjq2.png';
 import { BLUE, BLUE_LIGHT, ORANGE, RED, AuthBackground, Neu, useAuthPalette, type AuthPalette } from './authDesign';
 
 type Props = AuthScreenProps<'Login'>;
@@ -103,10 +104,10 @@ export function LoginScreen({ navigation }: Props) {
 
             {/* Logo en carte de verre flottante */}
             <Neu radius={46} depth={1.4} style={s.logoWrap} innerStyle={s.logoInner}>
-              <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logo} accessibilityLabel="Logo Primeo" />
+              <Image source={{ uri: AUTH_LOGO_URL }} resizeMode="contain" style={s.logo} accessibilityLabel="Logo Primeo" />
             </Neu>
 
-            <Text style={s.title} accessibilityRole="header">Bienvenue sur Primeo</Text>
+            <Text style={s.title} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>Bienvenue sur Primeo</Text>
             <Text style={s.subtitle}>Connectez-vous pour continuer</Text>
 
             {error && (
@@ -171,7 +172,7 @@ export function LoginScreen({ navigation }: Props) {
                 <View style={[s.checkbox, remember && s.checkboxOn]}>
                   {remember && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                 </View>
-                <Text style={s.rememberText}>Se souvenir de moi</Text>
+                <Text style={s.rememberText} numberOfLines={1}>Se souvenir de moi</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} accessibilityRole="link" hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}>
                 <Text style={s.forgotLink}>Mot de passe oublié ?</Text>
@@ -264,16 +265,16 @@ export function LoginScreen({ navigation }: Props) {
 function makeStyles(P: AuthPalette) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
-    scroll: { flexGrow: 1, paddingHorizontal: 26, paddingBottom: 24, maxWidth: 520, width: '100%', alignSelf: 'center' },
+    scroll: { flexGrow: 1, paddingHorizontal: 26, paddingBottom: 48, maxWidth: 520, width: '100%', alignSelf: 'center' },
 
     topBar: { alignItems: 'flex-end', paddingTop: 10 },
     roundInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
 
     logoWrap: { alignSelf: 'center', marginTop: 6, marginBottom: 26 },
-    logoInner: { width: 150, height: 150, alignItems: 'center', justifyContent: 'center' },
-    logo: { width: 104, height: 104 },
+    logoInner: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+    logo: { width: 96, height: 96 },
 
-    title: { fontSize: 32, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
+    title: { fontSize: 30, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
     subtitle: { fontSize: 14, color: P.muted, textAlign: 'center', letterSpacing: 3, marginTop: 10, marginBottom: 30 },
 
     errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 18, padding: 12, marginBottom: 16 },
@@ -286,17 +287,17 @@ function makeStyles(P: AuthPalette) {
     eyeBtn: { padding: 8, marginRight: -8 },
 
     optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, marginTop: 2 },
-    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1 },
+    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1, marginRight: 12 },
     checkbox: { width: 30, height: 30, borderRadius: 9, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.field },
     checkboxOn: { backgroundColor: BLUE, shadowColor: BLUE, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 5 },
-    rememberText: { fontSize: 15, color: P.text, fontWeight: '500' },
-    forgotLink: { color: BLUE, fontSize: 15, fontWeight: '700' },
+    rememberText: { fontSize: 14, color: P.text, fontWeight: '500' },
+    forgotLink: { color: BLUE, fontSize: 14, fontWeight: '700', flexShrink: 0 },
 
     primaryShadow: { borderRadius: 40, shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
     primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 40, paddingVertical: 18, paddingHorizontal: 22, minHeight: 66, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)' },
     primaryBtnText: { color: '#FFFFFF', fontSize: 20, fontWeight: '800', letterSpacing: 0.3 },
     arrowCircle: { position: 'absolute', right: 12, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' },
-    btnDisabled: { opacity: 0.55 },
+    btnDisabled: { opacity: 0.75 },
 
     dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 30, marginBottom: 22 },
     dividerLine: { flex: 1, height: 1, backgroundColor: P.line },
