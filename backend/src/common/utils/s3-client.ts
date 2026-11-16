@@ -51,11 +51,19 @@ export async function uploadToCloudinary(
   form.append('timestamp', timestamp);
   form.append('signature', signature);
 
-  const response = await axios.post(
-    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-    form,
-    { headers: form.getHeaders() }
-  );
+  let response;
+  try {
+    response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+      form,
+      { headers: form.getHeaders() }
+    );
+  } catch (err) {
+    // Remonte le message Cloudinary (clé invalide, signature, quota…) pour le diagnostic
+    const detail = (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message;
+    logger.error(`Cloudinary upload refusé (cloud=${cloudName}, api_key=${apiKey}): ${detail ?? (err as Error).message}`);
+    throw err;
+  }
 
   logger.debug(`Cloudinary upload success: ${response.data.public_id}`);
   return {
