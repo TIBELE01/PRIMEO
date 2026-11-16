@@ -2088,3 +2088,80 @@ model FeatureFlag {
 
   @@map("feature_flags")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMUNICATION — canaux WhatsApp / Telegram via Norasend (envois admin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum MessagingChannel {
+  whatsapp
+  telegram
+}
+
+enum CampaignStatus {
+  processing
+  completed // tous les destinataires envoyés
+  partial   // au moins un envoi réussi et au moins un échec
+  failed    // aucun envoi réussi
+}
+
+enum CampaignRecipientStatus {
+  pending
+  sent
+  failed
+  skipped // ignoré : désinscrit
+}
+
+model MessagingCampaign {
+  id               String           @id @default(cuid())
+  channel          MessagingChannel
+  mode             String // "direct" (envoi individuel) | "broadcast" (diffusion)
+  title            String?
+  text             String
+  mediaUrl         String?
+  parseMode        String? // Telegram : HTML | Markdown | MarkdownV2
+  status           CampaignStatus   @default(processing)
+  totalRecipients  Int              @default(0)
+  sentCount        Int              @default(0)
+  failedCount      Int              @default(0)
+  skippedCount     Int              @default(0)
+  delayMs          Int              @default(0)
+  consentConfirmed Boolean          @default(false) // l'admin atteste le consentement des destinataires
+  error            String?
+  createdBy        String? // ID de l'admin
+  createdAt        DateTime         @default(now())
+  completedAt      DateTime?
+
+  recipients MessagingCampaignRecipient[]
+
+  @@index([createdAt])
+  @@index([channel, status])
+  @@map("messaging_campaigns")
+}
+
+model MessagingCampaignRecipient {
+  id                String                  @id @default(cuid())
+  campaignId        String
+  campaign          MessagingCampaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient         String // numéro (format international sans +) ou chatId Telegram
+  variables         Json?
+  status            CampaignRecipientStatus @default(pending)
+  providerMessageId String?
+  error             String?
+  sentAt            DateTime?
+
+  @@index([campaignId, status])
+  @@map("messaging_campaign_recipients")
+}
+
+model MessagingOptOut {
+  id        String           @id @default(cuid())
+  channel   MessagingChannel
+  recipient String
+  reason    String?
+  createdBy String?
+  createdAt DateTime         @default(now())
+
+  @@unique([channel, recipient])
+  @@map("messaging_opt_outs")
+}

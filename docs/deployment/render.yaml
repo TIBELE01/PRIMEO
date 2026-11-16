@@ -153,6 +153,18 @@ services:
       - key: SOCKET_IO_REDIS_ENABLED
         sync: false          # mettre: false (ou true si multi-instances)
 
+      # ── Norasend (WhatsApp / Telegram) ───────────────────────────────────────
+      - key: NORASEND_API_KEY
+        sync: false
+      - key: NORASEND_API_URL
+        sync: false          # mettre: https://api.norasend.com
+      - key: NORASEND_AUTH_SCHEME
+        sync: false          # bearer (défaut) ou x-api-key
+      - key: WHATSAPP_SESSION_ID
+        sync: false
+      - key: TELEGRAM_BOT_ID
+        sync: false
+
       # ── Taux de change ───────────────────────────────────────────────────────
       - key: EXCHANGERATE_API_KEY
         sync: false

@@ -9,6 +9,7 @@ import { logger } from './common/utils/logger';
 import { env, reportEnvReadiness } from './config/env.config';
 import { validateSmtpConnection } from './common/utils/mailer';
 import { initPlatformSettings } from './common/settings/platform-settings';
+import { communicationsService } from './modules/communications/communications.service';
 
 async function bootstrap(): Promise<void> {
   // Audit de configuration : signale les intégrations tierces incomplètes sans
@@ -28,6 +29,9 @@ async function bootstrap(): Promise<void> {
   // Amorce le cache de configuration plateforme (overrides admin lus par le métier)
   // + rafraîchissement périodique. Non-bloquant : repli sur les constantes si échec.
   initPlatformSettings().catch(() => null);
+
+  // Campagnes WhatsApp/Telegram interrompues par un redémarrage : clôture propre
+  communicationsService.recoverInterrupted().catch(() => null);
 
   // Start all cron jobs
   startAllJobs();

@@ -389,6 +389,59 @@ export const websiteService = {
 };
 
 // ── Feature flags ─────────────────────────────────────────────────────────────
+// ── Communication WhatsApp / Telegram (Norasend) ──────────────────────────────
+export type MessagingChannel = 'whatsapp' | 'telegram';
+export type CampaignStatus = 'processing' | 'completed' | 'partial' | 'failed';
+
+export interface CampaignRecipient {
+  id: string;
+  recipient: string;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  error: string | null;
+  sentAt: string | null;
+}
+export interface Campaign {
+  id: string;
+  channel: MessagingChannel;
+  mode: 'direct' | 'broadcast';
+  title: string | null;
+  text: string;
+  mediaUrl: string | null;
+  status: CampaignStatus;
+  totalRecipients: number;
+  sentCount: number;
+  failedCount: number;
+  skippedCount: number;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  recipients?: CampaignRecipient[];
+}
+export interface CampaignPayload {
+  channel: MessagingChannel;
+  recipients: Array<{ to: string; variables?: Record<string, string> }>;
+  text: string;
+  title?: string;
+  mediaUrl?: string;
+  parseMode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  variables?: Record<string, string>;
+  delayMs?: number;
+  consentConfirmed: boolean;
+}
+export interface MessagingOptOut { id: string; channel: MessagingChannel; recipient: string; reason: string | null; createdAt: string }
+
+export const communicationService = {
+  status: () => api.get<{ configured: boolean; whatsapp: { ready: boolean; sessionConfigured: boolean }; telegram: { ready: boolean; botConfigured: boolean }; limits: { maxRecipientsPerCampaign: number; maxBroadcastBatch: number; maxTextLength: number } }>('/admin/communications/status'),
+  send: (payload: CampaignPayload) => api.post<Campaign>('/admin/communications/send', payload),
+  broadcast: (payload: CampaignPayload) => api.post<Campaign>('/admin/communications/broadcast', payload),
+  campaigns: (params: { page?: number; channel?: MessagingChannel | '' }) =>
+    api.get<{ data: Campaign[]; total: number; page: number; pages: number }>('/admin/communications/campaigns', { page: params.page, channel: params.channel || undefined, limit: 15 }),
+  campaign: (id: string) => api.get<Campaign>(`/admin/communications/campaigns/${id}`),
+  optOuts: () => api.get<MessagingOptOut[]>('/admin/communications/opt-outs'),
+  addOptOut: (channel: MessagingChannel, recipient: string, reason?: string) => api.post<MessagingOptOut>('/admin/communications/opt-outs', { channel, recipient, reason: reason || undefined }),
+  removeOptOut: (id: string) => api.delete(`/admin/communications/opt-outs/${id}`),
+};
+
 // ── Cartes de l'accueil (secteurs) ────────────────────────────────────────────
 export interface SectorFlags {
   residence_enabled: boolean;

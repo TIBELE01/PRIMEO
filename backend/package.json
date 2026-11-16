@@ -22,7 +22,8 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "migrate:cloudinary": "tsx scripts/migrate-cloudinary.ts",
-    "cleanup:cloudinary": "tsx scripts/cleanup-cloudinary-folders.ts"
+    "cleanup:cloudinary": "tsx scripts/cleanup-cloudinary-folders.ts",
+    "norasend:smoke": "tsx scripts/norasend-smoke.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

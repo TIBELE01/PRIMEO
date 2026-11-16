@@ -69,6 +69,7 @@ import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-fl
 import { listAdminAccounts, createAdminAccount, updateAdminAccount } from './admin-accounts.controller';
 import { getMonitoringDashboard } from './monitoring.controller';
 import { adminGetSectorFlags, adminUpdateSectorFlags } from '../sectors/sectors.router';
+import { communicationsRouter } from '../communications/communications.router';
 import { changeUserPlan, getSubscriptionHistory, forceRecalculateBenefits, getPaymentFailures } from './admin.controller';
 import { ChangeUserPlanDto } from './dto/admin.dto';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
@@ -205,6 +206,9 @@ adminRouter.get('/client-ip', (req, res) => {
     trustProxy: req.app.get('trust proxy'),
   });
 });
+
+// ── Communication WhatsApp / Telegram (Norasend) — Super Admin uniquement ──────
+adminRouter.use('/communications', communicationsRouter);
 
 // ── Monitoring dashboard ───────────────────────────────────────────────────────
 adminRouter.get('/monitoring', getMonitoringDashboard);
