@@ -119,7 +119,7 @@ export default function ProReceivedReviewsScreen() {
   };
 
   const avgRating = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length).toFixed(1)
     : null;
 
   return (

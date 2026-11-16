@@ -240,7 +240,7 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
               <Text style={styles.cardSubtitle}>Tous avis</Text>
               <View style={styles.ratingBox}>
                 <Text style={[styles.bigNumber, { fontSize: 32, color: '#F59E0B' }]}>
-                  {avgRating ? avgRating.toFixed(1) : '—'}
+                  {Number(avgRating) ? Number(avgRating).toFixed(1) : '—'}
                 </Text>
                 <Text style={{ fontSize: 20 }}>⭐</Text>
               </View>
@@ -279,7 +279,7 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
               </Text>
               <Text style={styles.cardSubtitle}>Vues ce mois</Text>
               {convRate > 0 && (
-                <Text style={styles.trendText}>Conversion : {convRate.toFixed(1)}%</Text>
+                <Text style={styles.trendText}>Conversion : {Number(convRate).toFixed(1)}%</Text>
               )}
             </View>
           </View>

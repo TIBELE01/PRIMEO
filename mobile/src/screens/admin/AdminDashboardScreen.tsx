@@ -304,7 +304,7 @@ export default function AdminDashboardScreen() {
                       />
                     </View>
                     <Text style={[styles.advRowValue, { color: '#059669' }]}>
-                      {(item.conversionRate * 100).toFixed(1)}%
+                      {(Number(item.conversionRate) * 100).toFixed(1)}%
                     </Text>
                   </View>
                 ))}

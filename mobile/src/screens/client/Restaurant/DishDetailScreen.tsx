@@ -133,7 +133,7 @@ export default function DishDetailScreen({ navigation, route }: Props) {
             <Text style={styles.location}>🍴 {restaurantName ?? 'Restaurant'}</Text>
             <View style={styles.ratingRow}>
               <Text style={styles.star}>★</Text>
-              <Text style={styles.rating}>{rating > 0 ? rating.toFixed(1) : 'Nouveau'}</Text>
+              <Text style={styles.rating}>{Number(rating) > 0 ? Number(rating).toFixed(1) : 'Nouveau'}</Text>
               {reviewCount > 0 ? <Text style={styles.reviewCount}>({reviewCount} avis)</Text> : null}
             </View>
           </View>

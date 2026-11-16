@@ -171,7 +171,7 @@ export default function PropertyManagementScreen({ navigation, route }: any) {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: '#F59E0B' }]}>
-                  {stats.rating ? stats.rating.toFixed(1) : '—'}
+                  {Number(stats.rating) ? Number(stats.rating).toFixed(1) : '—'}
                 </Text>
                 <Text style={styles.statLabel}>Note ⭐</Text>
               </View>

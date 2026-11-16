@@ -363,7 +363,7 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={styles.cardSubtitle}>Tous avis</Text>
               <View style={styles.ratingBox}>
                 <Text style={[styles.bigNumber, { fontSize: 32, color: '#F59E0B' }]}>
-                  {avgRating ? avgRating.toFixed(1) : '—'}
+                  {Number(avgRating) ? Number(avgRating).toFixed(1) : '—'}
                 </Text>
                 <Text style={{ fontSize: 20 }}>⭐</Text>
               </View>
@@ -400,7 +400,7 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={[styles.bigNumber, { color: '#6366F1' }]}>{totalViews.toLocaleString('fr-CI')}</Text>
               <Text style={styles.cardSubtitle}>Vues ce mois</Text>
               {conversionRate > 0 && (
-                <Text style={styles.trendText}>Conversion : {conversionRate.toFixed(1)}%</Text>
+                <Text style={styles.trendText}>Conversion : {Number(conversionRate).toFixed(1)}%</Text>
               )}
             </View>
           </View>

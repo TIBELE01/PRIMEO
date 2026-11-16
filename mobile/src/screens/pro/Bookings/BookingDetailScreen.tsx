@@ -61,7 +61,7 @@ function RatingBar({ label, value }: { label: string; value: number }) {
       <View style={styles.ratingBarTrack}>
         <View style={[styles.ratingBarFill, { width: `${(value / 5) * 100}%` as any }]} />
       </View>
-      <Text style={styles.ratingBarValue}>{value.toFixed(1)}</Text>
+      <Text style={styles.ratingBarValue}>{Number(value).toFixed(1)}</Text>
     </View>
   );
 }
@@ -320,7 +320,7 @@ export default function BookingDetailScreen() {
             <View style={styles.aggregateBox}>
               <View style={styles.aggregateHeader}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text style={styles.aggregateAvg}>{clientAggregate.overallAvg.toFixed(1)}</Text>
+                <Text style={styles.aggregateAvg}>{Number(clientAggregate.overallAvg).toFixed(1)}</Text>
                 <Text style={styles.aggregateCount}>({clientAggregate.totalRatings} évaluation{clientAggregate.totalRatings > 1 ? 's' : ''})</Text>
               </View>
               <RatingBar label="Respect des lieux"  value={clientAggregate.avgRespect} />

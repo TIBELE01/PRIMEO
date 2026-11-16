@@ -424,7 +424,7 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
             <>
               <View style={styles.profilePanelHeader}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text style={styles.profilePanelAvg}>{clientProfile.overallAvg.toFixed(1)}</Text>
+                <Text style={styles.profilePanelAvg}>{Number(clientProfile.overallAvg).toFixed(1)}</Text>
                 <Text style={styles.profilePanelCount}>
                   ({clientProfile.totalRatings} évaluation{clientProfile.totalRatings > 1 ? 's' : ''})
                 </Text>
@@ -440,7 +440,7 @@ function BookingCard({ booking, tab, onRefresh, isRated }: BookingCardProps) {
                   <View style={styles.profileBarTrack}>
                     <View style={[styles.profileBarFill, { width: `${(v / 5) * 100}%` as any }]} />
                   </View>
-                  <Text style={styles.profileBarVal}>{v.toFixed(1)}</Text>
+                  <Text style={styles.profileBarVal}>{Number(v).toFixed(1)}</Text>
                 </View>
               ))}
             </>
