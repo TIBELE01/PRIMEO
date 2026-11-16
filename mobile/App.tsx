@@ -110,7 +110,16 @@ const linking = {
     // Fallback to default React Navigation linking handler
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getStateFromPath: defaultParser } = require('@react-navigation/native');
-    return defaultParser(path, options);
+    const parsed = defaultParser(path, options);
+    // Web : le bouton « Retour » du navigateur ramène à des adresses de l'état précédent
+    // (/Welcome après la connexion, /MainTabs… après la déconnexion) qui n'existent pas dans
+    // le navigateur courant — React Navigation plantait (« reading 'routes' »). On retombe
+    // alors proprement sur l'accueil du contexte actuel.
+    const root = useAuthStore.getState().user ? 'MainTabs' : 'PublicTabs';
+    if (!parsed || !parsed.routes?.length || parsed.routes[0].name !== root) {
+      return { routes: [{ name: root }] };
+    }
+    return parsed;
   },
 };
 
