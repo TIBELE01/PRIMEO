@@ -19,7 +19,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { usersApi } from '../../../services/api/endpoints/users';
-import { PaymentOptionsSelector } from './PaymentOptionsSelector';
+import { PaymentOptionsSelector, type PaymentChoice } from './PaymentOptionsSelector';
 import { useCurrency } from '../../../hooks/useCurrency';
 import { generateUUID } from '../../../utils/uuid';
 import { trackEvent } from '../../../services/analytics';
@@ -103,6 +103,8 @@ export function BookingScreen({ navigation, route }: Props) {
   const [pricePerNight, setPricePerNight] = useState<number | null>(paramPricePerNight ?? null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [maxGuests, setMaxGuests] = useState<number>(10);
+  // Options de paiement réellement acceptées par la propriété (null = inconnu → toutes proposées)
+  const [allowedPayments, setAllowedPayments] = useState<PaymentChoice[] | null>(null);
   const [resolvedPropertyName, setResolvedPropertyName] = useState<string>(propertyName ?? '');
 
   // Saisies utilisateur
@@ -110,7 +112,7 @@ export function BookingScreen({ navigation, route }: Props) {
   const [promoCodeInput, setPromoCodeInput] = useState<string>('');
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoApplied, setPromoApplied] = useState<boolean>(false);
-  const [paymentOption, setPaymentOption] = useState<'full_online' | 'ten_percent_online' | 'zero_online'>('ten_percent_online');
+  const [paymentOption, setPaymentOption] = useState<PaymentChoice>('ten_percent_online');
 
   // Coordonnées du client (pré-remplies depuis le profil, confirmées avant paiement)
   const [contactFirstName, setContactFirstName] = useState<string>('');
@@ -137,12 +139,20 @@ export function BookingScreen({ navigation, route }: Props) {
   const tenPercent = Math.ceil(totalAmount * 0.1);
   const ninetyPercent = totalAmount - tenPercent;
 
+  // Le mode choisi doit toujours faire partie des modes acceptés par la propriété
+  useEffect(() => {
+    if (allowedPayments && !allowedPayments.includes(paymentOption)) {
+      setPaymentOption(allowedPayments.includes('ten_percent_online') ? 'ten_percent_online' : allowedPayments[0]);
+    }
+  }, [allowedPayments, paymentOption]);
+
   const fetchData = useCallback(async () => {
     if (!propertyId) { setIsFetching(false); return; } // params invalides — écran d'erreur affiché
     setIsFetching(true);
     try {
       const [propertyRes, profileRes] = await Promise.allSettled([
-        paramPricePerNight == null ? propertiesApi.getById(propertyId) : Promise.resolve(null),
+        // Toujours chargée : capacité et options de paiement viennent de la propriété
+        propertiesApi.getById(propertyId),
         usersApi.getProfile(),
       ]);
 
@@ -150,8 +160,14 @@ export function BookingScreen({ navigation, route }: Props) {
         const data = propertyRes.value?.data;
         const prop = data?.property ?? data?.data?.property ?? data;
         if (prop) {
-          if (prop.pricePerNight != null) setPricePerNight(prop.pricePerNight);
-          if (prop.maxGuests != null) setMaxGuests(prop.maxGuests);
+          if (paramPricePerNight == null && prop.pricePerNight != null) setPricePerNight(prop.pricePerNight);
+          const cap = Number(prop.maxGuests ?? prop.capacity);
+          if (Number.isFinite(cap) && cap > 0) setMaxGuests(cap);
+          if (Array.isArray(prop.paymentOptions)) {
+            const ok = (prop.paymentOptions as string[]).filter((o): o is PaymentChoice =>
+              o === 'full_online' || o === 'ten_percent_online' || o === 'zero_online');
+            if (ok.length > 0) setAllowedPayments(ok);
+          }
           if (prop.name && !propertyName) setResolvedPropertyName(prop.name);
         }
       }
@@ -820,6 +836,7 @@ export function BookingScreen({ navigation, route }: Props) {
               totalAmount={totalAmount}
               selected={paymentOption}
               onSelect={setPaymentOption}
+              allowed={allowedPayments ?? undefined}
             />
           </View>
         )}

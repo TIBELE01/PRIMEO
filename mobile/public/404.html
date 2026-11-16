@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Primeo</title>
+  <script>
+    // Hébergement statique : toute adresse « profonde » (/Recherche/…, /Booking…) rechargée
+    // ou ouverte directement tombe ici. On mémorise l'adresse puis on relance l'application,
+    // qui la rétablit (voir index.js) avant que la navigation ne démarre.
+    try { sessionStorage.setItem('primeo_deeplink', location.pathname + location.search + location.hash); } catch (e) {}
+    location.replace('/');
+  </script>
+</head>
+<body></body>
+</html>
