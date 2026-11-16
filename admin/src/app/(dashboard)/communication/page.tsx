@@ -35,7 +35,7 @@ const errorMessage = (e: unknown): string => {
 };
 
 // Une ligne par destinataire : « numéro ; prénom ; nom » (prénom et nom facultatifs)
-export function parseRecipients(raw: string): Array<{ to: string; variables?: Record<string, string> }> {
+function parseRecipients(raw: string): Array<{ to: string; variables?: Record<string, string> }> {
   return raw
     .split(/\r?\n/)
     .map((line) => line.trim())
