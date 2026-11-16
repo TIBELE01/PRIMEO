@@ -44,6 +44,7 @@ interface Booking {
   property: { id: string; name: string; city: string };
   client: { id: string; firstName: string; lastName: string; phone?: string };
   createdAt: string;
+  rawStatus?: string;
 }
 
 type TabKey = 'pending' | 'confirmed' | 'history';
@@ -56,6 +57,29 @@ function formatDate(iso: string): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
+}
+
+/** Réservation telle que renvoyée par l'API → forme attendue par l'écran. */
+function normalizeHostBooking(raw: any): Booking {
+  const status = String(raw?.status ?? '');
+  const ui: Booking['status'] =
+    status === 'confirmed' ? 'confirmed'
+    : status === 'completed' ? 'completed'
+    : status.startsWith('cancelled') ? 'cancelled'
+    : 'pending';
+  return {
+    ...raw,
+    status: ui,
+    rawStatus: status,
+    checkIn: raw?.checkIn ?? raw?.startDate ?? '',
+    checkOut: raw?.checkOut ?? raw?.endDate ?? '',
+    guests: Number(raw?.guests ?? 1),
+    totalAmount: Number(raw?.totalAmount ?? 0),
+    // Le paiement 100 % sur place s'appelle zero_online côté API
+    paymentOption: raw?.paymentOption === 'zero_online' ? 'full_cash' : raw?.paymentOption,
+    property: { ...(raw?.property ?? {}), name: raw?.property?.name ?? raw?.property?.title ?? 'Propriété', city: raw?.property?.city ?? '' },
+    client: raw?.client ?? { id: raw?.clientId ?? '', firstName: '', lastName: '' },
+  } as Booking;
 }
 
 function formatAmount(n?: number | null): string {
@@ -584,7 +608,9 @@ export default function BookingsScreen() {
     try {
       const res = await bookingsApi.getMyBookings({ role: 'host', limit: 100, page: 1 });
       const all: Booking[] = (res.data?.data ?? res.data) ?? [];
-      const data = (Array.isArray(all) ? all : []).filter((bk) => TAB_STATUSES[tab].includes(String((bk as { status?: string }).status)));
+      const data = (Array.isArray(all) ? all : [])
+        .filter((bk) => TAB_STATUSES[tab].includes(String((bk as { status?: string }).status)))
+        .map(normalizeHostBooking);
       setBookings((prev: Record<TabKey, Booking[]>) => ({ ...prev, [tab]: data }));
     } catch {
       // Keep previous data on error

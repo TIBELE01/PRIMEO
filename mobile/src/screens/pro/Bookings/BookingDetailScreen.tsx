@@ -99,7 +99,18 @@ export default function BookingDetailScreen() {
     setLoading(true);
     try {
       const res = await bookingsApi.getById(bookingId);
-      const b: Booking = res.data?.data ?? res.data;
+      const raw: any = res.data?.booking ?? res.data?.data?.booking ?? res.data?.data ?? res.data;
+      // L'API renvoie startDate/endDate, property.title et zero_online (paiement 100 % sur place)
+      const b: Booking = {
+        ...raw,
+        checkIn: raw.checkIn ?? raw.startDate,
+        checkOut: raw.checkOut ?? raw.endDate,
+        guests: Number(raw.guests ?? 1),
+        totalAmount: Number(raw.totalAmount ?? 0),
+        paymentOption: raw.paymentOption === 'zero_online' ? 'full_cash' : raw.paymentOption,
+        property: { ...(raw.property ?? {}), name: raw.property?.name ?? raw.property?.title ?? 'Propriété', city: raw.property?.city ?? '' },
+        client: raw.client ?? { id: raw.clientId ?? '', firstName: '', lastName: '' },
+      };
       setBooking(b);
 
       const [aggRes, canRateRes] = await Promise.allSettled([
