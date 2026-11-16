@@ -10,7 +10,7 @@ jest.mock('@upstash/redis', () => ({
 jest.mock('../../config/redis.config', () => ({ redisConfig: { url: 'https://test.upstash.io', token: 'tok' } }));
 jest.mock('./logger', () => ({ logger: { debug: jest.fn(), warn: jest.fn(), error: jest.fn(), info: jest.fn() } }));
 
-import { redisGet } from './redis-client';
+import { redisGet, redisSet, cacheGet, cacheSet, cacheDel } from './redis-client';
 
 describe('redisGet — coercion en chaîne', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -32,3 +32,36 @@ describe('redisGet — coercion en chaîne', () => {
     expect(await redisGet('otp:absent')).toBeNull();
   });
 });
+
+// Un cache ne doit jamais faire échouer une requête : jeton en lecture seule
+// (« NOPERM … 'set' »), panne réseau, quota dépassé…
+describe('cache au mieux — cacheGet / cacheSet / cacheDel', () => {
+  const noperm = new Error("Command failed: NOPERM this user has no permissions to run the 'set' command");
+  beforeEach(() => jest.clearAllMocks());
+
+  it('cacheSet n\'échoue pas quand Redis refuse l\'écriture', async () => {
+    mockSet.mockRejectedValueOnce(noperm);
+    await expect(cacheSet('website:stats', '{}', 60)).resolves.toBeUndefined();
+  });
+
+  it('cacheGet renvoie null quand Redis est injoignable', async () => {
+    mockGet.mockRejectedValueOnce(new Error('fetch failed'));
+    expect(await cacheGet('website:stats')).toBeNull();
+  });
+
+  it('cacheGet renvoie la valeur quand Redis répond', async () => {
+    mockGet.mockResolvedValueOnce('{"a":1}');
+    expect(await cacheGet('k')).toBe('{"a":1}');
+  });
+
+  it('cacheDel n\'échoue pas quand Redis refuse la suppression', async () => {
+    mockDel.mockRejectedValueOnce(noperm);
+    await expect(cacheDel('k')).resolves.toBeUndefined();
+  });
+
+  it('redisSet, lui, propage l\'erreur (données dont dépend la sécurité)', async () => {
+    mockSet.mockRejectedValueOnce(noperm);
+    await expect(redisSet('otp:x', '123456', 300)).rejects.toThrow('NOPERM');
+  });
+});
+

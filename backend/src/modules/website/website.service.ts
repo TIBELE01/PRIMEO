@@ -1,6 +1,6 @@
 // website.service.ts — Page d'accueil administrable du site vitrine
 import { prisma } from '../../database/prisma.service';
-import { redisGet, redisSet } from '../../common/utils/redis-client';
+import { cacheGet, cacheSet } from '../../common/utils/redis-client';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
@@ -239,7 +239,7 @@ export const websiteService = {
   },
 
   async getStats() {
-    const cached = await redisGet(STATS_CACHE_KEY);
+    const cached = await cacheGet(STATS_CACHE_KEY);
     if (cached) return JSON.parse(cached as string);
 
     const [properties, cities, reservations, clients] = await Promise.all([
@@ -254,7 +254,7 @@ export const websiteService = {
     ]);
 
     const stats = { properties, cities, reservations, clients };
-    await redisSet(STATS_CACHE_KEY, JSON.stringify(stats), STATS_TTL);
+    await cacheSet(STATS_CACHE_KEY, JSON.stringify(stats), STATS_TTL);
     return stats;
   },
 

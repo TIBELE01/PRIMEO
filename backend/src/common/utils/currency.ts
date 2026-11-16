@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { prisma } from '../../database/prisma.service';
 import { exchangeRateConfig } from '../../config/exchangerate.config';
-import { redisSet, redisGet, redisDel } from './redis-client';
+import { cacheSet, cacheGet, cacheDel } from './redis-client';
 import { logger } from './logger';
 
 const CACHE_KEY = `exchange_rates:${exchangeRateConfig.baseCurrency}`;
@@ -78,7 +78,7 @@ async function fetchFromApi(): Promise<ExchangeRates | null> {
   };
 
   // Persist — Redis (24 h) + DB
-  await redisSet(CACHE_KEY, JSON.stringify(data), CACHE_TTL);
+  await cacheSet(CACHE_KEY, JSON.stringify(data), CACHE_TTL);
   await persistToDb(rates).catch((err) =>
     logger.warn('Currency DB persistence failed', err),
   );
@@ -94,7 +94,7 @@ async function fetchFromApi(): Promise<ExchangeRates | null> {
  * Used by the GET /rates endpoint.
  */
 export async function fetchExchangeRates(): Promise<ExchangeRates | null> {
-  const cached = await redisGet(CACHE_KEY);
+  const cached = await cacheGet(CACHE_KEY);
   if (cached) {
     return { ...(JSON.parse(cached) as ExchangeRates), source: 'cache' };
   }
@@ -103,7 +103,7 @@ export async function fetchExchangeRates(): Promise<ExchangeRates | null> {
   const stored = await getStoredRates();
   if (stored) {
     // Re-warm Redis so next requests are fast
-    await redisSet(CACHE_KEY, JSON.stringify({ ...stored, source: 'api' }), CACHE_TTL).catch(() => null);
+    await cacheSet(CACHE_KEY, JSON.stringify({ ...stored, source: 'api' }), CACHE_TTL);
     return stored;
   }
 
@@ -121,7 +121,7 @@ export async function fetchExchangeRates(): Promise<ExchangeRates | null> {
  * Called by the daily cron job and on server startup.
  */
 export async function refreshExchangeRates(): Promise<ExchangeRates | null> {
-  await redisDel(CACHE_KEY);
+  await cacheDel(CACHE_KEY);
   try {
     return await fetchFromApi();
   } catch (err) {

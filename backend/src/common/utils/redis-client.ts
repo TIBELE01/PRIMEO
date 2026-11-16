@@ -47,3 +47,37 @@ export async function redisDel(key: string): Promise<void> {
   if (!client) return;
   await client.del(key);
 }
+
+// ── Cache « au mieux » ────────────────────────────────────────────────────────
+// Pour les usages de pur cache (statistiques, taux de change) : une panne ou un
+// refus de Redis ne doit JAMAIS faire échouer la requête — on se passe du cache.
+// À ne pas utiliser pour les données dont dépend la sécurité (OTP, sessions 2FA,
+// anti-rejeu) : celles-ci doivent voir l'erreur et décider elles-mêmes.
+
+/** Lecture de cache : null si absent OU si Redis est indisponible. */
+export async function cacheGet(key: string): Promise<string | null> {
+  try {
+    return await redisGet(key);
+  } catch (err) {
+    logger.warn('Cache Redis illisible — valeur ignorée', { key, error: (err as Error).message });
+    return null;
+  }
+}
+
+/** Écriture de cache : sans effet si Redis est indisponible ou en lecture seule. */
+export async function cacheSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
+  try {
+    await redisSet(key, value, ttlSeconds);
+  } catch (err) {
+    logger.warn('Cache Redis non écrit', { key, error: (err as Error).message });
+  }
+}
+
+/** Invalidation de cache : sans effet si Redis est indisponible. */
+export async function cacheDel(key: string): Promise<void> {
+  try {
+    await redisDel(key);
+  } catch (err) {
+    logger.warn('Cache Redis non invalidé', { key, error: (err as Error).message });
+  }
+}

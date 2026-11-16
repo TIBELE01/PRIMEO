@@ -18,6 +18,9 @@ export function applyLogger(app: Application): void {
         durationMs: Math.round(durationMs * 100) / 100,
         userId: req.user?.sub,
         ip: req.ip ?? req.socket?.remoteAddress,
+        // Chaîne complète des proxys : sert à régler TRUST_PROXY (req.ip doit être
+        // l'adresse du client, pas celle d'un proxy de l'hébergeur).
+        forwardedFor: req.headers['x-forwarded-for'],
         userAgent: req.get('User-Agent'),
         contentLength: res.get('Content-Length') ?? 0,
       });
