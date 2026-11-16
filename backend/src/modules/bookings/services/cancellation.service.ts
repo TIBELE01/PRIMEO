@@ -7,7 +7,13 @@ export interface CancellationResult {
 }
 
 export const cancellationService = {
-  computeRefund(booking: Booking): CancellationResult {
+  /**
+   * Barème selon les jours restant avant l'arrivée (annulation par le client).
+   * Quand l'annulation vient du professionnel ou d'un administrateur, le client
+   * n'est pas fautif : remboursement intégral, quelle que soit la date.
+   */
+  computeRefund(booking: Booking, cancelledBy: 'client' | 'professional' | 'admin' = 'client'): CancellationResult {
+    if (cancelledBy !== 'client') return { refundAmount: booking.onlinePaidAmount, refundPercent: 100 };
     const daysUntil = Math.ceil(
       (new Date(booking.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );

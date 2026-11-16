@@ -22,7 +22,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'booking_status',
     category: 'Réservations',
     response:
-      'Pour réserver, recherchez un bien ou un restaurant, sélectionnez vos dates et le nombre de personnes, puis cliquez sur "Réserver". Selon l\'annonce, vous pourrez payer en ligne (totalement ou un acompte de 10 %) ou confirmer sans paiement immédiat.',
+      'Pour réserver : trouvez un bien avec la recherche, choisissez vos dates et le nombre de personnes, puis l\'option de paiement proposée par l\'hôte (100 % en ligne, acompte de 10 % en ligne avec solde en espèces à l\'arrivée, ou 100 % sur place). Pour un restaurant, la réservation de table est gratuite et confirmée immédiatement ; pour l\'immobilier, touchez « Exprimer mon intérêt ».',
   },
   {
     id: 'booking_status',
@@ -30,7 +30,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'booking_status',
     category: 'Réservations',
     response:
-      'Consultez l\'état de vos réservations dans l\'onglet "Mes réservations". Les statuts possibles : En attente de paiement → Confirmée → Terminée. Si votre réservation est bloquée, contactez le support.',
+      'Consultez vos réservations dans l\'onglet « Réservations ». Statuts : En attente de paiement (2 h pour payer) → Confirmée → Terminée (après la date de départ), ou Annulée. Si votre réservation reste bloquée, créez un ticket de support.',
   },
   {
     id: 'booking_cancel',
@@ -38,7 +38,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'booking_cancel',
     category: 'Réservations',
     response:
-      'Pour annuler une réservation : accédez à "Mes réservations", ouvrez la réservation souhaitée et cliquez sur "Annuler". Les conditions de remboursement dépendent du délai avant l\'arrivée prévu.',
+      'Pour annuler : ouvrez la réservation dans « Réservations », touchez « Annuler la réservation » et indiquez un motif. Remboursement du montant payé en ligne : 100 % à 7 jours ou plus avant l\'arrivée, 50 % de 3 à 6 jours, 0 % en dessous. Il est crédité sur votre portefeuille Primeo. Si c\'est l\'hôte qui annule, vous êtes remboursé intégralement.',
   },
   {
     id: 'booking_modify',
@@ -46,7 +46,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'booking_cancel',
     category: 'Réservations',
     response:
-      'La modification de dates n\'est pas possible directement. Annulez la réservation existante et créez-en une nouvelle avec les bonnes dates. Les frais d\'annulation s\'appliquent.',
+      'L\'application ne permet pas de modifier les dates d\'une réservation. Annulez-la (selon le barème d\'annulation) puis effectuez une nouvelle réservation avec les bonnes dates.',
   },
   // Payments
   {
@@ -55,7 +55,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'payment_issue',
     category: 'Paiements',
     response:
-      'Primeo accepte les paiements via Genius Pay : Mobile Money Orange Money, MTN Mobile Money, cartes bancaires Visa et Mastercard. Le paiement est sécurisé et crypté.',
+      'Le paiement en ligne se fait sur la page sécurisée Genius Pay (Mobile Money comme Wave ou Orange Money, selon les moyens affichés). Vous pouvez aussi choisir un acompte de 10 % ou le paiement 100 % sur place si l\'hôte le propose. Aucun frais de service n\'est ajouté. Un numéro de téléphone doit figurer dans votre profil pour payer en ligne.',
   },
   {
     id: 'payment_failed',
@@ -63,7 +63,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'payment_issue',
     category: 'Paiements',
     response:
-      'En cas d\'échec de paiement : vérifiez que votre compte Mobile Money est suffisamment approvisionné, ou que votre carte bancaire est valide et non expirée. Réessayez dans quelques minutes. Si le problème persiste, créez un ticket de support.',
+      'En cas d\'échec de paiement : vérifiez votre solde Mobile Money et votre connexion, puis relancez le paiement depuis la réservation (vous avez 2 heures, après quoi elle est annulée automatiquement). Si vous avez été débité sans confirmation, créez un ticket de support ou ouvrez un litige « Problème de paiement ».',
   },
   // Refunds
   {
@@ -72,7 +72,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'refund_request',
     category: 'Remboursements',
     response:
-      'Les remboursements sont traités selon la politique d\'annulation de chaque annonce. Annulation plus de 7 jours avant : 100 % remboursé. Entre 3 et 7 jours : 50 %. Moins de 3 jours : 0 %. Le virement est effectué sous 5 à 10 jours ouvrables.',
+      'Remboursement d\'une annulation : 100 % du montant payé en ligne si vous annulez 7 jours ou plus avant l\'arrivée, 50 % de 3 à 6 jours, 0 % en dessous. Il est crédité sur votre portefeuille Primeo et déduit automatiquement de vos prochaines réservations. Une réservation non payée ne coûte rien : le solde et le code promo utilisés sont restitués.',
   },
   // Account
   {
@@ -81,7 +81,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'account_help',
     category: 'Compte',
     response:
-      'Pour réinitialiser votre mot de passe : cliquez sur "Mot de passe oublié" sur l\'écran de connexion, saisissez votre email et suivez le lien reçu. Le lien est valable 2 heures.',
+      'Pour réinitialiser votre mot de passe : touchez « Mot de passe oublié » sur l\'écran de connexion, saisissez votre e-mail et suivez le lien reçu. Le lien est valable 1 heure.',
   },
   {
     id: 'register',
@@ -89,7 +89,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'account_help',
     category: 'Compte',
     response:
-      'Créez votre compte Primeo gratuitement en cliquant sur "S\'inscrire". Fournissez votre email, numéro de téléphone et créez un mot de passe sécurisé. Une vérification OTP par SMS est requise.',
+      'Créez votre compte en touchant « Créer un compte » : prénom, nom, e-mail, téléphone ivoirien (+225) et mot de passe (8 caractères minimum, 1 majuscule, 1 chiffre). Un code de vérification valable 5 minutes vous est envoyé par e-mail. Les professionnels passent par « Inscription professionnelle » et par une validation de leur dossier.',
   },
   {
     id: 'kyc',
@@ -97,7 +97,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'account_help',
     category: 'Compte',
     response:
-      'La vérification KYC est obligatoire pour les professionnels. Accédez à "Mon profil" → "Vérification KYC" et fournissez : pièce d\'identité (CNI ou passeport), RCCM si applicable, licence touristique pour les hébergements. La vérification prend 24 à 48 heures.',
+      'La vérification KYC est obligatoire pour les professionnels : pièce d\'identité et extrait RCCM (obligatoires), licence touristique (facultative), fournis à l\'inscription professionnelle. L\'équipe Primeo valide généralement sous 24 à 48 h ; en cas de refus, le motif s\'affiche et vous pouvez soumettre à nouveau vos documents.',
   },
   // Platform
   {
@@ -106,7 +106,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Plateforme',
     response:
-      'Les commissions Primeo varient selon votre plan d\'abonnement : Essentiel (gratuit) : 9 %, Prestige (9 000 FCFA/mois) : 5 %, Premium (24 000 FCFA/mois) : 0 %. Les commissions sont prélevées sur chaque réservation confirmée.',
+      'Primeo ne prélève aucune commission : toutes les formules sont à 0 % de commission sur les réservations, et aucun frais de service n\'est ajouté au prix payé par le client.',
   },
   {
     id: 'subscription',
@@ -114,7 +114,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Plateforme',
     response:
-      'Primeo propose 3 plans professionnels : Essentiel (gratuit, 3 annonces, 9 % commission), Prestige (9 000 FCFA/mois, 15 annonces, 5 % commission, 2 boosts), Premium (24 000 FCFA/mois, illimité, 0 % commission, 10 boosts). Le plan Restaurant est également disponible.',
+      '3 formules professionnelles : Starter (gratuit, 3 publications), Business (9 000 FCFA/mois, 10 publications, vidéo, badge Vérifié, 2 boosts gratuits/mois, statistiques) et Entreprise (24 000 FCFA/mois, 40 publications — plats illimités pour un restaurant —, visite 3D, badge Premium, visibilité prioritaire, 7 boosts gratuits/mois, co-gérants). Changez de formule dans Profil → Mon abonnement. Des publications supplémentaires coûtent 500 FCFA/mois chacune.',
   },
   {
     id: 'boost',
@@ -122,7 +122,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Plateforme',
     response:
-      'Les boosts permettent à votre annonce d\'apparaître en tête des résultats pendant 72h (payant : 2 000 FCFA) ou selon la durée incluse dans votre plan (Prestige : 3j, Premium : 7j). Activez un boost depuis "Mes annonces".',
+      'Un boost met votre annonce en avant pendant 3 jours. Boost payant : 2 000 FCFA pour 72 h. Boosts gratuits inclus : 2 par mois en Business, 7 en Entreprise (aucun en Starter). L\'annonce doit être active et pas déjà boostée. Activez-le dans Profil → Boosts d\'annonces.',
   },
   {
     id: 'dispute',
@@ -130,7 +130,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Litiges',
     response:
-      'Pour signaler un problème : ouvrez votre réservation concernée et cliquez sur "Signaler un problème". Un litige sera ouvert et notre équipe interviendra sous 24 heures.',
+      'Pour signaler un problème : ouvrez la réservation concernée et touchez « Signaler un problème » (catégorie, description d\'au moins 20 caractères, pièces jointes facultatives). Un administrateur examine le dossier et décide d\'un rejet, d\'un remboursement partiel ou total. Suivi dans « Mes litiges ».',
   },
   {
     id: 'review',
@@ -138,7 +138,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Avis',
     response:
-      'Vous pouvez laisser un avis après chaque séjour terminé. Accédez à "Mes réservations", sélectionnez la réservation terminée et cliquez sur "Laisser un avis". Les avis sont modifiables ou supprimables dans les 7 jours suivant la publication.',
+      'Vous pouvez laisser un avis une fois la réservation Terminée et la date de départ passée (la réservation passe automatiquement à Terminée le lendemain du départ). Ouvrez-la dans « Réservations » puis « Laisser un avis ». Un seul avis par réservation ; modifiable ou supprimable pendant 7 jours.',
   },
   {
     id: 'referral',
@@ -146,7 +146,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Parrainage',
     response:
-      'Parrainez vos proches et recevez 2 000 FCFA de crédit sur votre portefeuille Primeo dès que votre filleul complète sa première réservation. Votre code de parrainage unique est disponible dans votre profil.',
+      'Parrainage : partagez votre code (Profil → Parrainage). Vous recevez 250 FCFA sur votre portefeuille Primeo quand un client parrainé effectue sa première réservation confirmée, ou 1 000 FCFA quand un professionnel parrainé voit son dossier validé.',
   },
 ];
 

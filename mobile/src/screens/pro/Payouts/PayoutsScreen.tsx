@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { walletApi } from '../../../services/api/endpoints/wallet';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import PayoutSection from './PayoutSection';
 
 type TxType = 'payout_to_professional' | 'referral_reward' | 'refund';
 
@@ -113,7 +114,7 @@ export default function PayoutsScreen() {
       <FlatList
         data={wallet?.transactions ?? []}
         keyExtractor={(it, i) => it.id ?? String(i)}
-        contentContainerStyle={(wallet?.transactions.length ?? 0) === 0 ? s.emptyWrap : { padding: 16 }}
+        contentContainerStyle={{ padding: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -122,9 +123,12 @@ export default function PayoutsScreen() {
           />
         }
         ListHeaderComponent={
-          (wallet?.transactions.length ?? 0) > 0
-            ? <Text style={s.listHeader}>Historique des transactions</Text>
-            : null
+          <>
+            <PayoutSection balance={wallet?.balance ?? 0} onChanged={() => load(true)} />
+            {(wallet?.transactions.length ?? 0) > 0
+              ? <Text style={s.listHeader}>Historique des transactions</Text>
+              : null}
+          </>
         }
         ListEmptyComponent={
           <View style={s.empty}>

@@ -183,7 +183,7 @@ export default function BookingDetailScreen() {
   };
 
   const handleCancelBooking = () => {
-    Alert.alert('Annuler la réservation', 'Annuler cette réservation confirmée ?', [
+    Alert.alert('Annuler la réservation', 'Annuler cette réservation confirmée ? Le client sera intégralement remboursé du montant payé en ligne.', [
       { text: 'Non', style: 'cancel' },
       {
         text: 'Annuler', style: 'destructive',
@@ -401,7 +401,7 @@ export default function BookingDetailScreen() {
         {/* ── Actions ── */}
         <View style={styles.actionsCard}>
           {/* Mark cash received */}
-          {isConfirmed && (booking.paymentOption === 'full_cash' || booking.paymentOption === 'ten_percent_online') && !booking.cashReceived && (
+          {(isConfirmed || (booking.status as string) === 'completed') && (booking.paymentOption === 'full_cash' || booking.paymentOption === 'ten_percent_online') && Number((booking as any).remainingCashAmount ?? 1) > 0 && !booking.cashReceived && (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: '#065F46' }]}
               onPress={handleMarkCash}

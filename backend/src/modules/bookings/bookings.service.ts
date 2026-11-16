@@ -480,7 +480,7 @@ export const bookingsService = {
     const cancelledBy = isClient ? 'client' : isOwner ? 'professional' : 'admin';
     const newStatus = isClient ? 'cancelled_by_client' : 'cancelled_by_professional';
 
-    const { refundAmount, refundPercent } = cancellationService.computeRefund(booking);
+    const { refundAmount, refundPercent } = cancellationService.computeRefund(booking, cancelledBy);
     // Réservation jamais payée : rien n'a été encaissé, le crédit portefeuille et
     // le code promo prélevés à la création sont rendus intégralement.
     const wasUnpaid = booking.status === 'pending_payment';
@@ -744,7 +744,8 @@ export const bookingsService = {
     });
     if (!booking) throw new HttpError(404, 'Réservation introuvable');
     if (booking.property.ownerId !== professionalId) throw new HttpError(403, 'Accès non autorisé');
-    if (booking.status !== 'confirmed') {
+    // « terminée » est accepté : la clôture automatique après le départ peut précéder l'encaissement du solde.
+    if (booking.status !== 'confirmed' && booking.status !== 'completed') {
       throw new HttpError(400, 'La réservation doit être confirmée pour enregistrer un paiement cash');
     }
     if (booking.remainingCashAmount <= 0) {

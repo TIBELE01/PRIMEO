@@ -11,6 +11,7 @@ import { startCurrencyRatesJob } from './currency-rates.job';
 import { startReferralRewardsJob } from './referral-rewards.job';
 import { startMonitoringReportJob } from './monitoring-report.job';
 import { startPayoutsJob } from './payouts.job';
+import { startBookingCompletionJob } from './booking-completion.job';
 import { startStayReminderJob } from './stay-reminder.job';
 import { startBoostExpiryReminderJob } from './boost-expiry-reminder.job';
 import { startIcalSyncJob } from './ical-sync.job';
@@ -30,6 +31,7 @@ export function startAllJobs(): void {
   startReferralRewardsJob();        // daily 06:00 — reconcile pending referral rewards
   startMonitoringReportJob();       // daily 08:00 — monitoring health digest
   startPayoutsJob();                // daily 05:00 — reversements auto aux pros (net après frais GP)
+  startBookingCompletionJob();      // daily 03:30 — réservations confirmées dont le départ est passé → terminées (avis possibles)
   startStayReminderJob();           // daily 09:00 — rappel J-1 au client (push + in-app)
   startBoostExpiryReminderJob();    // daily 10:00 — rappel 24h avant expiration du boost
   startIcalSyncJob();               // every 6h — sync calendriers iCal externes (Airbnb/Booking)

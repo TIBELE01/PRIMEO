@@ -148,7 +148,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Annulations et remboursements",
     "question": "Quel est le barème de remboursement ?",
-    "answer": "<p>Il dépend du nombre de jours restant avant l’arrivée et porte sur le montant payé en ligne :</p><ul><li><strong>7 jours ou plus</strong> : remboursement de 100 %.</li><li><strong>De 3 à 6 jours</strong> : remboursement de 50 %.</li><li><strong>Moins de 3 jours</strong> : aucun remboursement.</li></ul><p>Une réservation payée 100 % sur place n’a aucun paiement en ligne à rembourser.</p>",
+    "answer": "<p>Il dépend du nombre de jours restant avant l’arrivée et porte sur le montant payé en ligne :</p><ul><li><strong>7 jours ou plus</strong> : remboursement de 100 %.</li><li><strong>De 3 à 6 jours</strong> : remboursement de 50 %.</li><li><strong>Moins de 3 jours</strong> : aucun remboursement.</li></ul><p>Ce barème s’applique quand c’est <strong>vous</strong> qui annulez. Si l’annulation vient de l’hôte, le remboursement est intégral. Une réservation payée 100 % sur place n’a aucun paiement en ligne à rembourser.</p>",
     "order": 2
   },
   {
@@ -166,7 +166,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Annulations et remboursements",
     "question": "L’hôte a annulé ma réservation. Que se passe-t-il ?",
-    "answer": "<p>Vous êtes notifié par push et e-mail et la réservation passe au statut « Annulée ». Si le remboursement ne correspond pas à votre situation, ouvrez un litige (catégorie « Annulation abusive ») ou contactez le support.</p>",
+    "answer": "<p>Vous êtes notifié par push et e-mail et la réservation passe au statut « Annulée ». Quand l’annulation vient de l’hôte, vous êtes <strong>remboursé intégralement</strong> du montant payé en ligne, quelle que soit la date (le barème 100 % / 50 % / 0 % ne concerne que les annulations faites par le client), crédité sur votre portefeuille Primeo. Si le remboursement n’arrive pas, ouvrez un litige ou contactez le support.</p>",
     "order": 5
   },
   {
@@ -207,8 +207,8 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   },
   {
     "category": "Abonnements professionnels",
-    "question": "Comment sont versés les paiements en ligne de mes clients ?",
-    "answer": "<p>Chaque jour, les paiements en ligne des réservations confirmées sont <strong>reversés automatiquement sur votre portefeuille Primeo</strong> (écran Reversements). Les paiements en espèces sont encaissés directement par vous ; touchez « Marquer paiement cash reçu » pour clôturer la réservation.</p><p>À ce jour, l’application ne propose pas de retrait du portefeuille vers un compte bancaire ou Mobile Money : contactez le support pour toute question sur vos fonds.</p>",
+    "question": "Comment recevoir l’argent de mes réservations ?",
+    "answer": "<p>Chaque jour, les paiements en ligne de vos réservations confirmées sont <strong>reversés automatiquement sur votre portefeuille Primeo</strong>. Ce portefeuille est <strong>virtuel</strong> : il ne détient pas d’argent. Pour recevoir votre dû, ouvrez <strong>Reversements</strong>, renseignez vos <strong>coordonnées de versement</strong> (Orange Money, MTN Money, Wave, Moov Money ou compte bancaire) puis touchez <strong>« Demander un versement »</strong> (minimum 1 000 FCFA ; tout le solde ou un montant au choix).</p><p>Le montant est retiré de votre solde et Primeo vire la somme sur vos coordonnées. La demande passe de « En attente » à « Versé » (avec la référence du virement) ou « Refusé » avec un motif — le montant est alors remis sur votre solde. Vous pouvez annuler une demande en attente. Les paiements en espèces sont encaissés directement par vous : touchez « Marquer paiement cash reçu » pour clôturer la réservation.</p>",
     "order": 6
   },
   {
@@ -292,7 +292,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Avis et évaluations",
     "question": "Qui peut laisser un avis, et quand ?",
-    "answer": "<p>Le client d’une réservation <strong>Terminée</strong>, une fois la date de départ passée. Un seul avis par réservation.</p>",
+    "answer": "<p>Le client d’une réservation <strong>Terminée</strong>, une fois la date de départ passée. Une réservation confirmée passe automatiquement à « Terminée » le lendemain de la date de départ. Un seul avis par réservation.</p>",
     "order": 1
   },
   {
@@ -322,7 +322,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Avis et évaluations",
     "question": "Je ne peux pas laisser d’avis. Pourquoi ?",
-    "answer": "<p>L’avis n’est possible que lorsque la réservation est au statut <strong>Terminée</strong> et que la date de départ est passée. Si votre séjour est achevé mais que la réservation n’est pas marquée comme terminée, contactez le support.</p>",
+    "answer": "<p>L’avis n’est possible que lorsque la réservation est au statut <strong>Terminée</strong> et que la date de départ est passée. Une réservation confirmée passe automatiquement à « Terminée » <strong>le lendemain de la date de départ</strong> : si vous venez de quitter le logement, réessayez le lendemain. Une réservation annulée ou non payée ne peut pas être notée.</p>",
     "order": 6
   },
   {

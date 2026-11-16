@@ -28,4 +28,9 @@ describe('cancellationService.computeRefund', () => {
     // 7 jours pile (Math.ceil peut donner 7) → palier 100 %
     expect(cancellationService.computeRefund(bookingInDays(7)).refundPercent).toBe(100);
   });
+
+  it('annulation par le professionnel ou un administrateur : remboursement intégral même à moins de 3 jours', () => {
+    expect(cancellationService.computeRefund(bookingInDays(1), 'professional')).toEqual({ refundAmount: 10000, refundPercent: 100 });
+    expect(cancellationService.computeRefund(bookingInDays(4), 'admin')).toEqual({ refundAmount: 10000, refundPercent: 100 });
+  });
 });

@@ -22,8 +22,8 @@ datasource db {
 // §3.1 — Type de compte utilisateur
 enum AccountType {
   client
-  professional_hebergement  // résidences, appartements
-  professional_hotel        // hôtels
+  professional_hebergement // résidences, appartements
+  professional_hotel // hôtels
   professional_immobilier
   restaurateur
   admin
@@ -118,7 +118,7 @@ enum AvailabilityStatus {
 
 // §3.6 — Statut de réservation
 enum BookingStatus {
-  interest_expressed        // immobilier : intérêt sans paiement
+  interest_expressed // immobilier : intérêt sans paiement
   pending_payment
   confirmed
   cancelled_by_client
@@ -264,26 +264,26 @@ enum FoodOrderDeliveryType {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  phone        String?   @unique // null pour les comptes créés via Google OAuth
-  firstName    String
-  lastName     String
-  birthDate    DateTime? @db.Date
-  gender       Gender?
-  avatarUrl    String?
+  id        String    @id @default(cuid())
+  email     String    @unique
+  phone     String?   @unique // null pour les comptes créés via Google OAuth
+  firstName String
+  lastName  String
+  birthDate DateTime? @db.Date
+  gender    Gender?
+  avatarUrl String?
 
   // Rôle et statut
-  accountType AccountType @default(client)
-  extraRoles  Json? // rôles complémentaires (admin sub-roles)
+  accountType      AccountType @default(client)
+  extraRoles       Json? // rôles complémentaires (admin sub-roles)
   // Rôle admin granulaire (uniquement pour accountType=admin) :
   // super_admin | moderateur | support | analyste. null ⇒ traité comme super_admin.
-  adminRole   String?
-  status      UserStatus  @default(pending)
-  deactivatedUntil  DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
+  adminRole        String?
+  status           UserStatus  @default(pending)
+  deactivatedUntil DateTime? // null = réactivé ; date = désactivation temporaire jusqu'à cette date
   // true = suspension décidée par un administrateur (seul un admin peut la lever).
   // false + status=suspended = désactivation volontaire (réactivable par l'utilisateur).
-  suspendedByAdmin  Boolean   @default(false)
+  suspendedByAdmin Boolean     @default(false)
 
   // Portefeuille et parrainage
   // walletBalance : conservé pour compatibilité ; la source de vérité est désormais
@@ -294,7 +294,7 @@ model User {
 
   // Notifications push et préférences (§11.2–11.4)
   onesignalPlayerId       String?
-  notificationPreferences Json?   // { email: bool, push: bool, sms: bool }
+  notificationPreferences Json? // { email: bool, push: bool, sms: bool }
 
   // Note admin interne (§9.4)
   adminNotes String?
@@ -332,6 +332,8 @@ model User {
   foodOrders            FoodOrder[]          @relation("ClientFoodOrders")
   pushTokens            PushToken[]
   wallet                Wallet?
+  payoutAccount         PayoutAccount?
+  withdrawalRequests    WithdrawalRequest[]
   dataExports           DataExport[]
   payouts               Payout[]             @relation("ProfessionalPayouts")
   messageTemplates      MessageTemplate[]
@@ -406,15 +408,15 @@ enum PayoutStatus {
 }
 
 model Payout {
-  id             String @id @default(cuid())
+  id             String  @id @default(cuid())
   professionalId String
-  professional   User   @relation("ProfessionalPayouts", fields: [professionalId], references: [id], onDelete: Restrict)
-  bookingId      String @unique // une seule opération de reversement par réservation
+  professional   User    @relation("ProfessionalPayouts", fields: [professionalId], references: [id], onDelete: Restrict)
+  bookingId      String  @unique // une seule opération de reversement par réservation
   booking        Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
 
-  grossAmount Int     // FCFA — montant payé en ligne (base du reversement)
+  grossAmount Int // FCFA — montant payé en ligne (base du reversement)
   feeAmount   Int     @default(0) // FCFA — frais Genius Pay déduits
-  netAmount   Int     // FCFA — montant réellement crédité au portefeuille
+  netAmount   Int // FCFA — montant réellement crédité au portefeuille
   feePercent  Decimal @default(0) @db.Decimal(5, 2) // taux de frais appliqué (traçabilité)
 
   status PayoutStatus @default(completed)
@@ -556,8 +558,8 @@ model Property {
   priceSale     Int? // FCFA — immobilier achat
 
   // Spécifique restaurants (§8.3, §8.4)
-  cuisineType  String?
-  openingHours Json? // { lun: ["12:00-14:00","19:00-22:00"], ... }
+  cuisineType             String?
+  openingHours            Json? // { lun: ["12:00-14:00","19:00-22:00"], ... }
   // Réservation de tables activable par le restaurateur (désactivée par défaut).
   tableReservationEnabled Boolean @default(false)
 
@@ -587,10 +589,10 @@ model Property {
   rules          Json? // règlement intérieur
 
   // Immobilier — champs spécifiques (§3.4)
-  floor            Int?      // étage (0 = rez-de-chaussée)
-  yearBuilt        Int?      // année de construction
+  floor            Int? // étage (0 = rez-de-chaussée)
+  yearBuilt        Int? // année de construction
   availabilityDate DateTime? // date de disponibilité (location / vente)
-  diagnostics      Json?     // { dpe: true, carrez: true, amiante: false, ... }
+  diagnostics      Json? // { dpe: true, carrez: true, amiante: false, ... }
 
   // Hôtel — types de chambres avec tarifs distincts (§3.4)
   roomTypes Json? // [{ label, pricePerNight, capacity, beds, amenities }]
@@ -616,12 +618,12 @@ model Property {
   favorites         Favorite[]
   favoriteListItems FavoriteListItem[]
   boosts            Boost[]
-  menuItems      RestaurantMenuItem[]
-  timeSlots      RestaurantTimeSlot[]
-  tables         RestaurantTable[]
-  specialMenus   RestaurantSpecialMenu[]
-  promotions     RestaurantPromotion[]
-  foodOrders     FoodOrder[]
+  menuItems         RestaurantMenuItem[]
+  timeSlots         RestaurantTimeSlot[]
+  tables            RestaurantTable[]
+  specialMenus      RestaurantSpecialMenu[]
+  promotions        RestaurantPromotion[]
+  foodOrders        FoodOrder[]
 
   @@index([ownerId])
   @@index([status, propertyType])
@@ -740,8 +742,8 @@ model Booking {
   cancelledBy        String? // "client" | "professional" | "admin"
 
   // No-show (§8.5 — restaurants)
-  isNoShow  Boolean   @default(false)
-  noShowAt  DateTime?
+  isNoShow Boolean   @default(false)
+  noShowAt DateTime?
 
   // Facture PDF (générée à la confirmation du paiement, stockée sur Cloudinary)
   invoiceUrl String?
@@ -843,8 +845,8 @@ model MessageTemplate {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label     String   // libellé court affiché sur la puce
-  content   String   // texte inséré dans le message
+  label     String // libellé court affiché sur la puce
+  content   String // texte inséré dans le message
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
@@ -874,9 +876,9 @@ model Review {
   valueRating         Int?
 
   // Critères spécifiques restaurants
-  cuisineRating   Int? // restaurant uniquement
-  serviceRating   Int? // restaurant uniquement
-  ambianceRating  Int? // restaurant uniquement
+  cuisineRating  Int? // restaurant uniquement
+  serviceRating  Int? // restaurant uniquement
+  ambianceRating Int? // restaurant uniquement
 
   // Contenu (§3.9)
   comment                  String?
@@ -901,8 +903,8 @@ model ReviewMedia {
   id         String   @id @default(cuid())
   reviewId   String
   review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  url        String   // URL Cloudinary optimisée
-  publicId   String?  // Cloudinary publicId — requis pour la suppression du CDN
+  url        String // URL Cloudinary optimisée
+  publicId   String? // Cloudinary publicId — requis pour la suppression du CDN
   uploadedAt DateTime @default(now())
 
   @@map("review_media")
@@ -925,10 +927,10 @@ model ClientRating {
   rulesRating         Int
   overallRating       Int
 
-  comment  String?
-  isPublic Boolean @default(true)
-  isHidden   Boolean @default(false) // masqué par admin après signalement
-  isReported Boolean @default(false) // signalé par le client comme injuste
+  comment      String?
+  isPublic     Boolean @default(true)
+  isHidden     Boolean @default(false) // masqué par admin après signalement
+  isReported   Boolean @default(false) // signalé par le client comme injuste
   reportReason String? // motif du signalement
 
   createdAt DateTime @default(now())
@@ -967,7 +969,7 @@ model Referral {
   id String @id @default(cuid())
 
   // §3.10 : code, referrer_id, referee_id, inscription_date, reward_date
-  referralCode String  // code du parrain utilisé par le filleul — NON unique : un même code parrain est partagé par tous ses filleuls
+  referralCode String // code du parrain utilisé par le filleul — NON unique : un même code parrain est partagé par tous ses filleuls
   referrerId   String
   referrer     User    @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Restrict)
   refereeId    String? @unique
@@ -1236,9 +1238,9 @@ model RestaurantTimeSlot {
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  dayOfWeek   Int     // 0=Lun … 6=Dim
-  startTime   String  // "HH:MM"
-  endTime     String  // "HH:MM"
+  dayOfWeek   Int // 0=Lun … 6=Dim
+  startTime   String // "HH:MM"
+  endTime     String // "HH:MM"
   maxCapacity Int
   isBlocked   Boolean @default(false)
 
@@ -1258,8 +1260,8 @@ model RestaurantTable {
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  name      String  // ex: "Table 1", "Terrasse 3"
-  seats     Int     // nombre de couverts
+  name      String // ex: "Table 1", "Terrasse 3"
+  seats     Int // nombre de couverts
   location  String? // ex: "Intérieur", "Terrasse", "Étage", "Privé"
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
@@ -1280,10 +1282,10 @@ model RestaurantSpecialMenu {
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  name          String
-  description   String?
-  date          DateTime @db.Date
-  pricePerPerson Int     // FCFA
+  name           String
+  description    String?
+  date           DateTime @db.Date
+  pricePerPerson Int // FCFA
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1303,10 +1305,10 @@ model RestaurantPromotion {
 
   title         String
   description   String?
-  discountType  String  // "percent" | "fixed"
-  discountValue Int     // valeur entière — % ou FCFA
+  discountType  String // "percent" | "fixed"
+  discountValue Int // valeur entière — % ou FCFA
   validUntil    DateTime?
-  isActive      Boolean @default(true)
+  isActive      Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1362,9 +1364,9 @@ model PushToken {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   // Expo push token (ExponentPushToken[...])
-  playerId  String?  // OneSignal player ID après enregistrement via REST API
-  platform  String?  // "ios" | "android"
+  token     String // Expo push token (ExponentPushToken[...])
+  playerId  String? // OneSignal player ID après enregistrement via REST API
+  platform  String? // "ios" | "android"
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1413,19 +1415,19 @@ model FoodOrder {
   client     User     @relation("ClientFoodOrders", fields: [clientId], references: [id], onDelete: Restrict)
 
   items               FoodOrderItem[]
-  totalAmount         Int                  // FCFA
+  totalAmount         Int // FCFA
   specialInstructions String?
 
-  status       FoodOrderStatus      @default(pending)
-  deliveryType FoodOrderDeliveryType @default(dine_in)
-  deliveryAddress String?
+  status           FoodOrderStatus       @default(pending)
+  deliveryType     FoodOrderDeliveryType @default(dine_in)
+  deliveryAddress  String?
   estimatedMinutes Int?
 
-  orderedAt   DateTime  @default(now())
-  confirmedAt DateTime?
-  readyAt     DateTime?
-  deliveredAt DateTime?
-  cancelledAt DateTime?
+  orderedAt    DateTime  @default(now())
+  confirmedAt  DateTime?
+  readyAt      DateTime?
+  deliveredAt  DateTime?
+  cancelledAt  DateTime?
   cancelReason String?
 
   createdAt DateTime @default(now())
@@ -1437,15 +1439,15 @@ model FoodOrder {
 }
 
 model FoodOrderItem {
-  id         String    @id @default(cuid())
+  id         String             @id @default(cuid())
   orderId    String
-  order      FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order      FoodOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItemId String
   menuItem   RestaurantMenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
 
   quantity   Int
-  unitPrice  Int     // snapshot du prix au moment de la commande (FCFA)
-  totalPrice Int     // quantity * unitPrice
+  unitPrice  Int // snapshot du prix au moment de la commande (FCFA)
+  totalPrice Int // quantity * unitPrice
   notes      String? // personnalisations ex: "sans oignons"
 
   createdAt DateTime @default(now())
@@ -1526,7 +1528,7 @@ model WebsiteWhyCard {
 model WebsiteTestimonial {
   id            String   @id @default(cuid())
   name          String
-  role          String?  // rôle/fonction du client affiché sous son nom (ex: « Propriétaire »)
+  role          String? // rôle/fonction du client affiché sous son nom (ex: « Propriétaire »)
   rating        Int      @default(5)
   text          String
   photoUrl      String?
@@ -1673,7 +1675,7 @@ model ProductsUpcoming {
 model CareersPresentation {
   id        String   @id @default(cuid())
   title     String   @default("Construisons l'avenir énergétique ensemble")
-  intro1    String   @db.Text @default("Chez Primeo, chaque ligne de code, chaque partenariat, chaque décision contribue à un objectif commun : rendre l'énergie accessible et maîtrisable pour tous.")
+  intro1    String   @default("Chez Primeo, chaque ligne de code, chaque partenariat, chaque décision contribue à un objectif commun : rendre l'énergie accessible et maîtrisable pour tous.") @db.Text
   intro2    String?  @db.Text
   intro3    String?  @db.Text
   updatedBy String?
@@ -1687,7 +1689,7 @@ model CareersTeam {
   id            String   @id @default(cuid())
   photoUrl      String?
   photoPublicId String?
-  text          String   @db.Text @default("Une équipe soudée, passionnée, qui croit profondément en sa mission.")
+  text          String   @default("Une équipe soudée, passionnée, qui croit profondément en sa mission.") @db.Text
   updatedBy     String?
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
@@ -1752,19 +1754,19 @@ model CareersJob {
 }
 
 model CareersSpontaneous {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String
-  phone       String?
-  message     String?  @db.Text
-  cvUrl       String?
-  cvPublicId  String?
-  status      String   @default("received")
-  notes       String?  @db.Text
-  ipAddress   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String
+  phone      String?
+  message    String?  @db.Text
+  cvUrl      String?
+  cvPublicId String?
+  status     String   @default("received")
+  notes      String?  @db.Text
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("careers_spontaneous")
 }
@@ -1823,31 +1825,31 @@ model AboutTeam {
 }
 
 model AboutPartner {
-  id            String   @id @default(cuid())
-  name          String
-  logoUrl       String?
-  logoPublicId  String?
-  url           String?
-  sortOrder     Int      @default(0)
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  logoUrl      String?
+  logoPublicId String?
+  url          String?
+  sortOrder    Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("about_partners")
 }
 
 model ContactMessage {
-  id         String    @id @default(cuid())
-  name       String
-  email      String
-  phone      String?
-  subject    String
-  message    String    @db.Text
-  isRead     Boolean   @default(false)
-  isReplied  Boolean   @default(false)
-  repliedAt  DateTime?
-  repliedBy  String?
-  createdAt  DateTime  @default(now())
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String    @db.Text
+  isRead    Boolean   @default(false)
+  isReplied Boolean   @default(false)
+  repliedAt DateTime?
+  repliedBy String?
+  createdAt DateTime  @default(now())
 
   @@map("contact_messages")
 }
@@ -1867,8 +1869,8 @@ model BlogPost {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  categories    BlogPostCategory[]
-  comments      BlogComment[]
+  categories BlogPostCategory[]
+  comments   BlogComment[]
 
   @@map("blog_posts")
 }
@@ -1879,7 +1881,7 @@ model BlogCategory {
   slug      String   @unique
   createdAt DateTime @default(now())
 
-  posts     BlogPostCategory[]
+  posts BlogPostCategory[]
 
   @@map("blog_categories")
 }
@@ -1913,7 +1915,7 @@ model BlogComment {
   status    String   @default("pending")
   createdAt DateTime @default(now())
 
-  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@map("blog_comments")
 }
@@ -2033,12 +2035,12 @@ enum EmailLogStatus {
 
 model EmailLog {
   id           String         @id @default(cuid())
-  recipient    String         // adresse email destinataire
-  subject      String         // sujet ou identifiant de template
-  templateId   Int?           // ID template Brevo (si template)
+  recipient    String // adresse email destinataire
+  subject      String // sujet ou identifiant de template
+  templateId   Int? // ID template Brevo (si template)
   status       EmailLogStatus @default(sent)
-  errorMessage String?        // message d'erreur si status = failed
-  messageId    String?        // ID message Brevo (pour corréler les webhooks)
+  errorMessage String? // message d'erreur si status = failed
+  messageId    String? // ID message Brevo (pour corréler les webhooks)
   bounceCount  Int            @default(0)
   sentAt       DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -2062,11 +2064,11 @@ enum SmsLogStatus {
 
 model SmsLog {
   id          String       @id @default(cuid())
-  recipient   String       // numéro destinataire au format +225XXXXXXXXXX
+  recipient   String // numéro destinataire au format +225XXXXXXXXXX
   message     String       @db.Text
   status      SmsLogStatus @default(pending)
-  requestId   String?      // ID Orange (dernier segment de resourceURL) pour corréler les webhooks
-  errorCode   String?      // code d'erreur Orange ou message d'exception
+  requestId   String? // ID Orange (dernier segment de resourceURL) pour corréler les webhooks
+  errorCode   String? // code d'erreur Orange ou message d'exception
   isOtp       Boolean      @default(false) // true = SMS OTP critique (fallback email si échec)
   sentAt      DateTime     @default(now())
   deliveredAt DateTime?
@@ -2080,11 +2082,11 @@ model SmsLog {
 // ── Feature flags dynamiques ───────────────────────────────────────────────────
 
 model FeatureFlag {
-  key         String   @id                    // identifiant unique ex: "show_ai_recommendations"
+  key         String   @id // identifiant unique ex: "show_ai_recommendations"
   enabled     Boolean  @default(false)
-  description String?                         // explication lisible pour l'admin
+  description String? // explication lisible pour l'admin
   updatedAt   DateTime @updatedAt
-  updatedBy   String?                         // userId de l'admin qui a modifié
+  updatedBy   String? // userId de l'admin qui a modifié
 
   @@map("feature_flags")
 }
@@ -2101,8 +2103,8 @@ enum MessagingChannel {
 enum CampaignStatus {
   processing
   completed // tous les destinataires envoyés
-  partial   // au moins un envoi réussi et au moins un échec
-  failed    // aucun envoi réussi
+  partial // au moins un envoi réussi et au moins un échec
+  failed // aucun envoi réussi
 }
 
 enum CampaignRecipientStatus {
@@ -2164,4 +2166,52 @@ model MessagingOptOut {
 
   @@unique([channel, recipient])
   @@map("messaging_opt_outs")
+}
+
+// Coordonnées de versement d'un professionnel (Mobile Money ou compte bancaire) :
+// le portefeuille Primeo est virtuel, le « dû » est viré manuellement sur ce compte.
+model PayoutAccount {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  method        String // orange_money | mtn_money | wave | moov_money | bank
+  holderName    String
+  accountNumber String // numéro Mobile Money ou IBAN / RIB
+  bankName      String? // renseigné pour method = bank
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payout_accounts")
+}
+
+// Demande de versement : le montant est retiré du portefeuille virtuel à la demande,
+// puis marqué « paid » par un administrateur une fois le virement effectué
+// (ou « rejected » / « cancelled » : le montant est alors recrédité).
+model WithdrawalRequest {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount Int // FCFA
+  status String @default("pending") // pending | paid | rejected | cancelled
+
+  // Copie des coordonnées au moment de la demande
+  method        String
+  holderName    String
+  accountNumber String
+  bankName      String?
+
+  reference       String? // référence du virement saisie par l'admin
+  rejectionReason String?
+  processedById   String?
+  processedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("withdrawal_requests")
 }

@@ -70,6 +70,7 @@ import { listAdminAccounts, createAdminAccount, updateAdminAccount } from './adm
 import { getMonitoringDashboard } from './monitoring.controller';
 import { adminGetSectorFlags, adminUpdateSectorFlags } from '../sectors/sectors.router';
 import { communicationsRouter } from '../communications/communications.router';
+import { adminListWithdrawals, adminMarkWithdrawalPaid, adminRejectWithdrawal } from '../wallets/withdrawals.controller';
 import { changeUserPlan, getSubscriptionHistory, forceRecalculateBenefits, getPaymentFailures } from './admin.controller';
 import { ChangeUserPlanDto } from './dto/admin.dto';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
@@ -209,6 +210,11 @@ adminRouter.get('/client-ip', (req, res) => {
 
 // ── Communication WhatsApp / Telegram (Norasend) — Super Admin uniquement ──────
 adminRouter.use('/communications', communicationsRouter);
+
+// Demandes de versement des professionnels
+adminRouter.get('/withdrawals', adminListWithdrawals);
+adminRouter.put('/withdrawals/:id/paid', adminMarkWithdrawalPaid);
+adminRouter.put('/withdrawals/:id/reject', adminRejectWithdrawal);
 
 // ── Monitoring dashboard ───────────────────────────────────────────────────────
 adminRouter.get('/monitoring', getMonitoringDashboard);

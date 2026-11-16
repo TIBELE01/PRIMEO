@@ -30,6 +30,12 @@ export const usersService = {
   getPaymentFailures: (params?: object) => api.get<any>('/admin/subscriptions/payment-failures', params),
 };
 
+export const withdrawalsService = {
+  list: (status?: string) => api.get<any[]>('/admin/withdrawals', status ? { status } : undefined),
+  markPaid: (id: string, reference?: string) => api.put(`/admin/withdrawals/${id}/paid`, { reference }),
+  reject: (id: string, reason: string) => api.put(`/admin/withdrawals/${id}/reject`, { reason }),
+};
+
 export const propertiesService = {
   list: (params?: object) => api.get<any>('/admin/properties', params),
   getProperties: (params?: object) => api.get<any>('/admin/properties', params),
