@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import { isValidIvorianPhone, validatePassword } from '../auth.utils';
 import { signInWithGoogle } from '../../../services/googleAuth';
@@ -84,6 +85,8 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
 
   return (
     <SafeAreaView style={s.safe}>
+      <LinearGradient colors={['#FFFFFF', '#F8FAFC', '#E3EDFF']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      <LinearGradient colors={['#BFD6FF', '#EAF1FF']} style={s.shapeTop} pointerEvents="none" />
       <View style={s.progressTrack}>
         <View style={[s.progressFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
       </View>
@@ -192,8 +195,10 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
         </View>
 
         <View style={s.actions}>
-          <TouchableOpacity testID="register-next" style={s.nextBtn} onPress={handleNext} accessibilityRole="button">
-            <Text style={s.nextBtnText}>Continuer</Text>
+          <TouchableOpacity testID="register-next" style={s.nextShadow} onPress={handleNext} accessibilityRole="button" activeOpacity={0.9}>
+            <LinearGradient colors={['#4F8EF7', '#0055FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.nextBtn}>
+              <Text style={s.nextBtnText}>Continuer</Text>
+            </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity onPress={onBack} accessibilityRole="button">
             <Text style={s.backLink}>Retour</Text>
@@ -206,9 +211,10 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
-    safe:         { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    progressTrack:{ height: 4, backgroundColor: t.colors.border },
-    progressFill: { height: '100%', backgroundColor: t.colors.primary, borderRadius: 2 },
+    safe:         { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
+    shapeTop:     { position: 'absolute', width: 280, height: 280, borderRadius: 140, top: -110, left: -80, opacity: 0.7, shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+    progressTrack:{ height: 6, backgroundColor: '#DCE5F5', marginHorizontal: 24, borderRadius: 3 },
+    progressFill: { height: '100%', backgroundColor: '#0055FF', borderRadius: 3 },
     scroll:       { flexGrow: 1, padding: 24, gap: 24, paddingBottom: 40 },
     header:       { gap: 6 },
     stepLabel:    { fontSize: 12, color: t.colors.textDisabled, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
@@ -217,8 +223,8 @@ function makeStyles(t: Theme) {
     form:         { gap: 16 },
     field:        { gap: 6 },
     label:        { fontSize: 14, fontWeight: '600', color: t.colors.text },
-    input:        { borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: t.colors.text, backgroundColor: t.colors.surface },
-    inputError:   { borderColor: t.colors.error },
+    input:        { borderWidth: 1, borderColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 18, paddingVertical: 15, fontSize: 15, color: t.colors.text, backgroundColor: '#F2F6FF', shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5 },
+    inputError:   { borderColor: '#FF3333' },
     pwRow:        { flexDirection: 'row', alignItems: 'center', gap: 8 },
     eyeBtn:       { padding: 8 },
     hint:         { color: t.colors.error, fontSize: 12 },
@@ -226,7 +232,7 @@ function makeStyles(t: Theme) {
     rule:         { fontSize: 12, color: t.colors.textSecondary },
     referralSection: { marginTop: 8, borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: 16 },
     googleSection: { gap: 14 },
-    googleBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, paddingVertical: 14, backgroundColor: t.colors.surface },
+    googleBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 20, paddingVertical: 15, backgroundColor: '#FFFFFF', shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
     googleIcon:    { fontSize: 18, fontWeight: '900', color: '#4285F4' },
     googleBtnText: { fontSize: 15, fontWeight: '600', color: t.colors.text },
     dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -234,8 +240,9 @@ function makeStyles(t: Theme) {
     dividerText:   { fontSize: 13, color: t.colors.textSecondary, fontWeight: '600' },
     optional: { fontSize: 12, color: t.colors.textDisabled, fontWeight: '400' },
     actions:      { gap: 12 },
-    nextBtn:      { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
-    nextBtnText:  { color: '#FFF', fontSize: 16, fontWeight: '700' },
+    nextShadow:   { borderRadius: 36, shadowColor: '#0055FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
+    nextBtn:      { paddingVertical: 17, borderRadius: 36, alignItems: 'center' },
+    nextBtnText:  { color: '#FFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
     backLink:     { textAlign: 'center', color: t.colors.textSecondary, fontSize: 14, fontWeight: '600' },
   });
 }
