@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme, type Theme } from '../../../theme/ThemeProvider';
+import { useAuthTheme, AuthBackground, type AuthTheme } from '../authDesign';
 import { isValidIvorianPhone, validatePassword } from '../auth.utils';
 import { signInWithGoogle } from '../../../services/googleAuth';
 import type { RegistrationData } from './index';
@@ -19,7 +19,7 @@ type Props = {
 };
 
 export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSteps }: Props) {
-  const { theme } = useTheme();
+  const theme = useAuthTheme();
   const s = makeStyles(theme);
   const [showPw, setShowPw] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -75,6 +75,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
           value={data[key] as string}
           onChangeText={(v) => onUpdate({ [key]: v } as Partial<RegistrationData>)}
           onBlur={() => touch(key)}
+          placeholder={label}
           placeholderTextColor={theme.colors.textDisabled}
           {...props}
         />
@@ -85,6 +86,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
 
   return (
     <SafeAreaView style={s.safe}>
+      <AuthBackground />
       <LinearGradient colors={['#FFFFFF', '#F8FAFC', '#E3EDFF']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <LinearGradient colors={['#BFD6FF', '#EAF1FF']} style={s.shapeTop} pointerEvents="none" />
       <View style={s.progressTrack}>
@@ -142,6 +144,8 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
                 onChangeText={(v) => onUpdate({ password: v })}
                 onBlur={() => touch('password')}
                 secureTextEntry={!showPw}
+                placeholder="Mot de passe"
+                placeholderTextColor={theme.colors.textDisabled}
                 textContentType="newPassword"
                 returnKeyType="next"
                 accessibilityLabel="Mot de passe"
@@ -168,6 +172,8 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
               onChangeText={(v) => onUpdate({ confirmPassword: v })}
               onBlur={() => touch('confirmPassword')}
               secureTextEntry={!showPw}
+              placeholder="Confirmez le mot de passe"
+              placeholderTextColor={theme.colors.textDisabled}
               textContentType="newPassword"
               returnKeyType="done"
               onSubmitEditing={handleNext}
@@ -186,6 +192,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
               value={data.referralCode ?? ''}
               onChangeText={(v) => onUpdate({ referralCode: v })}
               placeholder="Ex: ABC12345"
+              placeholderTextColor={theme.colors.textDisabled}
               autoCapitalize="characters"
               returnKeyType="done"
               onSubmitEditing={handleNext}
@@ -209,7 +216,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
   );
 }
 
-function makeStyles(t: Theme) {
+function makeStyles(t: AuthTheme) {
   return StyleSheet.create({
     safe:         { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
     shapeTop:     { position: 'absolute', width: 280, height: 280, borderRadius: 140, top: -110, left: -80, opacity: 0.7, shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },

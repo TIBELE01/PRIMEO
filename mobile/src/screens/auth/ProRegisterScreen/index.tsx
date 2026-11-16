@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { secureStore as SecureStore } from '../../../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
+import { AuthBackground, AuthButtonGradient } from '../authDesign';
 import { authApi } from '../../../services/api/endpoints/auth';
 import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
@@ -158,8 +159,8 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 }
 
 const pbStyles = StyleSheet.create({
-  track: { height: 3, backgroundColor: '#E2E8F0' },
-  fill:  { height: 3, backgroundColor: BRAND_BLUE, borderRadius: 2 },
+  track: { height: 6, backgroundColor: '#DCE5F5', marginHorizontal: 20, borderRadius: 3 },
+  fill:  { height: 6, backgroundColor: BRAND_BLUE, borderRadius: 3 },
 });
 
 // ── Étape 1 : Type d'activité + CGU ───────────────────────────────────────────
@@ -182,6 +183,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
 
   return (
     <SafeAreaView style={step1Styles.safe}>
+      <AuthBackground forceLight />
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <ScreenHeader onBack={onBack} title="Type d'activité" currentStep={currentStep} totalSteps={totalSteps} />
       <ProgressBar current={currentStep} total={totalSteps} />
@@ -295,6 +297,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
             accessibilityRole="button"
             activeOpacity={0.85}
           >
+<AuthButtonGradient />
             <Text style={step1Styles.primaryBtnText}>Continuer</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={step1Styles.btnIcon} />
           </TouchableOpacity>
@@ -313,18 +316,14 @@ const step1Styles = StyleSheet.create({
   cardsContainer:    { gap: 10 },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderWidth: 2,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
   },
   cardSelected:      { borderColor: BRAND_BLUE, backgroundColor: BLUE_LIGHT },
   emojiWrap: {
@@ -341,13 +340,9 @@ const step1Styles = StyleSheet.create({
   cardDesc:          { fontSize: 12, color: '#64748B', lineHeight: 17 },
   cguCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
     marginTop: 8,
   },
   cguRow:            { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
@@ -368,8 +363,8 @@ const step1Styles = StyleSheet.create({
   actions:           { marginTop: 4, gap: 10 },
   primaryBtn: {
     backgroundColor: BRAND_BLUE,
-    paddingVertical: 17,
-    borderRadius: 16,
+    paddingVertical: 18,
+    borderRadius: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -425,6 +420,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
 
   return (
     <SafeAreaView style={step2Styles.safe}>
+      <AuthBackground forceLight />
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <ScreenHeader onBack={onBack} title="Informations personnelles" currentStep={currentStep} totalSteps={totalSteps} />
       <ProgressBar current={currentStep} total={totalSteps} />
@@ -447,7 +443,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
             autoCapitalize="words"
             returnKeyType="next"
             accessibilityLabel="Prénom"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Votre prénom"
           />
           {touched.firstName && errors.firstName ? <Text style={step2Styles.errorMsg}>{errors.firstName}</Text> : null}
@@ -464,7 +460,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
             autoCapitalize="words"
             returnKeyType="next"
             accessibilityLabel="Nom"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Votre nom"
           />
           {touched.lastName && errors.lastName ? <Text style={step2Styles.errorMsg}>{errors.lastName}</Text> : null}
@@ -482,7 +478,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
             autoCapitalize="none"
             returnKeyType="next"
             accessibilityLabel="Adresse e-mail"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="exemple@domaine.com"
           />
           {touched.email && errors.email ? <Text style={step2Styles.errorMsg}>{errors.email}</Text> : null}
@@ -504,7 +500,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
               keyboardType="phone-pad"
               returnKeyType="next"
               accessibilityLabel="Numéro de téléphone"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               placeholder="07 XX XX XX XX"
             />
           </View>
@@ -524,7 +520,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
               textContentType="newPassword"
               returnKeyType="next"
               accessibilityLabel="Mot de passe"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               placeholder="Minimum 8 caractères"
             />
             <TouchableOpacity style={step2Styles.eyeBtn} onPress={() => setShowPw(v => !v)} accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>
@@ -562,7 +558,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
               returnKeyType="done"
               onSubmitEditing={handleNext}
               accessibilityLabel="Confirmer le mot de passe"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               placeholder="Répétez votre mot de passe"
             />
             <TouchableOpacity style={step2Styles.eyeBtn} onPress={() => setShowCpw(v => !v)} accessibilityLabel={showCpw ? 'Masquer' : 'Afficher'}>
@@ -580,6 +576,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
             accessibilityRole="button"
             activeOpacity={0.85}
           >
+<AuthButtonGradient />
             <Text style={step2Styles.primaryBtnText}>Continuer</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={step2Styles.btnIcon} />
           </TouchableOpacity>
@@ -598,24 +595,26 @@ const step2Styles = StyleSheet.create({
   field:           { gap: 6 },
   label:           { fontSize: 14, fontWeight: '600', color: DARK_NAVY },
   input: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 15,
     color: DARK_NAVY,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F2F6FF',
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
   },
   inputError:      { borderColor: '#EF4444' },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 20,
+    backgroundColor: '#F2F6FF',
     overflow: 'hidden',
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
   },
   phonePrefix:     { paddingHorizontal: 12, paddingVertical: 13 },
   phonePrefixText: { fontSize: 15, fontWeight: '600', color: DARK_NAVY },
@@ -624,10 +623,11 @@ const step2Styles = StyleSheet.create({
   pwRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 20,
+    backgroundColor: '#F2F6FF',
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
   },
   pwInput:         { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: DARK_NAVY },
   eyeBtn:          { paddingHorizontal: 12, paddingVertical: 13 },
@@ -639,8 +639,8 @@ const step2Styles = StyleSheet.create({
   actions:         { marginTop: 8, gap: 10 },
   primaryBtn: {
     backgroundColor: BRAND_BLUE,
-    paddingVertical: 17,
-    borderRadius: 16,
+    paddingVertical: 18,
+    borderRadius: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -721,6 +721,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
 
   return (
     <SafeAreaView style={step3Styles.safe}>
+      <AuthBackground forceLight />
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <ScreenHeader onBack={onBack} title="Informations pro" currentStep={currentStep} totalSteps={totalSteps} />
       <ProgressBar current={currentStep} total={totalSteps} />
@@ -759,7 +760,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             autoCapitalize="words"
             returnKeyType="next"
             accessibilityLabel="Nom de l'établissement"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder={isRestaurant ? 'Ex. : Le Jardin Tropical' : 'Ex. : Primeo Résidences SARL'}
           />
         </View>
@@ -777,7 +778,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             autoCapitalize="sentences"
             returnKeyType="next"
             accessibilityLabel="Adresse de l'établissement"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Ex. : Cocody, Abidjan"
           />
         </View>
@@ -795,7 +796,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             autoCapitalize="characters"
             returnKeyType="next"
             accessibilityLabel="Numéro RCCM"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Ex. : CI-ABJ-01-2023-B12-00123"
           />
         </View>
@@ -814,7 +815,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
             accessibilityLabel="Numéro de contribuable"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Ex. : 1234567A"
           />
         </View>
@@ -834,7 +835,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
             accessibilityLabel="Code de parrainage"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             placeholder="Code de la personne qui vous a invité"
           />
         </View>
@@ -848,6 +849,7 @@ function StepProInfo({ data, onUpdate, onBack, currentStep, totalSteps, navigati
             accessibilityRole="button"
             activeOpacity={0.85}
           >
+<AuthButtonGradient />
             {loading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
@@ -897,20 +899,21 @@ const step3Styles = StyleSheet.create({
   label:         { fontSize: 14, fontWeight: '600', color: DARK_NAVY },
   optional:      { fontSize: 13, fontWeight: '400', color: '#94A3B8' },
   input: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 15,
     color: DARK_NAVY,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F2F6FF',
+    shadowColor: '#7FA6E8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5,
   },
   actions:       { marginTop: 8, gap: 12 },
   primaryBtn: {
     backgroundColor: BRAND_BLUE,
-    paddingVertical: 17,
-    borderRadius: 16,
+    paddingVertical: 18,
+    borderRadius: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

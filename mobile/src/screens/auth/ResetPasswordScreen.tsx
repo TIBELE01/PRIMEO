@@ -4,7 +4,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, type Theme } from '../../theme/ThemeProvider';
+import { useAuthTheme, AuthBackground, AuthButtonGradient, type AuthTheme } from './authDesign';
 import { authApi } from '../../services/api/endpoints/auth';
 import { validatePassword } from './auth.utils';
 import type { AuthScreenProps } from '../../navigation/types';
@@ -15,7 +15,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
   // Cible de deep link (primeo://reset-password) : params absents si le lien
   // est ouvert sans fragment — ne jamais déstructurer sans repli.
   const { recoveryToken = '' } = route.params ?? {};
-  const { theme } = useTheme();
+  const theme = useAuthTheme();
   const s = makeStyles(theme);
 
   const [password,  setPassword]  = useState('');
@@ -48,6 +48,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
   if (success) {
     return (
       <SafeAreaView style={s.safe}>
+      <AuthBackground />
         <View style={s.successContainer}>
           <Text style={s.successIcon}>✅</Text>
           <Text style={s.successTitle}>Mot de passe modifié</Text>
@@ -59,6 +60,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
             onPress={() => navigation.navigate('Login')}
             accessibilityRole="button"
           >
+<AuthButtonGradient />
             <Text style={s.sendBtnText}>Se connecter</Text>
           </TouchableOpacity>
         </View>
@@ -68,6 +70,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={s.safe}>
+      <AuthBackground />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
@@ -134,6 +137,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
               disabled={!canSubmit || loading}
               accessibilityRole="button"
             >
+<AuthButtonGradient />
               {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.sendBtnText}>Réinitialiser</Text>}
             </TouchableOpacity>
           </View>
@@ -144,7 +148,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
   );
 }
 
-function makeStyles(t: Theme) {
+function makeStyles(t: AuthTheme) {
   return StyleSheet.create({
     safe:             { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     scroll:           { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24, gap: 24 },
@@ -160,7 +164,7 @@ function makeStyles(t: Theme) {
     form:             { gap: 16 },
     field:            { gap: 6 },
     label:            { fontSize: 14, fontWeight: '600', color: t.colors.text },
-    input:            { borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: t.colors.text, backgroundColor: t.colors.surface },
+    input:            { borderWidth: 1, borderColor: t.auth.highlight, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: t.colors.text, backgroundColor: t.colors.surface , shadowColor: t.auth.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5 },
     inputError:       { borderColor: t.colors.error },
     pwRow:            { flexDirection: 'row', alignItems: 'center', gap: 8 },
     eyeBtn:           { padding: 8 },
@@ -168,7 +172,7 @@ function makeStyles(t: Theme) {
     errorBox:         { backgroundColor: t.colors.errorLight, borderRadius: 10, padding: 12 },
     errorText:        { color: t.colors.error, fontSize: 14 },
     footer:           { gap: 14 },
-    sendBtn:          { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
+    sendBtn:          { backgroundColor: t.colors.primary, paddingVertical: 17, borderRadius: 36, alignItems: 'center' , shadowColor: '#0055FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
     btnDisabled:      { opacity: 0.5 },
     sendBtnText:      { color: '#FFF', fontSize: 16, fontWeight: '700' },
   });

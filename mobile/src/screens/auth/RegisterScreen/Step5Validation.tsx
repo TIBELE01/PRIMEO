@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { secureStore as SecureStore } from '../../../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme, type Theme } from '../../../theme/ThemeProvider';
+import { useAuthTheme, AuthBackground, AuthButtonGradient, type AuthTheme } from '../authDesign';
 import { normalizeIvorianPhone } from '../auth.utils';
 import { authApi } from '../../../services/api/endpoints/auth';
 import { submitKyc as submitKycDocuments } from '../../../services/kycUpload';
@@ -34,7 +34,7 @@ const ACCOUNT_LABELS: Record<string, string> = {
 };
 
 export function Step5Validation({ data, onBack, currentStep, totalSteps, navigation }: Props) {
-  const { theme } = useTheme();
+  const theme = useAuthTheme();
   const s = makeStyles(theme);
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);
@@ -132,6 +132,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
 
   return (
     <SafeAreaView style={s.safe}>
+      <AuthBackground />
       <View style={s.progressTrack}>
         <View style={[s.progressFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
       </View>
@@ -217,6 +218,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
             disabled={!accepted || loading}
             accessibilityRole="button"
           >
+<AuthButtonGradient />
             {loading
               ? <ActivityIndicator color="#FFF" />
               : <Text style={s.submitBtnText}>Créer mon compte</Text>
@@ -234,7 +236,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
 function SummaryRow({
   label, value, theme, last = false,
 }: {
-  label: string; value: string; theme: ReturnType<typeof useTheme>['theme']; last?: boolean;
+  label: string; value: string; theme: AuthTheme; last?: boolean;
 }) {
   return (
     <View style={[
@@ -249,11 +251,11 @@ function SummaryRow({
   );
 }
 
-function makeStyles(t: Theme) {
+function makeStyles(t: AuthTheme) {
   return StyleSheet.create({
     safe:           { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    progressTrack:  { height: 4, backgroundColor: t.colors.border },
-    progressFill:   { height: '100%', backgroundColor: t.colors.primary, borderRadius: 2 },
+    progressTrack:  { height: 6, backgroundColor: t.colors.border, marginHorizontal: 24, borderRadius: 3 },
+    progressFill:   { height: '100%', backgroundColor: t.colors.primary, borderRadius: 3 },
     scroll:         { flexGrow: 1, padding: 24, gap: 20, paddingBottom: 40 },
     header:         { gap: 6 },
     stepLabel:      { fontSize: 12, color: t.colors.textDisabled, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
@@ -269,7 +271,7 @@ function makeStyles(t: Theme) {
     cguText:        { flex: 1, fontSize: 13, color: t.colors.textSecondary, lineHeight: 20 },
     cguLink:        { color: t.colors.primary, fontWeight: '700' },
     actions:        { gap: 12 },
-    submitBtn:      { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
+    submitBtn:      { backgroundColor: t.colors.primary, paddingVertical: 17, borderRadius: 36, alignItems: 'center' , shadowColor: '#0055FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
     btnDisabled:    { opacity: 0.4 },
     submitBtnText:  { color: '#FFF', fontSize: 16, fontWeight: '700' },
     backLink:       { textAlign: 'center', color: t.colors.textSecondary, fontSize: 14, fontWeight: '600' },

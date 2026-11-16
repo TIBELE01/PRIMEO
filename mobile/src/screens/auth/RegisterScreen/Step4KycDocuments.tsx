@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
-import { useTheme, type Theme } from '../../../theme/ThemeProvider';
+import { useAuthTheme, AuthBackground, AuthButtonGradient, type AuthTheme } from '../authDesign';
 import type { RegistrationData } from './index';
 
 type Props = {
@@ -25,7 +25,7 @@ const KYC_DOCS: DocDef[] = [
 ];
 
 export function Step4KycDocuments({ data, onUpdate, onNext, onBack, currentStep, totalSteps }: Props) {
-  const { theme } = useTheme();
+  const theme = useAuthTheme();
   const s = makeStyles(theme);
   const [picking, setPicking] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
@@ -59,6 +59,7 @@ export function Step4KycDocuments({ data, onUpdate, onNext, onBack, currentStep,
 
   return (
     <SafeAreaView style={s.safe}>
+      <AuthBackground />
       <View style={s.progressTrack}>
         <View style={[s.progressFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
       </View>
@@ -109,6 +110,7 @@ export function Step4KycDocuments({ data, onUpdate, onNext, onBack, currentStep,
 
         <View style={s.actions}>
           <TouchableOpacity style={s.nextBtn} onPress={handleNext} accessibilityRole="button">
+<AuthButtonGradient />
             <Text style={s.nextBtnText}>Continuer</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onBack} accessibilityRole="button">
@@ -120,18 +122,18 @@ export function Step4KycDocuments({ data, onUpdate, onNext, onBack, currentStep,
   );
 }
 
-function makeStyles(t: Theme) {
+function makeStyles(t: AuthTheme) {
   return StyleSheet.create({
     safe:         { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    progressTrack:{ height: 4, backgroundColor: t.colors.border },
-    progressFill: { height: '100%', backgroundColor: t.colors.primary, borderRadius: 2 },
+    progressTrack:{ height: 6, backgroundColor: t.colors.border, marginHorizontal: 24, borderRadius: 3 },
+    progressFill: { height: '100%', backgroundColor: t.colors.primary, borderRadius: 3 },
     scroll:       { flexGrow: 1, padding: 24, gap: 24, paddingBottom: 40 },
     header:       { gap: 6 },
     stepLabel:    { fontSize: 12, color: t.colors.textDisabled, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
     title:        { fontSize: 24, fontWeight: '800', color: t.colors.text },
     subtitle:     { fontSize: 15, color: t.colors.textSecondary, lineHeight: 22 },
     docList:      { gap: 12 },
-    docCard:      { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 14, padding: 14, gap: 12 },
+    docCard:      { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: t.auth.highlight, borderRadius: 20, padding: 14, gap: 12 , shadowColor: t.auth.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5 },
     docCardError: { borderColor: t.colors.error },
     docInfo:      { flex: 1, gap: 3 },
     docLabel:     { fontSize: 14, fontWeight: '600', color: t.colors.text },
@@ -143,7 +145,7 @@ function makeStyles(t: Theme) {
     pickBtnText:  { color: '#FFF', fontSize: 13, fontWeight: '700' },
     hint:         { color: t.colors.error, fontSize: 12 },
     actions:      { gap: 12 },
-    nextBtn:      { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center' },
+    nextBtn:      { backgroundColor: t.colors.primary, paddingVertical: 17, borderRadius: 36, alignItems: 'center' , shadowColor: '#0055FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
     nextBtnText:  { color: '#FFF', fontSize: 16, fontWeight: '700' },
     backLink:     { textAlign: 'center', color: t.colors.textSecondary, fontSize: 14, fontWeight: '600' },
   });

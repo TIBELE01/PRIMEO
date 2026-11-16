@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { secureStore as SecureStore } from '../../services/secureStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme, type Theme } from '../../theme/ThemeProvider';
+import { useAuthTheme, AuthBackground, AuthButtonGradient, type AuthTheme } from './authDesign';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api/endpoints/auth';
 import { submitKyc as submitKycDocuments } from '../../services/kycUpload';
@@ -20,7 +20,7 @@ const RESEND_DELAY = 60;
 export function OtpVerificationScreen({ route, navigation }: Props) {
   const { phone, context, bypassCode, kycDocuments, kycBusinessInfo } =
     route.params ?? ({} as Partial<Props['route']['params']>);
-  const { theme } = useTheme();
+  const theme = useAuthTheme();
   const setUser   = useAuthStore((s) => s.setUser);
   const setTokens = useAuthStore((s) => s.setTokens);
   const s = makeStyles(theme);
@@ -97,6 +97,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={s.safe}>
+      <AuthBackground />
       <View style={s.container}>
         <View style={s.header}>
           <Text style={s.title}>Vérification</Text>
@@ -141,6 +142,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
           disabled={loading || code.length < OTP_LEN}
           accessibilityRole="button"
         >
+<AuthButtonGradient />
           {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.verifyBtnText}>Vérifier</Text>}
         </TouchableOpacity>
 
@@ -162,7 +164,7 @@ export function OtpVerificationScreen({ route, navigation }: Props) {
   );
 }
 
-function makeStyles(t: Theme) {
+function makeStyles(t: AuthTheme) {
   return StyleSheet.create({
     safe:         { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
     container:    { flex: 1, paddingHorizontal: 24, paddingTop: 40, alignItems: 'center', gap: 24 },
@@ -171,11 +173,11 @@ function makeStyles(t: Theme) {
     subtitle:     { fontSize: 15, color: t.colors.textSecondary, textAlign: 'center', lineHeight: 22 },
     phoneText:    { fontWeight: '700', color: t.colors.text },
     otpRow:       { flexDirection: 'row', gap: 10 },
-    otpBox:       { width: 46, height: 54, borderWidth: 1.5, borderColor: t.colors.border, borderRadius: 12, fontSize: 22, fontWeight: '700', color: t.colors.text, backgroundColor: t.colors.surface },
+    otpBox:       { width: 46, height: 54, borderWidth: 1, borderColor: t.auth.highlight, borderRadius: 20, fontSize: 22, fontWeight: '700', color: t.colors.text, backgroundColor: t.colors.surface , shadowColor: t.auth.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 5 },
     otpBoxFilled: { borderColor: t.colors.primary, backgroundColor: t.colors.primaryLight },
     errorBox:     { backgroundColor: t.colors.errorLight, borderRadius: 10, padding: 12, width: '100%' },
     errorText:    { color: t.colors.error, fontSize: 14, textAlign: 'center' },
-    verifyBtn:    { backgroundColor: t.colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center', width: '100%' },
+    verifyBtn:    { backgroundColor: t.colors.primary, paddingVertical: 17, borderRadius: 36, alignItems: 'center', width: '100%' , shadowColor: '#0055FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
     btnDisabled:  { opacity: 0.5 },
     verifyBtnText:{ color: '#FFF', fontSize: 16, fontWeight: '700' },
     resendText:   { color: t.colors.textSecondary, fontSize: 14 },

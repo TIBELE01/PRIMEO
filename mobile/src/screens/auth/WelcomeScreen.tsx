@@ -1,4 +1,5 @@
-﻿// WelcomeScreen — premium redesign: dark hero, brand identity, floating bottom card
+﻿// WelcomeScreen — design néo-/glassmorphique aux couleurs Primeo (fond dégradé, formes
+// abstraites, logo en carte flottante, boutons pilule). Navigation inchangée.
 import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image,
@@ -10,41 +11,45 @@ const LottieView = require('lottie-react-native').default as React.ComponentType
 }>;
 import type { AuthScreenProps } from '../../navigation/types';
 import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
+import { Ionicons } from '@expo/vector-icons';
+import { AuthBackground, AuthButtonGradient, useAuthPalette, BLUE, ORANGE, type AuthPalette } from './authDesign';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 type Props = AuthScreenProps<'Welcome'>;
 
-const BRAND_BLUE = '#1056E0';
-
 export function WelcomeScreen({ navigation }: Props) {
+  const { P, isDark, toggle } = useAuthPalette();
+  const s = makeStyles(P);
+
   return (
     <View style={s.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#040C1F" />
-
-      {/* ── Background ambient glow ── */}
-      <View style={s.glowTop} />
-      <View style={s.glowMid} />
-
-      {/* ── Grid dots pattern ── */}
-      <View style={s.dotsOverlay} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={P.bg[0]} />
+      <AuthBackground />
 
       <SafeAreaView style={s.safe}>
-        {/* ── Top brand area ── */}
-        <View style={s.brandArea}>
-          {/* Logo */}
-          <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logoImg} />
-
-          {/* Tagline */}
-          <View style={s.taglineWrap}>
-            <View style={s.taglineLine} />
-            <Text style={s.tagline}>Réservez. Achetez. Vivez.</Text>
-            <View style={s.taglineLine} />
-          </View>
+        {/* Bouton thème */}
+        <View style={s.topBar}>
+          <TouchableOpacity
+            style={s.roundBtn}
+            onPress={toggle}
+            accessibilityRole="button"
+            accessibilityLabel={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            activeOpacity={0.85}
+          >
+            <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={20} color={BLUE} />
+          </TouchableOpacity>
         </View>
 
-        {/* ── Central illustration ── */}
+        {/* Logo en carte flottante */}
+        <View style={s.brandArea}>
+          <View style={s.logoCard}>
+            <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logoImg} accessibilityLabel="Logo Primeo" />
+          </View>
+          <Text style={s.tagline}>RÉSERVEZ · ACHETEZ · VIVEZ</Text>
+        </View>
+
+        {/* Illustration centrale */}
         <View style={s.animArea}>
-          <View style={s.animGlow} />
           <LottieView
             source={require('../../../assets/lottie/loading.json')}
             autoPlay
@@ -54,26 +59,26 @@ export function WelcomeScreen({ navigation }: Props) {
           />
         </View>
 
-        {/* ── Bottom card ── */}
+        {/* Carte du bas */}
         <View style={s.card}>
-          {/* Card handle */}
-          <View style={s.cardHandle} />
-
-          <Text style={s.cardTitle}>Commençons ensemble</Text>
+          <Text style={s.cardTitle} accessibilityRole="header">Commençons ensemble</Text>
           <Text style={s.cardSub}>
             Accédez aux meilleures propriétés, restaurants et biens immobiliers en Côte d'Ivoire.
           </Text>
 
-          {/* CTA buttons */}
           <View style={s.actions}>
             <TouchableOpacity
               style={s.primaryBtn}
               onPress={() => navigation.navigate('Login')}
               accessibilityRole="button"
               accessibilityLabel="Se connecter à votre compte Primeo"
-              activeOpacity={0.88}
+              activeOpacity={0.9}
             >
+              <AuthButtonGradient />
               <Text style={s.primaryBtnText}>Se connecter</Text>
+              <View style={s.arrowCircle}>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -86,9 +91,19 @@ export function WelcomeScreen({ navigation }: Props) {
             >
               <Text style={s.outlineBtnText}>Créer un compte</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={s.proBtn}
+              onPress={() => navigation.navigate('ProRegister')}
+              accessibilityRole="button"
+              accessibilityLabel="Inscription professionnelle"
+              activeOpacity={0.88}
+            >
+              <Ionicons name="briefcase-outline" size={17} color={ORANGE} />
+              <Text style={s.proBtnText}>Inscription professionnelle</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Legal */}
           <Text style={s.legal}>
             En continuant, vous acceptez nos{' '}
             <Text style={s.legalLink}>Conditions d'utilisation</Text>
@@ -101,111 +116,37 @@ export function WelcomeScreen({ navigation }: Props) {
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#040C1F' },
-  safe:      { flex: 1, paddingTop: 16, justifyContent: 'space-between' },
+function makeStyles(P: AuthPalette) {
+  const soft = { shadowColor: P.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: P.bg[1] },
+    safe: { flex: 1, paddingTop: 8, justifyContent: 'space-between', width: '100%', maxWidth: 520, alignSelf: 'center' },
 
-  // Background ambient glows
-  glowTop: {
-    position: 'absolute', width: 380, height: 380, borderRadius: 190,
-    top: -120, left: -60,
-    backgroundColor: 'rgba(16,86,224,0.18)',
-  },
-  glowMid: {
-    position: 'absolute', width: 260, height: 260, borderRadius: 130,
-    top: height * 0.28, right: -80,
-    backgroundColor: 'rgba(16,86,224,0.10)',
-  },
+    topBar: { alignItems: 'flex-end', paddingHorizontal: 24 },
+    roundBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
 
-  // Subtle dot pattern (decorative)
-  dotsOverlay: {
-    position: 'absolute', inset: 0,
-    opacity: 0.03,
-  },
+    brandArea: { alignItems: 'center', paddingTop: 8, gap: 16 },
+    logoCard: { width: 116, height: 116, borderRadius: 34, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.45, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 14 },
+    logoImg: { width: 88, height: 88 },
+    tagline: { fontSize: 12, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
 
-  // ── Brand area ──
-  brandArea: {
-    alignItems: 'center', paddingTop: 24, gap: 6,
-  },
-  logoImg: {
-    width: 112, height: 112,
-    marginBottom: 10,
-    shadowColor: BRAND_BLUE,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.55,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  taglineWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4,
-  },
-  taglineLine: {
-    flex: 1, height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.18)', maxWidth: 40,
-  },
-  tagline: {
-    fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 1.5, textTransform: 'uppercase',
-  },
+    animArea: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 120 },
+    lottie: { width: Math.min(width * 0.55, 240), height: Math.min(width * 0.55, 240) },
 
-  // ── Animation area ──
-  animArea: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    position: 'relative',
-  },
-  animGlow: {
-    position: 'absolute',
-    width: 260, height: 260, borderRadius: 130,
-    backgroundColor: 'rgba(16,86,224,0.14)',
-  },
-  lottie: { width: width * 0.62, height: width * 0.62 },
+    card: { backgroundColor: P.surface, marginHorizontal: 16, marginBottom: 12, borderRadius: 32, paddingTop: 24, paddingHorizontal: 22, paddingBottom: 20, ...soft, shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
+    cardTitle: { fontSize: 24, fontWeight: '900', color: P.text, marginBottom: 6, letterSpacing: -0.3 },
+    cardSub: { fontSize: 14, color: P.muted, lineHeight: 22, marginBottom: 20 },
 
-  // ── Bottom card ──
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingTop: 14, paddingHorizontal: 24, paddingBottom: 20,
-    gap: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  cardHandle: {
-    width: 38, height: 4, borderRadius: 2,
-    backgroundColor: '#E5E7EB',
-    alignSelf: 'center', marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 22, fontWeight: '900', color: '#0F1729',
-    marginBottom: 6, letterSpacing: -0.3,
-  },
-  cardSub: {
-    fontSize: 14, color: '#64748B', lineHeight: 22,
-    marginBottom: 22,
-  },
+    actions: { gap: 12, marginBottom: 16 },
+    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: BLUE, paddingVertical: 17, borderRadius: 36, minHeight: 58, shadowColor: BLUE, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
+    primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
+    arrowCircle: { position: 'absolute', right: 10, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
+    outlineBtn: { alignItems: 'center', paddingVertical: 16, borderRadius: 36, backgroundColor: P.field, borderWidth: 1, borderColor: P.highlight, ...soft, shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
+    outlineBtnText: { fontSize: 16, fontWeight: '800', color: BLUE },
+    proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: ORANGE, borderRadius: 36, paddingVertical: 14, backgroundColor: P.surface },
+    proBtnText: { fontSize: 15, fontWeight: '800', color: ORANGE },
 
-  // Actions
-  actions: { gap: 12, marginBottom: 16 },
-  primaryBtn: {
-    backgroundColor: BRAND_BLUE, paddingVertical: 17,
-    borderRadius: 16, alignItems: 'center',
-    shadowColor: BRAND_BLUE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
-  },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
-  outlineBtn: {
-    borderWidth: 2, borderColor: BRAND_BLUE,
-    paddingVertical: 15, borderRadius: 16, alignItems: 'center',
-  },
-  outlineBtnText: { fontSize: 16, fontWeight: '700', color: BRAND_BLUE },
-
-  // Legal
-  legal: {
-    textAlign: 'center', color: '#9CA3AF',
-    fontSize: 11.5, lineHeight: 17,
-  },
-  legalLink: { color: BRAND_BLUE, fontWeight: '600' },
-});
+    legal: { textAlign: 'center', color: P.muted, fontSize: 11.5, lineHeight: 17 },
+    legalLink: { color: BLUE, fontWeight: '600' },
+  });
+}

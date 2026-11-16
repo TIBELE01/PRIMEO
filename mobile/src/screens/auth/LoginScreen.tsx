@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView, Image, Dimensions, StatusBar, useColorScheme,
+  ActivityIndicator, ScrollView, Image, StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,28 +18,9 @@ import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
 import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
-import { useTheme } from '../../theme/ThemeProvider';
+import { BLUE, BLUE_LIGHT, ORANGE, RED, AuthBackground, useAuthPalette, type AuthPalette } from './authDesign';
 
 type Props = AuthScreenProps<'Login'>;
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
-// Charte Primeo
-const BLUE = '#0055FF';
-const BLUE_LIGHT = '#4F8EF7';
-const ORANGE = '#FF6600';
-const RED = '#FF3333';
-
-const LIGHT = {
-  bg: ['#FFFFFF', '#F8FAFC', '#E3EDFF'] as const,
-  surface: '#FFFFFF', field: '#F2F6FF', text: '#0B1F4D', muted: '#6B7A99', placeholder: '#A3AEC7',
-  line: '#DCE5F5', shadow: '#7FA6E8', highlight: '#FFFFFF', shape: ['#BFD6FF', '#EAF1FF'] as const,
-};
-const DARKP = {
-  bg: ['#0B1530', '#0A1228', '#07102A'] as const,
-  surface: '#14213F', field: '#101B36', text: '#F1F5FF', muted: '#9AA9C9', placeholder: '#6F7FA3',
-  line: '#24345C', shadow: '#000000', highlight: '#1B2B52', shape: ['#1A3A8F', '#0F2257'] as const,
-};
 
 export function LoginScreen({ navigation }: Props) {
   const setUser   = useAuthStore((s) => s.setUser);
@@ -53,10 +34,7 @@ export function LoginScreen({ navigation }: Props) {
   const [error,    setError]    = useState<string | null>(null);
   const [remember, setRemember] = useState(true);
 
-  const { themeMode, setThemeMode } = useTheme();
-  const systemScheme = useColorScheme();
-  const isDark = themeMode === 'dark' || (themeMode === 'auto' && systemScheme === 'dark');
-  const P = isDark ? DARKP : LIGHT;
+  const { P, isDark, toggle } = useAuthPalette();
   const s = makeStyles(P);
 
   const canSubmit = email.trim().length > 0 && password.length >= 1;
@@ -103,13 +81,7 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <View style={s.container}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={P.bg[0]} />
-      <LinearGradient colors={[...P.bg]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />
-
-      {/* Formes abstraites en relief, floutées */}
-      <LinearGradient colors={[...P.shape]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.shapeTopLeft} pointerEvents="none" />
-      <LinearGradient colors={[BLUE_LIGHT, BLUE]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.shapeTopRight} pointerEvents="none" />
-      <LinearGradient colors={[...P.shape]} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={s.shapeBottomRight} pointerEvents="none" />
-      <View style={s.shapeBottomLeft} pointerEvents="none" />
+      <AuthBackground />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
@@ -119,7 +91,7 @@ export function LoginScreen({ navigation }: Props) {
             <View style={s.topBar}>
               <TouchableOpacity
                 style={s.roundBtn}
-                onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
+                onPress={toggle}
                 accessibilityRole="button"
                 accessibilityLabel={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
                 activeOpacity={0.85}
@@ -284,19 +256,11 @@ export function LoginScreen({ navigation }: Props) {
   );
 }
 
-type Palette = typeof LIGHT | typeof DARKP;
-
-function makeStyles(P: Palette) {
+function makeStyles(P: AuthPalette) {
   const soft = { shadowColor: P.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
     scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24, alignItems: 'stretch', maxWidth: 520, width: '100%', alignSelf: 'center' },
-
-    // Formes abstraites
-    shapeTopLeft: { position: 'absolute', width: SCREEN_W * 0.75, height: SCREEN_W * 0.75, borderRadius: SCREEN_W * 0.375, top: -SCREEN_W * 0.3, left: -SCREEN_W * 0.25, opacity: 0.75, ...soft },
-    shapeTopRight: { position: 'absolute', width: SCREEN_W * 0.34, height: SCREEN_W * 0.34, borderRadius: SCREEN_W * 0.17, top: SCREEN_H * 0.17, right: -SCREEN_W * 0.12, opacity: 0.28, ...soft },
-    shapeBottomRight: { position: 'absolute', width: SCREEN_W * 0.8, height: SCREEN_W * 0.55, borderRadius: SCREEN_W * 0.4, bottom: -SCREEN_W * 0.22, right: -SCREEN_W * 0.3, opacity: 0.7, transform: [{ rotate: '-18deg' }], ...soft },
-    shapeBottomLeft: { position: 'absolute', width: SCREEN_W * 0.3, height: SCREEN_W * 0.3, borderRadius: SCREEN_W * 0.15, bottom: SCREEN_H * 0.2, left: -SCREEN_W * 0.14, backgroundColor: P.highlight, opacity: 0.55, ...soft },
 
     topBar: { alignItems: 'flex-end', paddingTop: 10 },
     roundBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
