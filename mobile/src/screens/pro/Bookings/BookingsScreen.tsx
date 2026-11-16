@@ -73,6 +73,11 @@ const STATUS_LABEL: Record<string, string> = {
   confirmed: 'Confirmée',
   completed: 'Terminée',
   cancelled: 'Annulée',
+  // Statuts renvoyés tels quels par l'API
+  pending_payment: 'Paiement en attente',
+  interest_expressed: 'Intérêt exprimé',
+  cancelled_by_client: 'Annulée par le client',
+  cancelled_by_professional: 'Annulée par vous',
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -80,6 +85,10 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   confirmed: { bg: '#D1FAE5', text: '#065F46' },
   completed: { bg: '#F3F4F6', text: '#6B7280' },
   cancelled: { bg: '#FEE2E2', text: '#DC2626' },
+  pending_payment: { bg: '#FEF3C7', text: '#D97706' },
+  interest_expressed: { bg: '#DBEAFE', text: '#1E40AF' },
+  cancelled_by_client: { bg: '#FEE2E2', text: '#DC2626' },
+  cancelled_by_professional: { bg: '#FEE2E2', text: '#DC2626' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -563,18 +572,19 @@ export default function BookingsScreen() {
       setLoading((prev: Record<TabKey, boolean>) => ({ ...prev, [tab]: true }));
     }
 
-    let params: Record<string, unknown>;
-    if (tab === 'pending') {
-      params = { status: 'pending', role: 'host' };
-    } else if (tab === 'confirmed') {
-      params = { status: 'confirmed', role: 'host' };
-    } else {
-      params = { status: 'completed,cancelled', role: 'host' };
-    }
+    // L'API ne filtre que sur UN statut exact (pending_payment, confirmed…) : « pending » et
+    // « completed,cancelled » étaient rejetés (400) et les onglets restaient vides.
+    // On charge la liste en une page et on répartit par onglet.
+    const TAB_STATUSES: Record<TabKey, string[]> = {
+      pending: ['pending_payment', 'interest_expressed'],
+      confirmed: ['confirmed'],
+      history: ['completed', 'cancelled_by_client', 'cancelled_by_professional'],
+    };
 
     try {
-      const res = await bookingsApi.getMyBookings(params);
-      const data: Booking[] = (res.data?.data ?? res.data) ?? [];
+      const res = await bookingsApi.getMyBookings({ role: 'host', limit: 100, page: 1 });
+      const all: Booking[] = (res.data?.data ?? res.data) ?? [];
+      const data = (Array.isArray(all) ? all : []).filter((bk) => TAB_STATUSES[tab].includes(String((bk as { status?: string }).status)));
       setBookings((prev: Record<TabKey, Booking[]>) => ({ ...prev, [tab]: data }));
     } catch {
       // Keep previous data on error
