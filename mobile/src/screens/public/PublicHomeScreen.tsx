@@ -19,6 +19,8 @@ import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../client/Home/PropertyCard';
 import { HomeHeader } from '../client/Home/HomeHeader';
 import { HomeFooter } from '../client/Home/HomeFooter';
+import { useSectorFlags } from '../../hooks/useSectorFlags';
+import { filterEnabledProperties } from '../../utils/sectors';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -136,7 +138,8 @@ export function PublicHomeScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-  const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
+  const { sectors, refresh: refreshSectors } = useSectorFlags();
+  const onRefresh = useCallback(() => { setRefreshing(true); void refreshSectors(); load(true); }, [load, refreshSectors]);
 
   /* Naviguer vers la connexion */
   const goLogin = () => navigation.navigate('Connexion');
@@ -166,6 +169,7 @@ export function PublicHomeScreen() {
       >
         {/* ── Hero bleu — identique à HomeScreen, bouton Connexion remplace la cloche ── */}
         <HomeHeader
+          sectors={sectors}
           loginButton={{ label: 'Se connecter', onPress: goLogin }}
           onPressResidence={() => goSearch({ type: 'residence' })}
           onPressHotel={() => goSearch({ type: 'hotel' })}
@@ -178,7 +182,7 @@ export function PublicHomeScreen() {
           <SectionTitle text="Pour vous" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {forYou.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {filterEnabledProperties(forYou, sectors).map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
             </ScrollView>
           )}
         </View>
@@ -188,7 +192,7 @@ export function PublicHomeScreen() {
           <SectionTitle text="Populaires dans votre région" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {popular.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {filterEnabledProperties(popular, sectors).map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
             </ScrollView>
           )}
         </View>
@@ -226,7 +230,7 @@ export function PublicHomeScreen() {
           <SectionTitle text="Nouveautés" onSeeAll={() => goSearch()} />
           {loading ? <ActivityIndicator color="#1056E0" style={s.loader} /> : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hList}>
-              {newest.map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
+              {filterEnabledProperties(newest, sectors).map(p => <PropertyCard key={p.id} property={p} onPress={() => goProperty(p.id)} style={s.hCard} />)}
             </ScrollView>
           )}
         </View>

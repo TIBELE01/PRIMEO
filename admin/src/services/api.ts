@@ -389,6 +389,21 @@ export const websiteService = {
 };
 
 // ── Feature flags ─────────────────────────────────────────────────────────────
+// ── Cartes de l'accueil (secteurs) ────────────────────────────────────────────
+export interface SectorFlags {
+  residence_enabled: boolean;
+  hotel_enabled: boolean;
+  immobilier_enabled: boolean;
+  restaurant_enabled: boolean;
+}
+
+export const sectorCardsService = {
+  // État des quatre cartes
+  get: () => api.get<SectorFlags>('/admin/config/features'),
+  // Modifie une ou plusieurs cartes ; renvoie l'état complet enregistré
+  update: (patch: Partial<SectorFlags>) => api.put<SectorFlags>('/admin/config/features', patch),
+};
+
 export const featureFlagsService = {
   // Tous les flags (admin)
   getAll: () => api.get<any[]>('/admin/feature-flags'),

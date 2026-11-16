@@ -1,5 +1,6 @@
 // Properties service — CRUD, search, geo, media signing, admin moderation
 import * as crypto from 'crypto';
+import { sectorsService } from '../sectors/sectors.service';
 import { prisma } from '../../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { HttpError } from '../../common/handlers/http-error.handler';
@@ -103,6 +104,10 @@ export const propertiesService = {
     });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
 
+    // Secteur désactivé par l'admin : la fiche publique n'est plus consultable
+    // (503 « Service temporairement indisponible »).
+    await sectorsService.assertPropertyTypeEnabled(property.propertyType);
+
     // Fire-and-forget view count increment
     prisma.property
       .update({ where: { id }, data: { viewsCount: { increment: 1 } } })
@@ -145,6 +150,9 @@ export const propertiesService = {
   },
 
   async create(ownerId: string, input: CreatePropertyInput) {
+    // Secteur désactivé par l'admin : aucune nouvelle annonce de ce type
+    await sectorsService.assertPropertyTypeEnabled(input.propertyType);
+
     // Un compte ne peut posséder qu'UN SEUL restaurant : on bloque la création
     // d'un second (la fiche est créée automatiquement à l'inscription / au 1er accès
     // au tableau de bord). Le restaurateur gère ensuite menus, tables et créneaux.
@@ -241,6 +249,9 @@ export const propertiesService = {
     if (source.ownerId !== userId && requester?.accountType !== 'admin') {
       throw new HttpError(403, 'Accès non autorisé');
     }
+
+    // Secteur désactivé par l'admin : aucune nouvelle annonce de ce type
+    await sectorsService.assertPropertyTypeEnabled(source.propertyType);
 
     // Limite de publications (formule + slots achetés) — un brouillon compte.
     await propertiesService._assertPublicationLimit(source.ownerId, ' avant de dupliquer');
@@ -846,6 +857,8 @@ export const propertiesService = {
       select: { id: true, title: true, ownerId: true, propertyType: true, status: true },
     });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
+    // Secteur désactivé par l'admin : aucune nouvelle demande d'intérêt
+    await sectorsService.assertPropertyTypeEnabled(property.propertyType);
     // Bloquer uniquement les statuts explicitement invalides ; un bien en review reste accessible à l'intérêt
     const blockedStatuses = ['rejected', 'cancelled', 'deleted'];
     if (blockedStatuses.includes(property.status)) {

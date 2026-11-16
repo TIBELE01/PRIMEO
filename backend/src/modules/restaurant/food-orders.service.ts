@@ -1,5 +1,6 @@
 // Food orders service — commandes de nourriture (restaurant)
 import { prisma } from '../../database/prisma.service';
+import { sectorsService } from '../sectors/sectors.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { getSocketServer } from '../messaging/socket.server';
 import { sendPushNotification } from '../../common/utils/push';
@@ -48,6 +49,8 @@ export const foodOrdersService = {
       },
     });
     if (!property) throw new HttpError(404, 'Restaurant introuvable');
+    // Secteur Restaurant désactivé par l'admin : aucune nouvelle commande
+    await sectorsService.assertPropertyTypeEnabled(property.propertyType);
     if (property.propertyType !== 'restaurant') throw new HttpError(400, 'Cette propriété n\'est pas un restaurant');
     if (property.status !== 'active') throw new HttpError(400, 'Ce restaurant n\'est pas disponible actuellement');
     if (data.deliveryType === 'delivery' && !data.deliveryAddress?.trim()) {

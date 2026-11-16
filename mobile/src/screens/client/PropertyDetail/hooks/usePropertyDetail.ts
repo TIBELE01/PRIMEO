@@ -90,13 +90,21 @@ export const usePropertyDetail = (propertyId: string) => {
       })
       .catch(async e => {
         if (cancelled) return;
+        // Secteur désactivé par l'admin (503 SECTOR_DISABLED) : on affiche le message
+        // du serveur (« Le service … est temporairement indisponible. ») et on
+        // n'utilise PAS la copie en cache, qui rendrait la fiche consultable.
+        const body = e.response?.data as { error?: string; message?: string; details?: { code?: string } } | undefined;
+        if (body?.details?.code === 'SECTOR_DISABLED') {
+          setError(body.error ?? 'Service temporairement indisponible');
+          return;
+        }
         const cached = await AsyncStorage.getItem(`${CACHE_PREFIX}${propertyId}`).catch(() => null);
         const parsedCache = safeJsonParse<any>(cached, null);
         if (parsedCache) {
           setProperty(normalizeProperty(parsedCache));
           setIsFromCache(true);
         } else {
-          setError(e.response?.data?.message ?? 'Erreur de chargement');
+          setError(body?.error ?? body?.message ?? 'Erreur de chargement');
         }
       })
       .finally(() => {

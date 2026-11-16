@@ -68,6 +68,7 @@ import {
 import { getAllFlags, upsertFlag, deleteFlag } from '../feature-flags/feature-flags.controller';
 import { listAdminAccounts, createAdminAccount, updateAdminAccount } from './admin-accounts.controller';
 import { getMonitoringDashboard } from './monitoring.controller';
+import { adminGetSectorFlags, adminUpdateSectorFlags } from '../sectors/sectors.router';
 import { changeUserPlan, getSubscriptionHistory, forceRecalculateBenefits, getPaymentFailures } from './admin.controller';
 import { ChangeUserPlanDto } from './dto/admin.dto';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
@@ -149,6 +150,10 @@ adminRouter.post('/disputes/:id/resolve', parseId, validate(ResolveDisputeDto), 
 adminRouter.post('/disputes/:id/refund', parseId, validate(RefundDisputeDto), refundDispute);
 
 // ── Platform config ────────────────────────────────────────────────────────────
+// Secteurs (cartes de l'accueil) : Résidence, Hôtel, Immobilier, Restaurant
+adminRouter.get('/config/features', adminGetSectorFlags);
+adminRouter.put('/config/features', adminUpdateSectorFlags);
+
 adminRouter.get('/config', getAllConfig);
 adminRouter.patch('/config', validate(UpsertConfigDto), upsertConfig);
 

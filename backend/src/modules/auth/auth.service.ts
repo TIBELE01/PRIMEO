@@ -20,6 +20,7 @@ import { env } from '../../config/env.config';
 import { orangeSmsConfig } from '../../config/orange-sms.config';
 import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 import { getAccountBlock } from '../../common/utils/account-status';
+import { sectorsService } from '../sectors/sectors.service';
 import {
   readTwoFactor,
   writeTwoFactor,
@@ -322,6 +323,9 @@ export const authService = {
   // ── Inscription ─────────────────────────────────────────────────────────────
 
   async register(input: RegisterInput): Promise<{ message: string; accessToken?: string; refreshToken?: string; user?: SafeUser }> {
+    // Secteur désactivé par l'admin : plus d'inscription pour ce type de compte
+    await sectorsService.assertAccountTypeEnabled(input.accountType);
+
     const emailExists = await prisma.user.findUnique({ where: { email: input.email } });
     if (emailExists) {
       throw new HttpError(409, 'Un compte avec cet email existe déjà');

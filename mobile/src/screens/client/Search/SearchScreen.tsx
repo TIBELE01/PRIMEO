@@ -22,6 +22,8 @@ import { SearchMapView } from './MapView';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
 import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal';
 import { trackEvent } from '../../../services/analytics';
+import { useSectorFlags } from '../../../hooks/useSectorFlags';
+import { filterEnabledOptions, filterEnabledProperties, sectorOfPropertyType } from '../../../utils/sectors';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -58,6 +60,13 @@ export function SearchScreen() {
 
   const [destination, setDestination] = useState<string>(route.params?.query ?? '');
   const [selectedType, setSelectedType] = useState<PropertyType | ''>(route.params?.type ?? '');
+  // Secteurs désactivés par l'admin : leur filtre de type n'est pas proposé et
+  // leurs annonces ne sont pas affichées (y compris depuis le cache hors ligne).
+  const { sectors } = useSectorFlags();
+  const typeOptions = filterEnabledOptions(PROPERTY_TYPES, sectors, (t) => sectorOfPropertyType(t.value));
+  useEffect(() => {
+    if (selectedType && !typeOptions.some((t) => t.value === selectedType)) setSelectedType('');
+  }, [selectedType, typeOptions]);
   const [guests, setGuests] = useState<number>(route.params?.guests ?? 1);
   const [checkIn, setCheckIn] = useState<string>(route.params?.checkIn ?? '');
   const [checkOut, setCheckOut] = useState<string>(route.params?.checkOut ?? '');
@@ -74,6 +83,7 @@ export function SearchScreen() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   const [results, setResults] = useState<Property[]>([]);
+  const visibleResults = filterEnabledProperties(results, sectors);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -335,7 +345,7 @@ export function SearchScreen() {
 
       {/* Type chips */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.typeBar} contentContainerStyle={s.typeBarContent}>
-        {PROPERTY_TYPES.map(t => (
+        {typeOptions.map(t => (
           <TouchableOpacity
             key={t.value}
             style={[s.typeChip, selectedType === t.value && s.typeChipActive]}
@@ -383,11 +393,11 @@ export function SearchScreen() {
 
       {/* Results */}
       {viewMode === 'map' ? (
-        <SearchMapView properties={results} onMarkerPress={goProperty} />
+        <SearchMapView properties={visibleResults} onMarkerPress={goProperty} />
       ) : (
         <FlatList
           testID="search-results"
-          data={results}
+          data={visibleResults}
           keyExtractor={(p, i) => p.id ?? String(i)}
           contentContainerStyle={s.list}
           renderItem={({ item, index }) => (

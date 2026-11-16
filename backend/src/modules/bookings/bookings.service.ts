@@ -21,6 +21,7 @@ import { messagingService } from '../messaging/messaging.service';
 import { referralsService } from '../referrals/referrals.service';
 import { walletService } from '../wallets/wallets.service';
 import { bookingCreditsService } from './services/booking-credits.service';
+import { sectorsService } from '../sectors/sectors.service';
 
 export const bookingsService = {
   async create(clientId: string, input: CreateBookingInput) {
@@ -51,6 +52,10 @@ export const bookingsService = {
     if (property.status !== 'active') {
       throw new HttpError(400, 'Cette propriété n\'est pas disponible à la réservation');
     }
+
+    // Secteur désactivé par l'admin : aucune nouvelle réservation ni demande
+    // d'intérêt pour ce type d'annonce (les réservations existantes restent gérables).
+    await sectorsService.assertPropertyTypeEnabled(property.propertyType);
 
     // ── Aiguillage par secteur ──────────────────────────────────────────────
     const isRealEstate = property.propertyType.startsWith('immobilier');

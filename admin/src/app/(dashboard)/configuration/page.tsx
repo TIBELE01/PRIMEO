@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/useToast';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Settings2, Tag, Zap, Palette, Mail, Clock, ToggleLeft, ToggleRight, ShieldCheck, Flag, CreditCard,
+  Settings2, Tag, Zap, Palette, Mail, Clock, ToggleLeft, ToggleRight, ShieldCheck, Flag, CreditCard, LayoutGrid,
 } from 'lucide-react';
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -47,6 +47,7 @@ export default function ConfigurationPage() {
   };
 
   const subPages = [
+    { href: '/configuration/cards', icon: LayoutGrid, label: 'Cartes de l\'accueil', desc: 'Activer / désactiver Résidence, Hôtel, Immobilier, Restaurant' },
     { href: '/configuration/subscriptions', icon: Settings2, label: 'Abonnements', desc: 'Tarifs Starter / Business / Entreprise' },
     { href: '/configuration/boosts', icon: Zap, label: 'Boosts', desc: 'Prix et crédits gratuits par formule' },
     { href: '/configuration/promos', icon: Tag, label: 'Codes promo', desc: 'Créer et gérer les réductions' },

@@ -1,6 +1,7 @@
 // Property search — filters, geo-radius Haversine, visibility scoring sort
 import { prisma } from '../../../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, PropertyType } from '@prisma/client';
+import { sectorsService } from '../../sectors/sectors.service';
 import type { SearchPropertiesInput } from '../dto/property.dto';
 import { getPlanDetails } from '../../../common/constants/subscription-plans';
 
@@ -25,6 +26,14 @@ type SearchResult = {
 const planVisibility = (plan: string): number =>
   (getPlanDetails(plan) ?? getPlanDetails('starter')).visibilityBoostPct;
 
+// Secteurs désactivés par l'admin : leurs annonces n'apparaissent dans aucune
+// recherche. Exprimé avec AND pour se combiner au filtre de type demandé.
+async function buildHiddenTypesFilter(): Promise<Prisma.PropertyWhereInput> {
+  const hidden = await sectorsService.getDisabledPropertyTypes();
+  if (hidden.length === 0) return {};
+  return { AND: [{ propertyType: { notIn: hidden as PropertyType[] } }] };
+}
+
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {
     if (params.lat !== undefined && params.lon !== undefined && params.radiusKm !== undefined) {
@@ -35,6 +44,7 @@ export const searchService = {
 
   async filterSearch(params: SearchPropertiesInput): Promise<SearchResult> {
     const { page, limit } = params;
+    const hiddenTypesFilter = await buildHiddenTypesFilter();
     const amenities = params.amenities
       ?.split(',')
       .map((a) => a.trim())
@@ -51,6 +61,7 @@ export const searchService = {
           }
         : {}),
       ...buildTypeFilter(params.propertyType),
+      ...hiddenTypesFilter,
       ...(params.city ? { city: { contains: params.city, mode: 'insensitive' } } : {}),
       ...(params.minRating ? { rating: { gte: new Prisma.Decimal(params.minRating) } } : {}),
       ...(params.paymentOption ? { paymentOptions: { has: params.paymentOption } } : {}),
@@ -140,6 +151,7 @@ export const searchService = {
 
   async geoSearch(params: SearchPropertiesInput): Promise<SearchResult> {
     const { lat, lon, radiusKm, page, limit } = params;
+    const hiddenTypesFilter = await buildHiddenTypesFilter();
 
     // CTE avoids repeating the Haversine expression; sorted by visibility score then distance
     const geoRows = await prisma.$queryRaw<{ id: string; distance_km: number }[]>(Prisma.sql`
@@ -180,6 +192,7 @@ export const searchService = {
     const where: Prisma.PropertyWhereInput = {
       id: { in: allIds },
       ...buildTypeFilter(params.propertyType),
+      ...hiddenTypesFilter,
       ...(params.city ? { city: { contains: params.city, mode: 'insensitive' } } : {}),
       ...(params.minRating ? { rating: { gte: new Prisma.Decimal(params.minRating) } } : {}),
       ...(params.paymentOption ? { paymentOptions: { has: params.paymentOption } } : {}),

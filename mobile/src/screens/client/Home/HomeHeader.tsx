@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
   Easing, Platform,
 } from 'react-native';
+import { ALL_SECTORS_ENABLED, type SectorFlags } from '../../../utils/sectors';
 
 const native = Platform.OS !== 'web';
 
@@ -77,13 +78,26 @@ interface HomeHeaderProps {
   onPressImmobilier?: () => void;
   onPressRestaurant?: () => void;
   loginButton?: { label: string; onPress: () => void };
+  /** Secteurs activés par l'admin — une carte désactivée n'est pas affichée. Défaut : tout activé. */
+  sectors?: SectorFlags;
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({
   userName, onNotificationsPress, unreadCount,
   onPressResidence, onPressHotel, onPressImmobilier, onPressRestaurant,
   loginButton,
-}) => (
+  sectors = ALL_SECTORS_ENABLED,
+}) => {
+  const anyCard =
+    sectors.residence_enabled || sectors.hotel_enabled || sectors.immobilier_enabled || sectors.restaurant_enabled;
+  // Le titre ne cite que des expériences réellement proposées
+  const stayLabels = [sectors.residence_enabled && 'Résidence', sectors.hotel_enabled && 'Hôtel'].filter(Boolean);
+  const heroTitle =
+    stayLabels.length > 0
+      ? `Choisissez votre expérience :\n${stayLabels.join(' ou ')}`
+      : 'Choisissez votre expérience';
+
+  return (
   <View style={s.container}>
     <VideoBackdrop />
 
@@ -129,7 +143,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       {/* ── Encadré titre ── */}
       <View style={s.titleBox}>
         <Text style={s.heroTitle}>
-          Choisissez votre expérience :{'\n'}Résidence ou Hôtel
+          {heroTitle}
         </Text>
       </View>
 
@@ -142,38 +156,52 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
 
       {/* ── 4 cartes en grille 2×2 ── */}
       <View style={s.cardGrid}>
+        {sectors.residence_enabled && (
         <TouchableOpacity style={s.card} onPress={onPressResidence} activeOpacity={0.85}
           accessibilityRole="button" accessibilityLabel="Résidences — Villas, appartements meublés">
           <Text style={s.cardIcon}>🏘️</Text>
           <Text style={s.cardTitle}>Résidences</Text>
           <Text style={s.cardDesc}>Villas, apparts meublés.</Text>
         </TouchableOpacity>
+        )}
 
+        {sectors.hotel_enabled && (
         <TouchableOpacity style={[s.card, s.cardB]} onPress={onPressHotel} activeOpacity={0.85}
           accessibilityRole="button" accessibilityLabel="Hôtels — Chambres et suites">
           <Text style={s.cardIcon}>🏨</Text>
           <Text style={s.cardTitle}>Hôtels</Text>
           <Text style={s.cardDesc}>Chambres et suites.</Text>
         </TouchableOpacity>
+        )}
 
+        {sectors.immobilier_enabled && (
         <TouchableOpacity style={[s.card, s.cardC]} onPress={onPressImmobilier} activeOpacity={0.85}
           accessibilityRole="button" accessibilityLabel="Immobilier — Achat et location">
           <Text style={s.cardIcon}>🏢</Text>
           <Text style={s.cardTitle}>Immobilier</Text>
           <Text style={s.cardDesc}>Achat et location.</Text>
         </TouchableOpacity>
+        )}
 
+        {sectors.restaurant_enabled && (
         <TouchableOpacity style={[s.card, s.cardD]} onPress={onPressRestaurant} activeOpacity={0.85}
           accessibilityRole="button" accessibilityLabel="Restaurants — Gastronomie ivoirienne">
           <Text style={s.cardIcon}>🍽️</Text>
           <Text style={s.cardTitle}>Restaurants</Text>
           <Text style={s.cardDesc}>Gastronomie CI.</Text>
         </TouchableOpacity>
+        )}
+        {!anyCard && (
+          <View style={s.noCard} accessibilityRole="text">
+            <Text style={s.noCardTxt}>Nos services sont temporairement indisponibles. Revenez très vite !</Text>
+          </View>
+        )}
       </View>
 
     </View>
   </View>
-);
+  );
+};
 
 /* ── Styles ── */
 const s = StyleSheet.create({
@@ -269,6 +297,8 @@ const s = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
   },
+  noCard: { flex: 1, borderRadius: 16, padding: 16, backgroundColor: 'rgba(255,255,255,0.92)' },
+  noCardTxt: { fontSize: 13, color: '#374151', textAlign: 'center', lineHeight: 19 },
   cardB: { backgroundColor: '#EEF6FF' },
   cardC: { backgroundColor: '#FFFCEE' },
   cardD: { backgroundColor: '#FFF0F5' },

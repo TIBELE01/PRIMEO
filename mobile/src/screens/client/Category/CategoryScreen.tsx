@@ -17,6 +17,8 @@ import { PropertyCard } from '../Home/PropertyCard';
 import { SearchMapView } from '../Search/MapView';
 import { CategoryFilterSheet, countActive, type FilterState } from './CategoryFilterSheet';
 import { CATEGORY_CONFIGS, type CategoryConfig, type CategoryKey } from './categoryConfig';
+import { useSectorFlags } from '../../../hooks/useSectorFlags';
+import { isSectorEnabled, sectorOfPropertyType, SECTOR_UNAVAILABLE_MESSAGE } from '../../../utils/sectors';
 import { GeoSearchInput } from '@components/search/GeoSearchInput';
 import { GuestPicker } from '@components/search/GuestPicker';
 import { CalendarPickerModal } from '../PropertyDetail/components/CalendarPickerModal';
@@ -457,6 +459,11 @@ export function CategoryScreen() {
   const route = useRoute<any>();
   const categoryKey: CategoryKey = route.params?.category ?? 'residence';
   const config = CATEGORY_CONFIGS[categoryKey];
+  // Secteur désactivé par l'admin : l'écran affiche un message d'indisponibilité
+  // au lieu des annonces (y compris pour un accès direct ou un lien enregistré).
+  const { sectors } = useSectorFlags();
+  const categorySector = sectorOfPropertyType(categoryKey);
+  const sectorDisabled = !!categorySector && !isSectorEnabled(sectors, categorySector);
 
   // Filtres avancés (sheet)
   const [filters, setFilters] = useState<FilterState>({});
@@ -666,6 +673,27 @@ export function CategoryScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [config, chips, total, usingDemo, loading, sortBy, viewMode, pourVous, nouveautes, searchCity, checkIn, checkOut, guests, avgPricePerNight]);
 
+  if (sectorDisabled) {
+    return (
+      <View style={[st.safe, st.unavailable, { backgroundColor: config.colorSoft }]} testID="sector-unavailable">
+        <StatusBar barStyle="dark-content" backgroundColor={config.colorSoft} />
+        <Text style={st.unavailableIcon}>🚧</Text>
+        <Text style={st.unavailableTitle}>{SECTOR_UNAVAILABLE_MESSAGE}</Text>
+        <Text style={st.unavailableText}>
+          {config.title} : ce service est momentanément fermé. Vos réservations et messages en cours restent accessibles.
+        </Text>
+        <TouchableOpacity
+          style={[st.unavailableBtn, { backgroundColor: config.colorDark }]}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Retour"
+        >
+          <Text style={st.unavailableBtnText}>Retour</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={[st.safe, { backgroundColor: config.colorSoft }]}>
       <StatusBar barStyle="light-content" backgroundColor={config.colorDark} translucent />
@@ -759,6 +787,12 @@ const HERO_H = 240 + (Platform.OS === 'ios' ? 44 : 30);
 
 const st = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16 },
+  unavailable: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  unavailableIcon: { fontSize: 44, marginBottom: 12 },
+  unavailableTitle: { fontSize: 19, fontWeight: '800', color: '#111827', textAlign: 'center', marginBottom: 8 },
+  unavailableText: { fontSize: 14, color: '#4B5563', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  unavailableBtn: { borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
+  unavailableBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   hero: { width: '100%', height: HERO_H, justifyContent: 'flex-end' },
   heroGrad1: { ...StyleSheet.absoluteFillObject, opacity: 0.55 },
   heroGrad2: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },

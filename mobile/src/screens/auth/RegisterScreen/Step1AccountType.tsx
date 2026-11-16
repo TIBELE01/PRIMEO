@@ -5,6 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { RegistrationData } from './index';
+import { useSectorFlags } from '../../../hooks/useSectorFlags';
+import { filterEnabledOptions, sectorOfAccountType } from '../../../utils/sectors';
 
 type Props = {
   data: RegistrationData;
@@ -51,6 +53,9 @@ const ACCOUNT_OPTIONS = [
 export function Step1AccountType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }: Props) {
   const { theme } = useTheme();
   const s = makeStyles(theme);
+  // Un type de compte dont le secteur est désactivé par l'admin n'est pas proposé
+  const { sectors } = useSectorFlags();
+  const accountOptions = filterEnabledOptions(ACCOUNT_OPTIONS, sectors, (o) => sectorOfAccountType(o.value));
 
   return (
     <SafeAreaView style={s.safe}>
@@ -65,7 +70,7 @@ export function Step1AccountType({ data, onUpdate, onNext, onBack, currentStep, 
         </View>
 
         <View style={s.options}>
-          {ACCOUNT_OPTIONS.map((opt) => {
+          {accountOptions.map((opt) => {
             const selected = data.accountType === opt.value;
             return (
               <TouchableOpacity

@@ -14,6 +14,8 @@ import { STORAGE_KEYS } from '../../../constants/storageKeys';
 import { isValidIvorianPhone, validatePassword, normalizeIvorianPhone } from '../auth.utils';
 import type { AuthScreenProps } from '../../../navigation/types';
 import { trackEvent } from '../../../services/analytics';
+import { useSectorFlags } from '../../../hooks/useSectorFlags';
+import { filterEnabledOptions, sectorOfAccountType, SECTOR_UNAVAILABLE_MESSAGE } from '../../../utils/sectors';
 
 // ── Constantes de couleurs premium ────────────────────────────────────────────
 
@@ -171,7 +173,12 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
   totalSteps: number;
   theme: Theme;
 }) {
-  const canContinue = !!data.proType && data.acceptedTerms;
+  // Un type d'activité dont le secteur est désactivé par l'admin n'est pas proposé.
+  const { sectors } = useSectorFlags();
+  const proOptions = filterEnabledOptions(PRO_OPTIONS, sectors, (o) => sectorOfAccountType(o.value));
+  // Un type choisi puis désactivé entre-temps ne permet plus de continuer.
+  const selectionStillAvailable = !!data.proType && proOptions.some((o) => o.value === data.proType);
+  const canContinue = selectionStillAvailable && data.acceptedTerms;
 
   return (
     <SafeAreaView style={step1Styles.safe}>
@@ -188,7 +195,10 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
 
         {/* Cartes de choix d'activité */}
         <View style={step1Styles.cardsContainer}>
-          {PRO_OPTIONS.map(opt => {
+          {proOptions.length === 0 && (
+            <Text style={step1Styles.subtitle}>{SECTOR_UNAVAILABLE_MESSAGE} : les inscriptions professionnelles sont momentanément fermées.</Text>
+          )}
+          {proOptions.map(opt => {
             const selected = data.proType === opt.value;
             return (
               <TouchableOpacity

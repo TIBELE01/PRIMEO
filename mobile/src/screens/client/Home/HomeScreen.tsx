@@ -21,6 +21,8 @@ import { useOffline } from '@hooks/useOffline';
 import { PropertyCard } from './PropertyCard';
 import { HomeHeader } from './HomeHeader';
 import { HomeFooter } from './HomeFooter';
+import { useSectorFlags } from '../../../hooks/useSectorFlags';
+import { filterEnabledProperties } from '../../../utils/sectors';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -235,7 +237,8 @@ export function HomeScreen() {
   }, [isAuthenticated, isOffline]);
 
   useEffect(() => { load(); loadFavorites(); }, [load, loadFavorites]);
-  const onRefresh = useCallback(() => { setRefreshing(true); load(true); loadFavorites(); }, [load, loadFavorites]);
+  const { sectors, refresh: refreshSectors } = useSectorFlags();
+  const onRefresh = useCallback(() => { setRefreshing(true); void refreshSectors(); load(true); loadFavorites(); }, [load, loadFavorites, refreshSectors]);
 
   const toggleFavorite = useCallback(async (propertyId: string) => {
     if (!isAuthenticated) return;
@@ -262,9 +265,11 @@ export function HomeScreen() {
   const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
 
   /* Données réelles uniquement — aucune propriété de démonstration */
-  const forYouList  = forYou;
-  const popularList = popular;
-  const newestList  = newest;
+  // Les annonces d'un secteur désactivé par l'admin ne sont pas affichées (le
+  // serveur les exclut déjà ; ce filtre couvre aussi les listes mises en cache).
+  const forYouList  = filterEnabledProperties(forYou, sectors);
+  const popularList = filterEnabledProperties(popular, sectors);
+  const newestList  = filterEnabledProperties(newest, sectors);
 
   const displayStats = stats ?? DEFAULT_STATS;
   const statCards = [
@@ -284,6 +289,7 @@ export function HomeScreen() {
       >
         {/* ── Hero bleu ── */}
         <HomeHeader
+          sectors={sectors}
           userName={user?.firstName}
           onPressResidence={() => navigation.navigate('ResidencesCategory', { category: 'residence' })}
           onPressHotel={() => navigation.navigate('HotelsCategory', { category: 'hotel' })}

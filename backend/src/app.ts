@@ -51,6 +51,7 @@ import { downloadsRouter } from './modules/downloads/downloads.router';
 import { restaurantMeRouter } from './modules/restaurant/restaurant-me.router';
 import { payoutsRouter } from './modules/payouts/payouts.router';
 import { walletsRouter } from './modules/wallets/wallets.router';
+import { sectorsConfigRouter } from './modules/sectors/sectors.router';
 
 export function createApp(): Application {
   const app = express();
@@ -142,6 +143,7 @@ export function createApp(): Application {
   app.use('/api/downloads', downloadsRouter);
   app.use('/api/payouts', payoutsRouter);
   app.use('/api/wallet', walletsRouter);
+  app.use('/api/config', sectorsConfigRouter); // secteurs activés (cartes de l'accueil)
 
   // Sentry error handler — must come AFTER all routes and BEFORE custom error handlers
   if (env.SENTRY_DSN) {
