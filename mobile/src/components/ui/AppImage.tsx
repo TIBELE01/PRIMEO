@@ -34,7 +34,7 @@ export function AppImage({
       contentFit={contentFit}
       transition={transition}
       cachePolicy="memory-disk"
-      placeholder={BLURHASH}
+      placeholder={{ blurhash: BLURHASH }}
       placeholderContentFit="cover"
       {...props}
     />

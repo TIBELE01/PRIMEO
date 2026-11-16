@@ -1,8 +1,30 @@
 // Properties API endpoints
 import { apiClient } from '../client';
 
+const IMMOBILIER_TYPES = 'immobilier_achat,immobilier_location,immobilier_terrain';
+
+/** Types côté application (filtres, écrans de secteur) → valeurs `propertyType` de l'API. */
+const TYPE_TO_API: Record<string, string> = {
+  residence: 'residence', apartment: 'residence', villa: 'residence',
+  hotel: 'hotel',
+  restaurant: 'restaurant',
+  immobilier: IMMOBILIER_TYPES, real_estate: IMMOBILIER_TYPES,
+  immobilier_achat: 'immobilier_achat', immobilier_location: 'immobilier_location', immobilier_terrain: 'immobilier_terrain',
+};
+
+/**
+ * L'API filtre sur `propertyType` (residence, hotel, immobilier_*, restaurant) ; l'application
+ * utilise `type` (apartment, real_estate…). Sans cette conversion le filtre était ignoré.
+ */
+export function toApiSearchParams(params: Record<string, unknown>): Record<string, unknown> {
+  const { type, ...rest } = params;
+  if (typeof type !== 'string' || !type) return rest;
+  const mapped = TYPE_TO_API[type];
+  return mapped && rest.propertyType === undefined ? { ...rest, propertyType: mapped } : rest;
+}
+
 export const propertiesApi = {
-  search: (params: Record<string, unknown>) => apiClient.get('/properties', { params }),
+  search: (params: Record<string, unknown>) => apiClient.get('/properties', { params: toApiSearchParams(params) }),
   getById: (id: string) => apiClient.get(`/properties/${id}`),
   getMyListings: (params?: Record<string, unknown>) => apiClient.get('/properties/my/listings', { params }),
   create: (data: Record<string, unknown>) => apiClient.post('/properties', data),
