@@ -93,21 +93,28 @@ export default function TableReservationScreen({ navigation, route }: Props) {
         instructions.trim() ? `Note : ${instructions.trim()}` : '',
       ].filter(Boolean).join(' — ');
       const [firstName, ...rest] = name.trim().split(' ');
+      // L'API exige endDate > startDate : une table réservée un jour D occupe [D, D+1[.
+      const nextDay = new Date(`${date}T00:00:00Z`);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      const trimmedEmail = email.trim();
       await bookingsApi.create({
         propertyId,
         startDate: date,
-        endDate: date,
+        endDate: nextDay.toISOString().slice(0, 10),
         guests,
         paymentOption: 'zero_online',
         contactFirstName: firstName,
         contactLastName: rest.join(' ') || firstName,
         contactPhone: phone.trim(),
-        contactEmail: email.trim(),
+        // Une adresse vide est rejetée par l'API (« Invalid email ») : on ne l'envoie que si renseignée
+        ...(/^\S+@\S+\.\S+$/.test(trimmedEmail) ? { contactEmail: trimmedEmail } : {}),
         reservationTime,
       });
       setDone(true);
     } catch (e: any) {
-      Alert.alert('Réservation impossible', e?.response?.data?.message ?? 'Une erreur est survenue. Réessayez.');
+      const data = e?.response?.data;
+      const detail = data?.details ? Object.values(data.details).flat().join(' ') : '';
+      Alert.alert('Réservation impossible', data?.message ?? detail ?? data?.error ?? 'Une erreur est survenue. Réessayez.');
     } finally {
       setSubmitting(false);
     }
