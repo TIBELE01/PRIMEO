@@ -1,11 +1,12 @@
-// Login screen — design premium harmonisé avec WelcomeScreen : hero sombre de
-// marque (logo + message d'accueil), carte de formulaire blanche arrondie, champs
-// avec icônes, boutons aux couleurs Primeo. Logique inchangée (2FA, Google, session).
+// Login screen — design néo-/glassmorphique aux couleurs Primeo : fond dégradé doux,
+// formes abstraites floues, logo en carte flottante, champs en relief, bouton pilule
+// dégradé. Logique inchangée (2FA, Google, session, inscription client / pro).
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView, Image, Dimensions, StatusBar,
+  ActivityIndicator, ScrollView, Image, Dimensions, StatusBar, useColorScheme,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { secureStore as SecureStore } from '../../services/secureStorage';
@@ -17,12 +18,28 @@ import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
 import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = AuthScreenProps<'Login'>;
 
-const { height } = Dimensions.get('window');
-const BRAND_BLUE = '#1056E0';
-const DARK = '#040C1F';
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+// Charte Primeo
+const BLUE = '#0055FF';
+const BLUE_LIGHT = '#4F8EF7';
+const ORANGE = '#FF6600';
+const RED = '#FF3333';
+
+const LIGHT = {
+  bg: ['#FFFFFF', '#F8FAFC', '#E3EDFF'] as const,
+  surface: '#FFFFFF', field: '#F2F6FF', text: '#0B1F4D', muted: '#6B7A99', placeholder: '#A3AEC7',
+  line: '#DCE5F5', shadow: '#7FA6E8', highlight: '#FFFFFF', shape: ['#BFD6FF', '#EAF1FF'] as const,
+};
+const DARKP = {
+  bg: ['#0B1530', '#0A1228', '#07102A'] as const,
+  surface: '#14213F', field: '#101B36', text: '#F1F5FF', muted: '#9AA9C9', placeholder: '#6F7FA3',
+  line: '#24345C', shadow: '#000000', highlight: '#1B2B52', shape: ['#1A3A8F', '#0F2257'] as const,
+};
 
 export function LoginScreen({ navigation }: Props) {
   const setUser   = useAuthStore((s) => s.setUser);
@@ -34,6 +51,13 @@ export function LoginScreen({ navigation }: Props) {
   const [loading,  setLoading]  = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
+  const [remember, setRemember] = useState(true);
+
+  const { themeMode, setThemeMode } = useTheme();
+  const systemScheme = useColorScheme();
+  const isDark = themeMode === 'dark' || (themeMode === 'auto' && systemScheme === 'dark');
+  const P = isDark ? DARKP : LIGHT;
+  const s = makeStyles(P);
 
   const canSubmit = email.trim().length > 0 && password.length >= 1;
 
@@ -78,42 +102,55 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={s.container}>
-      <StatusBar barStyle="light-content" backgroundColor={DARK} />
-      {/* Glows ambiants (mêmes que la page d'atterrissage) */}
-      <View style={s.glowTop} />
-      <View style={s.glowMid} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={P.bg[0]} />
+      <LinearGradient colors={[...P.bg]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />
+
+      {/* Formes abstraites en relief, floutées */}
+      <LinearGradient colors={[...P.shape]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.shapeTopLeft} pointerEvents="none" />
+      <LinearGradient colors={[BLUE_LIGHT, BLUE]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.shapeTopRight} pointerEvents="none" />
+      <LinearGradient colors={[...P.shape]} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={s.shapeBottomRight} pointerEvents="none" />
+      <View style={s.shapeBottomLeft} pointerEvents="none" />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+          <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* ── Hero de marque ── */}
-          <SafeAreaView edges={['top']} style={s.heroArea}>
-            <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logo} />
-            <Text style={s.welcome}>Bienvenue sur Primeo</Text>
-            <Text style={s.welcomeSub}>La plateforme de confiance pour vos réservations</Text>
-          </SafeAreaView>
+            {/* Bouton thème (clair / sombre) */}
+            <View style={s.topBar}>
+              <TouchableOpacity
+                style={s.roundBtn}
+                onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
+                accessibilityRole="button"
+                accessibilityLabel={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                activeOpacity={0.85}
+              >
+                <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={20} color={BLUE} />
+              </TouchableOpacity>
+            </View>
 
-          {/* ── Carte formulaire ── */}
-          <View style={s.card}>
-            <View style={s.cardHandle} />
-            <Text style={s.cardTitle}>Connexion</Text>
-            <Text style={s.cardSub}>Heureux de vous revoir 👋</Text>
+            {/* Logo en carte flottante */}
+            <View style={s.logoCard}>
+              <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logo} accessibilityLabel="Logo Primeo" />
+            </View>
+
+            <Text style={s.title} accessibilityRole="header">Bienvenue sur Primeo</Text>
+            <Text style={s.subtitle}>Connectez-vous pour continuer</Text>
 
             {error && (
               <View style={s.errorBox} accessibilityLiveRegion="polite">
-                <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                <Ionicons name="alert-circle" size={18} color={RED} />
                 <Text style={s.errorText}>{error}</Text>
               </View>
             )}
 
-            <View style={s.field}>
-              <Text style={s.label}>Adresse e-mail</Text>
+            {/* Champs en relief */}
+            <View style={s.fieldShadow}>
               <View style={s.inputRow}>
-                <Ionicons name="mail-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
+                <Ionicons name="person-outline" size={20} color={BLUE} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="vous@exemple.ci"
-                  placeholderTextColor="#9CA3AF"
+                  placeholder="Email"
+                  placeholderTextColor={P.placeholder}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="emailAddress"
@@ -125,14 +162,13 @@ export function LoginScreen({ navigation }: Props) {
               </View>
             </View>
 
-            <View style={s.field}>
-              <Text style={s.label}>Mot de passe</Text>
+            <View style={s.fieldShadow}>
               <View style={s.inputRow}>
-                <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" style={s.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={BLUE} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
+                  placeholder="Mot de passe"
+                  placeholderTextColor={P.placeholder}
                   secureTextEntry={!showPw}
                   textContentType="password"
                   autoComplete="password"
@@ -148,51 +184,77 @@ export function LoginScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
-                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color="#6B7280" />
+                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color={P.muted} />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} accessibilityRole="link">
-              <Text style={s.forgotLink}>Mot de passe oublié ?</Text>
-            </TouchableOpacity>
+            {/* Se souvenir de moi / Mot de passe oublié */}
+            <View style={s.optionsRow}>
+              <TouchableOpacity
+                style={s.rememberWrap}
+                onPress={() => setRemember((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: remember }}
+                accessibilityLabel="Se souvenir de moi"
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+              >
+                <View style={[s.checkbox, remember && s.checkboxOn]}>
+                  {remember && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                </View>
+                <Text style={s.rememberText}>Se souvenir de moi</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} accessibilityRole="link" hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}>
+                <Text style={s.forgotLink}>Mot de passe oublié ?</Text>
+              </TouchableOpacity>
+            </View>
 
+            {/* Bouton pilule en dégradé */}
             <TouchableOpacity
-              style={[s.primaryBtn, (!canSubmit || loading) && s.btnDisabled]}
+              style={[s.primaryShadow, (!canSubmit || loading) && s.btnDisabled]}
               onPress={handleLogin}
               disabled={!canSubmit || loading}
               accessibilityRole="button"
               accessibilityLabel="Se connecter"
-              activeOpacity={0.88}
+              accessibilityState={{ disabled: !canSubmit || loading }}
+              activeOpacity={0.9}
             >
-              {loading
-                ? <ActivityIndicator color="#FFFFFF" />
-                : <Text style={s.primaryBtnText}>Se connecter</Text>}
+              <LinearGradient colors={[BLUE_LIGHT, BLUE]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.primaryBtn}>
+                {loading
+                  ? <ActivityIndicator color="#FFFFFF" />
+                  : (
+                    <>
+                      <Text style={s.primaryBtnText}>Se connecter</Text>
+                      <View style={s.arrowCircle}>
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                      </View>
+                    </>
+                  )}
+              </LinearGradient>
             </TouchableOpacity>
 
+            {/* Séparateur */}
             <View style={s.dividerRow}>
               <View style={s.dividerLine} />
-              <Text style={s.dividerText}>ou</Text>
+              <Text style={s.dividerText}>OU CONTINUER AVEC</Text>
               <View style={s.dividerLine} />
             </View>
 
-            <TouchableOpacity
-              style={[s.googleBtn, googleLoading && s.btnDisabled]}
-              onPress={handleGoogleLogin}
-              disabled={googleLoading || loading}
-              accessibilityRole="button"
-              accessibilityLabel="Se connecter avec Google"
-              activeOpacity={0.88}
-            >
-              {googleLoading
-                ? <ActivityIndicator color="#0F1729" />
-                : (
-                  <>
-                    <Text style={s.googleIcon}>G</Text>
-                    <Text style={s.googleBtnText}>Continuer avec Google</Text>
-                  </>
-                )}
-            </TouchableOpacity>
+            {/* Connexion sociale */}
+            <View style={s.socialRow}>
+              <TouchableOpacity
+                style={[s.socialBtn, googleLoading && s.btnDisabled]}
+                onPress={handleGoogleLogin}
+                disabled={googleLoading || loading}
+                accessibilityRole="button"
+                accessibilityLabel="Se connecter avec Google"
+                activeOpacity={0.88}
+              >
+                {googleLoading
+                  ? <ActivityIndicator color={BLUE} />
+                  : <Text style={s.googleIcon}>G</Text>}
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('Register', { role: 'client' })} accessibilityRole="link" style={s.registerWrap}>
               <Text style={s.registerLink}>
@@ -201,6 +263,7 @@ export function LoginScreen({ navigation }: Props) {
               </Text>
             </TouchableOpacity>
 
+            {/* Inscription professionnelle (conservée) */}
             <TouchableOpacity
               style={s.proBtn}
               onPress={() => navigation.navigate('ProRegister')}
@@ -209,71 +272,78 @@ export function LoginScreen({ navigation }: Props) {
               accessibilityHint="Ouvre le formulaire d'inscription pour les professionnels"
               activeOpacity={0.88}
             >
-              <Ionicons name="briefcase-outline" size={17} color={BRAND_BLUE} />
+              <Ionicons name="briefcase-outline" size={18} color={ORANGE} />
               <Text style={s.proBtnText}>Inscription professionnelle</Text>
             </TouchableOpacity>
-          </View>
 
-        </ScrollView>
+            <Text style={s.tagline}>RÉSERVEZ · DÉCOUVREZ · VIVEZ</Text>
+          </ScrollView>
+        </SafeAreaView>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: DARK },
-  scroll: { flexGrow: 1 },
+type Palette = typeof LIGHT | typeof DARKP;
 
-  glowTop: { position: 'absolute', width: 380, height: 380, borderRadius: 190, top: -120, left: -60, backgroundColor: 'rgba(16,86,224,0.18)' },
-  glowMid: { position: 'absolute', width: 260, height: 260, borderRadius: 130, top: height * 0.18, right: -80, backgroundColor: 'rgba(16,86,224,0.10)' },
+function makeStyles(P: Palette) {
+  const soft = { shadowColor: P.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: P.bg[1] },
+    scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24, alignItems: 'stretch', maxWidth: 520, width: '100%', alignSelf: 'center' },
 
-  // ── Hero ──
-  heroArea: { alignItems: 'center', paddingTop: 24, paddingBottom: 18 },
-  logo: { width: 96, height: 96, marginBottom: 10, shadowColor: BRAND_BLUE, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.55, shadowRadius: 16, elevation: 10 },
-  welcome: { fontSize: 22, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.3 },
-  welcomeSub: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, textAlign: 'center', paddingHorizontal: 24 },
+    // Formes abstraites
+    shapeTopLeft: { position: 'absolute', width: SCREEN_W * 0.75, height: SCREEN_W * 0.75, borderRadius: SCREEN_W * 0.375, top: -SCREEN_W * 0.3, left: -SCREEN_W * 0.25, opacity: 0.75, ...soft },
+    shapeTopRight: { position: 'absolute', width: SCREEN_W * 0.34, height: SCREEN_W * 0.34, borderRadius: SCREEN_W * 0.17, top: SCREEN_H * 0.17, right: -SCREEN_W * 0.12, opacity: 0.28, ...soft },
+    shapeBottomRight: { position: 'absolute', width: SCREEN_W * 0.8, height: SCREEN_W * 0.55, borderRadius: SCREEN_W * 0.4, bottom: -SCREEN_W * 0.22, right: -SCREEN_W * 0.3, opacity: 0.7, transform: [{ rotate: '-18deg' }], ...soft },
+    shapeBottomLeft: { position: 'absolute', width: SCREEN_W * 0.3, height: SCREEN_W * 0.3, borderRadius: SCREEN_W * 0.15, bottom: SCREEN_H * 0.2, left: -SCREEN_W * 0.14, backgroundColor: P.highlight, opacity: 0.55, ...soft },
 
-  // ── Carte ──
-  card: {
-    flex: 1, backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingTop: 14, paddingHorizontal: 24, paddingBottom: 32,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 20,
-  },
-  cardHandle: { width: 38, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB', alignSelf: 'center', marginBottom: 18 },
-  cardTitle: { fontSize: 24, fontWeight: '900', color: '#0F1729', letterSpacing: -0.3 },
-  cardSub: { fontSize: 14, color: '#64748B', marginTop: 4, marginBottom: 20 },
+    topBar: { alignItems: 'flex-end', paddingTop: 10 },
+    roundBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
 
-  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 12, padding: 12, marginBottom: 14 },
-  errorText: { color: '#DC2626', fontSize: 13.5, flex: 1 },
+    logoCard: { alignSelf: 'center', width: 112, height: 112, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginTop: 4, marginBottom: 22, ...soft, shadowOpacity: 0.45, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 14 },
+    logo: { width: 84, height: 84 },
 
-  field: { marginBottom: 14 },
-  label: { fontSize: 13.5, fontWeight: '700', color: '#374151', marginBottom: 7 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, backgroundColor: '#F9FAFB', paddingHorizontal: 12 },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: '#0F1729' },
-  eyeBtn: { padding: 6 },
-  forgotLink: { color: BRAND_BLUE, fontSize: 13.5, fontWeight: '600', textAlign: 'right', marginTop: 2, marginBottom: 18 },
+    title: { fontSize: 28, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.4 },
+    subtitle: { fontSize: 13, color: P.muted, textAlign: 'center', letterSpacing: 1.5, marginTop: 8, marginBottom: 26 },
 
-  primaryBtn: {
-    backgroundColor: BRAND_BLUE, paddingVertical: 17, borderRadius: 16, alignItems: 'center',
-    shadowColor: BRAND_BLUE, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
-  },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
-  btnDisabled: { opacity: 0.5 },
+    errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 16, padding: 12, marginBottom: 16 },
+    errorText: { color: RED, fontSize: 13.5, flex: 1, fontWeight: '600' },
 
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
-  dividerText: { fontSize: 13, color: '#9CA3AF', fontWeight: '600' },
+    fieldShadow: { borderRadius: 20, marginBottom: 16, backgroundColor: P.field, ...soft, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, borderWidth: 1, borderColor: P.highlight, backgroundColor: P.field, paddingHorizontal: 16, minHeight: 56 },
+    inputIcon: { marginRight: 12 },
+    input: { flex: 1, paddingVertical: 15, fontSize: 15, color: P.text },
+    eyeBtn: { padding: 8, marginRight: -6 },
 
-  googleBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 16, paddingVertical: 15, backgroundColor: '#fff' },
-  googleIcon: { fontSize: 18, fontWeight: '900', color: '#4285F4' },
-  googleBtnText: { fontSize: 15, fontWeight: '700', color: '#0F1729' },
+    optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22, marginTop: 2 },
+    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 9, flexShrink: 1 },
+    checkbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.surface },
+    checkboxOn: { backgroundColor: BLUE },
+    rememberText: { fontSize: 13.5, color: P.text, fontWeight: '600' },
+    forgotLink: { color: BLUE, fontSize: 13.5, fontWeight: '700' },
 
-  registerWrap: { marginTop: 20, marginBottom: 4 },
-  registerLink: { textAlign: 'center', color: '#64748B', fontSize: 14 },
-  registerLinkBold: { color: BRAND_BLUE, fontWeight: '800' },
+    primaryShadow: { borderRadius: 36, shadowColor: BLUE, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
+    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 36, paddingVertical: 16, paddingHorizontal: 22, minHeight: 58 },
+    primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
+    arrowCircle: { position: 'absolute', right: 10, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
+    btnDisabled: { opacity: 0.55 },
 
-  proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 2, borderColor: BRAND_BLUE, borderRadius: 16, paddingVertical: 14, marginTop: 14 },
-  proBtnText: { fontSize: 15, fontWeight: '700', color: BRAND_BLUE },
-});
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 26, marginBottom: 20 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: P.line },
+    dividerText: { fontSize: 11.5, color: P.muted, fontWeight: '700', letterSpacing: 1.5 },
+
+    socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
+    socialBtn: { width: 64, height: 64, borderRadius: 20, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+    googleIcon: { fontSize: 26, fontWeight: '900', color: '#4285F4' },
+
+    registerWrap: { marginTop: 24 },
+    registerLink: { textAlign: 'center', color: P.muted, fontSize: 14 },
+    registerLinkBold: { color: BLUE, fontWeight: '800' },
+
+    proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: ORANGE, borderRadius: 30, paddingVertical: 14, marginTop: 16, backgroundColor: P.surface, shadowColor: ORANGE, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.18, shadowRadius: 10, elevation: 4 },
+    proBtnText: { fontSize: 15, fontWeight: '800', color: ORANGE },
+
+    tagline: { marginTop: 30, textAlign: 'center', fontSize: 11, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
+  });
+}
