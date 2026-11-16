@@ -632,3 +632,6 @@ footer {
   .highlight { border: 1pt solid #ccc; background: none; }
   @page { size: A4; margin: 2cm; }
 }
+
+/* Mobile : les tableaux défilent horizontalement dans leur cadre au lieu de faire déborder la page */
+table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
