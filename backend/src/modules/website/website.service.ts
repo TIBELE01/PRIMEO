@@ -172,7 +172,7 @@ const DEFAULT_ABOUT_VALUES = [
 ];
 
 const DEFAULT_ABOUT_TEAM = [
-  { name: 'YEO TIBELE', role: 'Fondateur', initials: 'YT', bio: null, sortOrder: 0 },
+  { name: 'YEO TIBELE', role: 'CEO & Co-fondateur', initials: 'YT', bio: 'Diplômé en Marketing et communication.', sortOrder: 0 },
 ];
 
 const DEFAULT_FAQ = [
@@ -983,7 +983,7 @@ export const websiteService = {
   async getAboutTeam() {
     const rows = await prisma.aboutTeam.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } });
     if (rows.length) return rows;
-    return [{ id: 'd1', name: 'YEO TIBELE', role: 'Fondateur', initials: 'YT', bio: null, photoUrl: null }];
+    return [{ id: 'd1', name: 'YEO TIBELE', role: 'CEO & Co-fondateur', initials: 'YT', bio: 'Diplômé en Marketing et communication.', photoUrl: null }];
   },
 
   async getAboutPartners() {
