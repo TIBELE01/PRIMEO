@@ -361,6 +361,7 @@ export const adminService = {
       kycVerified: u.professionalProfile?.verificationStatus === 'approved', // web admin (boolean)
       kycStatus: u.professionalProfile?.verificationStatus ?? null,           // mobile (string)
       walletBalance: u.walletBalance,
+      subscription: u.subscription ? { planType: u.subscription.planType, status: u.subscription.status } : null, // colonne « Formule »
       createdAt: u.createdAt,
       lastLoginAt: null,
     }));
