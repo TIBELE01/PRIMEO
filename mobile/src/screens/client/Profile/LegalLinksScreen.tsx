@@ -1,23 +1,24 @@
 // LegalLinksScreen: links to terms of service, privacy policy, and legal notices
 import React from 'react';
-import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ScreenWrapper } from '../../../components/layout/ScreenWrapper';
+import { legalUrl, openExternal } from '../../../constants/externalLinks';
 
 const LINKS = [
-  { label: 'Conditions Générales d\'Utilisation (CGU)', url: 'https://legal.primeo.ci/cgu/' },
-  { label: 'Conditions Générales de Vente (CGV)', url: 'https://legal.primeo.ci/conditions-vente/' },
-  { label: 'Conditions professionnels', url: 'https://legal.primeo.ci/professionnels/' },
-  { label: 'Politique de confidentialité', url: 'https://legal.primeo.ci/confidentialite/' },
-  { label: 'Mentions légales', url: 'https://legal.primeo.ci/mentions-legales/' },
-  { label: 'Règlement intérieur', url: 'https://legal.primeo.ci/reglement-interieur/' },
-  { label: 'Charte de protection des données (RGPD)', url: 'https://legal.primeo.ci/charte-donnees/' },
-  { label: 'Litiges & Médiation', url: 'https://legal.primeo.ci/litiges-mediation/' },
-  { label: 'Propriété intellectuelle', url: 'https://legal.primeo.ci/propriete-intellectuelle/' },
-  { label: 'Signalement de contenus', url: 'https://legal.primeo.ci/signalement/' },
-  { label: 'Charte de la communauté', url: 'https://legal.primeo.ci/charte-communaute/' },
-  { label: 'Politique de parrainage', url: 'https://legal.primeo.ci/parrainage/' },
-  { label: 'Avis juridique', url: 'https://legal.primeo.ci/disclaimer/' },
-  { label: 'Tous les documents légaux', url: 'https://legal.primeo.ci/' },
+  { label: 'Conditions Générales d\'Utilisation (CGU)', url: legalUrl('cgu/') },
+  { label: 'Conditions Générales de Vente (CGV)', url: legalUrl('conditions-vente/') },
+  { label: 'Conditions professionnels', url: legalUrl('professionnels/') },
+  { label: 'Politique de confidentialité', url: legalUrl('confidentialite/') },
+  { label: 'Mentions légales', url: legalUrl('mentions-legales/') },
+  { label: 'Règlement intérieur', url: legalUrl('reglement-interieur/') },
+  { label: 'Charte de protection des données (RGPD)', url: legalUrl('charte-donnees/') },
+  { label: 'Litiges & Médiation', url: legalUrl('litiges-mediation/') },
+  { label: 'Propriété intellectuelle', url: legalUrl('propriete-intellectuelle/') },
+  { label: 'Signalement de contenus', url: legalUrl('signalement/') },
+  { label: 'Charte de la communauté', url: legalUrl('charte-communaute/') },
+  { label: 'Politique de parrainage', url: legalUrl('parrainage/') },
+  { label: 'Avis juridique', url: legalUrl('disclaimer/') },
+  { label: 'Tous les documents légaux', url: legalUrl('') },
 ];
 
 export default function LegalLinksScreen() {
@@ -25,7 +26,7 @@ export default function LegalLinksScreen() {
     <ScreenWrapper>
       <View style={styles.list}>
         {LINKS.map((link, i) => (
-          <TouchableOpacity key={i} style={styles.item} onPress={() => Linking.openURL(link.url)}>
+          <TouchableOpacity key={i} style={styles.item} onPress={() => openExternal(link.url)}>
             <Text style={styles.text}>{link.label}</Text>
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>

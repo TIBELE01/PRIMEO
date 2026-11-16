@@ -2,18 +2,17 @@
 // PublicHomeScreen (visiteur). Source unique de vérité pour les liens vers le
 // site vitrine : toute mise à jour d'URL se fait ici, jamais en double.
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { PRIMEO_LOGO_URL } from '../../../components/common/Logo';
+import { VITRINE_URL as VITRINE, LEGAL_URL as LEGAL, SOCIAL_URLS, openExternal } from '../../../constants/externalLinks';
 
-const VITRINE = 'https://primeo-vitrine.onrender.com';
-const LEGAL = 'https://legal.primeo.ci';
 
 type Link = { label: string; url: string };
 
 const FOOTER_PRODUIT: Link[] = [
   { label: 'Solutions',          url: `${VITRINE}/solutions/` },
   { label: 'Produits',           url: `${VITRINE}/produits/` },
-  { label: 'Tarification',       url: `${VITRINE}/tarification/` },
+  { label: 'Tarification',       url: `${VITRINE}/professionnels/#tarifs` },
   { label: 'Télécharger l\'app', url: `${VITRINE}/telechargement/` },
 ];
 const FOOTER_ENTREPRISE: Link[] = [
@@ -27,7 +26,7 @@ const FOOTER_ENTREPRISE: Link[] = [
   { label: 'Communauté',         url: `${VITRINE}/communaute/` },
 ];
 const FOOTER_SUPPORT: Link[] = [
-  { label: 'Tarification',       url: `${VITRINE}/tarification/` },
+  { label: 'Tarification',       url: `${VITRINE}/professionnels/#tarifs` },
   { label: 'Documentation',      url: `${VITRINE}/documentation/` },
   { label: 'Centre d\'aide',     url: `${VITRINE}/aide/` },
   { label: 'Contact',            url: `${VITRINE}/contact/` },
@@ -42,14 +41,12 @@ const FOOTER_LEGAL: Link[] = [
   { label: 'Tous les documents',            url: `${LEGAL}/` },
 ];
 const SOCIAL_LINKS: Link[] = [
-  { label: 'LinkedIn',  url: 'https://linkedin.com/company/primeo-ci' },
-  { label: 'X',         url: 'https://twitter.com/primeoci' },
-  { label: 'Facebook',  url: 'https://facebook.com/primeoci' },
-  { label: 'Instagram', url: 'https://instagram.com/primeoci' },
-  { label: 'TikTok',    url: 'https://tiktok.com/@primeoci' },
+  { label: 'Facebook',  url: SOCIAL_URLS.facebook },
+  { label: 'Instagram', url: SOCIAL_URLS.instagram },
+  { label: 'TikTok',    url: SOCIAL_URLS.tiktok },
 ];
 
-const open = (url: string) => Linking.openURL(url).catch(() => null);
+const open = (url: string) => { void openExternal(url); };
 
 function Column({ title, links }: { title: string; links: Link[] }) {
   return (

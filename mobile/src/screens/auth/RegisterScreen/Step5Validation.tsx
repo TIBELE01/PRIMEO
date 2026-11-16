@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { secureStore as SecureStore } from '../../../services/secureStorage';
@@ -11,6 +11,7 @@ import { authApi } from '../../../services/api/endpoints/auth';
 import { submitKyc as submitKycDocuments } from '../../../services/kycUpload';
 import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
+import { legalUrl, openExternal } from '../../../constants/externalLinks';
 import type { AuthScreenProps } from '../../../navigation/types';
 import type { RegistrationData } from './index';
 import { trackEvent } from '../../../services/analytics';
@@ -194,7 +195,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
             J'accepte les{' '}
             <Text
               style={s.cguLink}
-              onPress={() => Linking.openURL('https://legal.primeo.ci/cgu/')}
+              onPress={() => openExternal(legalUrl('cgu/'))}
               accessibilityRole="link"
             >
               Conditions Générales d'Utilisation
@@ -202,7 +203,7 @@ export function Step5Validation({ data, onBack, currentStep, totalSteps, navigat
             {' '}et la{' '}
             <Text
               style={s.cguLink}
-              onPress={() => Linking.openURL('https://legal.primeo.ci/confidentialite/')}
+              onPress={() => openExternal(legalUrl('confidentialite/'))}
               accessibilityRole="link"
             >
               Politique de Confidentialité

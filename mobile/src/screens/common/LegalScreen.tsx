@@ -2,9 +2,10 @@
 // URL configurable via EXPO_PUBLIC_LEGAL_URL. Gère le chargement et l'absence de réseau.
 import React, { useState } from 'react';
 import {
-  View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Platform, Linking,
+  View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Platform,
 } from 'react-native';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
+import { LEGAL_URL, openExternal } from '../../constants/externalLinks';
 
 // Import conditionnel : react-native-webview n'existe pas sur le web.
 let WebView: React.ComponentType<{
@@ -20,15 +21,11 @@ if (Platform.OS !== 'web') {
   WebView = require('react-native-webview').WebView;
 }
 
-const LEGAL_URL =
-  (process.env.EXPO_PUBLIC_LEGAL_URL as string | undefined)?.replace(/\/+$/, '') ||
-  'https://legal.primeo.ci';
-
 export default function LegalScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
-  const openExternally = () => { Linking.openURL(LEGAL_URL).catch(() => null); };
+  const openExternally = () => { void openExternal(LEGAL_URL); };
 
   // Repli (web ou erreur réseau) : lien d'ouverture externe + message clair.
   const Fallback = ({ offline }: { offline?: boolean }) => (

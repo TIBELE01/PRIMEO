@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, Modal, TextInput, ActivityIndicator, Linking,
+  StyleSheet, Alert, Modal, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useProTheme } from '../../hooks/useProTheme';
 import { usersApi } from '../../services/api/endpoints/users';
 import { useAuthStore } from '../../store/authStore';
+import { legalUrl, openExternal } from '../../constants/externalLinks';
 import { socketService } from '../../services/socket/socketService';
 import {
   ProfileAccordion,
@@ -136,7 +137,7 @@ export default function ProSettingsScreen() {
     if (routeNames.includes('LegalLinks')) {
       navigation.navigate('LegalLinks');
     } else {
-      Linking.openURL('https://legal.primeo.ci/cgu/').catch(() => null);
+      openExternal(legalUrl('cgu/'));
     }
   };
 

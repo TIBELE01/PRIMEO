@@ -1,7 +1,7 @@
 ﻿// Écran d'inscription professionnel en 3 étapes — design premium inspiré WelcomeScreen
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, StatusBar,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { AuthBackground, AuthButtonGradient } from '../authDesign';
 import { authApi } from '../../../services/api/endpoints/auth';
 import { useAuthStore } from '../../../store/authStore';
 import { STORAGE_KEYS } from '../../../constants/storageKeys';
+import { legalUrl, openExternal } from '../../../constants/externalLinks';
 import { isValidIvorianPhone, validatePassword, normalizeIvorianPhone } from '../auth.utils';
 import type { AuthScreenProps } from '../../../navigation/types';
 import { trackEvent } from '../../../services/analytics';
@@ -255,7 +256,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   onPress={e => {
                     // Empêche le toggle de la checkbox lors du clic sur le lien
                     e.stopPropagation?.();
-                    Linking.openURL('https://legal.primeo.ci/cgu/');
+                    openExternal(legalUrl('cgu/'));
                   }}
                   accessibilityRole="link"
                 >
@@ -266,7 +267,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   style={step1Styles.cguLink}
                   onPress={e => {
                     e.stopPropagation?.();
-                    Linking.openURL('https://legal.primeo.ci/confidentialite/');
+                    openExternal(legalUrl('confidentialite/'));
                   }}
                   accessibilityRole="link"
                 >
@@ -277,7 +278,7 @@ function StepProType({ data, onUpdate, onNext, onBack, currentStep, totalSteps }
                   style={step1Styles.cguLink}
                   onPress={e => {
                     e.stopPropagation?.();
-                    Linking.openURL('https://legal.primeo.ci/professionnels/');
+                    openExternal(legalUrl('professionnels/'));
                   }}
                   accessibilityRole="link"
                 >
