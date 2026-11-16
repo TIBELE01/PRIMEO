@@ -18,7 +18,7 @@ import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
 import { PRIMEO_LOGO_URL } from '../../components/common/Logo';
-import { BLUE, BLUE_LIGHT, ORANGE, RED, AuthBackground, useAuthPalette, type AuthPalette } from './authDesign';
+import { BLUE, BLUE_LIGHT, ORANGE, RED, AuthBackground, Neu, useAuthPalette, type AuthPalette } from './authDesign';
 
 type Props = AuthScreenProps<'Login'>;
 
@@ -90,20 +90,21 @@ export function LoginScreen({ navigation }: Props) {
             {/* Bouton thème (clair / sombre) */}
             <View style={s.topBar}>
               <TouchableOpacity
-                style={s.roundBtn}
                 onPress={toggle}
                 accessibilityRole="button"
                 accessibilityLabel={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
                 activeOpacity={0.85}
               >
-                <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={20} color={BLUE} />
+                <Neu radius={16} innerStyle={s.roundInner}>
+                  <Ionicons name={isDark ? 'sunny' : 'moon'} size={20} color={isDark ? '#FFD76A' : '#0B1F4D'} />
+                </Neu>
               </TouchableOpacity>
             </View>
 
-            {/* Logo en carte flottante */}
-            <View style={s.logoCard}>
+            {/* Logo en carte de verre flottante */}
+            <Neu radius={46} depth={1.4} style={s.logoWrap} innerStyle={s.logoInner}>
               <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.logo} accessibilityLabel="Logo Primeo" />
-            </View>
+            </Neu>
 
             <Text style={s.title} accessibilityRole="header">Bienvenue sur Primeo</Text>
             <Text style={s.subtitle}>Connectez-vous pour continuer</Text>
@@ -116,50 +117,46 @@ export function LoginScreen({ navigation }: Props) {
             )}
 
             {/* Champs en relief */}
-            <View style={s.fieldShadow}>
-              <View style={s.inputRow}>
-                <Ionicons name="person-outline" size={20} color={BLUE} style={s.inputIcon} />
-                <TextInput
-                  style={s.input}
-                  placeholder="Email"
-                  placeholderTextColor={P.placeholder}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  textContentType="emailAddress"
-                  autoComplete="email"
-                  value={email}
-                  onChangeText={setEmail}
-                  accessibilityLabel="Champ e-mail"
-                />
-              </View>
-            </View>
+            <Neu radius={26} style={s.fieldWrap} innerStyle={s.inputRow}>
+              <Ionicons name="person-outline" size={24} color={P.muted} style={s.inputIcon} />
+              <TextInput
+                style={s.input}
+                placeholder="Email"
+                placeholderTextColor={P.placeholder}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoComplete="email"
+                value={email}
+                onChangeText={setEmail}
+                accessibilityLabel="Champ e-mail"
+              />
+            </Neu>
 
-            <View style={s.fieldShadow}>
-              <View style={s.inputRow}>
-                <Ionicons name="lock-closed-outline" size={20} color={BLUE} style={s.inputIcon} />
-                <TextInput
-                  style={s.input}
-                  placeholder="Mot de passe"
-                  placeholderTextColor={P.placeholder}
-                  secureTextEntry={!showPw}
-                  textContentType="password"
-                  autoComplete="password"
-                  value={password}
-                  onChangeText={setPassword}
-                  onSubmitEditing={handleLogin}
-                  returnKeyType="done"
-                  accessibilityLabel="Champ mot de passe"
-                />
-                <TouchableOpacity
-                  style={s.eyeBtn}
-                  onPress={() => setShowPw((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                >
-                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color={P.muted} />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Neu radius={26} style={s.fieldWrap} innerStyle={s.inputRow}>
+              <Ionicons name="lock-closed-outline" size={24} color={P.muted} style={s.inputIcon} />
+              <TextInput
+                style={s.input}
+                placeholder="Mot de passe"
+                placeholderTextColor={P.placeholder}
+                secureTextEntry={!showPw}
+                textContentType="password"
+                autoComplete="password"
+                value={password}
+                onChangeText={setPassword}
+                onSubmitEditing={handleLogin}
+                returnKeyType="done"
+                accessibilityLabel="Champ mot de passe"
+              />
+              <TouchableOpacity
+                style={s.eyeBtn}
+                onPress={() => setShowPw((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              >
+                <Ionicons name={showPw ? 'eye-outline' : 'eye-off-outline'} size={24} color={P.muted} />
+              </TouchableOpacity>
+            </Neu>
 
             {/* Se souvenir de moi / Mot de passe oublié */}
             <View style={s.optionsRow}>
@@ -172,7 +169,7 @@ export function LoginScreen({ navigation }: Props) {
                 hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
               >
                 <View style={[s.checkbox, remember && s.checkboxOn]}>
-                  {remember && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                  {remember && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                 </View>
                 <Text style={s.rememberText}>Se souvenir de moi</Text>
               </TouchableOpacity>
@@ -181,7 +178,7 @@ export function LoginScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
 
-            {/* Bouton pilule en dégradé */}
+            {/* Bouton pilule en dégradé lumineux */}
             <TouchableOpacity
               style={[s.primaryShadow, (!canSubmit || loading) && s.btnDisabled]}
               onPress={handleLogin}
@@ -191,14 +188,14 @@ export function LoginScreen({ navigation }: Props) {
               accessibilityState={{ disabled: !canSubmit || loading }}
               activeOpacity={0.9}
             >
-              <LinearGradient colors={[BLUE_LIGHT, BLUE]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.primaryBtn}>
+              <LinearGradient colors={[BLUE_LIGHT, BLUE, '#2E4BFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.primaryBtn}>
                 {loading
                   ? <ActivityIndicator color="#FFFFFF" />
                   : (
                     <>
                       <Text style={s.primaryBtnText}>Se connecter</Text>
                       <View style={s.arrowCircle}>
-                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                        <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
                       </View>
                     </>
                   )}
@@ -215,16 +212,18 @@ export function LoginScreen({ navigation }: Props) {
             {/* Connexion sociale */}
             <View style={s.socialRow}>
               <TouchableOpacity
-                style={[s.socialBtn, googleLoading && s.btnDisabled]}
                 onPress={handleGoogleLogin}
                 disabled={googleLoading || loading}
                 accessibilityRole="button"
                 accessibilityLabel="Se connecter avec Google"
                 activeOpacity={0.88}
+                style={googleLoading ? s.btnDisabled : undefined}
               >
-                {googleLoading
-                  ? <ActivityIndicator color={BLUE} />
-                  : <Text style={s.googleIcon}>G</Text>}
+                <Neu radius={26} innerStyle={s.socialInner}>
+                  {googleLoading
+                    ? <ActivityIndicator color={BLUE} />
+                    : <Text style={s.googleIcon}>G</Text>}
+                </Neu>
               </TouchableOpacity>
             </View>
 
@@ -237,18 +236,24 @@ export function LoginScreen({ navigation }: Props) {
 
             {/* Inscription professionnelle (conservée) */}
             <TouchableOpacity
-              style={s.proBtn}
               onPress={() => navigation.navigate('ProRegister')}
               accessibilityRole="button"
               accessibilityLabel="Inscription professionnelle"
               accessibilityHint="Ouvre le formulaire d'inscription pour les professionnels"
               activeOpacity={0.88}
+              style={s.proWrap}
             >
-              <Ionicons name="briefcase-outline" size={18} color={ORANGE} />
-              <Text style={s.proBtnText}>Inscription professionnelle</Text>
+              <Neu radius={30} innerStyle={s.proInner}>
+                <Ionicons name="briefcase-outline" size={18} color={ORANGE} />
+                <Text style={s.proBtnText}>Inscription professionnelle</Text>
+              </Neu>
             </TouchableOpacity>
 
-            <Text style={s.tagline}>RÉSERVEZ · DÉCOUVREZ · VIVEZ</Text>
+            <Text style={s.tagline}>RÉSERVEZ  •  DÉCOUVREZ  •  VIVEZ</Text>
+            <View style={s.moreWrap}>
+              <Text style={s.moreText}>{'PLUS QU\'UNE\nSIMPLE\nRÉSERVATION'}</Text>
+              <View style={s.moreLine} />
+            </View>
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -257,57 +262,61 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 function makeStyles(P: AuthPalette) {
-  const soft = { shadowColor: P.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
-    scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24, alignItems: 'stretch', maxWidth: 520, width: '100%', alignSelf: 'center' },
+    scroll: { flexGrow: 1, paddingHorizontal: 26, paddingBottom: 24, maxWidth: 520, width: '100%', alignSelf: 'center' },
 
     topBar: { alignItems: 'flex-end', paddingTop: 10 },
-    roundBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+    roundInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
 
-    logoCard: { alignSelf: 'center', width: 112, height: 112, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginTop: 4, marginBottom: 22, ...soft, shadowOpacity: 0.45, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 14 },
-    logo: { width: 84, height: 84 },
+    logoWrap: { alignSelf: 'center', marginTop: 6, marginBottom: 26 },
+    logoInner: { width: 150, height: 150, alignItems: 'center', justifyContent: 'center' },
+    logo: { width: 104, height: 104 },
 
-    title: { fontSize: 28, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.4 },
-    subtitle: { fontSize: 13, color: P.muted, textAlign: 'center', letterSpacing: 1.5, marginTop: 8, marginBottom: 26 },
+    title: { fontSize: 32, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
+    subtitle: { fontSize: 14, color: P.muted, textAlign: 'center', letterSpacing: 3, marginTop: 10, marginBottom: 30 },
 
-    errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 16, padding: 12, marginBottom: 16 },
+    errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 18, padding: 12, marginBottom: 16 },
     errorText: { color: RED, fontSize: 13.5, flex: 1, fontWeight: '600' },
 
-    fieldShadow: { borderRadius: 20, marginBottom: 16, backgroundColor: P.field, ...soft, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
-    inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, borderWidth: 1, borderColor: P.highlight, backgroundColor: P.field, paddingHorizontal: 16, minHeight: 56 },
-    inputIcon: { marginRight: 12 },
-    input: { flex: 1, paddingVertical: 15, fontSize: 15, color: P.text },
-    eyeBtn: { padding: 8, marginRight: -6 },
+    fieldWrap: { marginBottom: 18 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, minHeight: 64 },
+    inputIcon: { marginRight: 16 },
+    input: { flex: 1, paddingVertical: 16, fontSize: 16, color: P.text },
+    eyeBtn: { padding: 8, marginRight: -8 },
 
-    optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22, marginTop: 2 },
-    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 9, flexShrink: 1 },
-    checkbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.surface },
-    checkboxOn: { backgroundColor: BLUE },
-    rememberText: { fontSize: 13.5, color: P.text, fontWeight: '600' },
-    forgotLink: { color: BLUE, fontSize: 13.5, fontWeight: '700' },
+    optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, marginTop: 2 },
+    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1 },
+    checkbox: { width: 30, height: 30, borderRadius: 9, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.field },
+    checkboxOn: { backgroundColor: BLUE, shadowColor: BLUE, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 5 },
+    rememberText: { fontSize: 15, color: P.text, fontWeight: '500' },
+    forgotLink: { color: BLUE, fontSize: 15, fontWeight: '700' },
 
-    primaryShadow: { borderRadius: 36, shadowColor: BLUE, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.38, shadowRadius: 18, elevation: 10 },
-    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 36, paddingVertical: 16, paddingHorizontal: 22, minHeight: 58 },
-    primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
-    arrowCircle: { position: 'absolute', right: 10, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
+    primaryShadow: { borderRadius: 40, shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
+    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 40, paddingVertical: 18, paddingHorizontal: 22, minHeight: 66, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)' },
+    primaryBtnText: { color: '#FFFFFF', fontSize: 20, fontWeight: '800', letterSpacing: 0.3 },
+    arrowCircle: { position: 'absolute', right: 12, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' },
     btnDisabled: { opacity: 0.55 },
 
-    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 26, marginBottom: 20 },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 30, marginBottom: 22 },
     dividerLine: { flex: 1, height: 1, backgroundColor: P.line },
-    dividerText: { fontSize: 11.5, color: P.muted, fontWeight: '700', letterSpacing: 1.5 },
+    dividerText: { fontSize: 12, color: P.muted, fontWeight: '700', letterSpacing: 3 },
 
-    socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
-    socialBtn: { width: 64, height: 64, borderRadius: 20, backgroundColor: P.surface, alignItems: 'center', justifyContent: 'center', ...soft, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
-    googleIcon: { fontSize: 26, fontWeight: '900', color: '#4285F4' },
+    socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 22 },
+    socialInner: { width: 84, height: 84, alignItems: 'center', justifyContent: 'center' },
+    googleIcon: { fontSize: 36, fontWeight: '900', color: '#4285F4' },
 
-    registerWrap: { marginTop: 24 },
-    registerLink: { textAlign: 'center', color: P.muted, fontSize: 14 },
+    registerWrap: { marginTop: 26 },
+    registerLink: { textAlign: 'center', color: P.muted, fontSize: 14.5 },
     registerLinkBold: { color: BLUE, fontWeight: '800' },
 
-    proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: ORANGE, borderRadius: 30, paddingVertical: 14, marginTop: 16, backgroundColor: P.surface, shadowColor: ORANGE, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.18, shadowRadius: 10, elevation: 4 },
+    proWrap: { marginTop: 16 },
+    proInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 20 },
     proBtnText: { fontSize: 15, fontWeight: '800', color: ORANGE },
 
-    tagline: { marginTop: 30, textAlign: 'center', fontSize: 11, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
+    tagline: { marginTop: 34, textAlign: 'center', fontSize: 12, fontWeight: '600', color: P.muted, letterSpacing: 3 },
+    moreWrap: { alignSelf: 'flex-end', marginTop: 18, alignItems: 'flex-start' },
+    moreText: { fontSize: 10, fontWeight: '600', color: P.muted, letterSpacing: 2.5, lineHeight: 16 },
+    moreLine: { width: 22, height: 2, backgroundColor: P.muted, marginTop: 8, opacity: 0.7 },
   });
 }
