@@ -4,17 +4,51 @@ import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteService } from '@/services/api';
 import { SortableList } from '@/components/ui/SortableList';
-import { Plus, Trash2, ArrowLeft, Edit2, X, Check, Upload } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, X, Check, Upload, Camera } from 'lucide-react';
 import Link from 'next/link';
 
 interface Member { id: string; name: string; role: string; bio?: string; initials?: string; photoUrl?: string; active: boolean; sortOrder: number; }
 type MemberDraft = Pick<Member, 'name' | 'role' | 'bio' | 'initials'>;
 const EMPTY: MemberDraft = { name: '', role: '', bio: '', initials: '' };
 
-function MemberForm({ initial, onSave, onCancel }: { initial?: Partial<MemberDraft>; onSave: (d: MemberDraft) => void; onCancel: () => void; }) {
+const MAX_PHOTO_MB = 5;
+
+function MemberForm({ initial, photoUrl, onSave, onCancel }: { initial?: Partial<MemberDraft>; photoUrl?: string; onSave: (d: MemberDraft, photo?: File) => void; onCancel: () => void; }) {
   const { register, handleSubmit, formState: { errors } } = useForm<MemberDraft>({ defaultValues: { ...EMPTY, ...initial } });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const pick = (f?: File) => {
+    setPhotoError(null);
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { setPhotoError('Le fichier doit être une image (JPG, PNG, WebP).'); return; }
+    if (f.size > MAX_PHOTO_MB * 1024 * 1024) { setPhotoError(`Image trop lourde (${MAX_PHOTO_MB} Mo maximum).`); return; }
+    setPhoto(f);
+    setPreview(URL.createObjectURL(f));
+  };
+  const shown = preview ?? photoUrl ?? null;
+
   return (
-    <form onSubmit={handleSubmit(onSave)} className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
+    <form onSubmit={handleSubmit(d => onSave(d, photo ?? undefined))} className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
+      {/* Photo du membre — envoyée vers Cloudinary à la validation */}
+      <div className="flex items-center gap-4">
+        <div className="w-20 h-20 rounded-full overflow-hidden bg-white border border-blue-200 flex items-center justify-center shrink-0" data-testid="member-photo-preview">
+          {shown
+            ? <img src={shown} alt="Photo du membre" className="w-full h-full object-cover" />
+            : <Camera size={26} className="text-blue-300" />}
+        </div>
+        <div className="min-w-0">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Photo</label>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" data-testid="member-photo-input" onChange={e => pick(e.target.files?.[0])} />
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50">
+            <Upload size={13} /> {shown ? 'Changer la photo' : 'Choisir une photo'}
+          </button>
+          <p className="text-xs text-gray-500 mt-1">Carrée de préférence · JPG, PNG ou WebP · {MAX_PHOTO_MB} Mo max. Sans photo, les initiales sont affichées.</p>
+          {photoError && <p className="text-xs text-red-600 mt-1">{photoError}</p>}
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <input className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nom complet *" {...register('name', { required: true })} />
@@ -42,8 +76,8 @@ export default function AboutTeamPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const photoRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const createMut = useMutation({ mutationFn: (d: MemberDraft) => websiteService.createAboutTeam(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: Partial<MemberDraft> }) => websiteService.updateAboutTeam(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setEditId(null); } });
+  const createMut = useMutation({ mutationFn: async ({ d, photo }: { d: MemberDraft; photo?: File }) => { const created = await websiteService.createAboutTeam(d); if (photo && created?.id) await websiteService.uploadAboutTeamPhoto(created.id, photo); return created; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setAdding(false); } });
+  const updateMut = useMutation({ mutationFn: async ({ id, d, photo }: { id: string; d: Partial<MemberDraft>; photo?: File }) => { const updated = await websiteService.updateAboutTeam(id, d); if (photo) await websiteService.uploadAboutTeamPhoto(id, photo); return updated; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setEditId(null); } });
   const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutTeam(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
   const photoMut = useMutation({ mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadAboutTeamPhoto(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
   const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteAboutTeam(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
@@ -66,7 +100,7 @@ export default function AboutTeamPage() {
       </div>
 
       <div className="space-y-3">
-        {adding && <MemberForm onSave={d => createMut.mutate(d)} onCancel={() => setAdding(false)} />}
+        {adding && <MemberForm onSave={(d, photo) => createMut.mutate({ d, photo })} onCancel={() => setAdding(false)} />}
 
         <SortableList
           items={members}
@@ -75,7 +109,7 @@ export default function AboutTeamPage() {
           renderItem={m => (
             <div className={`bg-white border rounded-xl p-4 ${!m.active ? 'opacity-50' : ''}`}>
               {editId === m.id ? (
-                <MemberForm initial={m} onSave={d => updateMut.mutate({ id: m.id, d })} onCancel={() => setEditId(null)} />
+                <MemberForm initial={m} photoUrl={m.photoUrl} onSave={(d, photo) => updateMut.mutate({ id: m.id, d, photo })} onCancel={() => setEditId(null)} />
               ) : (
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">

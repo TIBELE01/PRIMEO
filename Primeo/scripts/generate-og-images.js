@@ -137,7 +137,7 @@ const IMAGES = {
   'og-aide': { title: "Centre d'aide Primeo", subtitle: 'Réponses rapides à toutes vos questions', accent: C.primaryLight },
   'og-communaute': { title: 'Rejoignez la communauté Primeo', subtitle: 'Hôtes, voyageurs et professionnels réunis', accent: C.cta },
   'og-engagement': { title: 'Nos engagements envers vous', subtitle: 'Sécurité · Transparence · Proximité', accent: C.cta },
-  'og-presse': { title: 'Espace presse Primeo', subtitle: 'Communiqués, kit média et contacts', accent: C.primaryLight },
+  'og-presse': { title: 'Espace presse Primeo', subtitle: 'Communiqués et contacts', accent: C.primaryLight },
   'og-telechargement': { title: "Téléchargez l'application Primeo", subtitle: 'Disponible sur iOS et Android', accent: C.cta },
   'og-documentation': { title: 'Documentation & guides Primeo', subtitle: 'Tout pour bien démarrer sur la plateforme', accent: C.primaryLight },
   'og-carrieres': { title: 'Rejoignez l\'aventure Primeo', subtitle: 'Construisons la tech ivoirienne de demain', accent: C.gold },
