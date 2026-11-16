@@ -172,10 +172,7 @@ const DEFAULT_ABOUT_VALUES = [
 ];
 
 const DEFAULT_ABOUT_TEAM = [
-  { name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Entrepreneur de l'immobilier, 10 ans d'expérience dans le logement et l'hospitalité en Côte d'Ivoire.", sortOrder: 0 },
-  { name: 'Aïssatou Fall', role: 'CTO & Co-fondatrice', initials: 'AF', bio: 'Développeuse full-stack, ancienne ingénieure chez Orange CI.', sortOrder: 1 },
-  { name: 'Moussa Yao', role: 'Directeur Commercial', initials: 'MY', bio: 'Spécialiste en développement des affaires B2B et partenariats stratégiques.', sortOrder: 2 },
-  { name: 'Sylvie Brou', role: 'Responsable Produit', initials: 'SB', bio: 'UX designer et chef de produit, passionnée par les interfaces inclusives.', sortOrder: 3 },
+  { name: 'YEO TIBELE', role: 'Fondateur', initials: 'YT', bio: null, sortOrder: 0 },
 ];
 
 const DEFAULT_FAQ = [
@@ -986,12 +983,7 @@ export const websiteService = {
   async getAboutTeam() {
     const rows = await prisma.aboutTeam.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } });
     if (rows.length) return rows;
-    return [
-      { id: 'd1', name: 'Kouassi Abo', role: 'CEO & Co-fondateur', initials: 'KA', bio: "Entrepreneur de l'immobilier, 10 ans d'expérience dans le logement et l'hospitalité en Côte d'Ivoire.", photoUrl: null },
-      { id: 'd2', name: 'Aïssatou Fall', role: 'CTO & Co-fondatrice', initials: 'AF', bio: 'Développeuse full-stack, ancienne ingénieure chez Orange CI.', photoUrl: null },
-      { id: 'd3', name: 'Moussa Yao', role: 'Directeur Commercial', initials: 'MY', bio: 'Spécialiste en développement des affaires B2B et partenariats stratégiques.', photoUrl: null },
-      { id: 'd4', name: 'Sylvie Brou', role: 'Responsable Produit', initials: 'SB', bio: 'UX designer et chef de produit, passionnée par les interfaces inclusives.', photoUrl: null },
-    ];
+    return [{ id: 'd1', name: 'YEO TIBELE', role: 'Fondateur', initials: 'YT', bio: null, photoUrl: null }];
   },
 
   async getAboutPartners() {
