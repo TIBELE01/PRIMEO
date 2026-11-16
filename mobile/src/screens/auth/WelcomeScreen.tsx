@@ -2,7 +2,7 @@
 // abstraites, logo en carte flottante, boutons pilule). Navigation inchangée.
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image, ScrollView, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -20,7 +20,9 @@ type Props = AuthScreenProps<'Welcome'>;
 
 export function WelcomeScreen({ navigation }: Props) {
   const { P, isDark, toggle } = useAuthPalette();
-  const s = makeStyles(P);
+  const { height: winH } = useWindowDimensions();
+  const sc = Math.min(1, Math.max(0.62, (winH - 70) / 800));
+  const s = makeStyles(P, sc);
 
   return (
     <View style={s.container}>
@@ -52,6 +54,7 @@ export function WelcomeScreen({ navigation }: Props) {
         </View>
 
         {/* Illustration centrale */}
+        {winH >= 720 && (
         <View style={s.animArea}>
           <LottieView
             source={require('../../../assets/lottie/loading.json')}
@@ -61,6 +64,7 @@ export function WelcomeScreen({ navigation }: Props) {
             accessibilityLabel="Animation de bienvenue Primeo"
           />
         </View>
+        )}
 
         {/* Carte du bas */}
         <Neu radius={34} depth={1.2} style={s.cardWrap} innerStyle={s.card}>
@@ -121,35 +125,36 @@ export function WelcomeScreen({ navigation }: Props) {
   );
 }
 
-function makeStyles(P: AuthPalette) {
+function makeStyles(P: AuthPalette, sc: number) {
+  const z = (n: number) => Math.round(n * sc);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
     safe: { flex: 1, paddingTop: 8, width: '100%', maxWidth: 520, alignSelf: 'center' },
-    scroll: { flexGrow: 1, justifyContent: 'space-between', paddingBottom: 56 },
+    scroll: { flexGrow: 1, justifyContent: 'center', gap: z(8), paddingTop: z(30), paddingBottom: z(16) },
 
-    topBar: { alignItems: 'flex-end', paddingHorizontal: 24 },
-    roundInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+    topBar: { position: 'absolute', top: z(6), right: 20, zIndex: 5 },
+    roundInner: { width: z(46), height: z(46), alignItems: 'center', justifyContent: 'center' },
 
-    brandArea: { alignItems: 'center', paddingTop: 8, gap: 16 },
-    logoInner: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
-    logoImg: { width: 92, height: 92 },
+    brandArea: { alignItems: 'center', paddingTop: z(8), gap: z(12) },
+    logoInner: { width: z(110), height: z(110), alignItems: 'center', justifyContent: 'center' },
+    logoImg: { width: z(74), height: z(74) },
     tagline: { fontSize: 12, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
 
-    animArea: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 90 },
-    lottie: { width: Math.min(width * 0.45, 200), height: Math.min(width * 0.45, 200) },
+    animArea: { alignItems: 'center', justifyContent: 'center' },
+    lottie: { width: Math.min(width * 0.4, z(150)), height: Math.min(width * 0.4, z(150)) },
 
     cardWrap: { marginHorizontal: 16, marginBottom: 12 },
-    card: { paddingTop: 24, paddingHorizontal: 22, paddingBottom: 20 },
-    cardTitle: { fontSize: 24, fontWeight: '900', color: P.text, marginBottom: 6, letterSpacing: -0.3 },
-    cardSub: { fontSize: 14, color: P.muted, lineHeight: 22, marginBottom: 20 },
+    card: { paddingTop: z(20), paddingHorizontal: 22, paddingBottom: z(16) },
+    cardTitle: { fontSize: z(23), fontWeight: '900', color: P.text, marginBottom: 6, letterSpacing: -0.3 },
+    cardSub: { fontSize: 13.5, color: P.muted, lineHeight: 20, marginBottom: z(14) },
 
-    actions: { gap: 12, marginBottom: 16 },
-    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: BLUE, paddingVertical: 17, borderRadius: 36, minHeight: 58, shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
+    actions: { gap: z(10), marginBottom: z(12) },
+    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: BLUE, paddingVertical: z(14), borderRadius: 36, minHeight: z(54), shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
     primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
     arrowCircle: { position: 'absolute', right: 10, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
-    outlineInner: { alignItems: 'center', paddingVertical: 16 },
+    outlineInner: { alignItems: 'center', paddingVertical: z(13) },
     outlineBtnText: { fontSize: 16, fontWeight: '800', color: BLUE },
-    proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: ORANGE, borderRadius: 36, paddingVertical: 14, backgroundColor: P.surface },
+    proBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: ORANGE, borderRadius: 36, paddingVertical: z(11), backgroundColor: P.surface },
     proBtnText: { fontSize: 15, fontWeight: '800', color: ORANGE },
 
     legal: { textAlign: 'center', color: P.muted, fontSize: 11.5, lineHeight: 17 },

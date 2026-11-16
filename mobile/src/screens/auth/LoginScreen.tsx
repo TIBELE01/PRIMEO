@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView, Image, StatusBar,
+  ActivityIndicator, ScrollView, Image, StatusBar, useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,7 +36,10 @@ export function LoginScreen({ navigation }: Props) {
   const [remember, setRemember] = useState(true);
 
   const { P, isDark, toggle } = useAuthPalette();
-  const s = makeStyles(P);
+  const { height: winH } = useWindowDimensions();
+  // Tout doit tenir sur un écran : on réduit proportionnellement sur les petits écrans
+  const sc = Math.min(1, Math.max(0.62, (winH - 70) / 800));
+  const s = makeStyles(P, sc);
 
   const canSubmit = email.trim().length > 0 && password.length >= 1;
 
@@ -262,62 +265,63 @@ export function LoginScreen({ navigation }: Props) {
   );
 }
 
-function makeStyles(P: AuthPalette) {
+function makeStyles(P: AuthPalette, sc: number) {
+  const z = (n: number) => Math.round(n * sc);
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: P.bg[1] },
-    scroll: { flexGrow: 1, paddingHorizontal: 26, paddingBottom: 48, maxWidth: 520, width: '100%', alignSelf: 'center' },
+    scroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 26, paddingTop: z(30), paddingBottom: z(16), maxWidth: 520, width: '100%', alignSelf: 'center' },
 
-    topBar: { alignItems: 'flex-end', paddingTop: 10 },
-    roundInner: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+    topBar: { position: 'absolute', top: z(6), right: 20, zIndex: 5 },
+    roundInner: { width: z(46), height: z(46), alignItems: 'center', justifyContent: 'center' },
 
-    logoWrap: { alignSelf: 'center', marginTop: 6, marginBottom: 26 },
-    logoInner: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
-    logo: { width: 96, height: 96 },
+    logoWrap: { alignSelf: 'center', marginBottom: z(16) },
+    logoInner: { width: z(104), height: z(104), alignItems: 'center', justifyContent: 'center' },
+    logo: { width: z(68), height: z(68) },
 
-    title: { fontSize: 30, fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
-    subtitle: { fontSize: 14, color: P.muted, textAlign: 'center', letterSpacing: 3, marginTop: 10, marginBottom: 30 },
+    title: { fontSize: z(27), fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
+    subtitle: { fontSize: z(13), color: P.muted, textAlign: 'center', letterSpacing: 2.5, marginTop: z(6), marginBottom: z(18) },
 
-    errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 18, padding: 12, marginBottom: 16 },
-    errorText: { color: RED, fontSize: 13.5, flex: 1, fontWeight: '600' },
+    errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,51,51,0.08)', borderWidth: 1, borderColor: 'rgba(255,51,51,0.35)', borderRadius: 18, padding: 10, marginBottom: z(10) },
+    errorText: { color: RED, fontSize: 13, flex: 1, fontWeight: '600' },
 
-    fieldWrap: { marginBottom: 18 },
-    inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, minHeight: 64 },
-    inputIcon: { marginRight: 16 },
-    input: { flex: 1, paddingVertical: 16, fontSize: 16, color: P.text },
+    fieldWrap: { marginBottom: z(12) },
+    inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, minHeight: z(54) },
+    inputIcon: { marginRight: 14 },
+    input: { flex: 1, paddingVertical: z(12), fontSize: 15, color: P.text },
     eyeBtn: { padding: 8, marginRight: -8 },
 
-    optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, marginTop: 2 },
-    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1, marginRight: 12 },
-    checkbox: { width: 30, height: 30, borderRadius: 9, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.field },
+    optionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: z(14) },
+    rememberWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, marginRight: 8 },
+    checkbox: { width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: BLUE, alignItems: 'center', justifyContent: 'center', backgroundColor: P.field },
     checkboxOn: { backgroundColor: BLUE, shadowColor: BLUE, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 5 },
-    rememberText: { fontSize: 14, color: P.text, fontWeight: '500' },
-    forgotLink: { color: BLUE, fontSize: 14, fontWeight: '700', flexShrink: 0 },
+    rememberText: { fontSize: sc < 0.85 ? 12.5 : 14, color: P.text, fontWeight: '500' },
+    forgotLink: { color: BLUE, fontSize: sc < 0.85 ? 12.5 : 14, fontWeight: '700', flexShrink: 0 },
 
-    primaryShadow: { borderRadius: 40, shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
-    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 40, paddingVertical: 18, paddingHorizontal: 22, minHeight: 66, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)' },
-    primaryBtnText: { color: '#FFFFFF', fontSize: 20, fontWeight: '800', letterSpacing: 0.3 },
-    arrowCircle: { position: 'absolute', right: 12, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' },
+    primaryShadow: { borderRadius: 40, shadowColor: '#3B6BFF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 18, elevation: 12 },
+    primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 40, paddingVertical: z(13), paddingHorizontal: 22, minHeight: z(56), borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)' },
+    primaryBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', letterSpacing: 0.3 },
+    arrowCircle: { position: 'absolute', right: 10, width: z(38), height: z(38), borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' },
     btnDisabled: { opacity: 0.75 },
 
-    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 30, marginBottom: 22 },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: z(18), marginBottom: z(14) },
     dividerLine: { flex: 1, height: 1, backgroundColor: P.line },
-    dividerText: { fontSize: 12, color: P.muted, fontWeight: '700', letterSpacing: 3 },
+    dividerText: { fontSize: 11, color: P.muted, fontWeight: '700', letterSpacing: 2.5 },
 
     socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 22 },
-    socialInner: { width: 84, height: 84, alignItems: 'center', justifyContent: 'center' },
-    googleIcon: { fontSize: 36, fontWeight: '900', color: '#4285F4' },
+    socialInner: { width: z(64), height: z(64), alignItems: 'center', justifyContent: 'center' },
+    googleIcon: { fontSize: z(28), fontWeight: '900', color: '#4285F4' },
 
-    registerWrap: { marginTop: 26 },
-    registerLink: { textAlign: 'center', color: P.muted, fontSize: 14.5 },
+    registerWrap: { marginTop: z(14) },
+    registerLink: { textAlign: 'center', color: P.muted, fontSize: 14 },
     registerLinkBold: { color: BLUE, fontWeight: '800' },
 
-    proWrap: { marginTop: 16 },
-    proInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 20 },
-    proBtnText: { fontSize: 15, fontWeight: '800', color: ORANGE },
+    proWrap: { marginTop: z(10) },
+    proInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: z(12), paddingHorizontal: 20 },
+    proBtnText: { fontSize: 14.5, fontWeight: '800', color: ORANGE },
 
-    tagline: { marginTop: 34, textAlign: 'center', fontSize: 12, fontWeight: '600', color: P.muted, letterSpacing: 3 },
-    moreWrap: { alignSelf: 'flex-end', marginTop: 18, alignItems: 'flex-start' },
-    moreText: { fontSize: 10, fontWeight: '600', color: P.muted, letterSpacing: 2.5, lineHeight: 16 },
-    moreLine: { width: 22, height: 2, backgroundColor: P.muted, marginTop: 8, opacity: 0.7 },
+    tagline: { marginTop: z(14), textAlign: 'center', fontSize: 11, fontWeight: '600', color: P.muted, letterSpacing: 2.5 },
+    moreWrap: { position: 'absolute', right: 20, bottom: z(10), alignItems: 'flex-start' },
+    moreText: { fontSize: 8.5, fontWeight: '600', color: P.muted, letterSpacing: 2, lineHeight: 12 },
+    moreLine: { width: 18, height: 2, backgroundColor: P.muted, marginTop: 5, opacity: 0.7 },
   });
 }
