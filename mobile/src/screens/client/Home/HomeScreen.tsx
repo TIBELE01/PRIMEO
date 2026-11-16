@@ -534,7 +534,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#EEF0F3',
     borderRadius: 16, padding: 16, alignItems: 'center', gap: 6,
-    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    ...CARD_SHADOW,
   },
   statIcon:  { fontSize: 28 },
   statValue: { fontSize: 22, fontWeight: '900', color: '#1056E0' },
