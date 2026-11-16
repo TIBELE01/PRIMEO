@@ -3,30 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Documentation Primeo – Retrouvez tous nos guides pour maîtriser la plateforme : réservations, hébergement, restaurant, immobilier.">
+  <meta name="description" content="Documentation Primeo : guides détaillés pour les clients, propriétaires de résidences, hôteliers, agents immobiliers, restaurateurs et administrateurs.">
   <meta name="robots" content="index, follow">
   <title>Documentation — Primeo</title>
   <link rel="canonical" href="https://primeo.ci/documentation/">
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Primeo">
-  <meta property="og:url" content="https://primeo.ci/documentation/">
   <meta property="og:title" content="Documentation — Primeo">
-  <meta property="og:description" content="Documentation Primeo – Retrouvez tous nos guides pour maîtriser la plateforme : réservations, hébergement, restaurant, immobilier.">
-  <meta property="og:image" content="https://primeo.ci/assets/img/og/og-documentation.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:description" content="Documentation Primeo : guides détaillés pour les clients, propriétaires de résidences, hôteliers, agents immobiliers, restaurateurs et administrateurs.">
   <meta property="og:locale" content="fr_FR">
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Documentation — Primeo">
-  <meta name="twitter:description" content="Tous nos guides pour maîtriser la plateforme Primeo : réservations, hébergement, restaurant, immobilier.">
-  <meta name="twitter:image" content="https://primeo.ci/assets/img/og/og-documentation.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="../assets/css/documentation.css">
+  <link rel="stylesheet" href="../assets/css/documentation.css?v=5">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
 </head>
 <body>
@@ -34,232 +24,326 @@
 
   <main>
 
-    <!-- Hero -->
     <section class="doc-hero">
       <div class="container">
         <h1>Documentation — Utiliser Primeo</h1>
-        <p>Retrouvez tous nos guides pour maîtriser la plateforme en quelques clics.</p>
+        <p>Des guides détaillés, étape par étape, pour chaque type d’utilisateur de la plateforme.</p>
+        <form class="doc-search" role="search" onsubmit="return false">
+          <label for="doc-search-input" class="sr-only">Rechercher dans la documentation</label>
+          <input id="doc-search-input" type="search" placeholder="Rechercher : annulation, boost, visite 3D, KYC…" autocomplete="off">
+        </form>
+        <div class="doc-search-results" id="doc-results" hidden role="region" aria-live="polite"></div>
       </div>
     </section>
 
-    <!-- Guides accordion -->
     <section class="doc-index-section">
       <div class="container">
-        <div class="doc-accordion-group">
+        <nav class="doc-chips" aria-label="Aller à un guide">
+          <a href="#client">✈️ Pour les clients</a>
+          <a href="#residence">🏡 Pour les propriétaires de résidences</a>
+          <a href="#hotel">🏨 Pour les hôteliers</a>
+          <a href="#immobilier">🏢 Pour les agents immobiliers</a>
+          <a href="#restaurant">🍽️ Pour les restaurateurs</a>
+          <a href="#abonnements">💼 Pour tous les professionnels</a>
+          <a href="#admin">🛡️ Pour les administrateurs</a>
+        </nav>
 
-          <!-- ── Catégorie 1 : Clients voyageurs ── -->
-          <div class="doc-accordion-item open" id="clients-voyageurs">
-            <button class="doc-accordion-btn" aria-expanded="true">
-              <div class="doc-acc-icon" aria-hidden="true">✈️</div>
-              <div class="doc-acc-info">
-                <span class="doc-acc-title">Pour les clients voyageurs</span>
-                <span class="doc-acc-desc">Trouver et réserver un hébergement</span>
-              </div>
-              <span class="doc-acc-arrow">›</span>
-            </button>
-            <div class="doc-accordion-body">
-              <div class="doc-accordion-inner">
-                <div class="doc-grid">
-                  <a href="guide-reservation-client.html" class="doc-card">
-                    <span class="doc-card-num">Guide 01</span>
-                    <h3 class="doc-card-title">Comment réserver un hébergement</h3>
-                    <p class="doc-card-desc">Rechercher un logement, sélectionner ses dates, choisir son mode de paiement et confirmer sa réservation étape par étape.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-reservation-client.html#modifier" class="doc-card">
-                    <span class="doc-card-num">Guide 02</span>
-                    <h3 class="doc-card-title">Modifier ou annuler une réservation</h3>
-                    <p class="doc-card-desc">Changer ses dates, demander un remboursement ou annuler selon la politique de l'hôte.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-reservation-client.html#avis" class="doc-card">
-                    <span class="doc-card-num">Guide 03</span>
-                    <h3 class="doc-card-title">Laisser un avis après son séjour</h3>
-                    <p class="doc-card-desc">Contribuer à la communauté en notant son expérience et en aidant les autres voyageurs.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                </div>
-              </div>
-            </div>
+        <div class="doc-category" id="client">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">✈️</div>
+            <h2 class="doc-category-title">Pour les clients</h2>
+            <a class="doc-category-desc" href="guide-client.html">Ouvrir le guide complet →</a>
           </div>
-
-          <!-- ── Catégorie 2 : Professionnels hébergement ── -->
-          <div class="doc-accordion-item" id="hebergement">
-            <button class="doc-accordion-btn" aria-expanded="false">
-              <div class="doc-acc-icon" aria-hidden="true">🏨</div>
-              <div class="doc-acc-info">
-                <span class="doc-acc-title">Pour les professionnels — Hébergement</span>
-                <span class="doc-acc-desc">Gérer et développer votre activité</span>
-              </div>
-              <span class="doc-acc-arrow">›</span>
-            </button>
-            <div class="doc-accordion-body" style="max-height:0">
-              <div class="doc-accordion-inner">
-                <div class="doc-grid">
-                  <a href="guide-publication-propriete.html" class="doc-card">
-                    <span class="doc-card-num">Guide 01</span>
-                    <h3 class="doc-card-title">Publier votre première propriété</h3>
-                    <p class="doc-card-desc">Créer votre fiche hôte, ajouter des photos, renseigner vos tarifs et soumettre votre annonce à la validation.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-publication-propriete.html#calendrier" class="doc-card">
-                    <span class="doc-card-num">Guide 02</span>
-                    <h3 class="doc-card-title">Gérer son calendrier et ses disponibilités</h3>
-                    <p class="doc-card-desc">Bloquer des dates, définir des prix selon la saison et synchroniser avec d'autres plateformes.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-publication-propriete.html#revenus" class="doc-card">
-                    <span class="doc-card-num">Guide 03</span>
-                    <h3 class="doc-card-title">Suivre ses revenus et demandes</h3>
-                    <p class="doc-card-desc">Consulter le tableau de bord financier, exporter ses relevés et comprendre la politique de versements.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                </div>
-              </div>
-            </div>
+          <p class="doc-category-intro">Guide complet pour les clients Primeo : inscription, recherche, réservation avec 3 options de paiement, annulation et remboursement, avis, messagerie, favoris et parrainage.</p>
+          <div class="doc-grid">
+            <a href="guide-client.html#compte" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Compte et connexion</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-client.html#recherche" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Rechercher</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-client.html#fiche" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">La fiche d’un bien</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-client.html#reserver" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Réserver un hébergement</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-client.html#paiement" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Options de paiement</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-client.html#immobilier" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Biens immobiliers</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
           </div>
-
-          <!-- ── Catégorie 3 : Restaurateurs ── -->
-          <div class="doc-accordion-item" id="restaurateurs">
-            <button class="doc-accordion-btn" aria-expanded="false">
-              <div class="doc-acc-icon" aria-hidden="true">🍽️</div>
-              <div class="doc-acc-info">
-                <span class="doc-acc-title">Pour les restaurateurs</span>
-                <span class="doc-acc-desc">Créneaux, réservations et menus</span>
-              </div>
-              <span class="doc-acc-arrow">›</span>
-            </button>
-            <div class="doc-accordion-body" style="max-height:0">
-              <div class="doc-accordion-inner">
-                <div class="doc-grid">
-                  <a href="guide-gestion-restaurant.html" class="doc-card">
-                    <span class="doc-card-num">Guide 01</span>
-                    <h3 class="doc-card-title">Gérer créneaux et réservations</h3>
-                    <p class="doc-card-desc">Configurer vos horaires d'ouverture, le nombre de couverts par créneau et accepter les réservations en ligne.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-gestion-restaurant.html#menu" class="doc-card">
-                    <span class="doc-card-num">Guide 02</span>
-                    <h3 class="doc-card-title">Mettre à jour votre carte et vos menus</h3>
-                    <p class="doc-card-desc">Ajouter des plats, modifier les prix, gérer les allergènes et publier des offres spéciales.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-gestion-restaurant.html#avis" class="doc-card">
-                    <span class="doc-card-num">Guide 03</span>
-                    <h3 class="doc-card-title">Gérer les avis et la réputation</h3>
-                    <p class="doc-card-desc">Répondre aux commentaires clients, signaler un avis abusif et améliorer sa note globale.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── Catégorie 4 : Immobilier ── -->
-          <div class="doc-accordion-item" id="immobilier">
-            <button class="doc-accordion-btn" aria-expanded="false">
-              <div class="doc-acc-icon" aria-hidden="true">🏠</div>
-              <div class="doc-acc-info">
-                <span class="doc-acc-title">Pour l'immobilier</span>
-                <span class="doc-acc-desc">Vente, location et gestion de biens</span>
-              </div>
-              <span class="doc-acc-arrow">›</span>
-            </button>
-            <div class="doc-accordion-body" style="max-height:0">
-              <div class="doc-accordion-inner">
-                <div class="doc-grid">
-                  <a href="guide-immobilier.html" class="doc-card">
-                    <span class="doc-card-num">Guide 01</span>
-                    <h3 class="doc-card-title">Diffuser un bien — vente ou location</h3>
-                    <p class="doc-card-desc">Créer une annonce immobilière, renseigner la superficie, le prix, les charges et publier sur le réseau Primeo.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-immobilier.html#leads" class="doc-card">
-                    <span class="doc-card-num">Guide 02</span>
-                    <h3 class="doc-card-title">Gérer les leads et les visites</h3>
-                    <p class="doc-card-desc">Répondre aux demandes de contact, programmer des visites et suivre l'avancement des dossiers.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                  <a href="guide-immobilier.html#energie" class="doc-card">
-                    <span class="doc-card-num">Guide 03</span>
-                    <h3 class="doc-card-title">Renseigner la performance énergétique</h3>
-                    <p class="doc-card-desc">Indiquer la classe énergétique du bien sur votre annonce pour valoriser les logements économes auprès des acquéreurs.</p>
-                    <span class="doc-card-arrow">Lire le guide →</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── Catégorie 5 : Comptes, paiement & fonctionnalités ── -->
-          <div class="doc-accordion-item" id="processus">
-            <button class="doc-accordion-btn" aria-expanded="false">
-              <div class="doc-acc-icon" aria-hidden="true">⚙️</div>
-              <div class="doc-acc-info">
-                <span class="doc-acc-title">Comptes, paiement &amp; fonctionnalités</span>
-                <span class="doc-acc-desc">Inscription, abonnements, paiement, visite 3D, messagerie, parrainage…</span>
-              </div>
-              <span class="doc-acc-arrow">›</span>
-            </button>
-            <div class="doc-accordion-body" style="max-height:0">
-              <div class="doc-accordion-inner">
-                <div class="doc-grid">
-                  <div class="doc-card">
-                    <span class="doc-card-num">Compte</span>
-                    <h3 class="doc-card-title">Inscription &amp; connexion</h3>
-                    <p class="doc-card-desc">Les <strong>clients</strong> créent leur compte instantanément (sans code OTP). Les <strong>professionnels</strong> vérifient leur numéro par <strong>code OTP envoyé par SMS</strong>, puis soumettent leur dossier KYC validé par un administrateur avant publication. Connexion par email ou Google, double authentification (2FA) optionnelle.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Réservation</span>
-                    <h3 class="doc-card-title">Réserver &amp; payer</h3>
-                    <p class="doc-card-desc">Trois options de paiement : <strong>100 % en ligne</strong>, <strong>10 % d'acompte</strong> (90 % sur place) ou <strong>0 % en ligne</strong> (paiement sur place). Paiement sécurisé via <strong>Genius Pay</strong> (Mobile Money, Wave, carte bancaire). Les dates d'une réservation peuvent être modifiées, et l'annulation suit la politique de l'hôte.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Facturation</span>
-                    <h3 class="doc-card-title">Factures PDF</h3>
-                    <p class="doc-card-desc">Une <strong>facture PDF</strong> est générée automatiquement à chaque réservation confirmée, envoyée par email (lien + pièce jointe) et téléchargeable à tout moment depuis « Mes réservations » côté client comme côté professionnel.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Messagerie</span>
-                    <h3 class="doc-card-title">Conversation automatique</h3>
-                    <p class="doc-card-desc">Une discussion s'ouvre <strong>automatiquement après chaque réservation</strong>, avec un message récapitulatif structuré. Les professionnels disposent de réponses rapides (modèles). Notifications par push et email à chaque message.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Abonnements</span>
-                    <h3 class="doc-card-title">Starter · Business · Entreprise</h3>
-                    <p class="doc-card-desc"><strong>Starter</strong> (gratuit, 3 publications), <strong>Business</strong> (9 000 FCFA/mois, 10 publications, vidéo), <strong>Entreprise</strong> (24 000 FCFA/mois, 40 publications — illimité pour les restaurants — vidéo + visite 3D). <strong>0 % de commission</strong> sur toutes les formules. Publications supplémentaires à 500 FCFA/mois.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Médias</span>
-                    <h3 class="doc-card-title">Photos, vidéos &amp; visite 3D</h3>
-                    <p class="doc-card-desc">Photos disponibles sur toutes les formules. La <strong>vidéo</strong> est incluse à partir de Business. La <strong>visite virtuelle 3D</strong> (panoramas 360°) est réservée à la formule Entreprise. Le type de média de chaque annonce dépend de la formule du professionnel.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Visibilité</span>
-                    <h3 class="doc-card-title">Boosts d'annonce</h3>
-                    <p class="doc-card-desc">Un boost met votre annonce <strong>en tête des résultats pendant 72 h</strong>. Boosts gratuits selon la formule (0 / 2 / 7 par mois pour Starter / Business / Entreprise) ; boost payant à <strong>2 000 FCFA / 3 jours</strong>.</p>
-                  </div>
-                  <div class="doc-card">
-                    <span class="doc-card-num">Confiance</span>
-                    <h3 class="doc-card-title">Avis, favoris &amp; parrainage</h3>
-                    <p class="doc-card-desc">Avis après séjour (note + commentaire) et <strong>évaluation réciproque</strong> client/professionnel. Favoris et listes personnalisées. <strong>Parrainage</strong> : 250 FCFA pour un filleul client (1ʳᵉ réservation confirmée) et 1 000 FCFA pour un filleul professionnel (KYC validé), crédités automatiquement.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
+
+        <div class="doc-category" id="residence">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">🏡</div>
+            <h2 class="doc-category-title">Pour les propriétaires de résidences</h2>
+            <a class="doc-category-desc" href="guide-residence.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Créer un compte professionnel, publier une résidence, ajouter photos, vidéo ou visite 3D, gérer calendrier, tarifs et réservations sur Primeo.</p>
+          <div class="doc-grid">
+            <a href="guide-residence.html#compte" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Créer son compte professionnel</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-residence.html#validation" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Validation du compte</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-residence.html#creer" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Créer une annonce</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-residence.html#medias" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Photos, vidéo, visite 3D</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-residence.html#publication" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Validation et statuts</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-residence.html#calendrier" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Calendrier et tarifs</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="doc-category" id="hotel">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">🏨</div>
+            <h2 class="doc-category-title">Pour les hôteliers</h2>
+            <a class="doc-category-desc" href="guide-hotel.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Guide pour les hôtels sur Primeo : créer la fiche, définir les types de chambre et leurs prix, gérer disponibilités et réservations.</p>
+          <div class="doc-grid">
+            <a href="guide-hotel.html#compte" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Compte hôtelier</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-hotel.html#creer" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Créer la fiche de l’établissement</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-hotel.html#chambres" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Types de chambre</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-hotel.html#medias" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Médias</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-hotel.html#dispo" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Disponibilités et règles</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-hotel.html#reservations" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Réservations</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="doc-category" id="immobilier">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">🏢</div>
+            <h2 class="doc-category-title">Pour les agents immobiliers</h2>
+            <a class="doc-category-desc" href="guide-immobilier.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Publier des biens immobiliers sur Primeo : location, vente, terrains, diagnostics, médias et gestion des expressions d’intérêt.</p>
+          <div class="doc-grid">
+            <a href="guide-immobilier.html#compte" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Compte agent immobilier</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-immobilier.html#creer" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Publier un bien</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-immobilier.html#medias" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Médias</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-immobilier.html#validation" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Validation et gestion</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-immobilier.html#interets" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Recevoir les expressions d’intérêt</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-immobilier.html#suite" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Aller plus loin</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="doc-category" id="restaurant">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">🍽️</div>
+            <h2 class="doc-category-title">Pour les restaurateurs</h2>
+            <a class="doc-category-desc" href="guide-restaurant.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Gérer son restaurant sur Primeo : fiche, menu et plats, créneaux, tables, réservations gratuites de table et commandes sur place, à emporter ou en livraison.</p>
+          <div class="doc-grid">
+            <a href="guide-restaurant.html#compte" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Compte restaurateur</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-restaurant.html#fiche" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Créer la fiche du restaurant</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-restaurant.html#menu" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Gérer le menu</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-restaurant.html#creneaux" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Créneaux, tables et réservations</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-restaurant.html#commandes" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Commandes de plats</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-restaurant.html#offres" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Menus spéciaux et promotions</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="doc-category" id="abonnements">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">💼</div>
+            <h2 class="doc-category-title">Pour tous les professionnels</h2>
+            <a class="doc-category-desc" href="guide-abonnements.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Les formules Starter, Business et Entreprise de Primeo, les publications supplémentaires, les boosts, le portefeuille, les reversements et les exports.</p>
+          <div class="doc-grid">
+            <a href="guide-abonnements.html#formules" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Les 3 formules</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-abonnements.html#changer" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Changer de formule</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-abonnements.html#slots" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Publications supplémentaires</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-abonnements.html#boosts" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Les boosts</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-abonnements.html#portefeuille" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Portefeuille et reversements</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-abonnements.html#stats" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Statistiques et exports</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="doc-category" id="admin">
+          <div class="doc-category-header">
+            <div class="doc-category-icon" aria-hidden="true">🛡️</div>
+            <h2 class="doc-category-title">Pour les administrateurs</h2>
+            <a class="doc-category-desc" href="guide-admin.html">Ouvrir le guide complet →</a>
+          </div>
+          <p class="doc-category-intro">Administrer Primeo : valider les comptes professionnels (KYC), modérer annonces et plats, traiter les litiges, configurer la plateforme et gérer le site vitrine.</p>
+          <div class="doc-grid">
+            <a href="guide-admin.html#acces" class="doc-card">
+              <span class="doc-card-num">Section 1</span>
+              <h3 class="doc-card-title">Accès et rôles</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-admin.html#kyc" class="doc-card">
+              <span class="doc-card-num">Section 2</span>
+              <h3 class="doc-card-title">Valider les comptes professionnels</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-admin.html#annonces" class="doc-card">
+              <span class="doc-card-num">Section 3</span>
+              <h3 class="doc-card-title">Modérer les annonces</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-admin.html#plats" class="doc-card">
+              <span class="doc-card-num">Section 4</span>
+              <h3 class="doc-card-title">Modérer les plats</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-admin.html#litiges" class="doc-card">
+              <span class="doc-card-num">Section 5</span>
+              <h3 class="doc-card-title">Traiter les litiges</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+            <a href="guide-admin.html#support" class="doc-card">
+              <span class="doc-card-num">Section 6</span>
+              <h3 class="doc-card-title">Support</h3>
+              <span class="doc-card-arrow">Lire →</span>
+            </a>
+          </div>
+        </div>
+
       </div>
     </section>
 
-    <!-- CTA -->
-    <section style="background:var(--color-bg-alt);border-top:1px solid var(--color-border);padding:3.5rem 0;">
+    <section class="doc-cta">
       <div class="container" style="text-align:center;max-width:580px">
-        <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:.6rem;background:none;color:var(--color-text);text-transform:none;letter-spacing:normal;padding:0;display:block;">Vous ne trouvez pas ce que vous cherchez ?</h2>
-        <p style="color:var(--color-text-muted);margin-bottom:1.5rem">Consultez notre centre d'aide pour des réponses rapides, ou contactez notre équipe support.</p>
+        <h2>Vous ne trouvez pas votre réponse ?</h2>
+        <p>Consultez le centre d’aide (questions fréquentes) ou contactez notre équipe.</p>
         <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
-          <a href="/aide/" class="btn btn-outline">Centre d'aide →</a>
+          <a href="/aide/" class="btn btn-outline">Centre d’aide →</a>
           <a href="/contact/" class="btn btn-primary">Contacter le support</a>
         </div>
       </div>
@@ -270,5 +354,22 @@
   <div id="footer-placeholder"></div>
 
   <script src="../assets/js/main.js" data-base=".."></script>
+  <script>
+  (function(){
+    var DATA=[{"t": "Guide du client : rechercher, réserver, payer et gérer ses réservations", "s": "", "u": "guide-client.html", "c": "Pour les clients", "k": "Guide complet pour les clients Primeo : inscription, recherche, réservation avec 3 options de paiement, annulation et remboursement, avis, messagerie, favoris et parrainage."}, {"t": "1. Compte et connexion", "s": "Pour les clients", "u": "guide-client.html#compte", "c": "Pour les clients", "k": ""}, {"t": "2. Rechercher", "s": "Pour les clients", "u": "guide-client.html#recherche", "c": "Pour les clients", "k": ""}, {"t": "3. La fiche d’un bien", "s": "Pour les clients", "u": "guide-client.html#fiche", "c": "Pour les clients", "k": ""}, {"t": "4. Réserver un hébergement", "s": "Pour les clients", "u": "guide-client.html#reserver", "c": "Pour les clients", "k": ""}, {"t": "5. Options de paiement", "s": "Pour les clients", "u": "guide-client.html#paiement", "c": "Pour les clients", "k": ""}, {"t": "6. Biens immobiliers", "s": "Pour les clients", "u": "guide-client.html#immobilier", "c": "Pour les clients", "k": ""}, {"t": "7. Restaurants", "s": "Pour les clients", "u": "guide-client.html#restaurant", "c": "Pour les clients", "k": ""}, {"t": "8. Suivre ses réservations", "s": "Pour les clients", "u": "guide-client.html#suivi", "c": "Pour les clients", "k": ""}, {"t": "9. Annuler et remboursement", "s": "Pour les clients", "u": "guide-client.html#annuler", "c": "Pour les clients", "k": ""}, {"t": "10. Laisser un avis", "s": "Pour les clients", "u": "guide-client.html#avis", "c": "Pour les clients", "k": ""}, {"t": "11. Messagerie", "s": "Pour les clients", "u": "guide-client.html#messagerie", "c": "Pour les clients", "k": ""}, {"t": "12. Favoris", "s": "Pour les clients", "u": "guide-client.html#favoris", "c": "Pour les clients", "k": ""}, {"t": "13. Parrainage", "s": "Pour les clients", "u": "guide-client.html#parrainage", "c": "Pour les clients", "k": ""}, {"t": "14. Litige et support", "s": "Pour les clients", "u": "guide-client.html#litiges", "c": "Pour les clients", "k": ""}, {"t": "15. Paramètres et compte", "s": "Pour les clients", "u": "guide-client.html#parametres", "c": "Pour les clients", "k": ""}, {"t": "Guide du propriétaire : publier et gérer ses résidences et appartements", "s": "", "u": "guide-residence.html", "c": "Pour les propriétaires de résidences", "k": "Créer un compte professionnel, publier une résidence, ajouter photos, vidéo ou visite 3D, gérer calendrier, tarifs et réservations sur Primeo."}, {"t": "1. Créer son compte professionnel", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#compte", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "2. Validation du compte", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#validation", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "3. Créer une annonce", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#creer", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "4. Photos, vidéo, visite 3D", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#medias", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "5. Validation et statuts", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#publication", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "6. Calendrier et tarifs", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#calendrier", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "7. Gérer les réservations", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#reservations", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "8. Messagerie", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#messagerie", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "9. Avis et évaluation des clients", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#avis", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "10. Aller plus loin", "s": "Pour les propriétaires de résidences", "u": "guide-residence.html#suite", "c": "Pour les propriétaires de résidences", "k": ""}, {"t": "Guide de l’hôtelier : chambres, disponibilités et réservations", "s": "", "u": "guide-hotel.html", "c": "Pour les hôteliers", "k": "Guide pour les hôtels sur Primeo : créer la fiche, définir les types de chambre et leurs prix, gérer disponibilités et réservations."}, {"t": "1. Compte hôtelier", "s": "Pour les hôteliers", "u": "guide-hotel.html#compte", "c": "Pour les hôteliers", "k": ""}, {"t": "2. Créer la fiche de l’établissement", "s": "Pour les hôteliers", "u": "guide-hotel.html#creer", "c": "Pour les hôteliers", "k": ""}, {"t": "3. Types de chambre", "s": "Pour les hôteliers", "u": "guide-hotel.html#chambres", "c": "Pour les hôteliers", "k": ""}, {"t": "4. Médias", "s": "Pour les hôteliers", "u": "guide-hotel.html#medias", "c": "Pour les hôteliers", "k": ""}, {"t": "5. Disponibilités et règles", "s": "Pour les hôteliers", "u": "guide-hotel.html#dispo", "c": "Pour les hôteliers", "k": ""}, {"t": "6. Réservations", "s": "Pour les hôteliers", "u": "guide-hotel.html#reservations", "c": "Pour les hôteliers", "k": ""}, {"t": "7. Aller plus loin", "s": "Pour les hôteliers", "u": "guide-hotel.html#suite", "c": "Pour les hôteliers", "k": ""}, {"t": "Guide de l’agent immobilier : publier des biens à vendre ou à louer", "s": "", "u": "guide-immobilier.html", "c": "Pour les agents immobiliers", "k": "Publier des biens immobiliers sur Primeo : location, vente, terrains, diagnostics, médias et gestion des expressions d’intérêt."}, {"t": "1. Compte agent immobilier", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#compte", "c": "Pour les agents immobiliers", "k": ""}, {"t": "2. Publier un bien", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#creer", "c": "Pour les agents immobiliers", "k": ""}, {"t": "3. Médias", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#medias", "c": "Pour les agents immobiliers", "k": ""}, {"t": "4. Validation et gestion", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#validation", "c": "Pour les agents immobiliers", "k": ""}, {"t": "5. Recevoir les expressions d’intérêt", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#interets", "c": "Pour les agents immobiliers", "k": ""}, {"t": "6. Aller plus loin", "s": "Pour les agents immobiliers", "u": "guide-immobilier.html#suite", "c": "Pour les agents immobiliers", "k": ""}, {"t": "Guide du restaurateur : menu, créneaux, tables et commandes", "s": "", "u": "guide-restaurant.html", "c": "Pour les restaurateurs", "k": "Gérer son restaurant sur Primeo : fiche, menu et plats, créneaux, tables, réservations gratuites de table et commandes sur place, à emporter ou en livraison."}, {"t": "1. Compte restaurateur", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#compte", "c": "Pour les restaurateurs", "k": ""}, {"t": "2. Créer la fiche du restaurant", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#fiche", "c": "Pour les restaurateurs", "k": ""}, {"t": "3. Gérer le menu", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#menu", "c": "Pour les restaurateurs", "k": ""}, {"t": "4. Créneaux, tables et réservations", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#creneaux", "c": "Pour les restaurateurs", "k": ""}, {"t": "5. Commandes de plats", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#commandes", "c": "Pour les restaurateurs", "k": ""}, {"t": "6. Menus spéciaux et promotions", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#offres", "c": "Pour les restaurateurs", "k": ""}, {"t": "7. Formules et visibilité", "s": "Pour les restaurateurs", "u": "guide-restaurant.html#suite", "c": "Pour les restaurateurs", "k": ""}, {"t": "Formules, boosts, portefeuille et statistiques", "s": "", "u": "guide-abonnements.html", "c": "Pour tous les professionnels", "k": "Les formules Starter, Business et Entreprise de Primeo, les publications supplémentaires, les boosts, le portefeuille, les reversements et les exports."}, {"t": "1. Les 3 formules", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#formules", "c": "Pour tous les professionnels", "k": ""}, {"t": "2. Changer de formule", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#changer", "c": "Pour tous les professionnels", "k": ""}, {"t": "3. Publications supplémentaires", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#slots", "c": "Pour tous les professionnels", "k": ""}, {"t": "4. Les boosts", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#boosts", "c": "Pour tous les professionnels", "k": ""}, {"t": "5. Portefeuille et reversements", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#portefeuille", "c": "Pour tous les professionnels", "k": ""}, {"t": "6. Statistiques et exports", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#stats", "c": "Pour tous les professionnels", "k": ""}, {"t": "7. Co-gérants (Entreprise)", "s": "Pour tous les professionnels", "u": "guide-abonnements.html#equipe", "c": "Pour tous les professionnels", "k": ""}, {"t": "Guide de l’administrateur : validation, modération, litiges et configuration", "s": "", "u": "guide-admin.html", "c": "Pour les administrateurs", "k": "Administrer Primeo : valider les comptes professionnels (KYC), modérer annonces et plats, traiter les litiges, configurer la plateforme et gérer le site vitrine."}, {"t": "1. Accès et rôles", "s": "Pour les administrateurs", "u": "guide-admin.html#acces", "c": "Pour les administrateurs", "k": ""}, {"t": "2. Valider les comptes professionnels", "s": "Pour les administrateurs", "u": "guide-admin.html#kyc", "c": "Pour les administrateurs", "k": ""}, {"t": "3. Modérer les annonces", "s": "Pour les administrateurs", "u": "guide-admin.html#annonces", "c": "Pour les administrateurs", "k": ""}, {"t": "4. Modérer les plats", "s": "Pour les administrateurs", "u": "guide-admin.html#plats", "c": "Pour les administrateurs", "k": ""}, {"t": "5. Traiter les litiges", "s": "Pour les administrateurs", "u": "guide-admin.html#litiges", "c": "Pour les administrateurs", "k": ""}, {"t": "6. Support", "s": "Pour les administrateurs", "u": "guide-admin.html#support", "c": "Pour les administrateurs", "k": ""}, {"t": "7. Utilisateurs, réservations, abonnements", "s": "Pour les administrateurs", "u": "guide-admin.html#suivi", "c": "Pour les administrateurs", "k": ""}, {"t": "8. Configuration", "s": "Pour les administrateurs", "u": "guide-admin.html#config", "c": "Pour les administrateurs", "k": ""}, {"t": "9. Communication et site vitrine", "s": "Pour les administrateurs", "u": "guide-admin.html#communication", "c": "Pour les administrateurs", "k": ""}, {"t": "10. Journaux et analytiques", "s": "Pour les administrateurs", "u": "guide-admin.html#journaux", "c": "Pour les administrateurs", "k": ""}];
+    var input=document.getElementById('doc-search-input'),box=document.getElementById('doc-results');
+    function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+    function run(){
+      var q=norm(input.value.trim());
+      if(q.length<2){box.hidden=true;box.innerHTML='';return;}
+      var words=q.split(/\s+/).map(function(w){return w.length>5?w.slice(0,5):w;});
+      var res=DATA.filter(function(r){var h=norm(r.t+' '+r.s+' '+r.c+' '+r.k);return words.every(function(w){return h.indexOf(w)>-1;});}).slice(0,10);
+      box.hidden=false;
+      if(!res.length){box.innerHTML='<p class="doc-noresult">Aucun résultat pour « '+input.value.replace(/</g,'&lt;')+' ». Essayez un autre mot ou consultez le <a href="/aide/">centre d’aide</a>.</p>';return;}
+      box.innerHTML='<ul>'+res.map(function(r){return '<li><a href="'+r.u+'"><strong>'+r.t+'</strong><span>'+(r.s||'Guide complet')+'</span></a></li>';}).join('')+'</ul>';
+    }
+    input.addEventListener('input',run);
+  })();
+  </script>
 </body>
 </html>

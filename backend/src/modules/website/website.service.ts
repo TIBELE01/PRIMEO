@@ -5,6 +5,7 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
 import { HttpError } from '../../common/handlers/http-error.handler';
+import { DEFAULT_FAQ } from './faq.defaults';
 function createHttpError(status: number, msg: string) { return new HttpError(status, msg); }
 
 // ── Defaults (fallback si base vide) ──────────────────────────────────────────
@@ -173,17 +174,6 @@ const DEFAULT_ABOUT_VALUES = [
 
 const DEFAULT_ABOUT_TEAM = [
   { name: 'YEO TIBELE', role: 'CEO & Co-fondateur', initials: 'YT', bio: 'Diplômé en Marketing et communication.', sortOrder: 0 },
-];
-
-const DEFAULT_FAQ = [
-  { category: 'Général', question: "Qu'est-ce que Primeo ?", answer: "<p>Primeo est une plateforme de réservation d'hébergement et de mise en relation dédiée aux voyageurs et aux professionnels en Côte d'Ivoire.</p>", order: 1 },
-  { category: 'Général', question: 'Comment créer un compte Primeo ?', answer: "<p>Rendez-vous sur app.primeo.ci/signup et renseignez votre adresse e-mail, votre numéro de téléphone et créez un mot de passe sécurisé.</p>", order: 2 },
-  { category: 'Général', question: "Primeo est-il disponible partout en Côte d'Ivoire ?", answer: "<p>Oui, Primeo est accessible sur l'ensemble du territoire ivoirien. L'offre s'enrichit progressivement, en commençant par Abidjan et les grandes agglomérations.</p>", order: 3 },
-  { category: 'Abonnements & Paiements', question: 'Quels sont les modes de paiement acceptés ?', answer: "<p>Nous acceptons : Mobile Money (Orange Money, MTN MoMo, Wave), Carte bancaire (Visa, Mastercard), et Virement bancaire pour les abonnements annuels.</p>", order: 1 },
-  { category: 'Abonnements & Paiements', question: "Puis-je annuler mon abonnement à tout moment ?", answer: "<p>Oui, vous pouvez résilier depuis votre espace client (Paramètres → Abonnement → Résilier). La résiliation prend effet à la fin de la période en cours.</p>", order: 2 },
-  { category: 'Compte & Sécurité', question: "J'ai oublié mon mot de passe, que faire ?", answer: "<p>Cliquez sur \"Mot de passe oublié ?\" sur la page de connexion. Vous recevrez un lien de réinitialisation valable 30 minutes.</p>", order: 1 },
-  { category: 'Compte & Sécurité', question: "Comment activer la double authentification ?", answer: "<p>Dans votre espace client, accédez à Paramètres → Sécurité → Authentification à deux facteurs.</p>", order: 2 },
-  { category: 'Application Mobile', question: "L'application Primeo est-elle disponible sur Android et iOS ?", answer: "<p>Oui, l'application est disponible sur Google Play Store et Apple App Store.</p>", order: 1 },
 ];
 
 const STATS_CACHE_KEY = 'website:stats';
