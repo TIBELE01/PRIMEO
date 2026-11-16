@@ -1,7 +1,7 @@
 // Envois Telegram via Norasend.
 //   POST /api/v1/telegram/send       — un message (texte ou média)
 //   POST /api/v1/telegram/broadcast  — diffusion (jusqu'à 100 chats par appel)
-import { norasendPost, type NorasendResult } from './norasend.client';
+import { norasendPost, norasendGet, type NorasendResult } from './norasend.client';
 import { norasendConfig } from '../../config/norasend.config';
 import { HttpError } from '../../common/handlers/http-error.handler';
 
@@ -11,9 +11,6 @@ const BROADCAST_PATH = '/api/v1/telegram/broadcast';
 export type TelegramParseMode = 'HTML' | 'Markdown' | 'MarkdownV2';
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp)(\?.*)?$/i;
-
-const withBot = (body: Record<string, unknown>): Record<string, unknown> =>
-  norasendConfig.telegramBotId ? { ...body, botId: norasendConfig.telegramBotId } : body;
 
 /**
  * Envoie un message Telegram.
@@ -36,7 +33,7 @@ export async function sendTelegramMessage(
     ? { chatId, type: IMAGE_EXT.test(mediaUrl) ? 'photo' : 'document', mediaUrl, caption: caption ?? text }
     : { chatId, type: 'text', text };
   if (parseMode) body.parseMode = parseMode;
-  return norasendPost(SEND_PATH, withBot(body));
+  return norasendPost(SEND_PATH, body);
 }
 
 /** Diffuse un texte à plusieurs chats (100 maximum par appel). */
@@ -45,11 +42,20 @@ export async function broadcastTelegram(
   text: string,
   delayMs?: number,
 ): Promise<NorasendResult> {
+  const { min, max } = norasendConfig.telegramDelayMs;
+  if (delayMs !== undefined && (!Number.isInteger(delayMs) || delayMs < min || delayMs > max)) {
+    throw new HttpError(400, `delayMs Telegram : entier entre ${min} et ${max}`);
+  }
   if (chatIds.length === 0) throw new HttpError(400, 'Aucun chat');
   if (chatIds.length > norasendConfig.maxBroadcastBatch) {
     throw new HttpError(400, `Une diffusion Telegram est limitée à ${norasendConfig.maxBroadcastBatch} chats par appel`);
   }
   const body: Record<string, unknown> = { chatIds, text };
   if (delayMs !== undefined) body.delayMs = delayMs;
-  return norasendPost(BROADCAST_PATH, withBot(body));
+  return norasendPost(BROADCAST_PATH, body);
+}
+
+/** Quota et état du bot Telegram (409 = bot non connecté). */
+export async function getTelegramQuota(): Promise<Record<string, unknown>> {
+  return (await norasendGet('/api/v1/telegram/quota')).data;
 }

@@ -103,11 +103,8 @@ const envSchema = z.object({
   NORASEND_API_KEY: z.string().optional(),
   NORASEND_API_URL: z.string().url().default('https://api.norasend.com'),
   // Schéma d'authentification : « bearer » (Authorization: Bearer <clé>) ou
-  // « x-api-key » (en-tête X-API-Key). À confirmer avec la documentation Norasend.
+  // « x-api-key » (en-tête X-Api-Key) — Norasend accepte les deux.
   NORASEND_AUTH_SCHEME: z.enum(['bearer', 'x-api-key']).default('bearer'),
-  // Identifiant de la session WhatsApp (numéro connecté par QR code) et du bot Telegram
-  WHATSAPP_SESSION_ID: z.string().optional(),
-  TELEGRAM_BOT_ID: z.string().optional(),
 
   // Geoapify (maps)
   GEOAPIFY_API_KEY: z.string().optional(),
@@ -193,7 +190,7 @@ const OPTIONAL_INTEGRATIONS: IntegrationGroup[] = [
   // Cloudinary est vérifié séparément (cf. cloudinaryParsed) car il accepte deux
   // formes de configuration (CLOUDINARY_URL OU les 3 variables séparées).
   { name: 'Geoapify — géolocalisation',         vars: ['GEOAPIFY_API_KEY'] },
-  { name: 'Norasend — WhatsApp / Telegram',      vars: ['NORASEND_API_KEY', 'WHATSAPP_SESSION_ID', 'TELEGRAM_BOT_ID'] },
+  { name: 'Norasend — WhatsApp / Telegram',      vars: ['NORASEND_API_KEY'] },
   { name: 'Upstash Redis — cache / rate-limit', vars: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'] },
 ];
 

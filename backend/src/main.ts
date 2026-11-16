@@ -32,6 +32,10 @@ async function bootstrap(): Promise<void> {
 
   // Campagnes WhatsApp/Telegram interrompues par un redémarrage : clôture propre
   communicationsService.recoverInterrupted().catch(() => null);
+  // Sonde Norasend (quota par canal) : journalise l'état sans jamais bloquer le démarrage
+  communicationsService.getStatus()
+    .then((s) => logger.info('Norasend', { configured: s.configured, whatsapp: s.whatsapp.ready, telegram: s.telegram.ready, whatsappError: s.whatsapp.error, telegramError: s.telegram.error }))
+    .catch(() => null);
 
   // Start all cron jobs
   startAllJobs();

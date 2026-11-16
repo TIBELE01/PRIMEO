@@ -431,7 +431,7 @@ export interface CampaignPayload {
 export interface MessagingOptOut { id: string; channel: MessagingChannel; recipient: string; reason: string | null; createdAt: string }
 
 export const communicationService = {
-  status: () => api.get<{ configured: boolean; whatsapp: { ready: boolean; sessionConfigured: boolean }; telegram: { ready: boolean; botConfigured: boolean }; limits: { maxRecipientsPerCampaign: number; maxBroadcastBatch: number; maxTextLength: number } }>('/admin/communications/status'),
+  status: () => api.get<{ configured: boolean; whatsapp: { ready: boolean; quota: Record<string, unknown> | null; error: string | null }; telegram: { ready: boolean; quota: Record<string, unknown> | null; error: string | null }; limits: { maxRecipientsPerCampaign: number; maxBroadcastBatch: number; maxTextLength: number } }>('/admin/communications/status'),
   send: (payload: CampaignPayload) => api.post<Campaign>('/admin/communications/send', payload),
   broadcast: (payload: CampaignPayload) => api.post<Campaign>('/admin/communications/broadcast', payload),
   campaigns: (params: { page?: number; channel?: MessagingChannel | '' }) =>

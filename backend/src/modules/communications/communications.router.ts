@@ -59,7 +59,7 @@ const parse = <T>(schema: z.ZodType<T>, data: unknown): T => {
 
 // État des canaux (sans secret)
 communicationsRouter.get('/status', handle(async (_req, res) => {
-  res.json(communicationsService.getStatus());
+  res.json(await communicationsService.getStatus());
 }));
 
 // Envoi direct : un message par destinataire

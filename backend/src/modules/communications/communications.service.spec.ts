@@ -4,7 +4,7 @@ jest.mock('../../common/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 jest.mock('../../config/norasend.config', () => ({
-  norasendConfig: { baseUrl: 'http://x', apiKey: 'k', authScheme: 'bearer', maxBroadcastBatch: 100, whatsappSessionId: undefined, telegramBotId: undefined },
+  norasendConfig: { baseUrl: 'http://x', apiKey: 'k', authScheme: 'bearer', maxBroadcastBatch: 100, whatsappDelayMs: { min: 3000, max: 30000, default: 4000 }, telegramDelayMs: { min: 500, max: 10000, default: 1000 } },
 }));
 
 const mockConfigured = jest.fn(() => true);
@@ -12,15 +12,19 @@ jest.mock('./norasend.client', () => ({ isNorasendConfigured: () => mockConfigur
 
 const mockWaSend = jest.fn();
 const mockWaBroadcast = jest.fn();
+const mockWaQuota = jest.fn();
+const mockTgQuota = jest.fn();
 const mockTgSend = jest.fn();
 const mockTgBroadcast = jest.fn();
 jest.mock('./norasend-whatsapp.service', () => ({
   sendWhatsAppMessage: (...a: unknown[]) => mockWaSend(...a),
   broadcastWhatsApp: (...a: unknown[]) => mockWaBroadcast(...a),
+  getWhatsAppQuota: () => mockWaQuota(),
 }));
 jest.mock('./norasend-telegram.service', () => ({
   sendTelegramMessage: (...a: unknown[]) => mockTgSend(...a),
   broadcastTelegram: (...a: unknown[]) => mockTgBroadcast(...a),
+  getTelegramQuota: () => mockTgQuota(),
 }));
 
 // ── Base en mémoire (juste ce que le service utilise) ─────────────────────────
@@ -72,8 +76,9 @@ jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 import { communicationsService, normalizePhone, normalizeChatId, placeholdersOf, renderTemplate, MAX_RECIPIENTS_PER_CAMPAIGN } from './communications.service';
 
-const ok = (id = 'm') => ({ ok: true, messageId: id, results: null, error: null, raw: {} });
-const base = { consentConfirmed: true, delayMs: 0 } as const;
+const ok = (id = 'm') => ({ ok: true, messageId: id, accepted: null, skipped: 0, results: null, error: null, raw: {} });
+const base = { consentConfirmed: true, delayMs: 3000 } as const;
+const tgBase = { consentConfirmed: true, delayMs: 1000 } as const;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -83,6 +88,8 @@ beforeEach(() => {
   mockWaBroadcast.mockResolvedValue(ok('wab'));
   mockTgSend.mockResolvedValue(ok('tg'));
   mockTgBroadcast.mockResolvedValue(ok('tgb'));
+  mockWaQuota.mockResolvedValue({ remaining: 50 });
+  mockTgQuota.mockResolvedValue({ botUsername: 'primeo_bot' });
 });
 
 describe('normalisation', () => {
@@ -121,7 +128,7 @@ describe('garde-fous', () => {
     await expect(communicationsService.createCampaign(wa(), 'adm')).rejects.toMatchObject({ statusCode: 503 });
   });
   it('refuse message vide, trop long, média non https, trop de destinataires, delayMs hors plage', async () => {
-    for (const bad of [{ text: '  ' }, { text: 'x'.repeat(4001) }, { mediaUrl: 'http://x.com/a.png' }, { delayMs: -1 }, { delayMs: 70000 }]) {
+    for (const bad of [{ text: '  ' }, { text: 'x'.repeat(4001) }, { mediaUrl: 'http://x.com/a.png' }, { delayMs: 0 }, { delayMs: 2999 }, { delayMs: 30001 }]) {
       await expect(communicationsService.createCampaign(wa(bad), 'adm')).rejects.toMatchObject({ statusCode: 400 });
     }
     const many = Array.from({ length: MAX_RECIPIENTS_PER_CAMPAIGN + 1 }, (_, i) => ({ to: `22507${String(i).padStart(8, '0')}` }));
@@ -141,6 +148,11 @@ describe('garde-fous', () => {
     expect(mockWaBroadcast).not.toHaveBeenCalled();
     expect(mockWaSend).not.toHaveBeenCalled();
   });
+  it('Telegram : délai 500–10000 ms (0 et 60000 refusés)', async () => {
+    const tg = (d: number) => ({ channel: 'telegram' as const, mode: 'broadcast' as const, text: 'x', consentConfirmed: true, delayMs: d, recipients: [{ to: '123456' }] });
+    for (const d of [0, 499, 10001, 60000]) await expect(communicationsService.createCampaign(tg(d), 'adm')).rejects.toMatchObject({ statusCode: 400 });
+    await expect(communicationsService.createCampaign(tg(500), 'adm')).resolves.toMatchObject({ status: 'completed' });
+  });
   it('parseMode réservé à Telegram', async () => {
     await expect(communicationsService.createCampaign(wa({ parseMode: 'HTML' }), 'adm')).rejects.toMatchObject({ statusCode: 400 });
   });
@@ -153,7 +165,7 @@ describe('envois', () => {
       recipients: [{ to: '2250700000001' }, { to: '0700000002' }, { to: '+225 07 00 00 00 03' }].map((r, i) => i === 2 ? { to: '2250700000003' } : r),
     }, 'adm');
     expect(mockWaBroadcast).toHaveBeenCalledTimes(1);
-    expect(mockWaBroadcast).toHaveBeenCalledWith(['2250700000001', '2250700000002', '2250700000003'], 'Promo -20 %', undefined, 3000);
+    expect(mockWaBroadcast).toHaveBeenCalledWith(['2250700000001', '2250700000002', '2250700000003'], 'Promo -20 %', {}, 3000);
     expect(c.status).toBe('completed');
     expect(c).toMatchObject({ totalRecipients: 3, sentCount: 3, failedCount: 0 });
     expect(c.recipients.every((r: Rec) => r.status === 'sent' && r.providerMessageId === 'wab')).toBe(true);
@@ -161,30 +173,57 @@ describe('envois', () => {
 
   it('Telegram diffusion à 3 chats', async () => {
     const c = await communicationsService.createCampaign({
-      channel: 'telegram', mode: 'broadcast', text: 'Nouveautés', ...base,
+      channel: 'telegram', mode: 'broadcast', text: 'Nouveautés', ...tgBase,
       recipients: [{ to: '@canal_un' }, { to: '123456' }, { to: '-1001234567' }],
     }, 'adm');
-    expect(mockTgBroadcast).toHaveBeenCalledWith(['@canal_un', '123456', '-1001234567'], 'Nouveautés', 0);
+    expect(mockTgBroadcast).toHaveBeenCalledWith(['@canal_un', '123456', '-1001234567'], 'Nouveautés', 1000);
     expect(c).toMatchObject({ status: 'completed', sentCount: 3 });
   });
 
-  it('variables : texte personnalisé par destinataire (chacun reçoit son prénom)', async () => {
+  it('WhatsApp : gabarit brut + variables par numéro dans UN appel /broadcast', async () => {
     const c = await communicationsService.createCampaign({
       channel: 'whatsapp', mode: 'broadcast', text: 'Bonjour {{prenom}} !', ...base,
       recipients: [{ to: '2250700000001', variables: { prenom: 'Awa' } }, { to: '2250700000002', variables: { prenom: 'Koffi' } }],
     }, 'adm');
-    const sent = mockWaSend.mock.calls.map((c) => [c[0], c[1]]);
-    expect(sent).toEqual([['2250700000001', 'Bonjour Awa !'], ['2250700000002', 'Bonjour Koffi !']]);
+    expect(mockWaBroadcast).toHaveBeenCalledTimes(1);
+    expect(mockWaBroadcast).toHaveBeenCalledWith(
+      ['2250700000001', '2250700000002'], 'Bonjour {{prenom}} !',
+      { '2250700000001': { prenom: 'Awa' }, '2250700000002': { prenom: 'Koffi' } }, 3000);
     expect(c.status).toBe('completed');
   });
 
-  it('valeur par défaut d\'une variable pour qui n\'a pas la sienne ; destinataires au même texte regroupés', async () => {
+  it('valeur par défaut d\'une variable appliquée à qui n\'a pas la sienne', async () => {
     await communicationsService.createCampaign({
       channel: 'whatsapp', mode: 'broadcast', text: 'Bonjour {{prenom}}', variables: { prenom: 'cher client' }, ...base,
+      recipients: [{ to: '2250700000001' }, { to: '2250700000002', variables: { prenom: 'Awa' } }],
+    }, 'adm');
+    expect(mockWaBroadcast.mock.calls[0][2]).toEqual({ '2250700000001': { prenom: 'cher client' }, '2250700000002': { prenom: 'Awa' } });
+  });
+
+  it('Telegram : texte personnalisé substitué ici, un appel par texte distinct', async () => {
+    await communicationsService.createCampaign({
+      channel: 'telegram', mode: 'broadcast', text: 'Salut {{prenom}}', ...tgBase,
+      recipients: [{ to: '123456', variables: { prenom: 'Awa' } }, { to: '234567', variables: { prenom: 'Awa' } }, { to: '345678', variables: { prenom: 'Koffi' } }],
+    }, 'adm');
+    // Groupe de 2 → /broadcast ; groupe d'un seul → /send
+    expect(mockTgBroadcast.mock.calls.map((c) => [c[0], c[1]])).toEqual([[['123456', '234567'], 'Salut Awa']]);
+    expect(mockTgSend.mock.calls.map((c) => [c[0], c[1]])).toEqual([['345678', 'Salut Koffi']]);
+  });
+
+  it('diffusion WhatsApp avec média : envois individuels (le média ne passe pas par /broadcast)', async () => {
+    await communicationsService.createCampaign({
+      channel: 'whatsapp', mode: 'broadcast', text: 'Voir', mediaUrl: 'https://cdn.example.com/a.png', ...base,
       recipients: [{ to: '2250700000001' }, { to: '2250700000002' }],
     }, 'adm');
-    expect(mockWaBroadcast).toHaveBeenCalledTimes(1);
-    expect(mockWaBroadcast.mock.calls[0][1]).toBe('Bonjour cher client');
+    expect(mockWaBroadcast).not.toHaveBeenCalled();
+    expect(mockWaSend).toHaveBeenCalledTimes(2);
+  });
+
+  it('accepted < destinataires → « partial » avec explication', async () => {
+    mockWaBroadcast.mockResolvedValue({ ...ok('b'), accepted: 1 });
+    const c = await communicationsService.createCampaign({ channel: 'whatsapp', mode: 'broadcast', text: 'x', ...base, recipients: [{ to: '2250700000001' }, { to: '2250700000002' }] }, 'adm');
+    expect(c.status).toBe('partial');
+    expect(c.error).toContain('accepté 1 message(s) sur 2');
   });
 
   it('envoi direct à plusieurs destinataires : un /send chacun', async () => {
@@ -200,7 +239,7 @@ describe('envois', () => {
   it('média WhatsApp et parseMode Telegram transmis à l\'envoi direct', async () => {
     await communicationsService.createCampaign({ channel: 'whatsapp', mode: 'direct', text: 'Voir', mediaUrl: 'https://cdn.example.com/a.png', ...base, recipients: [{ to: '2250700000001' }] }, 'adm');
     expect(mockWaSend).toHaveBeenCalledWith('2250700000001', 'Voir', 'https://cdn.example.com/a.png');
-    await communicationsService.createCampaign({ channel: 'telegram', mode: 'direct', text: '<b>Hi</b>', parseMode: 'HTML', ...base, recipients: [{ to: '123456' }] }, 'adm');
+    await communicationsService.createCampaign({ channel: 'telegram', mode: 'direct', text: '<b>Hi</b>', parseMode: 'HTML', ...tgBase, recipients: [{ to: '123456' }] }, 'adm');
     expect(mockTgSend).toHaveBeenCalledWith('123456', '<b>Hi</b>', undefined, undefined, 'HTML');
   });
 
@@ -254,19 +293,27 @@ describe('désinscriptions', () => {
   });
   it('la désinscription est propre à chaque canal', async () => {
     optOuts = [{ channel: 'whatsapp', recipient: '123456' }];
-    const c = await communicationsService.createCampaign({ channel: 'telegram', mode: 'broadcast', text: 'x', ...base, recipients: [{ to: '123456' }] }, 'adm');
+    const c = await communicationsService.createCampaign({ channel: 'telegram', mode: 'broadcast', text: 'x', ...tgBase, recipients: [{ to: '123456' }] }, 'adm');
     expect(c.sentCount).toBe(1);
   });
 });
 
 describe('journal et état', () => {
   it('trace chaque campagne dans le journal d\'audit', async () => {
-    await communicationsService.createCampaign({ channel: 'telegram', mode: 'direct', text: 'x', ...base, recipients: [{ to: '123456' }] }, 'adm-9');
+    await communicationsService.createCampaign({ channel: 'telegram', mode: 'direct', text: 'x', ...tgBase, recipients: [{ to: '123456' }] }, 'adm-9');
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ userId: 'adm-9', action: 'admin.messaging.campaign' }) });
   });
-  it('getStatus ne renvoie aucun secret', () => {
-    const s = communicationsService.getStatus();
+  it('getStatus : sonde les quotas ; 409 (canal non connecté) → prêt=false avec le motif ; aucun secret', async () => {
+    mockTgQuota.mockRejectedValue(Object.assign(new Error('Canal non connecté dans Norasend'), { statusCode: 409 }));
+    const s = await communicationsService.getStatus();
     expect(JSON.stringify(s)).not.toContain('"k"');
-    expect(s).toMatchObject({ configured: true, whatsapp: { ready: true }, telegram: { ready: true } });
+    expect(s).toMatchObject({ configured: true, whatsapp: { ready: true, quota: { remaining: 50 } }, telegram: { ready: false, error: expect.stringContaining('non connecté') } });
+    expect(s.limits.delayMs.whatsapp.min).toBe(3000);
+  });
+  it('getStatus sans clé : aucun appel Norasend', async () => {
+    mockConfigured.mockReturnValue(false);
+    const s = await communicationsService.getStatus();
+    expect(s.configured).toBe(false);
+    expect(mockWaQuota).not.toHaveBeenCalled();
   });
 });

@@ -4,25 +4,30 @@
 // Deux modes :
 //   - « direct »    : un message par destinataire (/send), envoyés l'un après l'autre
 //                     avec une pause entre deux envois ;
-//   - « broadcast » : diffusion (/broadcast, 100 destinataires par appel). Les variables
-//                     ({{prenom}}…) sont substituées ICI, destinataire par destinataire ;
-//                     les destinataires dont le texte final est identique partagent un appel.
+//   - « broadcast » : diffusion (/broadcast, 100 destinataires par appel). WhatsApp sans
+//                     média : le gabarit part tel quel avec les variables par numéro
+//                     (Norasend substitue {{prenom}}…). Telegram : les variables sont
+//                     substituées ICI et les destinataires au texte identique partagent un
+//                     appel. Avec un média, chaque destinataire reçoit un envoi individuel.
+//   « Envoyé » signifie ACCEPTÉ par Norasend (mis en file), pas livré.
 import { MessagingChannel, CampaignStatus, CampaignRecipientStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { logger } from '../../common/utils/logger';
 import { norasendConfig } from '../../config/norasend.config';
 import { isNorasendConfigured, type NorasendResult } from './norasend.client';
-import { sendWhatsAppMessage, broadcastWhatsApp } from './norasend-whatsapp.service';
-import { sendTelegramMessage, broadcastTelegram, type TelegramParseMode } from './norasend-telegram.service';
+import { sendWhatsAppMessage, broadcastWhatsApp, getWhatsAppQuota } from './norasend-whatsapp.service';
+import { sendTelegramMessage, broadcastTelegram, getTelegramQuota, type TelegramParseMode } from './norasend-telegram.service';
 
 // ── Limites ───────────────────────────────────────────────────────────────────
 
 export const MAX_RECIPIENTS_PER_CAMPAIGN = 500;
 export const MAX_TEXT_LENGTH = 4000;
-const MAX_DELAY_MS = 60_000;
-// Pause par défaut entre deux envois : prudente pour WhatsApp (risque de bannissement)
-const DEFAULT_DELAY_MS: Record<MessagingChannel, number> = { whatsapp: 3000, telegram: 1000 };
+// Délais documentés par Norasend (WhatsApp 3–30 s, Telegram 0,5–10 s)
+const DELAY_RANGE: Record<MessagingChannel, { min: number; max: number; default: number }> = {
+  whatsapp: norasendConfig.whatsappDelayMs,
+  telegram: norasendConfig.telegramDelayMs,
+};
 // Au-delà, l'envoi se poursuit en arrière-plan et l'historique se met à jour
 const SYNC_SEND_MAX_RECIPIENTS = 5;
 
@@ -116,9 +121,10 @@ function validate(input: CampaignInput): { recipients: PreparedRecipient[]; dela
     throw new HttpError(400, 'parseMode n\'existe que pour Telegram');
   }
 
-  const delayMs = input.delayMs ?? DEFAULT_DELAY_MS[input.channel];
-  if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > MAX_DELAY_MS) {
-    throw new HttpError(400, `delayMs doit être un entier entre 0 et ${MAX_DELAY_MS}`);
+  const range = DELAY_RANGE[input.channel];
+  const delayMs = input.delayMs ?? range.default;
+  if (!Number.isInteger(delayMs) || delayMs < range.min || delayMs > range.max) {
+    throw new HttpError(400, `Délai entre messages : entier entre ${range.min} et ${range.max} ms pour ${input.channel === 'whatsapp' ? 'WhatsApp' : 'Telegram'}`);
   }
 
   const needed = placeholdersOf(text);
@@ -172,7 +178,7 @@ async function markRecipients(
   });
 }
 
-async function finalizeCampaign(campaignId: string, fatalError?: string): Promise<void> {
+async function finalizeCampaign(campaignId: string, fatalError?: string, warnings: string[] = []): Promise<void> {
   const grouped = await prisma.messagingCampaignRecipient.groupBy({
     by: ['status'],
     where: { campaignId },
@@ -181,10 +187,11 @@ async function finalizeCampaign(campaignId: string, fatalError?: string): Promis
   const count = (s: CampaignRecipientStatus): number => grouped.find((g) => g.status === s)?._count._all ?? 0;
   const sent = count('sent');
   const failed = count('failed') + count('pending'); // « pending » restant = jamais envoyé
-  const status: CampaignStatus = sent === 0 ? 'failed' : failed > 0 ? 'partial' : 'completed';
+  const status: CampaignStatus = sent === 0 ? 'failed' : failed > 0 || warnings.length > 0 ? 'partial' : 'completed';
+  const note = [fatalError, ...warnings].filter(Boolean).join(' — ').slice(0, 500) || null;
   await prisma.messagingCampaign.update({
     where: { id: campaignId },
-    data: { status, sentCount: sent, failedCount: failed, skippedCount: count('skipped'), completedAt: new Date(), error: fatalError ?? null },
+    data: { status, sentCount: sent, failedCount: failed, skippedCount: count('skipped'), completedAt: new Date(), error: note },
   });
 }
 
@@ -193,8 +200,9 @@ async function sendBatch(
   campaign: { id: string; channel: MessagingChannel; text: string; mediaUrl: string | null; parseMode: string | null; delayMs: number },
   batch: PreparedRecipient[],
   mode: 'direct' | 'broadcast',
-): Promise<void> {
+): Promise<string | undefined> {
   const tos = batch.map((b) => b.to);
+  let warning: string | undefined;
   try {
     let result: NorasendResult;
     if (mode === 'direct' || batch.length === 1) {
@@ -203,9 +211,17 @@ async function sendBatch(
         ? await sendWhatsAppMessage(only.to, only.text, campaign.mediaUrl ?? undefined)
         : await sendTelegramMessage(only.to, only.text, campaign.mediaUrl ?? undefined, undefined, (campaign.parseMode as TelegramParseMode) ?? undefined);
     } else {
-      result = campaign.channel === 'whatsapp'
-        ? await broadcastWhatsApp(tos, batch[0].text, undefined, campaign.delayMs)
-        : await broadcastTelegram(tos, batch[0].text, campaign.delayMs);
+      if (campaign.channel === 'whatsapp') {
+        // Gabarit brut + variables par numéro : Norasend fait la substitution
+        const variables: Record<string, Record<string, string>> = {};
+        for (const b of batch) if (Object.keys(b.variables).length > 0) variables[b.to] = b.variables;
+        result = await broadcastWhatsApp(tos, campaign.text, variables, campaign.delayMs);
+        if (result.ok && result.accepted !== null && result.accepted < batch.length) {
+          warning = `Norasend a accepté ${result.accepted} message(s) sur ${batch.length} (quota dépassé ou numéro invalide) : vérifiez l'historique Norasend`;
+        }
+      } else {
+        result = await broadcastTelegram(tos, batch[0].text, campaign.delayMs);
+      }
     }
 
     if (result.results && result.results.length > 0) {
@@ -224,6 +240,7 @@ async function sendBatch(
   } catch (err) {
     await markRecipients(campaign.id, tos, { status: 'failed', error: (err as Error).message.slice(0, 300) });
   }
+  return warning;
 }
 
 /** Exécute une campagne déjà enregistrée. Ne lève jamais : les erreurs sont tracées en base. */
@@ -231,8 +248,10 @@ export async function runCampaign(campaignId: string, prepared: PreparedRecipien
   try {
     const campaign = await prisma.messagingCampaign.findUnique({ where: { id: campaignId } });
     if (!campaign) return;
-    const mode = campaign.mode as 'direct' | 'broadcast';
+    // Un média ne passe pas par /broadcast : envois individuels
+    const mode: 'direct' | 'broadcast' = campaign.mediaUrl ? 'direct' : (campaign.mode as 'direct' | 'broadcast');
     const active = prepared;
+    const warnings: string[] = [];
 
     if (mode === 'direct') {
       for (let i = 0; i < active.length; i++) {
@@ -240,19 +259,23 @@ export async function runCampaign(campaignId: string, prepared: PreparedRecipien
         await sendBatch(campaign, [active[i]], 'direct');
       }
     } else {
-      // Destinataires au texte identique → un seul appel de diffusion (100 max)
+      // WhatsApp : tous ensemble (variables par numéro). Telegram : texte identique → un appel.
       const groups = new Map<string, PreparedRecipient[]>();
-      for (const p of active) groups.set(p.text, [...(groups.get(p.text) ?? []), p]);
+      for (const p of active) {
+        const key = campaign.channel === 'whatsapp' ? '' : p.text;
+        groups.set(key, [...(groups.get(key) ?? []), p]);
+      }
       let first = true;
       for (const group of groups.values()) {
         for (let i = 0; i < group.length; i += norasendConfig.maxBroadcastBatch) {
           if (!first) await sleep(campaign.delayMs);
           first = false;
-          await sendBatch(campaign, group.slice(i, i + norasendConfig.maxBroadcastBatch), 'broadcast');
+          const w = await sendBatch(campaign, group.slice(i, i + norasendConfig.maxBroadcastBatch), 'broadcast');
+          if (w) warnings.push(w);
         }
       }
     }
-    await finalizeCampaign(campaignId);
+    await finalizeCampaign(campaignId, undefined, warnings);
   } catch (err) {
     logger.error('Campagne : erreur inattendue', { campaignId, error: (err as Error).message });
     await finalizeCampaign(campaignId, (err as Error).message.slice(0, 300)).catch(() => null);
@@ -261,13 +284,29 @@ export async function runCampaign(campaignId: string, prepared: PreparedRecipien
 
 export const communicationsService = {
   /** État de configuration des canaux (aucun secret renvoyé). */
-  getStatus() {
+  async getStatus() {
     const configured = isNorasendConfigured();
+    const probe = async (fn: () => Promise<Record<string, unknown>>) => {
+      if (!configured) return { ready: false, quota: null, error: 'NORASEND_API_KEY manquante' };
+      try {
+        return { ready: true, quota: await fn(), error: null };
+      } catch (err) {
+        const e = err as HttpError;
+        // 409 : canal non connecté dans Norasend ; autres : clé refusée, réseau…
+        return { ready: false, quota: null, error: e.message };
+      }
+    };
+    const [whatsapp, telegram] = await Promise.all([probe(getWhatsAppQuota), probe(getTelegramQuota)]);
     return {
       configured,
-      whatsapp: { ready: configured, sessionConfigured: !!norasendConfig.whatsappSessionId },
-      telegram: { ready: configured, botConfigured: !!norasendConfig.telegramBotId },
-      limits: { maxRecipientsPerCampaign: MAX_RECIPIENTS_PER_CAMPAIGN, maxBroadcastBatch: norasendConfig.maxBroadcastBatch, maxTextLength: MAX_TEXT_LENGTH },
+      whatsapp,
+      telegram,
+      limits: {
+        maxRecipientsPerCampaign: MAX_RECIPIENTS_PER_CAMPAIGN,
+        maxBroadcastBatch: norasendConfig.maxBroadcastBatch,
+        maxTextLength: MAX_TEXT_LENGTH,
+        delayMs: { whatsapp: norasendConfig.whatsappDelayMs, telegram: norasendConfig.telegramDelayMs },
+      },
     };
   },
 

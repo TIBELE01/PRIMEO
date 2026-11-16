@@ -5,7 +5,7 @@
  * ⚠️ Envoie de VRAIS messages : n'utilisez que des numéros / chats dont les titulaires
  * ont accepté de recevoir ce test (vous-même, un collègue).
  *
- * Variables (en plus de NORASEND_API_KEY, WHATSAPP_SESSION_ID, TELEGRAM_BOT_ID, SUPABASE_* et DATABASE_URL
+ * Variables (en plus de NORASEND_API_KEY, SUPABASE_* et DATABASE_URL
  * exigées par la configuration commune du backend) :
  *   NORASEND_TEST_WHATSAPP="2250700000001,2250700000002,2250700000003"   (3 numéros)
  *   NORASEND_TEST_TELEGRAM="123456789,987654321,@mon_canal"              (3 chats)

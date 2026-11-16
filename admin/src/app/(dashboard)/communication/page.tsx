@@ -23,11 +23,11 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Send }> = [
 const CHANNEL_LABEL: Record<MessagingChannel, string> = { whatsapp: 'WhatsApp', telegram: 'Telegram' };
 const STATUS: Record<Campaign['status'], { label: string; variant: 'success' | 'warning' | 'danger' | 'default' }> = {
   processing: { label: 'En cours', variant: 'warning' },
-  completed: { label: 'Envoyé', variant: 'success' },
+  completed: { label: 'Accepté', variant: 'success' },
   partial: { label: 'Partiel', variant: 'warning' },
   failed: { label: 'Échec', variant: 'danger' },
 };
-const RECIPIENT_STATUS: Record<string, string> = { pending: 'En attente', sent: 'Envoyé', failed: 'Échec', skipped: 'Ignoré' };
+const RECIPIENT_STATUS: Record<string, string> = { pending: 'En attente', sent: 'Accepté', failed: 'Échec', skipped: 'Ignoré' };
 
 const errorMessage = (e: unknown): string => {
   const err = e as { response?: { data?: { error?: string } }; message?: string };
@@ -166,8 +166,8 @@ function ComposeForm({ mode, onDone }: { mode: 'direct' | 'broadcast'; onDone: (
                   <input className="input" placeholder="ex. cher client" value={defaultPrenom} onChange={(e) => setDefaultPrenom(e.target.value)} />
                 </div>
                 <div>
-                  <label className="label">Pause entre deux envois (secondes)</label>
-                  <input className="input" type="number" min={0} max={60} placeholder={channel === 'whatsapp' ? '3' : '1'} value={delaySec} onChange={(e) => setDelaySec(e.target.value === '' ? '' : Number(e.target.value))} />
+                  <label className="label">Pause entre deux envois (secondes, {channel === 'whatsapp' ? '3 à 30' : '0,5 à 10'})</label>
+                  <input className="input" type="number" step="0.5" min={channel === 'whatsapp' ? 3 : 0.5} max={channel === 'whatsapp' ? 30 : 10} placeholder={channel === 'whatsapp' ? '4' : '1'} value={delaySec} onChange={(e) => setDelaySec(e.target.value === '' ? '' : Number(e.target.value))} />
                 </div>
               </>
             )}
@@ -204,7 +204,7 @@ function ComposeForm({ mode, onDone }: { mode: 'direct' | 'broadcast'; onDone: (
               <Badge variant={STATUS[result.status].variant}>{STATUS[result.status].label}</Badge>
             </div>
             <p className="text-sm text-gray-600" data-testid="result-summary">
-              {result.sentCount} envoyé(s) · {result.failedCount} en échec · {result.skippedCount} ignoré(s) sur {result.totalRecipients}
+              {result.sentCount} accepté(s) par Norasend · {result.failedCount} en échec · {result.skippedCount} ignoré(s) sur {result.totalRecipients}
             </p>
             {(result.recipients ?? []).filter((r) => r.error).slice(0, 5).map((r) => (
               <p key={r.id} className="text-xs text-red-600 mt-1">{r.recipient} : {r.error}</p>
@@ -258,7 +258,7 @@ function History_() {
                   <td className="p-3 whitespace-nowrap text-xs text-gray-500">{formatDateTime(c.createdAt)}</td>
                   <td className="p-3"><Badge>{CHANNEL_LABEL[c.channel]}</Badge> <span className="text-xs text-gray-400">{c.mode === 'broadcast' ? 'diffusion' : 'direct'}</span></td>
                   <td className="p-3 max-w-xs truncate text-gray-700">{c.title ? <strong>{c.title} — </strong> : null}{c.text}</td>
-                  <td className="p-3 text-xs text-gray-600">{c.sentCount}/{c.totalRecipients} envoyé(s){c.failedCount > 0 && <span className="text-red-600"> · {c.failedCount} échec(s)</span>}{c.skippedCount > 0 && <span className="text-gray-400"> · {c.skippedCount} ignoré(s)</span>}</td>
+                  <td className="p-3 text-xs text-gray-600">{c.sentCount}/{c.totalRecipients} accepté(s){c.failedCount > 0 && <span className="text-red-600"> · {c.failedCount} échec(s)</span>}{c.skippedCount > 0 && <span className="text-gray-400"> · {c.skippedCount} ignoré(s)</span>}</td>
                   <td className="p-3"><Badge variant={STATUS[c.status].variant}>{STATUS[c.status].label}</Badge></td>
                 </tr>
                 {openId === c.id && (
@@ -369,9 +369,16 @@ export default function CommunicationPage() {
       {status && !status.configured && (
         <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800" data-testid="not-configured">
           <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          <span>Norasend n&apos;est pas configuré : ajoutez <code>NORASEND_API_KEY</code> (et <code>WHATSAPP_SESSION_ID</code>, <code>TELEGRAM_BOT_ID</code>) sur le serveur. Les envois sont désactivés.</span>
+          <span>Norasend n&apos;est pas configuré : ajoutez <code>NORASEND_API_KEY</code> sur le serveur. Les envois sont désactivés.</span>
         </div>
       )}
+      {status?.configured && (['whatsapp', 'telegram'] as const).map((ch) => !status[ch].ready && (
+        <div key={ch} className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800" data-testid={`channel-down-${ch}`}>
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <span><strong>{ch === 'whatsapp' ? 'WhatsApp' : 'Telegram'}</strong> indisponible : {status[ch].error ?? 'canal non connecté'}.
+            {ch === 'telegram' && ' Un bot Telegram ne peut écrire qu\'aux personnes qui lui ont écrit en premier, ou aux canaux dont il est administrateur.'}</span>
+        </div>
+      ))}
 
       <div className="flex gap-1 border-b border-gray-200" role="tablist">
         {TABS.map(({ id, label, icon: Icon }) => (
