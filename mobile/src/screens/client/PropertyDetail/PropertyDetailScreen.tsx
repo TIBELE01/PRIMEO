@@ -404,7 +404,6 @@ export function PropertyDetailScreen() {
 
         {/* Badges */}
         <View style={styles.badges}>
-          {property.isBoosted && <View style={[styles.badge, { backgroundColor: '#F59E0B' }]}><Text style={styles.badgeText}>⚡ Boosté</Text></View>}
           {property.virtualTour?.available && <View style={[styles.badge, { backgroundColor: '#6366F1' }]}><Text style={styles.badgeText}>🔭 Visite 3D</Text></View>}
           {(property.isSuperHost || property.owner?.isSuperHost) && <View style={[styles.badge, { backgroundColor: '#D67309' }]}><Text style={styles.badgeText}>⭐ Super Hôte</Text></View>}
           {showNew && <View style={[styles.badge, { backgroundColor: '#16A34A' }]}><Text style={styles.badgeText}>✨ Nouveau</Text></View>}

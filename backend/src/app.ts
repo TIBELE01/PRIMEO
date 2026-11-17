@@ -102,12 +102,15 @@ export function createApp(): Application {
   // (exempt: health, maintenance, admin, docs, webhooks)
   app.use(maintenanceGate);
 
-  // Documentation OpenAPI interactive (Swagger UI) — sans authentification
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'Primeo API — Docs' }));
-  // Spécification brute (utile pour la génération de clients)
-  app.get('/api-docs.json', (_req: Request, res: Response) => {
-    res.json(swaggerSpec);
-  });
+  // Documentation OpenAPI (Swagger UI) : elle détaille tout le modèle économique (formules, boosts,
+  // tarifs) ; elle n'est donc plus publique en production (activable via ENABLE_API_DOCS=true).
+  if (process.env['NODE_ENV'] !== 'production' || process.env['ENABLE_API_DOCS'] === 'true') {
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'Primeo API — Docs' }));
+    // Spécification brute (utile pour la génération de clients)
+    app.get('/api-docs.json', (_req: Request, res: Response) => {
+      res.json(swaggerSpec);
+    });
+  }
 
   // API routes
   app.use('/api/auth', authRouter);

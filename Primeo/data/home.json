@@ -1,12 +1,12 @@
 {
   "hero": {
     "title": "Primeo, la plateforme de confiance pour vos réservations d'hébergement, de services immobiliers et de restauration en Côte d'Ivoire",
-    "subtitle": "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens sans commission.",
+    "subtitle": "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens en toute simplicité.",
     "buttonText": "Télécharger l'application",
     "buttonUrl": "#"
   },
   "mission": {
-    "text": "Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Pas de commission cachée, paiement adapté à vos habitudes."
+    "text": "Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Aucun frais caché, paiement adapté à vos habitudes."
   },
   "solutions_preview": [
     {
@@ -19,7 +19,7 @@
     {
       "id": "2",
       "title": "Professionnels de l'hébergement",
-      "summary": "Publiez vos annonces, gérez vos réservations et boostez votre visibilité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.",
+      "summary": "Publiez vos annonces, gérez vos réservations et suivez votre activité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.",
       "icon": "🏨",
       "link": "/solutions/"
     },
@@ -35,7 +35,7 @@
     {
       "id": "1",
       "title": "Shooting Photo",
-      "description": "Photos haute définition et panoramiques 360° pour sublimer vos biens et booster vos réservations.",
+      "description": "Photos haute définition et panoramiques 360° pour sublimer vos biens et attirer plus de réservations.",
       "imageUrl": "https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg",
       "badge": null,
       "link": "/produits/#shooting-photo"
@@ -65,7 +65,7 @@
   ],
   "testimonials": [
     { "id": "1", "name": "Ama Konan",         "rating": 5, "text": "Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple." },
-    { "id": "2", "name": "Jean-Baptiste Koffi","rating": 5, "text": "Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60% à 90% en un mois !" },
+    { "id": "2", "name": "Jean-Baptiste Koffi","rating": 5, "text": "Grâce à Primeo, mes annonces reçoivent beaucoup plus de vues. Mon taux d'occupation est passé de 60% à 90% en quelques mois !" },
     { "id": "3", "name": "Marie Touré",        "rating": 4, "text": "Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps." },
     { "id": "4", "name": "David Assi",         "rating": 5, "text": "La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement. Incroyable gain de temps." }
   ],

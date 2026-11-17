@@ -6,7 +6,7 @@
   <title>Conditions d'utilisation de l'API PRIMEO — PRIMEO</title>
   <meta name="description" content="Conditions d'utilisation de l'API PRIMEO : accès, authentification, quotas, données accessibles, interdictions, facturation et résiliation." />
   <link rel="canonical" href="https://legal.primeo.ci/conditions-api/" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=5" />
   <link rel="icon" href="/assets/images/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/assets/images/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png" />
@@ -40,7 +40,7 @@
         <li><a href="#donnees">Données accessibles via l'API</a></li>
         <li><a href="#interdictions">Interdictions et usages prohibés</a></li>
         <li><a href="#responsabilite">Responsabilité et garanties</a></li>
-        <li><a href="#facturation">Facturation et plans API</a></li>
+        <li><a href="#facturation">Conditions financières</a></li>
         <li><a href="#modifications">Modifications et résiliation</a></li>
       </ol>
     </div>
@@ -80,23 +80,17 @@
     <h2 class="section-title" id="limites">2. Limites d'utilisation et quotas</h2>
 
     <h3>2.1 Limites de débit (Rate Limiting)</h3>
-    <p>Afin de garantir la qualité de service pour l'ensemble des Partenaires, l'API PRIMEO applique des limites de débit selon le plan souscrit :</p>
-    <ul>
-      <li><strong>Plan Découverte (gratuit)</strong> : 100 requêtes par minute, 5 000 requêtes par jour ;</li>
-      <li><strong>Plan Starter</strong> : 500 requêtes par minute, 50 000 requêtes par jour ;</li>
-      <li><strong>Plan Business</strong> : 2 000 requêtes par minute, 500 000 requêtes par jour ;</li>
-      <li><strong>Plan Enterprise</strong> : limites négociées individuellement selon les besoins.</li>
-    </ul>
+    <p>Afin de garantir la qualité de service pour l'ensemble des Partenaires, l'API PRIMEO applique des limites de débit, définies pour chaque Partenaire lors de l'ouverture de son accès et communiquées sur le portail développeur.</p>
     <p>Les limites sont contrôlées par une fenêtre glissante. Les en-têtes HTTP <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> et <code>X-RateLimit-Reset</code> sont inclus dans chaque réponse pour permettre au Partenaire de gérer sa consommation. En cas de dépassement, l'API retourne une réponse HTTP 429 (Too Many Requests).</p>
 
     <h3>2.2 Quotas mensuels</h3>
-    <p>En complément des limites de débit, des quotas mensuels s'appliquent selon le plan. En cas de dépassement du quota mensuel, les requêtes supplémentaires sont facturées à la requête (voir article 6) ou entraînent la suspension temporaire de l'accès jusqu'au renouvellement mensuel du quota.</p>
+    <p>En complément des limites de débit, des quotas mensuels s'appliquent selon l'accès accordé. En cas de dépassement du quota mensuel, les requêtes supplémentaires sont facturées à la requête (voir article 6) ou entraînent la suspension temporaire de l'accès jusqu'au renouvellement mensuel du quota.</p>
 
     <h3>2.3 Mise en cache et optimisation</h3>
     <p>Le Partenaire est encouragé à mettre en place une stratégie de mise en cache (caching) de son côté pour réduire le nombre de requêtes. Les réponses de l'API incluent des en-têtes <code>Cache-Control</code> et <code>ETag</code> indiquant les durées de validité recommandées. Il est interdit de désactiver ou contourner ces mécanismes pour augmenter artificiellement la fréquence des requêtes.</p>
 
     <h3>2.4 Limites sur les données en masse</h3>
-    <p>L'extraction de données en masse (bulk) est soumise à des endpoints dédiés disponibles uniquement sur les plans Business et Enterprise. L'utilisation de l'API standard pour tenter de récupérer l'intégralité du catalogue PRIMEO par requêtes successives est interdite et peut entraîner la suspension immédiate de l'accès.</p>
+    <p>L'extraction de données en masse (bulk) est soumise à des endpoints dédiés disponibles uniquement sur demande et après accord de PRIMEO. L'utilisation de l'API standard pour tenter de récupérer l'intégralité du catalogue PRIMEO par requêtes successives est interdite et peut entraîner la suspension immédiate de l'accès.</p>
 
     <h2 class="section-title" id="donnees">3. Données accessibles via l'API</h2>
 
@@ -159,7 +153,7 @@
     <h2 class="section-title" id="responsabilite">5. Responsabilité et garanties</h2>
 
     <h3>5.1 Disponibilité de l'API</h3>
-    <p>PRIMEO s'efforce de maintenir l'API disponible 24h/24 et 7j/7, avec un objectif de disponibilité de 99,5 % sur une base mensuelle pour les plans Business et Enterprise (SLA). Aucune garantie de disponibilité n'est offerte pour le plan Découverte. Les maintenances planifiées sont annoncées avec un préavis minimum de quarante-huit (48) heures via le portail développeur et le tableau de bord du Partenaire.</p>
+    <p>PRIMEO s'efforce de maintenir l'API disponible 24h/24 et 7j/7, avec un objectif de disponibilité de 99,5 % sur une base mensuelle pour les accès disposant d'un engagement de niveau de service (SLA). Aucune garantie de disponibilité n'est offerte pour le plan Découverte. Les maintenances planifiées sont annoncées avec un préavis minimum de quarante-huit (48) heures via le portail développeur et le tableau de bord du Partenaire.</p>
 
     <h3>5.2 Exactitude des données</h3>
     <p>Les données disponibles via l'API PRIMEO sont fournies « en l'état » (as-is). PRIMEO s'efforce de maintenir leur exactitude mais ne garantit pas que les informations sont à jour, exactes ou complètes à tout moment. Le Partenaire utilise ces données sous sa propre responsabilité et doit mettre en place les vérifications nécessaires avant de les présenter à ses propres utilisateurs.</p>
@@ -176,13 +170,13 @@
       <li>De l'exactitude des informations présentées à ses utilisateurs sur la base des données PRIMEO.</li>
     </ul>
 
-    <h2 class="section-title" id="facturation">6. Facturation et plans API</h2>
+    <h2 class="section-title" id="facturation">6. Conditions financières</h2>
 
-    <h3>6.1 Plan Découverte (gratuit)</h3>
-    <p>Le Plan Découverte est gratuit et permet aux développeurs de tester l'API PRIMEO pour des projets personnels, des prototypes ou des petites applications. Il est limité à 5 000 requêtes par jour et ne donne pas accès aux données en masse ni aux SLA de disponibilité. Il est interdit d'utiliser le Plan Découverte pour une application commerciale dépassant les seuils de quota.</p>
+    <h3>6.1 Accès de test</h3>
+    <p>Un accès de test peut être accordé gratuitement aux développeurs pour des projets personnels, des prototypes ou des petites applications. Il ne donne pas accès aux données en masse ni aux SLA de disponibilité. Il est interdit de l'utiliser pour une application commerciale dépassant les limites communiquées.</p>
 
-    <h3>6.2 Plans payants</h3>
-    <p>Les plans payants (Starter, Business, Enterprise) sont facturés mensuellement ou annuellement (avec réduction pour le paiement annuel) en francs CFA (XOF). Les tarifs en vigueur sont disponibles sur le portail développeur. PRIMEO se réserve le droit de modifier ses tarifs avec un préavis de soixante (60) jours. Le Partenaire bénéficiant d'un plan annuel est protégé contre toute hausse de tarif jusqu'au renouvellement de son contrat annuel.</p>
+    <h3>6.2 Accès payants</h3>
+    <p>Les accès payants sont facturés selon les conditions financières communiquées au Partenaire, en francs CFA (XOF). PRIMEO se réserve le droit de modifier ses tarifs avec un préavis de soixante (60) jours ; le Partenaire dont l'accès est facturé annuellement est protégé contre toute hausse de tarif jusqu'au renouvellement de son contrat.</p>
 
     <h3>6.3 Facturation à l'usage</h3>
     <p>En cas de dépassement des quotas inclus dans le plan, les requêtes supplémentaires sont facturées selon le barème en vigueur sur le portail développeur. Le Partenaire peut configurer des alertes de consommation et des plafonds de dépenses depuis son tableau de bord pour éviter les dépassements non anticipés.</p>
@@ -199,7 +193,7 @@
     <p>PRIMEO peut modifier les présentes Conditions API avec un préavis de trente (30) jours. La poursuite de l'utilisation de l'API après l'entrée en vigueur des nouvelles Conditions vaut acceptation. Pour les modifications substantielles affectant les droits des Partenaires, un délai de préavis de soixante (60) jours est accordé.</p>
 
     <h3>7.3 Résiliation par le Partenaire</h3>
-    <p>Le Partenaire peut résilier son accès à l'API à tout moment en supprimant ses clés API depuis le portail développeur et en notifiant PRIMEO à <a href="mailto:api@primeo.ci">api@primeo.ci</a>. En cas d'abonnement annuel prépayé, aucun remboursement au prorata n'est accordé sauf accord exprès de PRIMEO.</p>
+    <p>Le Partenaire peut résilier son accès à l'API à tout moment en supprimant ses clés API depuis le portail développeur et en notifiant PRIMEO à <a href="mailto:api@primeo.ci">api@primeo.ci</a>. En cas d'accès prépayé, aucun remboursement au prorata n'est accordé sauf accord exprès de PRIMEO.</p>
 
     <h3>7.4 Résiliation par PRIMEO</h3>
     <p>PRIMEO peut résilier l'accès d'un Partenaire à l'API pour violation des présentes Conditions, avec effet immédiat en cas de violation grave (fraude, utilisation illicite des données) ou avec un préavis de trente (30) jours pour d'autres motifs. En cas de résiliation pour faute imputable à PRIMEO, les sommes prépayées non utilisées sont remboursées au prorata.</p>

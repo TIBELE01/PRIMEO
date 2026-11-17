@@ -127,9 +127,9 @@ function svg({ title, subtitle, accent = C.cta }) {
 // One entry per generated image: filename → { title, subtitle, accent }
 const IMAGES = {
   'og-default': { title: "Réservez votre hébergement en Côte d'Ivoire", subtitle: 'Hôtels · Résidences · Restaurants · Immobilier', accent: C.cta },
-  'og-home': { title: "La plateforme de réservation #1 en Côte d'Ivoire", subtitle: '3 modes de paiement · Visites 3D · 0 % de commission', accent: C.cta },
+  'og-home': { title: "La plateforme de réservation #1 en Côte d'Ivoire", subtitle: '3 modes de paiement · Visites 3D · Réservation simple', accent: C.cta },
   'og-solutions': { title: 'Des solutions pour chaque professionnel', subtitle: 'Hôtellerie · Restauration · Immobilier · Événementiel', accent: C.primaryLight },
-  'og-produits': { title: 'Tous les outils pour gérer votre activité', subtitle: 'Réservations · Paiements · Statistiques · Boosts', accent: C.primaryLight },
+  'og-produits': { title: 'Tous les outils pour gérer votre activité', subtitle: 'Réservations · Paiements · Statistiques · Visites 3D', accent: C.primaryLight },
   'og-pro': { title: 'Développez votre activité avec Primeo', subtitle: 'Rejoignez +1 200 professionnels en Côte d\'Ivoire', accent: C.gold },
   'og-blog': { title: 'Le blog Primeo', subtitle: "Conseils, actualités et analyses du secteur", accent: C.primaryLight },
   'og-a-propos': { title: 'Notre mission : simplifier la réservation', subtitle: "Primeo — la fierté tech ivoirienne", accent: C.cta },

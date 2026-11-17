@@ -9,11 +9,11 @@ import { UpgradePlanDto } from './dto/subscription.dto';
 
 export const subscriptionsRouter = Router();
 
-// Public: list available plans
-subscriptionsRouter.get('/plans', listPlans);
-
 subscriptionsRouter.use(authenticate);
 subscriptionsRouter.use(authorize('professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur', 'admin'));
+// Liste des formules : réservée aux professionnels connectés (modèle économique non public).
+subscriptionsRouter.get('/plans', listPlans);
+
 subscriptionsRouter.use(requireKycApproved); // les admins passent, les pros doivent avoir un KYC approuvé
 
 subscriptionsRouter.get('/me', getMySubscription);

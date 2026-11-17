@@ -63,7 +63,7 @@ const FAQ_ITEMS = [
   { q: 'Quelles sont les options de paiement ?',  a: '3 options : 100% en ligne via Genius Pay, 10%+90% cash, ou 100% cash directement.' },
   { q: 'Comment annuler une réservation ?',       a: 'Rendez-vous dans « Mes réservations » et appuyez sur « Annuler ».' },
   { q: 'Les avis sont-ils vérifiés ?',            a: 'Oui, seuls les clients ayant séjourné peuvent laisser un avis certifié.' },
-  { q: 'Comment publier mon bien sur Primeo ?',   a: 'Créez un compte pro, choisissez votre abonnement. Votre annonce sera validée sous 24h.' },
+  { q: 'Comment publier mon bien sur Primeo ?',   a: 'Créez un compte professionnel (« Inscription professionnelle »), puis publiez votre annonce : elle est validée par notre équipe avant d’être visible.' },
 ];
 
 /* ── Texte défilant dans la barre bleue supérieure ── */

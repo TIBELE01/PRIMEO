@@ -47,8 +47,7 @@ function CarouselCard({ item, color, onPress }: { item: Property; color: string;
         imageStyle={{ borderRadius: 14 }}
       >
         <View style={cst.cardOverlay} />
-        {item.isBoosted && <View style={[cst.cardBadge, { backgroundColor: color }]}><Text style={cst.cardBadgeText}>★ Promo</Text></View>}
-        {item.isSuperHost && <View style={[cst.cardBadge, { backgroundColor: '#F59E0B', top: item.isBoosted ? 36 : 8 }]}><Text style={cst.cardBadgeText}>⭐ Top</Text></View>}
+        {item.isSuperHost && <View style={[cst.cardBadge, { backgroundColor: '#F59E0B', top: 8 }]}><Text style={cst.cardBadgeText}>⭐ Top</Text></View>}
       </ImageBackground>
       <View style={cst.cardInfo}>
         <Text style={cst.cardTitle} numberOfLines={1}>{item.name}</Text>

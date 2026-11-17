@@ -55,7 +55,7 @@ const FAQ_ITEMS = [
   { q: 'Comment fonctionne Primeo ?',                    a: 'Primeo est une plateforme de réservation d\'hébergements et de restaurants en Côte d\'Ivoire. Recherchez, comparez et réservez en quelques clics.' },
   { q: 'Quels modes de paiement acceptez-vous ?',        a: 'Genius Pay (100 % en ligne), paiement mixte (10 % en ligne + 90 % cash), ou 100 % cash à l\'arrivée selon le mode choisi par l\'hôte.' },
   { q: 'Comment créer un compte professionnel ?',        a: 'Cliquez sur « Se connecter » puis « Créer un compte » et choisissez le type « Professionnel ». Votre compte sera validé sous 24h.' },
-  { q: 'Comment publier mon bien sur Primeo ?',          a: 'Créez un compte pro, choisissez votre abonnement. Votre annonce sera validée sous 24h.' },
+  { q: 'Comment publier mon bien sur Primeo ?',          a: 'Créez un compte professionnel (« Inscription professionnelle »), puis publiez votre annonce : elle est validée par notre équipe avant d’être visible.' },
 ];
 
 /* ── Bannière de titre ── */

@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
 import { AppImage } from '../ui/AppImage';
-import { BoostBadge } from '../boost/BoostBadge';
 import { useCurrency } from '../../hooks/useCurrency';
 import { num } from '../../utils/normalizeProperty';
 
@@ -36,17 +35,6 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress, o
           <View style={styles.grad3} />
           <View style={styles.grad4} />
 
-          {property.isBoosted && property.boostExpiresAt && (
-            <View style={styles.boostWrap}>
-              <BoostBadge expiresAt={property.boostExpiresAt} />
-            </View>
-          )}
-
-          {property.badgeType === 'premium' && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>★ Premium</Text>
-            </View>
-          )}
           {property.badgeType === 'verified' && (
             <View style={styles.verifiedBadge}>
               <Text style={styles.verifiedBadgeText}>✓ Vérifié</Text>

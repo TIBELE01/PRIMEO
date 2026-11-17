@@ -29,8 +29,9 @@ export const websiteRouter = Router();
 // ── Public ────────────────────────────────────────────────────────────────────
 // Products page (public)
 websiteRouter.get('/products/intro',         c.getProductsIntro);
-websiteRouter.get('/products/subscriptions', c.getProductsSubscriptions);
-websiteRouter.get('/products/boost',         c.getProductsBoost);
+// Modèle économique (formules, boosts) : confidentiel — réservé à l'administration, jamais exposé publiquement.
+websiteRouter.get('/products/subscriptions', authenticate, authorize('admin'), c.getProductsSubscriptions);
+websiteRouter.get('/products/boost',         authenticate, authorize('admin'), c.getProductsBoost);
 websiteRouter.get('/products/ads',           c.getProductsAds);
 websiteRouter.get('/products/data',          c.getProductsDataPacks);
 websiteRouter.get('/products/upcoming',      c.getProductsUpcoming);

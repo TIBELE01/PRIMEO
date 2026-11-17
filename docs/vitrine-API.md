@@ -43,8 +43,6 @@ limitées en débit (rate limiting) et protégées par un honeypot côté formul
 | Méthode | Endpoint                                | Description                       |
 |---------|-----------------------------------------|-----------------------------------|
 | GET     | `/api/website/products/intro`           | Intro de la page                  |
-| GET     | `/api/website/products/subscriptions`   | Plans + tableau comparatif        |
-| GET     | `/api/website/products/boost`           | Section Boost                     |
 | GET     | `/api/website/products/ads`             | Section Publicités                |
 | GET     | `/api/website/products/data`            | Data packs                        |
 | GET     | `/api/website/products/upcoming`        | Produits à venir                  |

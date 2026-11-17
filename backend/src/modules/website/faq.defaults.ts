@@ -76,7 +76,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Réservations et paiements",
     "question": "Primeo ajoute-t-il des frais de service à mon prix ?",
-    "answer": "<p>Non. Primeo applique <strong>0 % de commission</strong> et le récapitulatif de réservation n’ajoute aucun frais de service.</p>",
+    "answer": "<p>Non. Le prix affiché est le prix à payer : le récapitulatif de réservation n’ajoute aucun frais de service.</p>",
     "order": 4
   },
   {
@@ -176,58 +176,16 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
     "order": 6
   },
   {
-    "category": "Abonnements professionnels",
-    "question": "Quelles formules d’abonnement existe-t-il ?",
-    "answer": "<ul><li><strong>Starter</strong> — gratuit : 3 publications, tableau de bord basique, support par e-mail (réponse sous 48 h).</li><li><strong>Business</strong> — 9 000 FCFA/mois : 10 publications, vidéo, badge « Vérifié », visibilité +30 %, 2 boosts gratuits/mois, statistiques, support prioritaire (sous 12 h).</li><li><strong>Entreprise</strong> — 24 000 FCFA/mois : 40 publications (plats illimités pour un restaurant), visite 3D, badge « Premium », visibilité prioritaire, 7 boosts gratuits/mois, co-gérants, rapport mensuel PDF, support VIP 7j/7 (sous 4 h).</li></ul><p>Comparatif complet : <a href=\"/documentation/guide-abonnements.html#formules\">formules d’abonnement</a>.</p>",
+    "category": "Comptes professionnels",
+    "question": "Comment recevoir l’argent de mes réservations ?",
+    "answer": "<p>Chaque jour, les paiements en ligne de vos réservations confirmées sont <strong>reversés automatiquement sur votre portefeuille Primeo</strong>. Ce portefeuille est <strong>virtuel</strong> : il ne détient pas d’argent. Pour recevoir votre dû, ouvrez <strong>Reversements</strong>, renseignez vos <strong>coordonnées de versement</strong> (Orange Money, MTN Money, Wave, Moov Money ou compte bancaire) puis touchez <strong>« Demander un versement »</strong> (minimum 1 000 FCFA ; tout le solde ou un montant au choix).</p><p>Le montant est retiré de votre solde et Primeo vire la somme sur vos coordonnées. La demande passe de « En attente » à « Versé » (avec la référence du virement) ou « Refusé » avec un motif — le montant est alors remis sur votre solde. Vous pouvez annuler une demande en attente. Les paiements en espèces sont encaissés directement par vous : touchez « Marquer paiement cash reçu » pour clôturer la réservation.</p>",
     "order": 1
   },
   {
-    "category": "Abonnements professionnels",
-    "question": "Primeo prélève-t-il une commission sur mes réservations ?",
-    "answer": "<p>Non. Toutes les formules sont à <strong>0 % de commission</strong>.</p>",
-    "order": 2
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Comment changer de formule ?",
-    "answer": "<p>Dans <strong>Profil → Mon abonnement</strong>, touchez « Choisir ce plan ». Pour une formule supérieure, vous payez via Genius Pay et la formule est activée dès la validation du paiement. Pour une formule inférieure, le changement prend effet à la prochaine date de facturation ; les annonces excédentaires sont alors suspendues (l’application vous les indique avant confirmation).</p>",
-    "order": 3
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Que se passe-t-il si le paiement de mon abonnement échoue ?",
-    "answer": "<p>Un <strong>délai de grâce de 7 jours</strong> s’applique, avec des rappels, avant la suspension. Régularisez le paiement depuis « Mon abonnement ».</p>",
-    "order": 4
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Puis-je publier plus d’annonces que ma formule ne le permet ?",
-    "answer": "<p>Oui : ajoutez des <strong>publications supplémentaires à 500 FCFA/mois chacune</strong> (de 1 à 100 à la fois) depuis « Mon abonnement ».</p>",
-    "order": 5
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Comment recevoir l’argent de mes réservations ?",
-    "answer": "<p>Chaque jour, les paiements en ligne de vos réservations confirmées sont <strong>reversés automatiquement sur votre portefeuille Primeo</strong>. Ce portefeuille est <strong>virtuel</strong> : il ne détient pas d’argent. Pour recevoir votre dû, ouvrez <strong>Reversements</strong>, renseignez vos <strong>coordonnées de versement</strong> (Orange Money, MTN Money, Wave, Moov Money ou compte bancaire) puis touchez <strong>« Demander un versement »</strong> (minimum 1 000 FCFA ; tout le solde ou un montant au choix).</p><p>Le montant est retiré de votre solde et Primeo vire la somme sur vos coordonnées. La demande passe de « En attente » à « Versé » (avec la référence du virement) ou « Refusé » avec un motif — le montant est alors remis sur votre solde. Vous pouvez annuler une demande en attente. Les paiements en espèces sont encaissés directement par vous : touchez « Marquer paiement cash reçu » pour clôturer la réservation.</p>",
-    "order": 6
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Où trouver mes factures d’abonnement ?",
-    "answer": "<p>En bas de l’écran <strong>Mon abonnement</strong> : historique des factures (PDF) et des transactions.</p>",
-    "order": 7
-  },
-  {
-    "category": "Abonnements professionnels",
-    "question": "Comment ajouter des co-gérants ?",
-    "answer": "<p>La formule <strong>Entreprise</strong> permet d’inviter jusqu’à 10 co-gérants (<strong>Profil → Gestion des collaborateurs</strong>). L’invitation est envoyée par e-mail et n’est valable que pour l’adresse invitée ; l’accès peut être modifié ou révoqué à tout moment.</p>",
-    "order": 8
-  },
-  {
-    "category": "Abonnements professionnels",
+    "category": "Comptes professionnels",
     "question": "Pourquoi mon annonce n’apparaît-elle pas aux clients ?",
-    "answer": "<p>Vérifiez son statut : <strong>Brouillon</strong> (non soumise), <strong>En validation</strong> (examen par la modération), <strong>Rejetée</strong> (à corriger puis soumettre à nouveau), <strong>Suspendue</strong> (par vous ou après une rétrogradation de formule). Seules les annonces <strong>Actives</strong> sont visibles. Modifier une annonce active la renvoie en validation.</p>",
-    "order": 9
+    "answer": "<p>Vérifiez son statut : <strong>Brouillon</strong> (non soumise), <strong>En validation</strong> (examen par la modération), <strong>Rejetée</strong> (à corriger puis soumettre à nouveau) ou <strong>Suspendue</strong> (masquée temporairement). Seules les annonces <strong>Actives</strong> sont visibles. Modifier une annonce active la renvoie en validation.</p>",
+    "order": 2
   },
   {
     "category": "Visite 3D, vidéos et médias",
@@ -244,26 +202,20 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Visite 3D, vidéos et médias",
     "question": "Comment ajouter une vidéo ?",
-    "answer": "<p>La vidéo de présentation est réservée aux formules <strong>Business et Entreprise</strong> : <strong>1 vidéo</strong> (MP4 ou MOV), <strong>100 Mo maximum</strong>.</p>",
+    "answer": "<p>Choisissez le type de média « Vidéo » à l’étape Médias de l’annonce : <strong>1 vidéo</strong> de présentation (MP4 ou MOV), <strong>100 Mo maximum</strong>. Cette option n’est pas disponible sur tous les comptes : l’application vous l’indique au moment du choix.</p>",
     "order": 3
   },
   {
     "category": "Visite 3D, vidéos et médias",
     "question": "Comment créer une visite 3D ?",
-    "answer": "<p>La visite 3D est réservée à la formule <strong>Entreprise</strong>. Ajoutez jusqu’à <strong>10 photos 360°</strong> (équirectangulaires 2:1, 4000×2000 px minimum, 10 Mo maximum chacune). Chaque photo devient une pièce : nommez-les puis créez des liens entre les pièces dans « Visite 3D & navigation ».</p>",
+    "answer": "<p>Choisissez le type de média « Visite 3D » à l’étape Médias : ajoutez jusqu’à <strong>10 photos 360°</strong> (équirectangulaires 2:1, 4000×2000 px minimum, 10 Mo maximum chacune). Chaque photo devient une pièce : nommez-les puis créez des liens entre les pièces dans « Visite 3D & navigation ». Cette option n’est pas disponible sur tous les comptes.</p>",
     "order": 4
-  },
-  {
-    "category": "Visite 3D, vidéos et médias",
-    "question": "Pourquoi ne puis-je pas choisir la vidéo ou la visite 3D ?",
-    "answer": "<p>L’application affiche « Formule requise » : la vidéo demande Business ou Entreprise, la visite 3D demande Entreprise. Changez de formule depuis « Mon abonnement ».</p>",
-    "order": 5
   },
   {
     "category": "Visite 3D, vidéos et médias",
     "question": "Quels formats pour les documents KYC ?",
     "answer": "<p>Images ou PDF. Taille maximale : 5 Mo pour une image, 10 Mo pour un PDF.</p>",
-    "order": 6
+    "order": 5
   },
   {
     "category": "Messagerie et notifications",
@@ -332,34 +284,16 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
     "order": 7
   },
   {
-    "category": "Parrainage et boosts",
+    "category": "Parrainage",
     "question": "Comment fonctionne le parrainage ?",
     "answer": "<ol><li>Dans <strong>Profil → Parrainage</strong>, partagez votre code personnel.</li><li>Votre filleul le saisit une seule fois après son inscription (il ne peut pas utiliser son propre code).</li><li>Vous recevez <strong>250 FCFA</strong> quand un client parrainé effectue sa première réservation confirmée, ou <strong>1 000 FCFA</strong> quand un professionnel parrainé voit son dossier validé.</li></ol><p>Les récompenses sont créditées sur votre portefeuille Primeo, une seule fois par filleul.</p>",
     "order": 1
   },
   {
-    "category": "Parrainage et boosts",
+    "category": "Parrainage",
     "question": "Où saisir un code de parrainage reçu ?",
     "answer": "<p>À l’inscription (champ facultatif) ou ensuite dans <strong>Profil → Parrainage</strong>, rubrique « Vous avez été invité ? ». Le code ne peut être renseigné qu’une fois.</p>",
     "order": 2
-  },
-  {
-    "category": "Parrainage et boosts",
-    "question": "Qu’est-ce qu’un boost ?",
-    "answer": "<p>Un boost met votre annonce en avant dans les résultats pendant <strong>3 jours</strong>.</p>",
-    "order": 3
-  },
-  {
-    "category": "Parrainage et boosts",
-    "question": "Combien coûte un boost ?",
-    "answer": "<p>Un boost payant coûte <strong>2 000 FCFA pour 72 heures</strong>. Les formules incluent des boosts gratuits chaque mois : <strong>2</strong> avec Business, <strong>7</strong> avec Entreprise (aucun avec Starter). Le quota est remis à zéro chaque mois.</p>",
-    "order": 4
-  },
-  {
-    "category": "Parrainage et boosts",
-    "question": "Pourquoi ne puis-je pas booster mon annonce ?",
-    "answer": "<p>L’annonce doit être <strong>active</strong> et ne pas être déjà boostée, et votre compte professionnel doit être validé. Pour un boost gratuit, votre formule doit en inclure et votre quota du mois ne doit pas être épuisé.</p>",
-    "order": 5
   },
   {
     "category": "Problèmes techniques",

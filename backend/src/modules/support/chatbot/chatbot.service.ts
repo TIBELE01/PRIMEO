@@ -101,30 +101,6 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
   },
   // Platform
   {
-    id: 'commission',
-    keywords: ['commission', 'frais', 'tarif primeo'],
-    intent: 'general_inquiry',
-    category: 'Plateforme',
-    response:
-      'Primeo ne prélève aucune commission : toutes les formules sont à 0 % de commission sur les réservations, et aucun frais de service n\'est ajouté au prix payé par le client.',
-  },
-  {
-    id: 'subscription',
-    keywords: ['abonnement', 'formule', 'prestige', 'premium', 'essentiel'],
-    intent: 'general_inquiry',
-    category: 'Plateforme',
-    response:
-      '3 formules professionnelles : Starter (gratuit, 3 publications), Business (9 000 FCFA/mois, 10 publications, vidéo, badge Vérifié, 2 boosts gratuits/mois, statistiques) et Entreprise (24 000 FCFA/mois, 40 publications — plats illimités pour un restaurant —, visite 3D, badge Premium, visibilité prioritaire, 7 boosts gratuits/mois, co-gérants). Changez de formule dans Profil → Mon abonnement. Des publications supplémentaires coûtent 500 FCFA/mois chacune.',
-  },
-  {
-    id: 'boost',
-    keywords: ['boost', 'mettre en avant', 'visibilité', 'booster'],
-    intent: 'general_inquiry',
-    category: 'Plateforme',
-    response:
-      'Un boost met votre annonce en avant pendant 3 jours. Boost payant : 2 000 FCFA pour 72 h. Boosts gratuits inclus : 2 par mois en Business, 7 en Entreprise (aucun en Starter). L\'annonce doit être active et pas déjà boostée. Activez-le dans Profil → Boosts d\'annonces.',
-  },
-  {
     id: 'dispute',
     keywords: ['signaler litige', 'problème logement', 'plainte', 'litige'],
     intent: 'general_inquiry',

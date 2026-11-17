@@ -137,7 +137,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       {/* ── Badge premium ── */}
       <View style={s.premiumBadge}>
         <View style={s.premiumDot} />
-        <Text style={s.premiumText}>Plateforme premium</Text>
+        <Text style={s.premiumText}>Réservation sécurisée</Text>
       </View>
 
       {/* ── Encadré titre ── */}

@@ -11,7 +11,7 @@
     { "year": "2022", "title": "Création de Primeo",     "description": "Fondée à Abidjan par une équipe passionnée d'hospitalité et de technologie." },
     { "year": "2023", "title": "Lancement de la plateforme", "description": "Ouverture au public avec plus de 1 000 utilisateurs inscrits dès le premier mois." },
     { "year": "2024", "title": "Paiement mobile intégré", "description": "Intégration d'Orange Money, MTN MoMo et Wave pour des réservations payées en quelques secondes." },
-    { "year": "2025", "title": "Expansion régionale",     "description": "Extension du service à 14 villes et lancement des boosts d'annonce et de la visite 3D immersive." }
+    { "year": "2025", "title": "Expansion régionale",     "description": "Extension du service à 14 villes et lancement de la visite 3D immersive." }
   ],
   "values": [
     { "icon": "🎯", "title": "Impact réel",        "description": "Chaque fonctionnalité est conçue pour avoir un impact mesurable sur la vie de nos utilisateurs." },

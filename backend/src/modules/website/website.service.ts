@@ -12,24 +12,24 @@ function createHttpError(status: number, msg: string) { return new HttpError(sta
 
 const DEFAULT_HERO = {
   title: "Primeo, la plateforme de confiance pour vos réservations d'hébergement, de services immobiliers et de restauration",
-  subtitle: "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens sans commission.",
+  subtitle: "Réservez facilement avec 3 options de paiement, visitez les lieux en 3D, et gérez vos biens en toute simplicité.",
   buttonText: "Télécharger l'application",
   buttonUrl: '#',
   imageUrl: null,
 };
 
 const DEFAULT_MISSION = {
-  text: "Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Pas de commission cachée, paiement adapté à vos habitudes.",
+  text: "Primeo réinvente la réservation d'hébergement en Afrique francophone avec une approche locale, flexible et transparente. Aucun frais caché, paiement adapté à vos habitudes.",
 };
 
 const DEFAULT_SOLUTIONS = [
   { id: 'default-1', title: 'Voyageurs', summary: "Trouvez et réservez facilement votre hébergement idéal en Côte d'Ivoire. Comparez les prix, lisez les avis, payez comme vous le souhaitez.", icon: '✈️', link: '/solutions', sortOrder: 0 },
-  { id: 'default-2', title: "Professionnels de l'hébergement", summary: 'Publiez vos annonces, gérez vos réservations et boostez votre visibilité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.', icon: '🏨', link: '/solutions', sortOrder: 1 },
+  { id: 'default-2', title: "Professionnels de l'hébergement", summary: 'Publiez vos annonces, gérez vos réservations et suivez votre activité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.', icon: '🏨', link: '/solutions', sortOrder: 1 },
   { id: 'default-3', title: 'Restaurateurs & Immobilier', summary: 'Gérez votre restaurant en ligne, acceptez des réservations de tables et publiez vos offres immobilières sur une seule et même plateforme.', icon: '🍽️', link: '/solutions', sortOrder: 2 },
 ];
 
 const DEFAULT_PRODUCTS = [
-  { id: 'default-1', title: 'Shooting Photo', description: 'Photos haute définition et panoramiques 360° pour sublimer vos biens et booster vos réservations.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg', badge: null, link: '/produits/#shooting-photo', sortOrder: 0 },
+  { id: 'default-1', title: 'Shooting Photo', description: 'Photos haute définition et panoramiques 360° pour sublimer vos biens et attirer plus de réservations.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg', badge: null, link: '/produits/#shooting-photo', sortOrder: 0 },
   { id: 'default-2', title: 'PrimeoPay', description: 'Paiement en ligne sécurisé : Mobile Money (Orange, MTN, Wave) et carte bancaire, avec reversements automatiques.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433599/primeo/Website/products/primeopay.jpg', badge: 'Sécurisé', link: '/produits/#primeopay', sortOrder: 1 },
   { id: 'default-3', title: 'Formation', description: 'Formations en ligne pour optimiser vos annonces, gérer vos réservations et développer votre activité.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433604/primeo/Website/products/formation.jpg', badge: null, link: '/produits/#formation', sortOrder: 2 },
 ];
@@ -43,7 +43,7 @@ const DEFAULT_WHY = [
 
 const DEFAULT_TESTIMONIALS = [
   { id: 'default-1', name: 'Ama Konan', role: 'Cliente', rating: 5, text: "Primeo m'a permis de trouver un appartement meublé à Cocody en moins de 24h. Le processus de réservation est ultra-simple.", photoUrl: null, sortOrder: 0 },
-  { id: 'default-2', name: 'Jean-Baptiste Koffi', role: 'Propriétaire', rating: 5, text: "Grâce aux boosts, mes annonces reçoivent 3 fois plus de vues. Mon taux d'occupation est passé de 60% à 90% en un mois !", photoUrl: null, sortOrder: 1 },
+  { id: 'default-2', name: 'Jean-Baptiste Koffi', role: 'Propriétaire', rating: 5, text: "Grâce à Primeo, mes annonces reçoivent beaucoup plus de vues. Mon taux d'occupation est passé de 60% à 90% en quelques mois !", photoUrl: null, sortOrder: 1 },
   { id: 'default-3', name: 'Marie Touré', role: 'Cliente', rating: 4, text: "Excellent service client et interface très intuitive. Je recommande Primeo à tous les propriétaires qui veulent gagner du temps.", photoUrl: null, sortOrder: 2 },
   { id: 'default-4', name: 'David Assi', role: 'Hôtelier', rating: 5, text: "La visite 3D est une révolution ! Mes clients réservent maintenant sans même avoir visité physiquement. Incroyable gain de temps.", photoUrl: null, sortOrder: 3 },
 ];
@@ -71,11 +71,10 @@ const DEFAULT_SOLUTIONS_BLOCS = [
   {
     id: 'default-2', icon: '🏨', title: "Hôteliers & Propriétaires",
     subtitle: "Maximisez votre taux d'occupation",
-    description: "Publiez vos annonces en quelques minutes, gérez vos réservations en temps réel et augmentez votre visibilité grâce aux boosts d'annonces.",
+    description: "Publiez vos annonces en quelques minutes, gérez vos réservations en temps réel et suivez la performance de vos annonces.",
     features: [
       { icon: '📋', text: 'Tableau de bord de gestion complet' },
       { icon: '📅', text: 'Calendrier de disponibilités en temps réel' },
-      { icon: '🚀', text: 'Boosts pour propulser vos annonces' },
       { icon: '📊', text: 'Statistiques de performance détaillées' },
       { icon: '💬', text: 'Messagerie intégrée avec les clients' },
       { icon: '🔭', text: 'Outil de création de visite 3D' },
@@ -105,7 +104,6 @@ const DEFAULT_SOLUTIONS_BLOCS = [
       { icon: '📷', text: 'Photos HD et visites virtuelles 3D' },
       { icon: '👥', text: 'Suivi des prospects et des demandes' },
       { icon: '📝', text: 'Signature électronique des contrats' },
-      { icon: '📣', text: 'Campagnes de boost ciblées' },
       { icon: '🌍', text: 'Visibilité nationale et internationale' },
     ],
     ctaLabel: 'Publier une annonce', ctaUrl: '/mobile', sortOrder: 3, active: true,
@@ -114,7 +112,7 @@ const DEFAULT_SOLUTIONS_BLOCS = [
 
 const DEFAULT_PRODUCTS_INTRO = {
   title: 'Des produits conçus pour votre réussite',
-  paragraph: "Primeo propose une gamme complète de produits adaptés à la taille et aux objectifs de chaque professionnel — que vous débutiez ou gériez un portefeuille de biens important. Choisissez la formule qui vous correspond et évoluez à votre rythme.",
+  paragraph: "Primeo propose des services complémentaires pour accompagner chaque professionnel : photos et visites virtuelles, paiement en ligne sécurisé et formations.",
 };
 
 const DEFAULT_SUB_PLANS = [
@@ -160,7 +158,7 @@ const DEFAULT_DATA_PACKS = [
 
 const DEFAULT_UPCOMING = [
   { id: 'du-1', icon: '🛡️', title: 'Assurance voyage',       description: 'Protection couvrant annulations et incidents pour voyageurs et hôtes.'               },
-  { id: 'du-2', icon: '🤵', title: 'Conciergerie Primeo',    description: 'Service premium pour une gestion déléguée de vos propriétés.'                        },
+  { id: 'du-2', icon: '🤵', title: 'Conciergerie Primeo',    description: 'Service haut de gamme pour une gestion déléguée de vos propriétés.'                        },
   { id: 'du-3', icon: '🤝', title: 'Programme partenaires', description: 'Réseau de services locaux : ménage, maintenance, transferts aéroport.'                 },
   { id: 'du-4', icon: '💱', title: 'Paiement multi-devises', description: 'Acceptez XOF, EUR et USD pour attirer les voyageurs internationaux.'                  },
 ];
@@ -1282,9 +1280,9 @@ export const websiteService = {
       to: [{ email }],
       subject: 'Bienvenue sur le blog Primeo !',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px">
-        <h2 style="color:#4f6af5">Abonnement confirmé 🎉</h2>
-        <p>Merci de vous être abonné aux actualités du blog Primeo. Vous recevrez nos prochains articles directement dans votre boîte mail.</p>
-        <p style="color:#6b7280;font-size:13px">Pour vous désabonner, répondez à cet email avec « STOP ».</p>
+        <h2 style="color:#4f6af5">Inscription confirmée 🎉</h2>
+        <p>Merci de vous être inscrit aux actualités du blog Primeo. Vous recevrez nos prochains articles directement dans votre boîte mail.</p>
+        <p style="color:#6b7280;font-size:13px">Pour vous désinscrire, répondez à cet email avec « STOP ».</p>
       </div>`,
     }).catch(() => {});
     return sub;

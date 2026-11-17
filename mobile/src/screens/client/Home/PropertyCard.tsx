@@ -58,11 +58,6 @@ export function PropertyCard({ property, onPress, style, onFavorite, isFavorite 
 
           {/* Badge pills — top left */}
           <View style={styles.badges}>
-            {property.isBoosted && (
-              <View style={[styles.badge, styles.bBoosted]}>
-                <Text style={styles.badgeTxt}>⚡ Boosté</Text>
-              </View>
-            )}
             {property.virtualTour?.available && (
               <View style={[styles.badge, styles.b3D]}>
                 <Text style={styles.badgeTxt}>🔭 3D</Text>

@@ -24,11 +24,10 @@
       "icon": "🏨",
       "title": "Hôteliers & Propriétaires",
       "subtitle": "Maximisez votre taux d'occupation",
-      "description": "Publiez vos annonces en quelques minutes, gérez vos réservations en temps réel et augmentez votre visibilité grâce aux boosts d'annonces. Primeo vous donne tous les outils pour développer votre activité.",
+      "description": "Publiez vos annonces en quelques minutes, gérez vos réservations en temps réel et suivez la performance de vos annonces. Primeo vous donne tous les outils pour développer votre activité.",
       "features": [
         { "icon": "📋", "text": "Tableau de bord de gestion complet" },
         { "icon": "📅", "text": "Calendrier de disponibilités en temps réel" },
-        { "icon": "🚀", "text": "Boosts pour propulser vos annonces" },
         { "icon": "📊", "text": "Statistiques de performance détaillées" },
         { "icon": "💬", "text": "Messagerie intégrée avec les clients" },
         { "icon": "🔭", "text": "Outil de création de visite 3D" }
@@ -62,7 +61,6 @@
         { "icon": "📷", "text": "Photos HD et visites virtuelles 3D" },
         { "icon": "👥", "text": "Suivi des prospects et des demandes" },
         { "icon": "📝", "text": "Signature électronique des contrats" },
-        { "icon": "📣", "text": "Campagnes de boost ciblées" },
         { "icon": "🌍", "text": "Visibilité nationale et internationale" }
       ],
       "ctaLabel": "Publier une annonce",
