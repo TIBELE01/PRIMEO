@@ -16,14 +16,25 @@ export const paymentsService = {
     if (booking.status !== 'pending_payment') {
       throw new HttpError(400, 'Cette réservation ne nécessite pas de paiement en ligne');
     }
-    if (booking.onlinePaidAmount <= 0) {
+    // `onlinePaidAmount` n'est renseigné qu'APRÈS paiement réussi (webhook) : le
+    // montant à régler est celui de la dernière transaction client créée à la
+    // réservation (relance d'un paiement abandonné ou échoué).
+    const previous = await prisma.transaction.findFirst({
+      where: { bookingId: booking.id, type: 'client_payment' },
+      orderBy: { initiatedAt: 'desc' },
+    });
+    if (!previous || previous.amount <= 0) {
       throw new HttpError(400, 'Aucun montant en ligne à régler pour cette réservation');
     }
+    if (previous.status === 'success') {
+      throw new HttpError(400, 'Cette réservation est déjà payée');
+    }
+    const amount = previous.amount;
 
     const returnUrl = `${env.FRONTEND_URL ?? 'https://app.primeo.ci'}/bookings/${booking.id}/payment-status`;
 
     const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
-      amount: booking.onlinePaidAmount,
+      amount,
       bookingId: booking.id,
       customerEmail: booking.client.email,
       customerPhone: booking.client.phone ?? undefined,
@@ -36,9 +47,9 @@ export const paymentsService = {
         userId,
         bookingId: booking.id,
         type: 'client_payment',
-        amount: booking.onlinePaidAmount,
-        fee: 0,
-        netAmount: booking.onlinePaidAmount,
+        amount,
+        fee: previous.fee,
+        netAmount: previous.netAmount,
         status: 'initiated',
         geniusPayTransactionId: reference,
         checkoutUrl,

@@ -267,7 +267,7 @@ export function renderLocalTemplate(
             heading('🔐 Votre code de vérification') +
             paragraph('Utilisez le code ci-dessous pour vérifier votre identité :') +
             codeBlock(p('otp') || p('otpCode')) +
-            muted('Ce code est valable 5 minutes. Ne le communiquez à personne, même à un agent Primeo.'),
+            muted('Ce code est valable 10 minutes. Ne le communiquez à personne, même à un agent Primeo.'),
         }),
       };
 

@@ -184,9 +184,9 @@ interface IntegrationGroup {
 const OPTIONAL_INTEGRATIONS: IntegrationGroup[] = [
   { name: 'Genius Pay — paiements en ligne',    vars: ['GENIUS_PAY_API_KEY', 'GENIUS_PAY_SECRET_API_KEY', 'GENIUS_PAY_API_URL'] },
   { name: 'Genius Pay — vérification webhook',  vars: ['GENIUS_PAY_WEBHOOK_SECRET'] },
-  { name: 'Brevo — emails transactionnels',     vars: ['BREVO_SMTP_HOST', 'BREVO_SMTP_USER', 'BREVO_SMTP_PASS'] },
+  { name: 'Brevo — emails transactionnels',     vars: ['BREVO_API_KEY'] },
   { name: 'OneSignal — notifications push',     vars: ['ONESIGNAL_APP_ID', 'ONESIGNAL_REST_API_KEY'] },
-  { name: 'Orange — SMS / OTP',                 vars: ['ORANGE_CLIENT_ID', 'ORANGE_CLIENT_SECRET', 'ORANGE_SENDER'] },
+  { name: 'Orange — SMS (facultatif)',                vars: ['ORANGE_CLIENT_ID', 'ORANGE_CLIENT_SECRET', 'ORANGE_SENDER'] },
   // Cloudinary est vérifié séparément (cf. cloudinaryParsed) car il accepte deux
   // formes de configuration (CLOUDINARY_URL OU les 3 variables séparées).
   { name: 'Geoapify — géolocalisation',         vars: ['GEOAPIFY_API_KEY'] },

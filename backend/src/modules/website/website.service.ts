@@ -1,6 +1,7 @@
 // website.service.ts — Page d'accueil administrable du site vitrine
 import { prisma } from '../../database/prisma.service';
 import { cacheGet, cacheSet } from '../../common/utils/redis-client';
+import { env } from '../../config/env.config';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
@@ -765,7 +766,7 @@ export const websiteService = {
       },
     });
     await sendEmail({
-      to: [{ email: 'rh@primeo.ci', name: 'Primeo RH' }],
+      to: [{ email: env.ADMIN_EMAIL ?? 'support.primeo@gmail.com', name: 'Primeo RH' }],
       subject: `Nouvelle candidature spontanée — ${data.firstName} ${data.lastName}`,
       htmlContent: `
         <h2>Nouvelle candidature spontanée</h2>
@@ -1126,7 +1127,7 @@ export const websiteService = {
     }).catch(() => {});
 
     // Notification to admin
-    const { env } = await import('../../config/env.config');
+
     if (env.ADMIN_EMAIL) {
       await sendEmail({
         to: [{ email: env.ADMIN_EMAIL }],
@@ -1517,7 +1518,7 @@ export const websiteService = {
     }).catch(() => {});
 
     // Notification to admin
-    const { env } = await import('../../config/env.config');
+
     if (env.ADMIN_EMAIL) {
       await sendEmail({
         to: [{ email: env.ADMIN_EMAIL }],

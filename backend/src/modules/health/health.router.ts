@@ -51,8 +51,10 @@ export async function checkGeniusPay(): Promise<CheckResult> {
   const t = Date.now();
   try {
     await withTimeout(
-      axios.head(env.GENIUS_PAY_API_URL, { timeout: 4_000, validateStatus: () => true }),
-      5_000,
+      // Délai élargi : la passerelle répond parfois en 4–6 s depuis Francfort,
+      // ce qui faisait passer la sonde (et le statut global) à « down » à tort.
+      axios.head(env.GENIUS_PAY_API_URL, { timeout: 8_000, validateStatus: () => true }),
+      9_000,
     );
     return { status: 'ok', latencyMs: Date.now() - t };
   } catch (err) {

@@ -411,6 +411,7 @@ function StepPersonalInfo({ data, onUpdate, onNext, onBack, currentStep, totalSt
   const pwRules = [
     { label: '8 caractères minimum', ok: data.password.length >= 8 },
     { label: '1 lettre majuscule',    ok: /[A-Z]/.test(data.password) },
+    { label: '1 lettre minuscule',    ok: /[a-z]/.test(data.password) },
     { label: '1 chiffre',             ok: /[0-9]/.test(data.password) },
   ];
 

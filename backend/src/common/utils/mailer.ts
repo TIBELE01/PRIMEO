@@ -57,6 +57,23 @@ async function sendViaBrevoApi(
     return;
   }
 
+  // Brevo refuse (400) une pièce jointe par URL dont le chemin n'a pas d'extension
+  // (cas des liens signés /api/downloads/invoice?t=…) : on télécharge le fichier et
+  // on le joint en base64. En cas d'échec, l'email part sans pièce jointe (le lien
+  // de téléchargement reste dans le corps du message).
+  const resolvedAttachment = attachment && attachment.length
+    ? (await Promise.all(attachment.map(async (a) => {
+        if (a.content || !a.url) return a;
+        try {
+          const res = await axios.get<ArrayBuffer>(a.url, { responseType: 'arraybuffer', timeout: 15_000 });
+          return { name: a.name, content: Buffer.from(res.data).toString('base64') };
+        } catch (err) {
+          logger.warn(`Pièce jointe ignorée (${a.name}) : téléchargement impossible`, err);
+          return null;
+        }
+      }))).filter((a): a is EmailAttachment => a !== null)
+    : undefined;
+
   await axios.post(
     `${brevoConfig.baseUrl}/smtp/email`,
     {
@@ -64,7 +81,7 @@ async function sendViaBrevoApi(
       to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
       subject,
       htmlContent,
-      ...(attachment && attachment.length ? { attachment } : {}),
+      ...(resolvedAttachment && resolvedAttachment.length ? { attachment: resolvedAttachment } : {}),
     },
     {
       headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },

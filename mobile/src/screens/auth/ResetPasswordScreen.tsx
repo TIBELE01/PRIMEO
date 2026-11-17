@@ -80,7 +80,7 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
           </View>
 
           <View style={s.requirements}>
-            {['8 caractères minimum', '1 lettre majuscule', '1 chiffre'].map((r) => (
+            {['8 caractères minimum', '1 lettre majuscule', '1 lettre minuscule', '1 chiffre'].map((r) => (
               <Text key={r} style={s.req}>• {r}</Text>
             ))}
           </View>

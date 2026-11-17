@@ -156,7 +156,7 @@ export function Step2PersonalInfo({ data, onUpdate, onNext, onBack, currentStep,
             </View>
             {touched.password && errors.password && <Text style={s.hint}>{errors.password}</Text>}
             <View style={s.rules}>
-              {['8 caractères minimum', '1 lettre majuscule', '1 chiffre'].map((r) => (
+              {['8 caractères minimum', '1 lettre majuscule', '1 lettre minuscule', '1 chiffre'].map((r) => (
                 <Text key={r} style={s.rule}>• {r}</Text>
               ))}
             </View>

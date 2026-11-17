@@ -104,7 +104,7 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
     doc
       .fillColor('#ffffff')
       .fontSize(10)
-      .text('api.primeo.ci  |  contact@primeo.ci', doc.page.width - 250, 42, { width: 200, align: 'right' });
+      .text('support.primeo@gmail.com', doc.page.width - 250, 42, { width: 200, align: 'right' });
 
     // ── Titre + badge ───────────────────────────────────────────────────────────
     doc.fillColor(primaryBlue).fontSize(20).font('Helvetica-Bold').text('FACTURE', 50, 115);
@@ -134,7 +134,7 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica-Bold')
       .text(
-        `${data.startDate.toLocaleDateString('fr-CI')} → ${data.endDate.toLocaleDateString('fr-CI')}`,
+        `${data.startDate.toLocaleDateString('fr-CI')} au ${data.endDate.toLocaleDateString('fr-CI')}`,
         400,
         160,
         { width: 145 },
@@ -154,7 +154,7 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica')
       .text("Abidjan, Côte d'Ivoire", 350, 238)
-      .text('contact@primeo.ci', 350, 252);
+      .text('support.primeo@gmail.com', 350, 252);
 
     doc.moveTo(50, 280).lineTo(doc.page.width - 50, 280).strokeColor('#dddddd').stroke();
 
@@ -218,7 +218,7 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
       .fontSize(8)
       .font('Helvetica')
       .text(
-        `© ${new Date().getFullYear()} Primeo CI  |  Abidjan, Côte d'Ivoire  |  legal.primeo.ci`,
+        `© ${new Date().getFullYear()} Primeo CI  |  Cocody – Saint Viateur, Abidjan  |  +225 07 07 16 16 84`,
         50,
         footerY + 16,
         { align: 'center', width: doc.page.width - 100 },
@@ -267,7 +267,7 @@ function buildPdfBuffer(data: InvoiceData): Promise<Buffer> {
     doc
       .fillColor('#ffffff')
       .fontSize(10)
-      .text('api.primeo.ci  |  contact@primeo.ci', doc.page.width - 250, 42, { width: 200, align: 'right' });
+      .text('support.primeo@gmail.com', doc.page.width - 250, 42, { width: 200, align: 'right' });
 
     // ── Invoice title ─────────────────────────────────────────────────────────
     doc.fillColor(primaryBlue).fontSize(20).font('Helvetica-Bold').text('FACTURE', 50, 115);
@@ -298,7 +298,7 @@ function buildPdfBuffer(data: InvoiceData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica-Bold')
       .text(
-        `${data.periodStart.toLocaleDateString('fr-CI')} → ${data.periodEnd.toLocaleDateString('fr-CI')}`,
+        `${data.periodStart.toLocaleDateString('fr-CI')} au ${data.periodEnd.toLocaleDateString('fr-CI')}`,
         350,
         160,
       );
@@ -317,7 +317,7 @@ function buildPdfBuffer(data: InvoiceData): Promise<Buffer> {
       .fontSize(10)
       .font('Helvetica')
       .text('Abidjan, Côte d\'Ivoire', 350, 228)
-      .text('contact@primeo.ci', 350, 242);
+      .text('support.primeo@gmail.com', 350, 242);
 
     doc.moveTo(50, 270).lineTo(doc.page.width - 50, 270).strokeColor('#dddddd').stroke();
 
@@ -378,7 +378,7 @@ function buildPdfBuffer(data: InvoiceData): Promise<Buffer> {
       .fontSize(8)
       .font('Helvetica')
       .text(
-        `© ${new Date().getFullYear()} Primeo CI  |  Abidjan, Côte d'Ivoire  |  legal.primeo.ci`,
+        `© ${new Date().getFullYear()} Primeo CI  |  Cocody – Saint Viateur, Abidjan  |  +225 07 07 16 16 84`,
         50,
         footerY + 16,
         { align: 'center', width: doc.page.width - 100 },

@@ -363,9 +363,11 @@ describe('Parcours professionnel complet — inscription → réservation client
         id: BOOKING_ID,
         clientId: CLIENT_ID,
         status: 'pending_payment',
-        onlinePaidAmount: ONLINE_AMOUNT,
+        onlinePaidAmount: 0, // renseigné seulement après paiement (webhook)
         client: clientUser,
       });
+      // Montant dû = transaction client créée à la réservation
+      mockPrisma.transaction.findFirst.mockResolvedValue({ amount: ONLINE_AMOUNT, fee: 0, netAmount: ONLINE_AMOUNT, status: 'initiated' });
       mockPrisma.transaction.create.mockResolvedValue({ id: 'tx-genius-1' });
     });
 

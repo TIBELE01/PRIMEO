@@ -89,7 +89,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'account_help',
     category: 'Compte',
     response:
-      'Créez votre compte en touchant « Créer un compte » : prénom, nom, e-mail, téléphone ivoirien (+225) et mot de passe (8 caractères minimum, 1 majuscule, 1 chiffre). Un code de vérification valable 5 minutes vous est envoyé par e-mail. Les professionnels passent par « Inscription professionnelle » et par une validation de leur dossier.',
+      'Créez votre compte en touchant « Créer un compte » : prénom, nom, e-mail, téléphone ivoirien (+225) et mot de passe (8 caractères minimum, 1 majuscule, 1 minuscule, 1 chiffre). Le compte client est créé immédiatement. Les professionnels passent par « Inscription professionnelle » : un code de vérification valable 10 minutes leur est envoyé par e-mail, puis leur dossier est validé par notre équipe.',
   },
   {
     id: 'kyc',

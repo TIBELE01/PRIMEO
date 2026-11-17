@@ -4,19 +4,19 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Compte et authentification",
     "question": "Comment créer un compte client ?",
-    "answer": "<p>Dans l’application, touchez <strong>Créer un compte</strong> puis choisissez <strong>Client</strong>. Renseignez votre prénom, nom, e-mail, téléphone ivoirien (+225) et un mot de passe, acceptez les CGU et la politique de confidentialité, puis saisissez le code de vérification reçu par e-mail.</p><p>Détails : <a href=\"/documentation/guide-client.html#compte\">guide du client</a>.</p>",
+    "answer": "<p>Dans l’application, touchez <strong>Créer un compte</strong> puis choisissez <strong>Client</strong>. Renseignez votre prénom, nom, e-mail, téléphone ivoirien (+225) et un mot de passe, acceptez les CGU et la politique de confidentialité : votre compte est créé immédiatement et vous êtes connecté.</p><p>Détails : <a href=\"/documentation/guide-client.html#compte\">guide du client</a>.</p>",
     "order": 1
   },
   {
     "category": "Compte et authentification",
     "question": "Quelles sont les règles du mot de passe ?",
-    "answer": "<p>Le mot de passe doit contenir au moins <strong>8 caractères</strong>, <strong>1 lettre majuscule</strong> et <strong>1 chiffre</strong>.</p>",
+    "answer": "<p>Le mot de passe doit contenir au moins <strong>8 caractères</strong>, <strong>1 lettre majuscule</strong>, <strong>1 lettre minuscule</strong> et <strong>1 chiffre</strong>.</p>",
     "order": 2
   },
   {
     "category": "Compte et authentification",
     "question": "Je n’ai pas reçu mon code de vérification. Que faire ?",
-    "answer": "<p>Le code est envoyé <strong>par e-mail</strong>. Vérifiez vos courriers indésirables, puis touchez « Renvoyer le code ». Il est valable <strong>5 minutes</strong> et vous disposez de <strong>5 essais</strong> ; après 5 codes erronés, demandez-en un nouveau. Le nombre de demandes de code est limité par heure : en cas de blocage, réessayez plus tard.</p>",
+    "answer": "<p>Le code est envoyé <strong>par e-mail</strong>. Vérifiez vos courriers indésirables, puis touchez « Renvoyer le code ». Il est valable <strong>10 minutes</strong> et vous disposez de <strong>5 essais</strong> ; après 5 codes erronés, demandez-en un nouveau. Le nombre de demandes de code est limité par heure : en cas de blocage, réessayez plus tard.</p>",
     "order": 3
   },
   {

@@ -35,7 +35,7 @@ export const PAGINATION_LIMIT = 20;
 export const MAX_IMAGES_PER_PROPERTY = 10;
 
 export const OTP_LENGTH = 6;
-export const OTP_EXPIRY_SECONDS = 300; // 5 minutes
+export const OTP_EXPIRY_SECONDS = 600; // 10 minutes (aligné sur le backend)
 
 export const BOOKING_MIN_NIGHTS = 1;
 export const BOOKING_MAX_NIGHTS = 90;

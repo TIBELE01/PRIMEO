@@ -698,7 +698,7 @@ export async function adminReplyMessage(req: Request, res: Response, next: NextF
     const { replyText } = req.body;
     if (!replyText?.trim()) { res.status(400).json({ message: 'Le texte de réponse est requis' }); return; }
     const { env } = await import('../../config/env.config');
-    const adminEmail = (req as any).user?.email || env.ADMIN_EMAIL || 'contact@primeo.ci';
+    const adminEmail = (req as any).user?.email || env.ADMIN_EMAIL || 'support.primeo@gmail.com';
     res.json(await websiteService.adminReplyMessage(req.params.id, replyText, adminEmail));
   } catch (e) { next(e); }
 }

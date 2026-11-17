@@ -7,9 +7,15 @@ jest.mock('./services/genius-pay.service', () => ({
   geniusPayService: { initiatePayment: (...a: unknown[]) => mockInitiate(...a) },
 }));
 
-const mockPrisma = {
+const mockPrisma: any = {
   booking: { findUnique: jest.fn() },
-  transaction: { create: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), count: jest.fn() },
+  transaction: { findFirst: jest.fn(async () => {
+    // Montant dû = transaction client créée à la réservation (fixture : onlinePaidAmount)
+    const b = await mockPrisma.booking.findUnique.mock.results.at(-1)?.value;
+    return b && b.onlinePaidAmount > 0
+      ? { amount: b.onlinePaidAmount, fee: 0, netAmount: b.onlinePaidAmount, status: b.txStatus ?? 'initiated' }
+      : null;
+  }), create: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), count: jest.fn() },
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
@@ -57,6 +63,12 @@ describe('paymentsService.initiate', () => {
   it('400 si aucun montant en ligne à régler', async () => {
     mockPrisma.booking.findUnique.mockResolvedValue({ ...booking, onlinePaidAmount: 0 });
     await expect(paymentsService.initiate('user-1', { bookingId: 'bk-1' } as never)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('400 si la réservation est déjà payée', async () => {
+    mockPrisma.booking.findUnique.mockResolvedValue({ ...booking, txStatus: 'success' });
+    await expect(paymentsService.initiate('user-1', { bookingId: 'bk-1' } as never)).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockInitiate).not.toHaveBeenCalled();
   });
 });
 
