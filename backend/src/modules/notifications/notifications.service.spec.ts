@@ -98,17 +98,22 @@ describe('notificationsService.notify — email + push pour les réservations', 
 });
 
 describe('registerPushToken — enregistrement appareil (chaîne mobile → OneSignal → base)', () => {
-  it('enregistre le token en base (push_tokens) avec le player_id OneSignal', async () => {
+  it('jeton Expo : stocké SANS passer par OneSignal (livré par le service push Expo)', async () => {
     await notificationsService.registerPushToken('user-1', 'ExponentPushToken[abc123]', 'android');
-
-    // 1) Tentative d'enregistrement OneSignal (mock → player-1)
-    expect(registerExpoTokenWithOneSignal).toHaveBeenCalledWith('ExponentPushToken[abc123]', 'user-1', 'android');
-    // 2) Upsert idempotent dans push_tokens (même token re-soumis → réactivation)
+    expect(registerExpoTokenWithOneSignal).not.toHaveBeenCalled();
     expect(mockPrisma.pushToken.upsert).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId_token: { userId: 'user-1', token: 'ExponentPushToken[abc123]' } },
+      create: expect.objectContaining({ userId: 'user-1', playerId: null, platform: 'android', isActive: true }),
+    }));
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('jeton natif (FCM/APNs) : enregistré chez OneSignal avec player_id', async () => {
+    await notificationsService.registerPushToken('user-1', 'fcm-native-token-abc', 'android');
+    expect(registerExpoTokenWithOneSignal).toHaveBeenCalledWith('fcm-native-token-abc', 'user-1', 'android');
+    expect(mockPrisma.pushToken.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ userId: 'user-1', playerId: 'player-1', platform: 'android', isActive: true }),
     }));
-    // 3) Rétro-compatibilité : player_id reflété sur le user
     expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'user-1' }, data: { onesignalPlayerId: 'player-1' },
     }));
@@ -116,7 +121,7 @@ describe('registerPushToken — enregistrement appareil (chaîne mobile → OneS
 
   it('stocke quand même le token si OneSignal est indisponible (playerId null)', async () => {
     (registerExpoTokenWithOneSignal as jest.Mock).mockResolvedValueOnce(null);
-    await notificationsService.registerPushToken('user-2', 'ExponentPushToken[xyz]', 'ios');
+    await notificationsService.registerPushToken('user-2', 'apns-native-token-xyz', 'ios');
     expect(mockPrisma.pushToken.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ userId: 'user-2', playerId: null }),
     }));

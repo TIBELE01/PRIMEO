@@ -393,8 +393,12 @@ export const notificationsService = {
   // ── Push token ───────────────────────────────────────────────────────────────
 
   async registerPushToken(userId: string, token: string, platform?: string): Promise<void> {
-    // Attempt OneSignal device registration to obtain a player_id
-    const playerId = await registerExpoTokenWithOneSignal(token, userId, platform);
+    // Un jeton Expo (« ExponentPushToken[…] ») n'est livrable QUE par le service push
+    // d'Expo : l'enregistrer chez OneSignal comme appareil natif lui attribuait un
+    // player_id, routait les envois vers OneSignal… qui ne peut pas le livrer. On ne
+    // passe par OneSignal que pour un vrai jeton natif (FCM / APNs).
+    const isExpoToken = /^Expo(nent)?PushToken\[/.test(token);
+    const playerId = isExpoToken ? null : await registerExpoTokenWithOneSignal(token, userId, platform);
 
     // Upsert in push_tokens table (idempotent — same token from same device re-activates)
     await prisma.pushToken.upsert({
