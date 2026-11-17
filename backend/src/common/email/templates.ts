@@ -543,6 +543,51 @@ export function renderLocalTemplate(
       };
     }
 
+    // ── 21 · Litige ouvert (administrateurs) ────────────────────────────────
+    case 21: {
+      const rows: InfoRow[] = [
+        { label: 'Réservation', value: refId(params['bookingId']) },
+        { label: 'Bien', value: p('propertyTitle') },
+        { label: 'Motif', value: p('reason') },
+      ];
+      return {
+        subject: `Nouveau litige — ${p('propertyTitle')}`,
+        html: renderEmail({
+          title: 'Nouveau litige',
+          accent: 'secondary',
+          preheader: 'Un litige vient d\'être ouvert sur une réservation.',
+          body:
+            heading('⚖️ Nouveau litige à traiter', 'secondary') +
+            greeting(p('firstName')) +
+            paragraph('Un litige vient d\'être ouvert sur une réservation. Consultez-le depuis l\'espace d\'administration, rubrique « Litiges ».') +
+            infoCard(rows, { title: 'Détails du litige' }) +
+            signature(),
+        }),
+      };
+    }
+
+    // ── 22 · Litige résolu (client et professionnel) ────────────────────────
+    case 22: {
+      const outcome =
+        p('resolution') === 'resolved_refund_full' ? 'Le litige a été résolu avec un remboursement intégral, crédité sur votre portefeuille Primeo.'
+        : p('resolution') === 'resolved_refund_partial' ? 'Le litige a été résolu avec un remboursement partiel, crédité sur votre portefeuille Primeo.'
+        : 'Le litige a été examiné et clôturé par notre équipe.';
+      return {
+        subject: 'Votre litige a été résolu — Primeo',
+        html: renderEmail({
+          title: 'Litige résolu',
+          accent: 'success',
+          preheader: 'Notre équipe a statué sur votre litige.',
+          body:
+            heading('Litige résolu', 'success') +
+            greeting(p('firstName')) +
+            paragraph(outcome) +
+            paragraph('Retrouvez le détail dans l\'application, rubrique « Mes réservations ». Pour toute question, répondez à cet e-mail.') +
+            signature(),
+        }),
+      };
+    }
+
     // ── Défaut ──────────────────────────────────────────────────────────────
     default:
       return {

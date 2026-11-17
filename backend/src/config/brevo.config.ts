@@ -31,5 +31,7 @@ export const brevoConfig = {
     reviewReply: 18, // réponse du professionnel à un avis — client
     boostActivated: 19, // boost activé
     boostExpiryReminder: 20, // boost bientôt expiré
+    disputeOpened: 21, // litige ouvert — administrateurs
+    disputeResolved: 22, // litige résolu — client et professionnel
   },
 } as const;

@@ -9,7 +9,7 @@ import { applyRateLimit } from './common/middleware/rate-limit.middleware';
 import { applyRawBody } from './common/middleware/raw-body.middleware';
 import { applyRequestId } from './common/middleware/request-id.middleware';
 import { maintenanceGate, getMaintenanceState } from './common/middleware/maintenance.middleware';
-import { handleHttpError } from './common/handlers/http-error.handler';
+import { handleHttpError, HttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
 import { errorAlertMiddleware } from './common/middleware/error-alert.middleware';
 import { healthRouter } from './modules/health/health.router';
@@ -52,6 +52,7 @@ import { restaurantMeRouter } from './modules/restaurant/restaurant-me.router';
 import { payoutsRouter } from './modules/payouts/payouts.router';
 import { walletsRouter } from './modules/wallets/wallets.router';
 import { sectorsConfigRouter } from './modules/sectors/sectors.router';
+import { ZodError } from 'zod';
 
 export function createApp(): Application {
   const app = express();
@@ -147,6 +148,16 @@ export function createApp(): Application {
   app.use('/api/payouts', payoutsRouter);
   app.use('/api/wallet', walletsRouter);
   app.use('/api/config', sectorsConfigRouter); // secteurs activés (cartes de l'accueil)
+
+  // Validation Zod levée directement dans un contrôleur (`Schema.parse(req.body)`) :
+  // c'est une erreur du client (400), pas une panne serveur — convertie AVANT Sentry
+  // pour ne pas remonter de fausses erreurs 500.
+  app.use((err: Error, _req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    if (err instanceof ZodError) {
+      return next(new HttpError(400, 'Validation error', err.flatten().fieldErrors));
+    }
+    next(err);
+  });
 
   // Sentry error handler — must come AFTER all routes and BEFORE custom error handlers
   if (env.SENTRY_DSN) {
