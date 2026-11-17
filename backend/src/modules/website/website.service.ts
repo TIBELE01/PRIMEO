@@ -66,7 +66,7 @@ const DEFAULT_SOLUTIONS_BLOCS = [
       { icon: '📱', text: 'Application mobile intuitive' },
       { icon: '🛡️', text: 'Garantie remboursement en cas de litige' },
     ],
-    ctaLabel: 'Explorer les hébergements', ctaUrl: '/mobile', sortOrder: 0, active: true,
+    ctaLabel: 'Explorer les hébergements', ctaUrl: '/telechargement/', sortOrder: 0, active: true,
   },
   {
     id: 'default-2', icon: '🏨', title: "Hôteliers & Propriétaires",
@@ -79,7 +79,7 @@ const DEFAULT_SOLUTIONS_BLOCS = [
       { icon: '💬', text: 'Messagerie intégrée avec les clients' },
       { icon: '🔭', text: 'Outil de création de visite 3D' },
     ],
-    ctaLabel: 'Devenir partenaire', ctaUrl: '/mobile', sortOrder: 1, active: true,
+    ctaLabel: 'Devenir partenaire', ctaUrl: '/telechargement/', sortOrder: 1, active: true,
   },
   {
     id: 'default-3', icon: '🍽️', title: 'Restaurateurs',
@@ -93,7 +93,7 @@ const DEFAULT_SOLUTIONS_BLOCS = [
       { icon: '📍', text: 'Référencement local optimisé' },
       { icon: '📊', text: "Analyse des couverts et du chiffre d'affaires" },
     ],
-    ctaLabel: 'Référencer mon restaurant', ctaUrl: '/mobile', sortOrder: 2, active: true,
+    ctaLabel: 'Référencer mon restaurant', ctaUrl: '/telechargement/', sortOrder: 2, active: true,
   },
   {
     id: 'default-4', icon: '🏗️', title: "Professionnels de l'Immobilier",
@@ -106,7 +106,7 @@ const DEFAULT_SOLUTIONS_BLOCS = [
       { icon: '📝', text: 'Signature électronique des contrats' },
       { icon: '🌍', text: 'Visibilité nationale et internationale' },
     ],
-    ctaLabel: 'Publier une annonce', ctaUrl: '/mobile', sortOrder: 3, active: true,
+    ctaLabel: 'Publier une annonce', ctaUrl: '/telechargement/', sortOrder: 3, active: true,
   },
 ];
 

@@ -18,7 +18,7 @@
         { "icon": "🛡️", "text": "Garantie remboursement en cas de litige" }
       ],
       "ctaLabel": "Explorer les hébergements",
-      "ctaUrl": "/mobile"
+      "ctaUrl": "/telechargement/"
     },
     {
       "icon": "🏨",
@@ -33,7 +33,7 @@
         { "icon": "🔭", "text": "Outil de création de visite 3D" }
       ],
       "ctaLabel": "Devenir partenaire",
-      "ctaUrl": "/mobile"
+      "ctaUrl": "/telechargement/"
     },
     {
       "icon": "🍽️",
@@ -49,7 +49,7 @@
         { "icon": "📊", "text": "Analyse des couverts et du chiffre d'affaires" }
       ],
       "ctaLabel": "Référencer mon restaurant",
-      "ctaUrl": "/mobile"
+      "ctaUrl": "/telechargement/"
     },
     {
       "icon": "🏗️",
@@ -64,7 +64,7 @@
         { "icon": "🌍", "text": "Visibilité nationale et internationale" }
       ],
       "ctaLabel": "Publier une annonce",
-      "ctaUrl": "/mobile"
+      "ctaUrl": "/telechargement/"
     }
   ]
 }
