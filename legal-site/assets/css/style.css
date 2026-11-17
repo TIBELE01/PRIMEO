@@ -635,3 +635,6 @@ footer {
 
 /* Mobile : les tableaux défilent horizontalement dans leur cadre au lieu de faire déborder la page */
 table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Informations à compléter par l'éditeur (mentions obligatoires) */
+.todo{background:#fff3cd;color:#7a4b00;padding:0 .3em;border-radius:3px;font-weight:600}

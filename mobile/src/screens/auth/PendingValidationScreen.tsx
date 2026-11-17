@@ -47,8 +47,8 @@ export default function PendingValidationScreen() {
 
           <View style={s.infoCard}>
             <Text style={s.infoTitle}>Besoin d'aide ?</Text>
-            <Text style={s.infoItem}>📧  support@primeo.ci</Text>
-            <Text style={s.infoItem}>📞  +225 07 00 00 00 00</Text>
+            <Text style={s.infoItem}>📧  support.primeo@gmail.com</Text>
+            <Text style={s.infoItem}>📞  +225 07 07 16 16 84</Text>
           </View>
 
           <TouchableOpacity style={s.logoutBtn} onPress={logout} accessibilityRole="button">
@@ -80,8 +80,8 @@ export default function PendingValidationScreen() {
 
         <View style={s.infoCard}>
           <Text style={s.infoTitle}>Besoin d'aide ?</Text>
-          <Text style={s.infoItem}>📧  support@primeo.ci</Text>
-          <Text style={s.infoItem}>📞  +225 07 00 00 00 00</Text>
+          <Text style={s.infoItem}>📧  support.primeo@gmail.com</Text>
+          <Text style={s.infoItem}>📞  +225 07 07 16 16 84</Text>
         </View>
 
         <TouchableOpacity style={s.logoutBtn} onPress={logout} accessibilityRole="button">

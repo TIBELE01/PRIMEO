@@ -30,7 +30,7 @@
   <div class="section">
     <div class="breadcrumb"><a href="/">Accueil</a> <span>›</span> Politique de transfert de données hors CEDEAO</div>
     <h1 class="page-title">Politique de transfert de données hors CEDEAO</h1>
-    <p class="page-subtitle">Dernière mise à jour : 8 juin 2026 · Version 1.0</p>
+    <p class="page-subtitle">Dernière mise à jour : 17 novembre 2026 · Version 1.1</p>
 
     <div class="toc">
       <h4>Table des matières</h4>
@@ -77,7 +77,7 @@
     </ul>
 
     <h3>2.3 Localisation prioritaire des données</h3>
-    <p>Dans le cadre de sa stratégie de souveraineté des données, PRIMEO donne la priorité à l'hébergement de ses données en Côte d'Ivoire ou dans la sous-région CEDEAO. Lorsque des contraintes techniques ou économiques imposent un hébergement hors CEDEAO, PRIMEO s'assure que des garanties équivalentes sont en place et informe ses utilisateurs via la présente politique.</p>
+    <p>Les données de la plateforme sont aujourd'hui hébergées à <strong>Francfort (Allemagne)</strong> (base de données et authentification Supabase ; serveurs applicatifs Render), c'est-à-dire <strong>hors de Côte d'Ivoire et hors de l'espace CEDEAO</strong>. D'autres prestataires (médias, e-mails, notifications, suivi des erreurs) traitent des données dans l'Union européenne ou aux États-Unis. Ces transferts sont soumis à l'article 26 de la loi n°2013-450 : niveau de protection supérieur ou équivalent et autorisation préalable de l'ARTCI <span class="todo">[À COMPLÉTER : référence de l'autorisation de transfert de l'ARTCI, ou mention de la demande en cours]</span>.</p>
 
     <h2 class="section-title" id="base-legale">3. Base légale des transferts</h2>
     <h3>3.1 Exécution du contrat</h3>
@@ -109,10 +109,23 @@
     <p>Avant tout transfert vers un nouveau prestataire hors CEDEAO, PRIMEO procède à une <strong>évaluation de l'impact sur la protection des données (EIPD)</strong> et à un audit de sécurité du prestataire. Cette évaluation porte sur la législation applicable dans le pays destinataire, le niveau de sécurité technique et organisationnelle du prestataire, les droits résiduels des personnes concernées et les recours disponibles en cas de violation.</p>
 
     <h3>4.4 Chiffrement des données en transit</h3>
-    <p>Toutes les données personnelles transférées hors de Côte d'Ivoire le sont via des connexions chiffrées (TLS 1.2 minimum, TLS 1.3 recommandé). Les données particulièrement sensibles (données financières, données d'identité) font l'objet d'un chiffrement de bout en bout. PRIMEO applique une politique de chiffrement au repos pour toutes les données stockées chez ses prestataires cloud.</p>
+    <p>Les données personnelles transférées hors de Côte d'Ivoire le sont via des connexions chiffrées (HTTPS/TLS). Les prestataires appliquent leurs propres mesures de chiffrement au repos.</p>
 
     <h3>4.5 Liste des principaux sous-traitants impliquant des transferts</h3>
-    <p>PRIMEO maintient une liste actualisée de ses principaux sous-traitants impliquant des transferts de données hors CEDEAO, disponible sur demande auprès du DPD. Cette liste précise pour chaque prestataire : le pays de localisation, les catégories de données transférées, la base légale du transfert et les garanties en place.</p>
+    <p>Principaux sous-traitants impliquant des transferts de données hors de Côte d'Ivoire :</p>
+    <table class="data-table">
+      <thead><tr><th>Prestataire</th><th>Rôle</th><th>Localisation</th></tr></thead>
+      <tbody>
+        <tr><td>Supabase</td><td>Base de données, authentification</td><td>Francfort (Allemagne)</td></tr>
+        <tr><td>Render</td><td>Hébergement des applications et de l'API</td><td>Francfort (Allemagne) ; société établie aux États-Unis</td></tr>
+        <tr><td>Cloudinary</td><td>Stockage et diffusion des images et documents</td><td>Réseau mondial</td></tr>
+        <tr><td>Brevo</td><td>E-mails transactionnels</td><td>Union européenne</td></tr>
+        <tr><td>OneSignal</td><td>Notifications push</td><td>États-Unis</td></tr>
+        <tr><td>Sentry</td><td>Suivi des erreurs techniques</td><td>Union européenne / États-Unis</td></tr>
+        <tr><td>Geoapify</td><td>Cartes et autocomplétion d'adresses</td><td>Union européenne</td></tr>
+        <tr><td>Norasend</td><td>Messages WhatsApp / Telegram (communications consenties)</td><td>—</td></tr>
+      </tbody>
+    </table>
 
     <h2 class="section-title" id="droits">5. Droits des personnes concernées</h2>
     <h3>5.1 Information préalable</h3>
@@ -133,7 +146,7 @@
     <h3>5.4 Contact pour exercer ses droits</h3>
     <p>Pour toute question relative aux transferts de données ou pour exercer vos droits :</p>
     <ul>
-      <li><strong>DPD :</strong> <a href="mailto:dpd@primeo.ci">dpd@primeo.ci</a></li>
+      <li><strong>DPD :</strong> <a href="mailto:support.primeo@gmail.com">support.primeo@gmail.com</a></li>
       <li><strong>ARTCI :</strong> <a href="https://www.artci.ci" target="_blank" rel="noopener">www.artci.ci</a></li>
     </ul>
 
@@ -161,8 +174,8 @@
     <h3>7.1 Délégué à la Protection des Données</h3>
     <p>Pour toute question relative à la présente politique ou aux transferts de données effectués par PRIMEO :</p>
     <ul>
-      <li><strong>Email DPD :</strong> <a href="mailto:dpd@primeo.ci">dpd@primeo.ci</a></li>
-      <li><strong>Email général :</strong> <a href="mailto:legal@primeo.ci">legal@primeo.ci</a></li>
+      <li><strong>Email DPD :</strong> <a href="mailto:support.primeo@gmail.com">support.primeo@gmail.com</a></li>
+      <li><strong>Email général :</strong> <a href="mailto:support.primeo@gmail.com">support.primeo@gmail.com</a></li>
       <li><strong>Courrier :</strong> PRIMEO SARL — Délégué à la Protection des Données, Abidjan, Côte d'Ivoire</li>
     </ul>
 
@@ -183,7 +196,7 @@
         <div>
           <a href="/" class="footer-brand-logo"><img src="https://res.cloudinary.com/dlnnxvepd/image/upload/c_pad,b_transparent,w_240,h_240/v1782345787/Logo_Primeo_1_gzcjq2.png" alt="Primeo" class="brand-logo-img" /></a>
           <p class="footer-desc">Plateforme de référence pour la réservation d'hébergement, l'immobilier et la restauration en Côte d'Ivoire.</p>
-          <p style="font-size:.8rem;margin-top:.85rem"><a href="mailto:legal@primeo.ci" style="color:var(--orange)">legal@primeo.ci</a></p>
+          <p style="font-size:.8rem;margin-top:.85rem"><a href="mailto:support.primeo@gmail.com" style="color:var(--orange)">support.primeo@gmail.com</a></p>
         </div>
         <div class="footer-col">
           <h4>Utilisation</h4>
@@ -202,7 +215,7 @@
           <ul>
             <li><a href="/confidentialite/">Confidentialité</a></li>
             <li><a href="/cookies/">Politique cookies</a></li>
-            <li><a href="/charte-donnees/">Charte RGPD</a></li>
+            <li><a href="/charte-donnees/">Charte données personnelles</a></li>
             <li><a href="/confidentialite-pros/">Vie privée Pros</a></li>
             <li><a href="/protection-mineurs/">Protection des mineurs</a></li>
             <li><a href="/recrutement-confidentialite/">Recrutement</a></li>
@@ -227,7 +240,7 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; <span id="footer-year">2026</span> PRIMEO SARL &middot; Tous droits r&eacute;serv&eacute;s &middot; Cocody Riviera, Abidjan, C&ocirc;te d'Ivoire</span>
+        <span>&copy; <span id="footer-year">2026</span> PRIMEO SARL &middot; Tous droits r&eacute;serv&eacute;s &middot; Cocody – Saint Viateur, Abidjan, C&ocirc;te d'Ivoire</span>
         <a href="https://primeo.ci" target="_blank" rel="noopener noreferrer">&#8599; Retour au site principal</a>
       </div>
     </div>
