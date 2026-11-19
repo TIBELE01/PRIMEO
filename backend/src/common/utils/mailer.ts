@@ -97,18 +97,29 @@ async function sendViaBrevoApi(
  * avec coordonnées, réseaux et liens légaux). Un contenu déjà mis en page par
  * renderEmail est conservé tel quel ; un contenu HTML simple est enveloppé.
  */
+export const PRIMEO_LAYOUT_MARKER = 'x-primeo-layout';
+
 export function ensureBrandedEmail(html: string, subject: string): string {
-  if (!html || html.includes('primeo-card')) return html;
+  // Déjà mis en page par renderEmail (gabarit actuel ou précédent) : on n'enveloppe jamais deux fois
+  if (!html || html.includes(PRIMEO_LAYOUT_MARKER) || html.includes('primeo-card')) return html;
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  const inner = (bodyMatch ? bodyMatch[1]! : html).replace(/<!DOCTYPE[^>]*>/gi, '').trim();
-  const title = subject.replace(/^\[?Primeo\]?\s*[—:-]?\s*/i, '').trim() || 'Primeo';
+  let inner = (bodyMatch ? bodyMatch[1]! : html).replace(/<!DOCTYPE[^>]*>/gi, '').trim();
+  // Un titre en tête du contenu devient le titre du bandeau (pas de titre en double)
+  let title = subject.replace(/^\[?Primeo\]?\s*[—:-]?\s*/i, '').trim() || 'Primeo';
+  const lead = inner.match(/^(?:<div[^>]*>\s*)?<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i);
+  if (lead) {
+    const text = lead[1]!.replace(/<[^>]+>/g, '').trim();
+    if (text && !/^bonjour/i.test(text)) { title = text; inner = inner.replace(lead[0], lead[0].startsWith('<div') ? lead[0].replace(/<h[1-3][\s\S]*$/i, '') : ''); }
+  }
+  // Signature unique : seulement si le contenu n'en contient pas déjà une
+  const signed = /l['’]équipe primeo/i.test(inner);
   return renderEmail({
     title,
     preheader: title,
     body:
       heading(title) +
       `<div class="txt" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333333;">${inner}</div>` +
-      `<p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:14px;color:#6B7280;">L'équipe Primeo</p>`,
+      (signed ? '' : `<p class="muted" style="margin:24px 0 24px;font-family:Arial,sans-serif;font-size:14px;color:#6B7280;">L’équipe Primeo</p>`),
   });
 }
 

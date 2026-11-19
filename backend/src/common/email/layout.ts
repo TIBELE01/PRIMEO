@@ -9,7 +9,6 @@ import {
   EMAIL_LINKS,
   EMAIL_SOCIALS,
   EMAIL_LOGO_URL,
-  EMAIL_LOGO_WHITE_URL,
   EMAIL_STORE_BADGES,
   COMPANY,
 } from './theme';
@@ -62,9 +61,10 @@ function renderHero(text: string, accent: Accent): string {
 // ─── En-tête : logo + accès à l'espace client ────────────────────────────────
 
 function renderTopBar(): string {
-  const logo = EMAIL_LOGO_URL
-    ? `<img src="${EMAIL_LOGO_URL}" alt="Primeo" width="132" style="display:block;border:0;outline:none;height:auto;width:132px;max-width:132px;" />`
-    : `<span style="font-family:${FONT};font-size:26px;font-weight:800;color:${C.primary};">Primeo</span>`;
+  const logo = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="center-table"><tr>
+      <td style="padding-right:10px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="44" height="44" style="display:block;border:0;outline:none;width:44px;height:44px;" /></td>
+      <td style="vertical-align:middle;font-family:${FONT};font-size:24px;font-weight:800;color:${C.primary};letter-spacing:-0.3px;">Primeo</td>
+    </tr></table>`;
   return `
   <tr>
     <td class="px topbar" style="background-color:#ffffff;padding:22px 40px;">
@@ -143,14 +143,11 @@ function footerLink(url: string, label: string): string {
 
 function renderFooter(): string {
   const sep = `<span style="color:#3C5488;font-size:12px;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`;
-  const logo = EMAIL_LOGO_WHITE_URL
-    ? `<img src="${EMAIL_LOGO_WHITE_URL}" alt="Primeo" width="110" style="display:block;margin:0 auto;border:0;height:auto;width:110px;max-width:110px;" />`
-    : `<span style="font-family:${FONT};font-size:22px;font-weight:800;color:#ffffff;">Primeo</span>`;
   return `
   <tr>
     <td class="px" style="background-color:${C.footerBg};padding:34px 40px 30px;text-align:center;">
-      ${logo}
-      <p style="margin:14px 0 18px;font-family:${FONT};font-size:13px;line-height:1.6;color:#9FB2DA;">${COMPANY.tagline}</p>
+      <p style="margin:0 0 4px;font-family:${FONT};font-size:18px;font-weight:800;color:#ffffff;letter-spacing:0.2px;">${COMPANY.name}</p>
+      <p style="margin:0 0 18px;font-family:${FONT};font-size:13px;line-height:1.6;color:#9FB2DA;">${COMPANY.tagline}</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 20px;">
         <tr>
           <td class="stack-col" style="padding:4px 10px;font-family:${FONT};font-size:13px;">
@@ -207,6 +204,7 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
+  <meta name="x-primeo-layout" content="2">
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
@@ -229,7 +227,7 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
       .hero-title { font-size: 22px !important; }
       .stack-col { display: block !important; width: 100% !important; max-width: 100% !important; text-align: center !important; }
       .trust-col { padding: 10px 0 !important; }
-      .center-mobile img { margin: 0 auto !important; }
+      .center-mobile img, .center-mobile .center-table { margin: 0 auto !important; }
       .topbar-link { padding-top: 10px !important; }
       .info-label, .info-value { display: block !important; width: 100% !important; text-align: left !important; }
       .info-label { padding: 12px 0 2px !important; border-bottom: 0 !important; }
