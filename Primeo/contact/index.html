@@ -12,6 +12,7 @@
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
   <link rel="stylesheet" href="../assets/css/contact.css">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <!-- Open Graph -->
@@ -39,7 +40,6 @@
   <div id="header-placeholder"></div>
 
   <main>
-
     <!-- ── HERO ─────────────────────────────────────────────────── -->
     <section class="ct-hero">
       <div class="ct-hero__bg"></div>
@@ -50,112 +50,57 @@
       </div>
     </section>
 
-    <!-- ── MAIN LAYOUT ──────────────────────────────────────────── -->
+    <!-- ── CANAUX RAPIDES ───────────────────────────────────────── -->
+    <div class="ct-quick-wrap">
+      <div class="container">
+        <div class="ct-quick reveal">
+          <a class="ct-quick__card" href="tel:+2250707161684"><span class="ct-quick__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></span><span><strong>Appeler</strong><small>+225 07 07 16 16 84</small></span></a>
+          <a class="ct-quick__card" href="mailto:support.primeo@gmail.com"><span class="ct-quick__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span><span><strong>Écrire</strong><small>support.primeo@gmail.com</small></span></a>
+          <a class="ct-quick__card" href="https://wa.me/message/EETFFO7NDSETN1" target="_blank" rel="noopener noreferrer"><span class="ct-quick__ico ct-quick__ico--wa"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.3-2-1-1 .6a4 4 0 0 1-1.8-1.8l.6-1-1-2z"/></svg></span><span><strong>WhatsApp</strong><small>Discuter en direct</small></span></a>
+          <a class="ct-quick__card" href="/aide/"><span class="ct-quick__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></span><span><strong>Centre d'aide</strong><small>Réponses immédiates</small></span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FORMULAIRE + INFOS ───────────────────────────────────── -->
     <section class="section ct-section">
       <div class="container">
         <div class="ct-layout">
 
-          <!-- ── LEFT : INFO + MAP ──────────────────────────────── -->
-          <aside class="ct-sidebar">
-
-            <!-- Coordonnées -->
-            <div class="ct-info-block reveal">
-              <h2 class="ct-info-block__title">Coordonnées</h2>
-
-              <div class="ct-info-item">
-                <div class="ct-info-item__icon">📍</div>
-                <div class="ct-info-item__body">
-                  <p class="ct-info-item__label">Adresse</p>
-                  <p class="ct-info-item__value" id="address-text">Cocody – Saint Viateur, Abidjan<br>Côte d'Ivoire</p>
-                  <button class="ct-copy-btn" id="copy-address-btn" data-copy="Cocody – Saint Viateur, Abidjan, Côte d'Ivoire">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    Copier l'adresse
-                  </button>
-                  <span class="ct-copy-toast" id="copy-toast">Adresse copiée ✓</span>
-                </div>
-              </div>
-
-              <div class="ct-info-item">
-                <div class="ct-info-item__icon">📞</div>
-                <div class="ct-info-item__body">
-                  <p class="ct-info-item__label">Téléphone</p>
-                  <a href="tel:+2250707161684" class="ct-info-item__value ct-link">+225 07 07 16 16 84</a>
-                </div>
-              </div>
-
-              <div class="ct-info-item">
-                <div class="ct-info-item__icon">✉️</div>
-                <div class="ct-info-item__body">
-                  <p class="ct-info-item__label">Email</p>
-                  <a href="mailto:support.primeo@gmail.com" class="ct-info-item__value ct-link">support.primeo@gmail.com</a>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Horaires -->
-            <div class="ct-hours reveal">
-              <h3 class="ct-hours__title">Horaires du support</h3>
-              <div class="ct-hours__row">
-                <span>Lun – Ven</span>
-                <span class="ct-hours__badge ct-hours__badge--open">9h – 18h</span>
-              </div>
-              <div class="ct-hours__row">
-                <span>Samedi</span>
-                <span class="ct-hours__badge ct-hours__badge--open">10h – 16h</span>
-              </div>
-              <div class="ct-hours__row">
-                <span>Dimanche</span>
-                <span class="ct-hours__badge ct-hours__badge--closed">Fermé</span>
-              </div>
-            </div>
-
-            <!-- Carte -->
-            <div class="ct-map-block reveal">
-              <div class="ct-map__container" id="ct-map">
-                <div class="ct-map__placeholder">
-                  <div class="ct-map__spinner"></div>
-                </div>
-              </div>
-              <a href="https://www.google.com/maps/dir/?api=1&destination=5.3615,-3.9800" target="_blank" rel="noopener noreferrer" class="ct-map__open-btn" id="open-map-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Ouvrir dans Google Maps
-              </a>
-            </div>
-
-          </aside>
-
-          <!-- ── RIGHT : FORM ───────────────────────────────────── -->
+          <!-- Formulaire -->
           <div class="ct-form-col reveal">
             <div class="ct-form-card">
               <h2 class="ct-form-card__title">Envoyer un message</h2>
-              <p class="ct-form-card__sub">Décrivez votre demande et nous vous recontacterons rapidement.</p>
-
+              <p class="ct-form-card__sub">Décrivez votre demande : plus elle est précise, plus notre réponse sera rapide. Les champs marqués d'un <span class="ct-req">*</span> sont obligatoires.</p>
               <form id="contact-form" novalidate autocomplete="off">
                 <!-- Honeypot -->
                 <div class="ct-honeypot" aria-hidden="true" tabindex="-1">
                   <input type="text" name="email_confirm" tabindex="-1" autocomplete="off" value="">
                 </div>
 
-                <div class="ct-form-row">
-                  <div class="ct-form-group" id="grp-name">
-                    <label for="ct-name">Nom complet <span class="ct-req">*</span></label>
-                    <input type="text" id="ct-name" name="name" class="ct-input" placeholder="Jean Kouassi" autocomplete="name">
-                    <p class="ct-field-error" id="err-name"></p>
+                <fieldset class="ct-fieldset">
+                  <legend>Vos coordonnées</legend>
+                  <div class="ct-form-row">
+                    <div class="ct-form-group" id="grp-name">
+                      <label for="ct-name">Nom complet <span class="ct-req">*</span></label>
+                      <input type="text" id="ct-name" name="name" class="ct-input" placeholder="Jean Kouassi" autocomplete="name">
+                      <p class="ct-field-error" id="err-name"></p>
+                    </div>
+                    <div class="ct-form-group" id="grp-email">
+                      <label for="ct-email">E-mail <span class="ct-req">*</span></label>
+                      <input type="email" id="ct-email" name="email" class="ct-input" placeholder="jean@exemple.ci" autocomplete="email">
+                      <p class="ct-field-error" id="err-email"></p>
+                    </div>
                   </div>
-                  <div class="ct-form-group" id="grp-email">
-                    <label for="ct-email">Email <span class="ct-req">*</span></label>
-                    <input type="email" id="ct-email" name="email" class="ct-input" placeholder="jean@exemple.ci" autocomplete="email">
-                    <p class="ct-field-error" id="err-email"></p>
-                  </div>
-                </div>
-
-                <div class="ct-form-row">
                   <div class="ct-form-group" id="grp-phone">
                     <label for="ct-phone">Téléphone <span class="ct-opt">(optionnel)</span></label>
                     <input type="tel" id="ct-phone" name="phone" class="ct-input" placeholder="+225 07 00 00 00 00" autocomplete="tel">
                     <p class="ct-field-error" id="err-phone"></p>
                   </div>
+                </fieldset>
+
+                <fieldset class="ct-fieldset">
+                  <legend>Votre demande</legend>
                   <div class="ct-form-group" id="grp-subject">
                     <label for="ct-subject">Sujet <span class="ct-req">*</span></label>
                     <select id="ct-subject" name="subject" class="ct-input ct-select">
@@ -168,37 +113,143 @@
                     </select>
                     <p class="ct-field-error" id="err-subject"></p>
                   </div>
-                </div>
-
-                <div class="ct-form-group" id="grp-message">
-                  <label for="ct-message">Message <span class="ct-req">*</span></label>
-                  <textarea id="ct-message" name="message" class="ct-input ct-textarea" rows="6" placeholder="Décrivez votre demande en détail…" maxlength="2000"></textarea>
-                  <div class="ct-char-count">
-                    <p class="ct-field-error" id="err-message"></p>
-                    <span id="char-count">0 / 2000</span>
+                  <div class="ct-form-group" id="grp-message">
+                    <label for="ct-message">Message <span class="ct-req">*</span></label>
+                    <textarea id="ct-message" name="message" class="ct-input ct-textarea" rows="6" placeholder="Décrivez votre demande en détail…" maxlength="2000"></textarea>
+                    <div class="ct-char-count">
+                      <p class="ct-field-error" id="err-message"></p>
+                      <span id="char-count">0 / 2000</span>
+                    </div>
                   </div>
-                </div>
+                </fieldset>
 
-                <!-- Error feedback (success redirects to /contact/merci.html) -->
                 <div class="ct-alert ct-alert--error" id="form-error" style="display:none"></div>
-
                 <button type="submit" class="ct-submit-btn" id="submit-btn">
                   <span id="submit-label">Envoyer le message</span>
                   <span id="submit-spinner" class="ct-spinner" style="display:none"></span>
                 </button>
+                <p class="ct-consent">Vos données sont utilisées uniquement pour répondre à votre demande. Pour en savoir plus, consultez notre <a href="https://primeo-legal-kg6t.onrender.com/confidentialite/" target="_blank" rel="noopener noreferrer">politique de confidentialité</a>.</p>
               </form>
             </div>
           </div>
+
+          <!-- Informations -->
+          <aside class="ct-sidebar">
+            <div class="ct-info-block reveal">
+              <h2 class="ct-info-block__title">Coordonnées</h2>
+              <div class="ct-info-item">
+                <div class="ct-info-item__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <div class="ct-info-item__body">
+                  <p class="ct-info-item__label">Adresse</p>
+                  <p class="ct-info-item__value" id="address-text">Cocody – Saint Viateur, Abidjan<br>Côte d'Ivoire</p>
+                  <button class="ct-copy-btn" id="copy-address-btn" type="button" data-copy="Cocody – Saint Viateur, Abidjan, Côte d'Ivoire">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copier l'adresse
+                  </button>
+                  <span class="ct-copy-toast" id="copy-toast">Adresse copiée ✓</span>
+                </div>
+              </div>
+              <div class="ct-info-item">
+                <div class="ct-info-item__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div>
+                <div class="ct-info-item__body">
+                  <p class="ct-info-item__label">Téléphone</p>
+                  <a href="tel:+2250707161684" class="ct-info-item__value ct-link">+225 07 07 16 16 84</a>
+                </div>
+              </div>
+              <div class="ct-info-item">
+                <div class="ct-info-item__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
+                <div class="ct-info-item__body">
+                  <p class="ct-info-item__label">E-mail</p>
+                  <a href="mailto:support.primeo@gmail.com" class="ct-info-item__value ct-link">support.primeo@gmail.com</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="ct-hours reveal" id="ct-hours">
+              <div class="ct-hours__head">
+                <h3 class="ct-hours__title">Horaires du support</h3>
+                <span class="ct-hours__live" id="ct-hours-live" hidden></span>
+              </div>
+              <div class="ct-hours__row" data-days="1,2,3,4,5"><span>Lundi – Vendredi</span><span class="ct-hours__badge ct-hours__badge--open">9h – 18h</span></div>
+              <div class="ct-hours__row" data-days="6"><span>Samedi</span><span class="ct-hours__badge ct-hours__badge--open">10h – 16h</span></div>
+              <div class="ct-hours__row" data-days="0"><span>Dimanche</span><span class="ct-hours__badge ct-hours__badge--closed">Fermé</span></div>
+              <p class="ct-hours__note">Heure d'Abidjan (GMT). Hors horaires, laissez-nous un message : nous répondons sous 24 heures ouvrées.</p>
+            </div>
+
+            <div class="ct-social reveal">
+              <h3 class="ct-social__title">Suivez-nous</h3>
+              <div class="ct-social__list">
+                <a href="https://www.facebook.com/profile.php?id=61590079695276" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg><span>Facebook</span></a>
+                <a href="https://www.instagram.com/primeo.ci?igsh=MW5keHhiMmd5bWdsbw==" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg><span>Instagram</span></a>
+                <a href="https://www.tiktok.com/@primeo.ci?_r=1&amp;t=ZN-97Cjr3dKrfG" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12a4 4 0 1 0 4 4V3a5 5 0 0 0 5 5"/></svg><span>TikTok</span></a>
+              </div>
+            </div>
+          </aside>
 
         </div>
       </div>
     </section>
 
+    <!-- ── CARTE ────────────────────────────────────────────────── -->
+    <section class="ct-map-section">
+      <div class="container">
+        <div class="ct-map-head reveal">
+          <span class="ct-eyebrow">Nous trouver</span>
+          <h2>Primeo à Abidjan</h2>
+        </div>
+        <div class="ct-map-card reveal">
+          <div class="ct-map__container" id="ct-map" role="region" aria-label="Carte interactive — Cocody Saint Viateur, Abidjan">
+            <div class="ct-map__placeholder"><div class="ct-map__spinner"></div></div>
+          </div>
+          <div class="ct-map-card__info">
+            <span class="ct-map-card__pin"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <div>
+              <strong>Cocody – Saint Viateur</strong>
+              <span>Abidjan, Côte d'Ivoire</span>
+            </div>
+            <a href="https://www.google.com/maps/dir/?api=1&amp;destination=5.3615,-3.98" target="_blank" rel="noopener noreferrer" class="ct-map__open-btn" id="open-map-btn">Itinéraire</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FAQ RAPIDE ───────────────────────────────────────────── -->
+    <section class="section ct-faq">
+      <div class="container">
+        <div class="ct-map-head reveal">
+          <span class="ct-eyebrow">Questions fréquentes</span>
+          <h2>Les réponses rapides</h2>
+        </div>
+        <div class="accordion-group ct-faq__list reveal">
+          <div class="accordion-item">
+            <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="ctq-0">Dans quel délai répondez-vous ?</button>
+            <div class="accordion-body" id="ctq-0" role="region"><div class="accordion-body-inner">Notre équipe répond à toutes les demandes sous <strong>24 heures ouvrées</strong>. Pour une réponse plus rapide, appelez-nous ou écrivez-nous sur WhatsApp pendant les horaires du support.</div></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="ctq-1">J'ai un problème avec une réservation. Que faire ?</button>
+            <div class="accordion-body" id="ctq-1" role="region"><div class="accordion-body-inner">Depuis le détail de votre réservation dans l'application, touchez <strong>« Signaler un problème »</strong> : votre demande est transmise directement à notre équipe. Vous pouvez aussi choisir le sujet « Litige » dans le formulaire ci-dessus.</div></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="ctq-2">Comment devenir professionnel sur Primeo ?</button>
+            <div class="accordion-body" id="ctq-2" role="region"><div class="accordion-body-inner">Téléchargez l'application, touchez <strong>« Inscription professionnelle »</strong> et suivez les étapes (informations de l'établissement, pièce d'identité, extrait RCCM). Notre équipe valide votre dossier sous 24 à 48 h. Les guides sont disponibles dans la <a href="/documentation/">documentation</a>.</div></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="ctq-3">Je souhaite proposer un partenariat ou contacter la presse</button>
+            <div class="accordion-body" id="ctq-3" role="region"><div class="accordion-body-inner">Pour un partenariat, rendez-vous sur la page <a href="/devenir-partenaire/">Devenir partenaire</a>. Pour la presse, consultez l'<a href="/espace-presse/">Espace presse</a>.</div></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" type="button" aria-expanded="false" aria-controls="ctq-4">Où trouver toutes les réponses à mes questions ?</button>
+            <div class="accordion-body" id="ctq-4" role="region"><div class="accordion-body-inner">Le <a href="/aide/">Centre d'aide</a> regroupe les réponses classées par thème : compte, réservations et paiements, annulations et remboursements, avis, parrainage et sécurité.</div></div>
+          </div>
+        </div>
+        <p class="ct-faq__more reveal"><a class="btn btn-outline" href="/aide/">Voir tout le centre d'aide</a></p>
+      </div>
+    </section>
   </main>
 
   <div id="footer-placeholder"></div>
   <div id="cookie-banner" style="display:none" class="cookie-banner">
-    <p>Nous utilisons des cookies pour améliorer votre expérience. <a href="https://legal.primeo.ci/mentions-legales/">En savoir plus</a>.</p>
+    <p>Nous utilisons des cookies pour améliorer votre expérience. <a href="https://primeo-legal-kg6t.onrender.com/mentions-legales/">En savoir plus</a>.</p>
     <div class="cookie-actions">
       <button class="cookie-accept">Accepter</button>
       <button class="cookie-decline">Refuser</button>
@@ -211,6 +262,7 @@
   </a>
 
   <script src="../assets/js/main.js" data-base=".."></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js" defer></script>
   <script src="../assets/js/contact.js" data-base=".."></script>
 </body>
 </html>

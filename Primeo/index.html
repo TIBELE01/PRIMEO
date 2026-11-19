@@ -410,7 +410,7 @@
             var m = (err && (err.message || (err.error && err.error.message))) || '';
             // 409 / déjà inscrit → message neutre et positif
             if (/déjà|already|exist/i.test(m)) {
-              setMsg('Vous êtes déjà abonné(e) à notre bulletin. 👍', true);
+              setMsg('Vous êtes déjà abonné(e) à notre bulletin. ', true);
             } else {
               setMsg('Une erreur est survenue. Vérifiez votre connexion et réessayez.', false);
             }
