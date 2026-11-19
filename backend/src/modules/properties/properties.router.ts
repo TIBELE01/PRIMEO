@@ -34,6 +34,15 @@ import {
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 // Multer dédié aux photos 360° : 10 Mo max après compression
 const upload360 = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+// Photo / vidéo trop lourde : 413 explicite au lieu d'une erreur 500 générique
+const uploadMedia: RequestHandler = (req, res, next) => {
+  upload.single('file')(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return next(new HttpError(413, 'Fichier trop lourd (100 Mo maximum). Pour une vidéo, exportez-la en MP4 1080p puis réessayez.'));
+    }
+    return next(err as Error | undefined);
+  });
+};
 // Photo 360° trop lourde : message explicite (413) au lieu d'une erreur 500 générique
 const uploadScene360: RequestHandler = (req, res, next) => {
   upload360.single('file')(req, res, (err: unknown) => {
@@ -125,7 +134,7 @@ propertiesRouter.post(
 
 // Media management (owner only — professionnels)
 // Upload fichier → Cloudinary (dossier primeo/properties/<propertyId>)
-propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload.single('file'), uploadMediaFile);
+propertiesRouter.post('/:id/media/upload', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, uploadMedia, uploadMediaFile);
 // Type de média exclusif du bien — photos | video | threed (purge les autres types)
 propertiesRouter.put('/:id/media-type', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, setMediaType);
 propertiesRouter.post('/:id/media', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, validate(AddMediaDto), addMedia);

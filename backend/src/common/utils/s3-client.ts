@@ -37,7 +37,8 @@ export async function uploadToCloudinary(
   fileBuffer: Buffer,
   folder: string,
   filename: string,
-  resourceType: CloudinaryResourceType = 'image'
+  resourceType: CloudinaryResourceType = 'image',
+  options?: { eager?: string; eagerAsync?: boolean },
 ): Promise<UploadResult> {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
   if (!cloudName || !apiKey || !apiSecret) {
@@ -45,13 +46,18 @@ export async function uploadToCloudinary(
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signature = signParams({ folder, timestamp }, apiSecret);
+  const signed: Record<string, string> = { folder, timestamp };
+  if (options?.eager) signed['eager'] = options.eager;
+  if (options?.eagerAsync) signed['eager_async'] = 'true';
+  const signature = signParams(signed, apiSecret);
 
   const form = new FormData();
   form.append('file', fileBuffer, { filename });
   form.append('folder', folder);
   form.append('api_key', apiKey);
   form.append('timestamp', timestamp);
+  if (signed['eager']) form.append('eager', signed['eager']);
+  if (signed['eager_async']) form.append('eager_async', signed['eager_async']);
   form.append('signature', signature);
 
   let response;

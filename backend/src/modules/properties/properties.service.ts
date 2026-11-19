@@ -12,6 +12,7 @@ import { uploadToCloudinary, deleteFromCloudinary, renameCloudinaryAsset, setClo
 import { searchService } from './services/search.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
+import { panoramaCoverUrl, videoPosterUrl, videoPlaybackUrl, VIDEO_PLAYBACK_TRANSFORM } from './media-urls';
 import {
   CreatePropertyInput,
   UpdatePropertyInput,
@@ -26,29 +27,36 @@ import {
  * affichent correctement les photos. Source unique de vérité : la relation `media`.
  */
 export function serializeProperty<T extends Record<string, unknown>>(property: T): T {
-  const media = (property as { media?: Array<{ url: string; isPrimary?: boolean }> }).media ?? [];
-  const primary = media.find((m) => m.isPrimary) ?? media[0];
-  // Bien en mode visite 3D : la première scène panoramique sert d'image de
-  // couverture (cartes de recherche, favoris) puisqu'il n'a plus de photos.
+  const allMedia = (property as { media?: Array<{ url: string; isPrimary?: boolean; mediaType?: string }> }).media ?? [];
+  // Vidéo réservée aux formules Business / Entreprise : masquée si la formule du propriétaire ne l'inclut plus
+  const media = videoAllowed(property) ? allMedia : allMedia.filter((m) => m.mediaType !== 'video');
+  const photos = media.filter((m) => m.mediaType !== 'video');
+  const primary = photos.find((m) => m.isPrimary) ?? photos[0];
+  const video = media.find((m) => m.mediaType === 'video');
+  // Biens sans photo : poster extrait de la vidéo, sinon 1re scène panoramique
+  // (vignettes recadrées ≈ 900 px pour ne pas saturer la mémoire des listes).
   const scenes = (property as { scenes3d?: Array<{ url: string }> }).scenes3d ?? [];
-  // Vignette recadrée et allégée (≈ 900 px) plutôt que le panorama 4096 px complet,
-  // pour ne pas saturer la mémoire des listes (cartes de recherche, favoris).
-  const coverFallback = scenes[0]?.url ? panoramaCoverUrl(scenes[0].url) : null;
+  const coverFallback = (video ? videoPosterUrl(video.url) : null)
+    ?? (scenes[0]?.url ? panoramaCoverUrl(scenes[0].url) : null);
   return {
     ...property,
+    media,
     images: media,
     mainImageUrl: primary?.url ?? coverFallback,
+    ...(video ? { video: { url: videoPlaybackUrl(video.url), originalUrl: video.url, posterUrl: videoPosterUrl(video.url) } } : {}),
     virtualTour: buildVirtualTour(property),
   };
 }
 
-/** Vignette d'un panorama Cloudinary : centre de l'image, 900×600, qualité/format auto. */
-export function panoramaCoverUrl(url: string): string {
-  const marker = '/image/upload/';
-  const i = url.indexOf(marker);
-  if (i === -1 || !url.includes('res.cloudinary.com')) return url;
-  return `${url.slice(0, i + marker.length)}c_fill,g_center,w_900,h_600,q_auto,f_auto/${url.slice(i + marker.length)}`;
+/** Vidéo autorisée si la formule du propriétaire l'inclut (Business/Entreprise). Offre non chargée : on ne bloque pas. */
+function videoAllowed(property: Record<string, unknown>): boolean {
+  const owner = (property as { owner?: { subscription?: { planType?: string } | null } }).owner;
+  if (!owner || !('subscription' in owner)) return true;
+  const planType = owner.subscription?.planType;
+  return !!(planType && getPlanDetails(planType)?.videoUpload);
 }
+
+export { panoramaCoverUrl };
 
 /**
  * Construit l'objet virtualTour attendu par le mobile à partir des scènes 3D
@@ -508,6 +516,13 @@ export const propertiesService = {
     }
   },
 
+  // Vidéo : formule Business/Entreprise et 1 seule vidéo par bien (tous les chemins d'upload).
+  async _assertVideoUploadAllowed(propertyId: string, userId: string): Promise<void> {
+    await propertiesService._assertPlanAllowsMediaChoice(userId, 'video');
+    const videos = await prisma.propertyMedia.count({ where: { propertyId, mediaType: 'video' as never } });
+    if (videos >= 1) throw new HttpError(400, 'Maximum 1 vidéo par propriété.');
+  },
+
   // Vérifie qu'un upload correspond au type de média exclusif déclaré du bien.
   _assertUploadMatchesChoice(propertyChoice: string, uploadKind: 'photo' | 'video' | 'threed'): void {
     const expected: Record<string, string> = { photo: 'photos', video: 'video', threed: 'threed' };
@@ -571,6 +586,7 @@ export const propertiesService = {
       throw new HttpError(400, 'Les photos 360° doivent être téléversées via l\'endpoint /3d-scenes.');
     }
     propertiesService._assertUploadMatchesChoice(property.mediaType, input.mediaType === 'video' ? 'video' : 'photo');
+    if (input.mediaType === 'video') await propertiesService._assertVideoUploadAllowed(propertyId, userId);
 
     const count = await prisma.propertyMedia.count({ where: { propertyId } });
     if (count >= 20) throw new HttpError(400, 'Limite de 20 médias par propriété atteinte');
@@ -640,6 +656,7 @@ export const propertiesService = {
       throw new HttpError(400, 'Les photos 360° doivent être téléversées via l\'endpoint /3d-scenes.');
     }
     propertiesService._assertUploadMatchesChoice(property.mediaType, opts.mediaType === 'video' ? 'video' : 'photo');
+    if (opts.mediaType === 'video') await propertiesService._assertVideoUploadAllowed(propertyId, userId);
 
     const count = await prisma.propertyMedia.count({ where: { propertyId } });
     if (count >= 20) throw new HttpError(400, 'Limite de 20 médias par propriété atteinte');
@@ -650,10 +667,12 @@ export const propertiesService = {
     const resourceType = opts.mediaType === 'video' ? 'video' : 'image';
     let uploaded;
     try {
-      uploaded = await uploadToCloudinary(file.buffer, folder, file.originalname, resourceType);
+      // Vidéo : la version de lecture mobile (1280 px, H.264) est préparée en tâche de fond dès l'upload
+      uploaded = await uploadToCloudinary(file.buffer, folder, file.originalname, resourceType,
+        resourceType === 'video' ? { eager: `${VIDEO_PLAYBACK_TRANSFORM}/mp4`, eagerAsync: true } : undefined);
     } catch (uploadError) {
       logger.error('Échec upload Cloudinary', uploadError);
-      throw new HttpError(502, 'Échec du stockage de l\'image. Réessayez.');
+      throw new HttpError(502, resourceType === 'video' ? 'Échec du stockage de la vidéo. Réessayez.' : 'Échec du stockage de l\'image. Réessayez.');
     }
 
     // Écritures DB atomiques : si l'une échoue, aucune flag isPrimary n'est

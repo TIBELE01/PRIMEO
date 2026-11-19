@@ -82,6 +82,9 @@ export default function PropertyDetailPage() {
 
   const images: string[] = (property as any).images ?? [];
   const displayImages = images.length > 0 ? images : (property.mainImageUrl ? [property.mainImageUrl] : []);
+  const mediaType: 'photos' | 'video' | 'threed' = (property as any).mediaType ?? 'photos';
+  const video: { url: string; originalUrl: string; posterUrl?: string | null } | null = (property as any).video ?? null;
+  const scenes3d: Array<{ id: string; roomName: string; url: string; previewUrl: string }> = (property as any).scenes3d ?? [];
   const amenities: string[] = (property as any).amenities ?? [];
   const rules: string[] = (property as any).rules ?? [];
   const description: string = (property as any).description ?? '';
@@ -124,8 +127,55 @@ export default function PropertyDetailPage() {
         </div>
       </div>
 
-      {/* Photo gallery */}
-      {displayImages.length > 0 ? (
+      {/* Média à contrôler en modération : vidéo (Business/Entreprise) ou visite 3D (Entreprise) */}
+      {mediaType === 'video' && video ? (
+        <Card padding={false}>
+          <div className="relative rounded-t-xl overflow-hidden bg-black">
+            <video
+              key={video.url}
+              controls
+              playsInline
+              preload="metadata"
+              poster={video.posterUrl ?? undefined}
+              className="w-full max-h-[420px] bg-black"
+              data-testid="moderation-video"
+            >
+              <source src={video.url} type="video/mp4" />
+              <source src={video.originalUrl} />
+            </video>
+          </div>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+            <span className="font-medium text-gray-700">🎬 Vidéo de présentation</span>
+            <a href={video.originalUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary-600 hover:underline">
+              Fichier d&apos;origine <ExternalLink size={13} />
+            </a>
+          </div>
+        </Card>
+      ) : mediaType === 'threed' ? (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-gray-900">🔭 Visite 3D · {scenes3d.length} pièce{scenes3d.length > 1 ? 's' : ''}</h2>
+            <span className="text-xs text-gray-500">Panoramas 360° (format 2:1)</span>
+          </div>
+          {scenes3d.length === 0 ? (
+            <p className="text-sm text-gray-400">Aucune photo 360° téléversée.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="moderation-scenes">
+              {scenes3d.map((sc) => (
+                <a key={sc.id} href={sc.url} target="_blank" rel="noreferrer" className="group block rounded-lg overflow-hidden border border-gray-200 hover:border-primary-400">
+                  <div className="aspect-[2/1] bg-gray-100">
+                    <img src={sc.previewUrl} alt={sc.roomName} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 text-sm">
+                    <span className="font-medium text-gray-800">{sc.roomName}</span>
+                    <ExternalLink size={13} className="text-gray-400 group-hover:text-primary-600" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </Card>
+      ) : displayImages.length > 0 ? (
         <Card padding={false}>
           <div className="relative h-64 rounded-t-xl overflow-hidden bg-gray-100">
             <img src={displayImages[selectedImg]} alt="Photo principale" className="w-full h-full object-cover" />

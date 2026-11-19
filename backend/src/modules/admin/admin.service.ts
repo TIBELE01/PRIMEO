@@ -1,4 +1,5 @@
 // Admin service — platform oversight and moderation
+import { panoramaCoverUrl, videoPosterUrl, videoPlaybackUrl } from '../properties/media-urls';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { subscriptionsService } from '../subscriptions/subscriptions.service';
@@ -820,7 +821,8 @@ export const adminService = {
               professionalProfile: { select: { verificationStatus: true } },
             },
           },
-          media: { where: { isPrimary: true }, take: 1 },
+          media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 },
+          scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
         },
       }),
       prisma.property.count({ where: where as never }),
@@ -861,7 +863,8 @@ export const adminService = {
         reviewCount: (pAny['reviewsCount'] as number) ?? 0,
         isBoosted: (pAny['isBoosted'] as boolean) ?? false,
         hasVirtualTour: (pAny['hasVirtualTour'] as boolean) ?? false,
-        mainImageUrl: ((p.media[0] as Record<string, unknown> | undefined)?.['url'] as string) ?? null,
+        mediaType: (pAny['mediaType'] as string) ?? 'photos',
+        mainImageUrl: adminCoverUrl(p.media as never, (p as never as { scenes3d?: Array<{ url: string }> }).scenes3d),
         submittedAt: p.createdAt,
         updatedAt: p.updatedAt,
       };
@@ -882,6 +885,7 @@ export const adminService = {
           },
         },
         media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
+        scenes3d: { orderBy: { sortOrder: 'asc' } },
         bookings: {
           orderBy: { createdAt: 'desc' },
           select: { totalAmount: true },
@@ -911,16 +915,21 @@ export const adminService = {
       reviewCount: (pAny['reviewsCount'] as number) ?? 0,
       isBoosted: (pAny['isBoosted'] as boolean) ?? false,
       hasVirtualTour: (pAny['hasVirtualTour'] as boolean) ?? false,
-      mainImageUrl: (p.media.find(m => (m as Record<string, unknown>)['isPrimary']) as Record<string, unknown> | undefined)?.['url']
-        ?? (p.media[0] as Record<string, unknown> | undefined)?.['url']
-        ?? null,
+      mainImageUrl: adminCoverUrl(p.media as never, p.scenes3d),
+      // Médias à contrôler en modération selon le type exclusif du bien
+      mediaType: (pAny['mediaType'] as string) ?? 'photos',
+      video: (() => {
+        const v = p.media.find((m) => (m.mediaType as string) === 'video');
+        return v ? { url: videoPlaybackUrl(v.url), originalUrl: v.url, posterUrl: videoPosterUrl(v.url) } : null;
+      })(),
+      scenes3d: p.scenes3d.map((sc) => ({ id: sc.id, roomName: sc.roomName, url: sc.url, previewUrl: panoramaPreviewUrl(sc.url) })),
       submittedAt: p.createdAt,
       updatedAt: p.updatedAt,
       rejectionReason: (pAny['rejectionReason'] as string) ?? null,
       // Champs étendus PropertyDetail
       description: p.description ?? '',
       amenities: (p.amenities as string[] | null) ?? [],
-      images: p.media.map(m => ((m as Record<string, unknown>)['url'] as string)).filter(Boolean),
+      images: p.media.filter((m) => (m.mediaType as string) !== 'video').map(m => ((m as Record<string, unknown>)['url'] as string)).filter(Boolean),
       latitude: p.latitude ?? null,
       longitude: p.longitude ?? null,
       rules: (p.rules as string[] | null) ?? [],
@@ -982,14 +991,14 @@ export const adminService = {
         include: {
           owner: { select: { id: true, firstName: true, lastName: true, email: true } },
           media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
+          scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
         },
       }),
       prisma.property.count({ where: { status: 'pending' } }),
     ]);
     const serialized = data.map((p) => {
       const media = p.media ?? [];
-      const primary = media.find((m) => m.isPrimary) ?? media[0];
-      return { ...p, images: media, mainImageUrl: primary?.url ?? null };
+      return { ...p, images: media, mainImageUrl: adminCoverUrl(media as never, p.scenes3d) };
     });
     return { data: serialized, total, page, limit, pages: Math.ceil(total / limit) };
   },
@@ -2089,3 +2098,22 @@ export const adminService = {
     });
   },
 };
+
+
+/** Couverture admin : photo principale → poster de la vidéo → 1re scène 360°. */
+function adminCoverUrl(media: Array<{ url: string; isPrimary?: boolean; mediaType?: string }>, scenes?: Array<{ url: string }>): string | null {
+  const photos = media.filter((m) => m.mediaType !== 'video');
+  const photo = photos.find((m) => m.isPrimary) ?? photos[0];
+  if (photo) return photo.url;
+  const video = media.find((m) => m.mediaType === 'video');
+  if (video) return videoPosterUrl(video.url);
+  return scenes?.[0]?.url ? panoramaCoverUrl(scenes[0].url) : null;
+}
+
+/** Aperçu d'un panorama pour la modération (2048 px, compressé). */
+function panoramaPreviewUrl(url: string): string {
+  const marker = '/image/upload/';
+  const i = url.indexOf(marker);
+  if (i === -1 || !url.includes('res.cloudinary.com')) return url;
+  return `${url.slice(0, i + marker.length)}c_limit,w_2048,q_auto:good,f_jpg/${url.slice(i + marker.length)}`;
+}

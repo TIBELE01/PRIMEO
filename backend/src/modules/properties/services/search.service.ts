@@ -118,7 +118,7 @@ export const searchService = {
           { bookingsCount: 'desc' },
         ],
         include: {
-          media:  { where: { isPrimary: true }, take: 1 },
+          media:  { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 }, // photo principale, sinon vidéo (poster)
           // Biens « visite 3D » sans photo : 1re scène servant de couverture (URL seule)
           scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
           owner:  { select: { subscription: { select: { planType: true } } } },
@@ -218,7 +218,7 @@ export const searchService = {
     const filtered = await prisma.property.findMany({
       where,
       include: {
-        media:  { where: { isPrimary: true }, take: 1 },
+        media:  { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 }, // photo principale, sinon vidéo (poster)
         scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
         owner:  { select: { subscription: { select: { planType: true } } } },
       },

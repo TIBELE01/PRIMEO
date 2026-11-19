@@ -647,7 +647,14 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
   const pickVideo = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'video/*', multiple: false, copyToCacheDirectory: true });
     if (result.canceled) return;
-    const assets = result.assets ?? [];
+    // Limite serveur : 100 Mo par vidéo
+    const assets = (result.assets ?? []).filter((a: any) => {
+      if (typeof a.size === 'number' && a.size > 100 * 1024 * 1024) {
+        Alert.alert('Vidéo trop lourde', 'La vidéo dépasse 100 Mo. Exportez-la en MP4 1080p (ou moins) puis réessayez.');
+        return false;
+      }
+      return true;
+    });
     onChange('videoFiles', [...videoFiles, ...assets.slice(0, 1 - videoFiles.length).map((a: any) => ({ uri: a.uri, name: a.name ?? 'video.mp4', file: a.file ?? undefined }))]);
   };
   const removeVideo = (i: number) => {
@@ -1470,6 +1477,12 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     } catch (e: any) {
       setUploadStatus(null);
       const status: number = e?.response?.status ?? 0;
+      const apiErr: string = e?.response?.data?.message ?? e?.response?.data?.error ?? '';
+      // 403 de formule (vidéo / visite 3D non incluses) : message dédié, pas « limite d'annonces »
+      if (status === 403 && /réservée|formule/i.test(apiErr) && !/limite|maximum|publication/i.test(apiErr)) {
+        showFeedback(false, 'Formule requise', `${apiErr}\n\nMettez à niveau votre abonnement pour utiliser ce type de média.`, () => navigation.navigate('Subscriptions'));
+        return;
+      }
       if (status === 403) {
         showFeedback(
           false,

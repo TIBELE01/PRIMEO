@@ -93,12 +93,35 @@ const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 <
 
 // Lecteur vidéo de la carte média : démarre automatiquement (muet) quand la carte
 // est visible à l'écran, se met en pause dès qu'elle en sort. Bouton mute/unmute.
-function MediaVideoPlayer({ uri, isVisible }: { uri: string; isVisible: boolean }) {
+/**
+ * Lecteur vidéo de la fiche : version allégée Cloudinary (1280 px, H.264) avec
+ * repli automatique sur le fichier d'origine si elle n'est pas (encore) prête,
+ * poster pendant le chargement et message en cas d'échec — jamais d'écran noir figé.
+ */
+function MediaVideoPlayer({ uri, fallbackUri, posterUri, isVisible }: { uri: string; fallbackUri?: string; posterUri?: string | null; isVisible: boolean }) {
   const player = useVideoPlayer(uri, (p: { loop: boolean; muted: boolean }) => {
     p.loop = true;     // boucle : la vidéo tourne tant que la carte reste visible
     p.muted = true;    // son coupé par défaut (bonne pratique autoplay)
   });
   const [muted, setMuted] = React.useState(true);
+  const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const usedFallback = React.useRef(false);
+
+  // Suivi de l'état du lecteur : prêt → on retire le poster ; erreur → repli puis message
+  React.useEffect(() => {
+    if (!player) return;
+    const sub = player.addListener('statusChange', ({ status: st }: { status: string }) => {
+      if (st === 'readyToPlay') setStatus('ready');
+      else if (st === 'error') {
+        if (fallbackUri && fallbackUri !== uri && !usedFallback.current) {
+          usedFallback.current = true;
+          try { player.replace(fallbackUri); setStatus('loading'); return; } catch { /* message ci-dessous */ }
+        }
+        setStatus('error');
+      }
+    });
+    return () => { try { sub.remove(); } catch { /* lecteur déjà libéré */ } };
+  }, [player, uri, fallbackUri]);
 
   // Play/pause piloté par la visibilité de la carte (économie de ressources)
   React.useEffect(() => {
@@ -128,6 +151,14 @@ function MediaVideoPlayer({ uri, isVisible }: { uri: string; isVisible: boolean 
         contentFit="cover"
         accessibilityLabel="Vidéo de présentation du bien"
       />
+      {status !== 'ready' && (
+        <View style={styles.mediaVideoOverlay} pointerEvents="none">
+          {posterUri ? <ImageBackground source={{ uri: posterUri }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+          {status === 'loading'
+            ? <ActivityIndicator size="large" color="#fff" />
+            : <Text style={styles.mediaVideoError}>Vidéo momentanément indisponible</Text>}
+        </View>
+      )}
       {/* Badge « Vidéo » discret */}
       <View style={styles.mediaVideoBadge}>
         <Text style={styles.mediaVideoBadgeText}>▶ Vidéo</Text>
@@ -327,6 +358,8 @@ export function PropertyDetailScreen() {
     (property as { mediaType?: 'photos' | 'video' | 'threed' }).mediaType
     ?? (property.virtualTour?.available ? 'threed' : videoMedia.length > 0 ? 'video' : 'photos');
   const tourPanoramas = property.virtualTour?.panoramas ?? [];
+  // Vidéo servie par l'API : version de lecture allégée + fichier d'origine + poster
+  const propertyVideo = (property as { video?: { url: string; originalUrl: string; posterUrl?: string | null } }).video;
   const showNew = isNew(property.createdAt);
   const ownerName = `${property.owner?.firstName ?? ''} ${property.owner?.lastName ?? ''}`.trim() || 'Le responsable';
 
@@ -375,7 +408,12 @@ export function PropertyDetailScreen() {
         <View style={styles.mediaCardOuter} onLayout={onMediaLayout}>
           <View style={styles.mediaCardInner}>
             {mediaKind === 'video' && videoMedia.length > 0 ? (
-              <MediaVideoPlayer uri={videoMedia[0].url} isVisible={mediaVisible} />
+              <MediaVideoPlayer
+                uri={propertyVideo?.url ?? videoMedia[0].url}
+                fallbackUri={propertyVideo?.originalUrl ?? videoMedia[0].url}
+                posterUri={propertyVideo?.posterUrl}
+                isVisible={mediaVisible}
+              />
             ) : mediaKind === 'threed' && tourPanoramas.length > 0 ? (
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -743,6 +781,8 @@ const styles = StyleSheet.create({
   // Vidéo
   mediaVideoWrap: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, backgroundColor: '#000' },
   mediaVideoView: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT },
+  mediaVideoOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
+  mediaVideoError: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center', paddingHorizontal: 24, textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 },
   mediaVideoBadge: {
     position: 'absolute', top: 10, left: 10,
     backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
