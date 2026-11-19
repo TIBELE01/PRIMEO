@@ -58,7 +58,7 @@ describe('referralsService.triggerReward', () => {
     expect(notifyMock).not.toHaveBeenCalled();
   });
 
-  it('crédite 250 FCFA au parrain pour un filleul client ayant une réservation confirmée', async () => {
+  it('crédite 250 FCFA au parrain pour un filleul client ayant un séjour terminé', async () => {
     mockPrisma.referral.findFirst.mockResolvedValue({
       id: 'ref-1',
       referrerId: 'parrain-1',
@@ -77,7 +77,7 @@ describe('referralsService.triggerReward', () => {
     );
   });
 
-  it('ne verse pas si le filleul client n\'a aucune réservation confirmée', async () => {
+  it('ne verse pas si le filleul client n\'a aucun séjour terminé (réservation seulement confirmée)', async () => {
     mockPrisma.referral.findFirst.mockResolvedValue({
       id: 'ref-1',
       referrerId: 'parrain-1',
@@ -89,6 +89,24 @@ describe('referralsService.triggerReward', () => {
 
     expect(creditMock).not.toHaveBeenCalled();
     expect(notifyMock).not.toHaveBeenCalled();
+  });
+
+  it('la condition client exige une réservation « terminée » dont le départ est passé', async () => {
+    mockPrisma.referral.findFirst.mockResolvedValue({
+      id: 'ref-1',
+      referrerId: 'parrain-1',
+      referee: { firstName: 'Koffi', lastName: 'K.', accountType: 'client' },
+    });
+    mockPrisma.booking.count.mockResolvedValue(0);
+
+    await referralsService.triggerReward('referee-1');
+
+    const where = mockPrisma.booking.count.mock.calls[0][0].where;
+    expect(where.status).toBe('completed'); // « confirmée » ne suffit plus
+    expect(where.endDate.lt).toBeInstanceOf(Date); // le séjour doit être passé
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    expect(where.endDate.lt.getTime()).toBe(startOfToday.getTime());
   });
 
   it('crédite 1000 FCFA au parrain pour un filleul professionnel au KYC approuvé', async () => {

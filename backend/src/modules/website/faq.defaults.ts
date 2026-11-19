@@ -286,7 +286,7 @@ export const DEFAULT_FAQ: Array<{ category: string; question: string; answer: st
   {
     "category": "Parrainage",
     "question": "Comment fonctionne le parrainage ?",
-    "answer": "<ol><li>Dans <strong>Profil → Parrainage</strong>, partagez votre code personnel.</li><li>Votre filleul le saisit une seule fois après son inscription (il ne peut pas utiliser son propre code).</li><li>Vous recevez <strong>250 FCFA</strong> quand un client parrainé effectue sa première réservation confirmée, ou <strong>1 000 FCFA</strong> quand un professionnel parrainé voit son dossier validé.</li></ol><p>Les récompenses sont créditées sur votre portefeuille Primeo, une seule fois par filleul.</p>",
+    "answer": "<ol><li>Dans <strong>Profil → Parrainage</strong>, partagez votre code personnel.</li><li>Votre filleul le saisit une seule fois après son inscription (il ne peut pas utiliser son propre code).</li><li>Vous recevez <strong>250 FCFA</strong> quand un client parrainé a terminé son premier séjour (réservation passée au statut « Terminée » après la date de départ), ou <strong>1 000 FCFA</strong> quand un professionnel parrainé voit son dossier validé.</li></ol><p>Les récompenses sont créditées sur votre portefeuille Primeo, une seule fois par filleul.</p>",
     "order": 1
   },
   {

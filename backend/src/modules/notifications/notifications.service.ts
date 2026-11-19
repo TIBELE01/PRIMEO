@@ -204,7 +204,7 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
     case 'referral_reward':
       return {
         title: '🎉 Récompense de parrainage',
-        body: `Votre filleul ${String(data['refereeName'] ?? '')} a effectué sa première réservation. ${(data['rewardAmount'] as number | undefined)?.toLocaleString('fr-CI') ?? '2 000'} FCFA ont été ajoutés à votre portefeuille.`,
+        body: `Votre filleul ${String(data['refereeName'] ?? '')} ${data['refereeType'] === 'professional' ? 'a vu son dossier validé' : 'a terminé son premier séjour'}. ${(data['rewardAmount'] as number | undefined)?.toLocaleString('fr-CI') ?? '250'} FCFA ont été ajoutés à votre portefeuille.`,
       };
     case 'boost_expiry_reminder':
       return {

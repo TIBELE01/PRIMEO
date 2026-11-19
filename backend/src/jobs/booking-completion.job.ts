@@ -24,7 +24,8 @@ export async function runBookingCompletion(now: Date = new Date()): Promise<{ co
     data: { status: 'completed' },
   });
 
-  // Même effet de bord que la clôture manuelle : récompense de parrainage éventuelle.
+  // Même effet de bord que la clôture manuelle : récompense de parrainage éventuelle
+  // (le séjour est terminé et la date de départ passée : la condition client est remplie).
   for (const clientId of new Set(due.map((b) => b.clientId))) {
     await referralsService.triggerReward(clientId).catch((err) =>
       logger.warn(`Referral reward trigger failed on auto-complete for client ${clientId}`, err),

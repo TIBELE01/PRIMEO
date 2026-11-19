@@ -9,7 +9,6 @@ import { brevoConfig } from '../../../config/brevo.config';
 import { env } from '../../../config/env.config';
 import { boostsService } from '../../boosts/boosts.service';
 import { subscriptionsService } from '../../subscriptions/subscriptions.service';
-import { referralsService } from '../../referrals/referrals.service';
 import { analyticsService } from '../../analytics/analytics.service';
 import { generateAndUploadBookingInvoice, formatBookingInvoiceRef } from '../../../common/utils/invoice';
 import { messagingService } from '../../messaging/messaging.service';
@@ -496,10 +495,6 @@ export async function processSuccessfulPayment(
     if (booking) {
       await blockAvailability(booking.propertyId, booking.startDate, booking.endDate).catch((err) =>
         logger.warn('Failed to block availability dates', err),
-      );
-      // Filleul client : récompense de parrainage à la première réservation confirmée
-      await referralsService.triggerReward(booking.clientId).catch((err) =>
-        logger.warn(`Referral reward trigger failed on payment confirm for client ${booking.clientId}`, err),
       );
       // Message structuré d'ouverture de la conversation après confirmation de paiement.
       // Pour les réservations immédiates (restaurant/cash), ce message est créé à la création

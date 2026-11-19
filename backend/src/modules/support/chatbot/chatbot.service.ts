@@ -122,7 +122,7 @@ export const DEFAULT_FAQ_ENTRIES: FaqEntry[] = [
     intent: 'general_inquiry',
     category: 'Parrainage',
     response:
-      'Parrainage : partagez votre code (Profil → Parrainage). Vous recevez 250 FCFA sur votre portefeuille Primeo quand un client parrainé effectue sa première réservation confirmée, ou 1 000 FCFA quand un professionnel parrainé voit son dossier validé.',
+      'Parrainage : partagez votre code (Profil → Parrainage). Vous recevez 250 FCFA sur votre portefeuille Primeo quand un client parrainé a terminé son premier séjour (réservation passée au statut « Terminée » après la date de départ), ou 1 000 FCFA quand un professionnel parrainé voit son dossier validé.',
   },
 ];
 

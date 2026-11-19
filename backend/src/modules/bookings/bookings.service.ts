@@ -705,11 +705,6 @@ export const bookingsService = {
       return tx.booking.findUnique({ where: { id } });
     });
 
-    // Filleul client : récompense de parrainage à la première réservation confirmée
-    await referralsService.triggerReward(booking.clientId).catch((err) =>
-      logger.warn(`Referral reward trigger failed on confirm for client ${booking.clientId}`, err),
-    );
-
     return updated;
   },
 

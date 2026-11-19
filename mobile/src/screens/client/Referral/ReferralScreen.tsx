@@ -165,7 +165,7 @@ export function ReferralScreen({ navigation }: Props) {
           <Text style={styles.rewardLabel}>par filleul parrainé</Text>
           <View style={styles.rewardBreakdown}>
             <Text style={styles.rewardBreakdownItem}>
-              {rewardClient.toLocaleString('fr-CI')} FCFA · filleul client (1ʳᵉ réservation confirmée)
+              {rewardClient.toLocaleString('fr-CI')} FCFA · filleul client (1ᵉʳ séjour terminé)
             </Text>
             <Text style={styles.rewardBreakdownItem}>
               {rewardPro.toLocaleString('fr-CI')} FCFA · filleul professionnel (KYC validé)

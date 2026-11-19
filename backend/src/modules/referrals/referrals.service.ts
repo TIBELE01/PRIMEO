@@ -2,7 +2,8 @@
 // et versement automatique des récompenses sur le portefeuille virtuel (table wallets).
 //
 // Conditions de versement (créditées au PARRAIN) :
-//   • filleul client       → 250 FCFA  après sa première réservation CONFIRMÉE
+//   • filleul client       → 250 FCFA  après son premier séjour TERMINÉ (réservation
+//                            « terminée » ET date de départ passée)
 //   • filleul professionnel → 1000 FCFA après la validation de son KYC
 //
 // Le versement est idempotent : une fois le parrainage passé en `rewarded`, tout
@@ -140,7 +141,7 @@ export const referralsService = {
     }
 
     // Si les conditions de récompense sont déjà remplies (ex. le pro a déjà un KYC
-    // approuvé, ou le client a déjà une réservation confirmée), on verse immédiatement.
+    // approuvé, ou le client a déjà un séjour terminé), on verse immédiatement.
     await referralsService.triggerReward(userId);
 
     logger.info(`Code de parrainage appliqué post-inscription: referee=${userId} referrer=${referrer.id}`);
@@ -150,10 +151,15 @@ export const referralsService = {
   // Vérifie si le filleul remplit la condition de versement selon son type de compte.
   async _isRewardConditionMet(refereeId: string, accountType: string): Promise<boolean> {
     if (accountType === 'client') {
-      const confirmed = await prisma.booking.count({
-        where: { clientId: refereeId, status: { in: ['confirmed', 'completed'] } },
+      // Récompense APRÈS le séjour : réservation « terminée » dont la date de départ
+      // est passée (début de journée UTC = heure d'Abidjan). Une réservation
+      // confirmée mais pas encore terminée — ou clôturée avant le départ — ne compte pas.
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const completed = await prisma.booking.count({
+        where: { clientId: refereeId, status: 'completed', endDate: { lt: today } },
       });
-      return confirmed > 0;
+      return completed > 0;
     }
     // Professionnels : KYC approuvé
     const profile = await prisma.professionalProfile.findUnique({
@@ -163,8 +169,8 @@ export const referralsService = {
     return profile?.verificationStatus === 'approved';
   },
 
-  // Déclenché à la confirmation d'une réservation (filleul client) ou à l'approbation
-  // KYC (filleul pro). Idempotent : sans effet si déjà récompensé ou condition non remplie.
+  // Déclenché à la clôture d'un séjour (filleul client) ou à l'approbation KYC
+  // (filleul pro). Idempotent : sans effet si déjà récompensé ou condition non remplie.
   async triggerReward(refereeId: string): Promise<void> {
     const referral = await prisma.referral.findFirst({
       where: { refereeId, status: 'pending' },
@@ -211,14 +217,14 @@ export const referralsService = {
     notificationsService.notify({
       type: 'referral_reward',
       recipientId: referral.referrerId,
-      data: { refereeName, rewardAmount },
+      data: { refereeName, rewardAmount, refereeType: accountType === 'client' ? 'client' : 'professional' },
     }).catch((err) => logger.warn(`Referral reward notification failed for referrer ${referral.referrerId}`, err));
 
     logger.info(`Referral reward distributed: referrer=${referral.referrerId} referee=${refereeId} type=${accountType} amount=${rewardAmount}`);
   },
 
   // Réconciliation (cron) : rattrape les récompenses manquées par les déclencheurs inline.
-  // Couvre les deux conditions : filleuls clients avec réservation confirmée/terminée,
+  // Couvre les deux conditions : filleuls clients avec séjour terminé,
   // et filleuls professionnels avec KYC approuvé.
   async reconcilePendingRewards(): Promise<{ rewarded: number; errors: number }> {
     const pendingReferrals = await prisma.referral.findMany({
