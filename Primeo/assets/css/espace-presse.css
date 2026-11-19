@@ -14,3 +14,23 @@
 .ep-pr__contact h4{margin-top:0}
 .ep-pr__contact p{line-height:1.8;color:var(--color-text)}
 @media (max-width:640px){.ep-pr__head,.ep-pr__body,.ep-pr__foot{padding-left:1.25rem;padding-right:1.25rem}}
+
+/* Communiqué compact : titre, sous-titre et date visibles ; le reste se déplie au clic */
+.ep-pr{box-shadow:0 8px 20px -8px rgba(16,24,40,.22),0 2px 6px rgba(16,24,40,.06);transition:box-shadow var(--transition-slow),transform var(--transition-slow)}
+.ep-pr:hover{box-shadow:0 12px 26px -8px rgba(16,24,40,.28),0 3px 8px rgba(16,24,40,.08);transform:translateY(-2px)}
+.ep-pr__details>summary{list-style:none;cursor:pointer}
+.ep-pr__details>summary::-webkit-details-marker{display:none}
+.ep-pr__head{padding:1.5rem 1.8rem 1.3rem;border-bottom:0;display:block}
+.ep-pr__meta{margin-bottom:.7rem}
+.ep-pr__title{font-size:clamp(1.25rem,2.4vw,1.65rem);margin-bottom:.6rem}
+.ep-pr__lead{font-size:.98rem;line-height:1.65;font-weight:400;color:var(--color-text-muted);margin:0}
+.ep-pr__more{display:inline-flex;align-items:center;gap:.45rem;margin-top:1rem;font-size:.88rem;font-weight:700;color:var(--color-primary)}
+.ep-pr__more svg{transition:transform var(--transition)}
+.ep-pr__more-open{display:none}
+.ep-pr__details[open] .ep-pr__more-closed{display:none}
+.ep-pr__details[open] .ep-pr__more-open{display:inline}
+.ep-pr__details[open] .ep-pr__more svg{transform:rotate(180deg)}
+.ep-pr__details[open]>summary{border-bottom:1px solid var(--color-border)}
+.ep-pr__details>summary:focus-visible{outline:3px solid rgba(var(--color-primary-rgb),.35);outline-offset:-3px;border-radius:24px}
+@media (max-width:640px){.ep-pr__head{padding:1.2rem 1.1rem 1.1rem}}
+.ep-releases{border:0;background:transparent;box-shadow:none;border-radius:0;padding:0;overflow:visible}
