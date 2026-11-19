@@ -25,6 +25,7 @@ import { generateUUID } from '../../../utils/uuid';
 import { trackEvent } from '../../../services/analytics';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
+import { showStyledAlert } from '../../../utils/alertManager';
 
 type Props = {
   navigation: NativeStackNavigationProp<ClientStackParamList, 'Booking'>;
@@ -133,6 +134,25 @@ export function BookingScreen({ navigation, route }: Props) {
   // One unique key per screen mount — reused on network retries so the server
   // returns the cached response instead of initiating a second Genius Pay charge.
   const idempotencyKey = useRef<string>(generateUUID());
+
+  // Toute erreur bloquante (dates occupées, données manquantes, souci technique) s'affiche
+  // dans une fenêtre flottante plutôt que dans un bandeau rouge en haut de l'écran.
+  useEffect(() => {
+    if (!error) return;
+    const title = /disponibles|occup|dates/i.test(error)
+      ? 'Dates indisponibles'
+      : /renseigner|valide|invalide/i.test(error)
+        ? 'Informations à compléter'
+        : 'Réservation impossible';
+    showStyledAlert({
+      title,
+      message: error,
+      tone: /renseigner/i.test(error) ? 'warning' : 'error',
+      buttons: [{ text: 'Compris' }],
+    });
+    // Réinitialisé aussitôt : la même erreur pourra s'afficher de nouveau si elle se reproduit
+    setError(null);
+  }, [error]);
 
   const nights = countNights(checkIn, checkOut);
   const basePrice = pricePerNight != null ? pricePerNight * nights : 0;
@@ -320,12 +340,8 @@ export function BookingScreen({ navigation, route }: Props) {
       if (status === 409) {
         setError('Ces dates ne sont plus disponibles. Retournez en arrière et choisissez d\'autres dates.');
       } else if (status === 502) {
-        // Afficher le message réel de Genius Pay pour faciliter le diagnostic
-        const detail =
-          e?.response?.data?.message ??
-          e?.response?.data?.error ??
-          'Le service de paiement est temporairement indisponible. Veuillez réessayer.';
-        setError(detail);
+        // Service de paiement indisponible : message clair pour le client (le détail technique reste dans les journaux)
+        setError('Le paiement en ligne est momentanément indisponible. Choisissez le paiement sur place ou réessayez dans quelques instants.');
       } else {
         const msg =
           e?.response?.data?.message ??
@@ -417,16 +433,7 @@ export function BookingScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Bannière d'erreur */}
-        {error ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerIcon}>⚠️</Text>
-            <Text style={styles.errorBannerText}>{error}</Text>
-            <TouchableOpacity onPress={() => setError(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.errorBannerClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+        {/* Les erreurs s'affichent dans une fenêtre flottante (voir l'effet « error » ci-dessus) */}
 
         {/* ── Étape 1 (immobilier) : Votre intérêt ── */}
         {isInterest && step === 1 && (

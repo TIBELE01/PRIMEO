@@ -45,14 +45,14 @@ function renderHero(text: string, accent: Accent): string {
   const { icon, title } = splitIcon(text);
   const iconCell = icon
     ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 16px;">
-        <tr><td align="center" valign="middle" width="64" height="64" style="width:64px;height:64px;border-radius:32px;background-color:#ffffff;font-size:30px;line-height:64px;text-align:center;box-shadow:0 6px 18px rgba(0,26,102,0.25);">${icon}</td></tr>
+        <tr><td align="center" valign="middle" width="56" height="56" class="hero-icon" style="width:56px;height:56px;border-radius:28px;background-color:#ffffff;font-size:26px;line-height:56px;text-align:center;box-shadow:0 6px 18px rgba(0,26,102,0.25);">${icon}</td></tr>
       </table>`
     : '';
   return `
   <tr>
-    <td class="hero" align="center" style="background-color:${C.primary};background-image:${G.hero};padding:38px 40px 36px;text-align:center;">
+    <td class="hero" align="center" style="background-color:${C.primary};background-image:${G.hero};padding:32px 36px 30px;text-align:center;">
       ${iconCell}
-      <h1 class="hero-title" style="margin:0;font-family:${FONT};font-size:27px;line-height:1.25;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">${title}</h1>
+      <h1 class="hero-title" style="margin:0;font-family:${FONT};font-size:23px;line-height:1.3;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">${title}</h1>
     </td>
   </tr>
   <tr><td style="height:5px;line-height:5px;font-size:0;background-color:${accentColor(accent)};">&nbsp;</td></tr>`;
@@ -62,8 +62,8 @@ function renderHero(text: string, accent: Accent): string {
 
 function renderTopBar(): string {
   const logo = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="center-table"><tr>
-      <td style="padding-right:10px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="44" height="44" style="display:block;border:0;outline:none;width:44px;height:44px;" /></td>
-      <td style="vertical-align:middle;font-family:${FONT};font-size:24px;font-weight:800;color:${C.primary};letter-spacing:-0.3px;">Primeo</td>
+      <td style="padding-right:10px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="38" height="38" style="display:block;border:0;outline:none;width:38px;height:38px;" /></td>
+      <td style="vertical-align:middle;font-family:${FONT};font-size:21px;font-weight:800;color:${C.primary};letter-spacing:-0.3px;">Primeo</td>
     </tr></table>`;
   return `
   <tr>
@@ -91,14 +91,14 @@ function renderTrust(): string {
     { icon: '💬', title: 'Support réactif', text: 'Une équipe à votre écoute' },
   ];
   const cols = items.map((i) => `
-          <td class="stack-col trust-col" width="33%" valign="top" style="width:33%;padding:0 8px;text-align:center;vertical-align:top;">
-            <div style="font-size:24px;line-height:32px;">${i.icon}</div>
-            <p class="txt" style="margin:6px 0 2px;font-family:${FONT};font-size:14px;font-weight:700;color:${C.heading};">${i.title}</p>
-            <p class="muted" style="margin:0;font-family:${FONT};font-size:12px;line-height:1.5;color:${C.textMuted};">${i.text}</p>
+          <td class="trust-col" width="33%" valign="top" style="width:33%;padding:0 6px;text-align:center;vertical-align:top;">
+            <div class="trust-icon" style="font-size:20px;line-height:28px;">${i.icon}</div>
+            <p class="txt trust-title" style="margin:4px 0 2px;font-family:${FONT};font-size:13px;font-weight:700;color:${C.heading};">${i.title}</p>
+            <p class="muted trust-text" style="margin:0;font-family:${FONT};font-size:11px;line-height:1.45;color:${C.textMuted};">${i.text}</p>
           </td>`).join('');
   return `
   <tr>
-    <td class="px panel-row" style="background-color:${C.panelBg};padding:26px 32px;border-top:1px solid ${C.border};">
+    <td class="px panel-row trust-row" style="background-color:${C.panelBg};padding:22px 26px;border-top:1px solid ${C.border};">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cols}</tr></table>
     </td>
   </tr>`;
@@ -110,13 +110,13 @@ function renderAppBlock(): string {
   const badges = EMAIL_STORE_BADGES.map((b) => `
               <td style="padding:0 5px;">
                 <a href="${b.url}" target="_blank" style="text-decoration:none;display:inline-block;">
-                  <img src="${b.image}" alt="${b.name}" height="40" style="display:block;border:0;height:40px;width:auto;" />
+                  <img src="${b.image}" alt="${b.name}" height="36" style="display:block;border:0;height:36px;width:auto;" />
                 </a>
               </td>`).join('');
   return `
   <tr>
     <td class="px content-row" align="center" style="background-color:#ffffff;padding:28px 40px 30px;text-align:center;border-top:1px solid ${C.border};">
-      <p class="txt" style="margin:0 0 4px;font-family:${FONT};font-size:16px;font-weight:800;color:${C.heading};">Primeo dans votre poche</p>
+      <p class="txt" style="margin:0 0 4px;font-family:${FONT};font-size:15px;font-weight:800;color:${C.heading};">Primeo dans votre poche</p>
       <p class="muted" style="margin:0 0 16px;font-family:${FONT};font-size:13px;color:${C.textMuted};">Réservez, payez et échangez avec les professionnels depuis l’application.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;"><tr>${badges}</tr></table>
     </td>
@@ -146,7 +146,7 @@ function renderFooter(): string {
   return `
   <tr>
     <td class="px" style="background-color:${C.footerBg};padding:34px 40px 30px;text-align:center;">
-      <p style="margin:0 0 4px;font-family:${FONT};font-size:18px;font-weight:800;color:#ffffff;letter-spacing:0.2px;">${COMPANY.name}</p>
+      <p style="margin:0 0 4px;font-family:${FONT};font-size:16px;font-weight:800;color:#ffffff;letter-spacing:0.2px;">${COMPANY.name}</p>
       <p style="margin:0 0 18px;font-family:${FONT};font-size:13px;line-height:1.6;color:#9FB2DA;">${COMPANY.tagline}</p>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 20px;">
         <tr>
@@ -191,7 +191,7 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
     body = body.slice(0, start) + body.slice(end + HERO_CLOSE.length);
   }
   // Les heading() suivants éventuels deviennent de simples intertitres
-  body = body.split(HERO_OPEN).join(`<h2 class="txt" style="margin:8px 0 14px;font-family:${FONT};font-size:19px;font-weight:800;color:${C.heading};">`).split(HERO_CLOSE).join('</h2>');
+  body = body.split(HERO_OPEN).join(`<h2 class="txt" style="margin:8px 0 14px;font-family:${FONT};font-size:17px;font-weight:800;color:${C.heading};">`).split(HERO_CLOSE).join('</h2>');
 
   const preheaderText = preheader ?? splitIcon(heroText).title;
   // Remplissage invisible : empêche les clients d'afficher le début du corps après l'aperçu
@@ -221,19 +221,27 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
     @media only screen and (max-width: 620px) {
       .container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
       .outer-pad { padding: 0 !important; }
-      .px { padding-left: 22px !important; padding-right: 22px !important; }
-      .content { padding: 28px 22px 8px !important; }
-      .hero { padding: 30px 22px 28px !important; }
-      .hero-title { font-size: 22px !important; }
+      .px { padding-left: 18px !important; padding-right: 18px !important; }
+      .content { padding: 24px 18px 6px !important; }
+      .hero { padding: 24px 18px 22px !important; }
+      .hero-title { font-size: 19px !important; }
+      .hero-icon { width: 46px !important; height: 46px !important; line-height: 46px !important; font-size: 22px !important; }
+      .greet { font-size: 14px !important; }
+      .body-p { font-size: 13px !important; line-height: 1.6 !important; }
       .stack-col { display: block !important; width: 100% !important; max-width: 100% !important; text-align: center !important; }
-      .trust-col { padding: 10px 0 !important; }
+      .trust-row { padding: 18px 8px !important; }
+      .trust-col { padding: 0 3px !important; }
+      .trust-icon { font-size: 18px !important; line-height: 24px !important; }
+      .trust-title { font-size: 11px !important; }
+      .trust-text { font-size: 10px !important; }
       .center-mobile img, .center-mobile .center-table { margin: 0 auto !important; }
-      .topbar-link { padding-top: 10px !important; }
+      .topbar-link { padding-top: 8px !important; }
       .info-label, .info-value { display: block !important; width: 100% !important; text-align: left !important; }
-      .info-label { padding: 12px 0 2px !important; border-bottom: 0 !important; }
-      .info-value { padding: 0 0 12px !important; }
+      .info-label { padding: 10px 0 1px !important; border-bottom: 0 !important; font-size: 12px !important; }
+      .info-value { padding: 0 0 10px !important; font-size: 13px !important; }
       .btn, .btn a { display: block !important; width: 100% !important; box-sizing: border-box; }
-      .code { font-size: 30px !important; letter-spacing: 7px !important; }
+      .btn a { font-size: 14px !important; padding: 13px 20px !important; }
+      .code { font-size: 26px !important; letter-spacing: 6px !important; }
     }
     @media (prefers-color-scheme: dark) {
       .outer { background-color: #0B1220 !important; }
@@ -256,7 +264,7 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
           ${renderTopBar()}
           ${renderHero(heroText, accent)}
           <tr>
-            <td class="content content-row" style="background-color:${C.cardBg};padding:36px 40px 12px;font-family:${FONT};">
+            <td class="content content-row" style="background-color:${C.cardBg};padding:30px 36px 10px;font-family:${FONT};">
               ${body}
             </td>
           </tr>
@@ -282,12 +290,12 @@ export function heading(text: string, _accent: Accent = 'primary'): string {
 /** Salutation personnalisée « Bonjour Prénom, ». */
 export function greeting(firstName?: string): string {
   const name = firstName?.trim();
-  return `<p class="txt" style="margin:0 0 16px;font-family:${FONT};font-size:17px;font-weight:600;color:${C.heading};">Bonjour${name ? ` ${name}` : ''},</p>`;
+  return `<p class="txt greet" style="margin:0 0 14px;font-family:${FONT};font-size:15px;font-weight:600;color:${C.heading};">Bonjour${name ? ` ${name}` : ''},</p>`;
 }
 
 /** Paragraphe de corps de texte. */
 export function paragraph(html: string): string {
-  return `<p class="txt" style="margin:0 0 18px;font-family:${FONT};font-size:15px;line-height:1.7;color:${C.text};">${html}</p>`;
+  return `<p class="txt body-p" style="margin:0 0 16px;font-family:${FONT};font-size:14px;line-height:1.65;color:${C.text};">${html}</p>`;
 }
 
 /** Bouton d'action principal — orange (couleur d'action Primeo), compatible Outlook (VML). */
@@ -300,11 +308,11 @@ export function button(url: string, label: string, accent: Accent = 'secondary')
       <td class="btn" align="center" style="border-radius:12px;background-color:${color};background-image:${gradient};box-shadow:0 6px 16px rgba(0,0,0,0.12);">
         <!--[if mso]>
         <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${url}" style="height:50px;v-text-anchor:middle;width:280px;" arcsize="24%" stroke="f" fillcolor="${color}">
-          <w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">${label}</center>
+          <w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">${label}</center>
         </v:roundrect>
         <![endif]-->
         <!--[if !mso]><!-- -->
-        <a href="${url}" target="_blank" style="display:inline-block;padding:16px 40px;font-family:${FONT};font-size:16px;font-weight:700;line-height:18px;color:#ffffff;text-decoration:none;border-radius:12px;text-align:center;">${label}</a>
+        <a href="${url}" target="_blank" style="display:inline-block;padding:14px 34px;font-family:${FONT};font-size:15px;font-weight:700;line-height:18px;color:#ffffff;text-decoration:none;border-radius:12px;text-align:center;">${label}</a>
         <!--<![endif]-->
       </td>
     </tr>
@@ -313,7 +321,7 @@ export function button(url: string, label: string, accent: Accent = 'secondary')
 
 /** Lien secondaire discret (ex : télécharger une facture). */
 export function secondaryLink(url: string, label: string): string {
-  return `<p style="margin:-8px 0 22px;text-align:center;font-family:${FONT};font-size:14px;"><a href="${url}" target="_blank" style="color:${C.primary};font-weight:700;text-decoration:none;">${label}</a></p>`;
+  return `<p style="margin:-8px 0 20px;text-align:center;font-family:${FONT};font-size:13px;"><a href="${url}" target="_blank" style="color:${C.primary};font-weight:700;text-decoration:none;">${label}</a></p>`;
 }
 
 export interface InfoRow {
@@ -335,12 +343,12 @@ export function infoCard(rows: InfoRow[], opts: { title?: string } = {}): string
       const isLast = i === arr.length - 1;
       const border = isLast ? '' : `border-bottom:1px solid ${C.border};`;
       const valueStyle = r.highlight
-        ? `font-size:19px;font-weight:800;color:${C.primary};`
-        : `font-size:15px;font-weight:700;color:${C.heading};`;
+        ? `font-size:17px;font-weight:800;color:${C.primary};`
+        : `font-size:14px;font-weight:700;color:${C.heading};`;
       return `
         <tr>
-          <td class="info-label muted" width="45%" style="padding:12px 0;${border}font-family:${FONT};font-size:14px;color:${C.textMuted};vertical-align:top;">${r.label}</td>
-          <td class="info-value txt" width="55%" style="padding:12px 0;${border}font-family:${FONT};text-align:right;vertical-align:top;${valueStyle}">${r.value}</td>
+          <td class="info-label muted" width="45%" style="padding:10px 0;${border}font-family:${FONT};font-size:13px;color:${C.textMuted};vertical-align:top;">${r.label}</td>
+          <td class="info-value txt" width="55%" style="padding:10px 0;${border}font-family:${FONT};text-align:right;vertical-align:top;${valueStyle}">${r.value}</td>
         </tr>`;
     })
     .join('');
@@ -363,7 +371,7 @@ export function alertBox(html: string, accent: Accent = 'primary'): string {
     : '#EDF3FF';
   return `
   <table role="presentation" class="panel" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;border-radius:12px;background-color:${bg};">
-    <tr><td class="txt" style="border-left:4px solid ${color};border-radius:12px;padding:15px 18px;font-family:${FONT};font-size:14px;line-height:1.65;color:${C.text};">${html}</td></tr>
+    <tr><td class="txt" style="border-left:4px solid ${color};border-radius:12px;padding:13px 16px;font-family:${FONT};font-size:13px;line-height:1.6;color:${C.text};">${html}</td></tr>
   </table>`;
 }
 
@@ -372,14 +380,14 @@ export function codeBlock(code: string): string {
   return `
   <table role="presentation" class="panel" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px;background-color:${C.panelBg};border:2px dashed ${C.primary};border-radius:14px;">
     <tr><td align="center" style="padding:26px 12px;">
-      <span class="code" style="font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:38px;font-weight:800;letter-spacing:10px;color:${C.primary};">${code}</span>
+      <span class="code" style="font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:32px;font-weight:800;letter-spacing:8px;color:${C.primary};">${code}</span>
     </td></tr>
   </table>`;
 }
 
 /** Signature standard de l'équipe. */
 export function signature(): string {
-  return `<p class="muted" style="margin:26px 0 24px;font-family:${FONT};font-size:14px;line-height:1.6;color:${C.textMuted};">À très vite,<br><strong class="txt" style="color:${C.heading};">L’équipe Primeo</strong></p>`;
+  return `<p class="muted" style="margin:22px 0 22px;font-family:${FONT};font-size:13px;line-height:1.6;color:${C.textMuted};">À très vite,<br><strong class="txt" style="color:${C.heading};">L’équipe Primeo</strong></p>`;
 }
 
 /** Séparateur horizontal léger. */
