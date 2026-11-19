@@ -97,10 +97,11 @@ export function buildTourHtml(
 <style>${PANNELLUM_CSS}</style>
 <style>
   html, body, #panorama { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; -webkit-user-select:none; user-select:none; }
-  .pnlm-load-box, .pnlm-about-msg, .pnlm-error-msg { display:none !important; }
-  /* Libellés des hotspots toujours visibles (pas de survol sur mobile) */
-  .pnlm-hotspot-base .pnlm-tooltip span { visibility:visible; font:600 13px -apple-system, Roboto, sans-serif; border-radius:8px; padding:6px 10px; background:rgba(0,0,0,.72); }
-  .pnlm-hotspot.pnlm-scene { width:34px; height:34px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.85); }
+  /* Le nom de la pièce est déjà affiché dans l'en-tête natif */
+  .pnlm-load-box, .pnlm-about-msg, .pnlm-error-msg, .pnlm-panorama-info { display:none !important; }
+  /* Libellés des hotspots toujours visibles (pas de survol sur mobile) ; suivent la visibilité du hotspot */
+  div.pnlm-tooltip span { visibility:inherit; font:600 13px -apple-system, Roboto, sans-serif; }
+  .pnlm-hotspot.pnlm-scene { box-shadow:0 0 0 3px rgba(255,255,255,.85); }
 </style>
 </head>
 <body>

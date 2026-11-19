@@ -31,13 +31,23 @@ export function serializeProperty<T extends Record<string, unknown>>(property: T
   // Bien en mode visite 3D : la première scène panoramique sert d'image de
   // couverture (cartes de recherche, favoris) puisqu'il n'a plus de photos.
   const scenes = (property as { scenes3d?: Array<{ url: string }> }).scenes3d ?? [];
-  const coverFallback = scenes[0]?.url ?? null;
+  // Vignette recadrée et allégée (≈ 900 px) plutôt que le panorama 4096 px complet,
+  // pour ne pas saturer la mémoire des listes (cartes de recherche, favoris).
+  const coverFallback = scenes[0]?.url ? panoramaCoverUrl(scenes[0].url) : null;
   return {
     ...property,
     images: media,
     mainImageUrl: primary?.url ?? coverFallback,
     virtualTour: buildVirtualTour(property),
   };
+}
+
+/** Vignette d'un panorama Cloudinary : centre de l'image, 900×600, qualité/format auto. */
+export function panoramaCoverUrl(url: string): string {
+  const marker = '/image/upload/';
+  const i = url.indexOf(marker);
+  if (i === -1 || !url.includes('res.cloudinary.com')) return url;
+  return `${url.slice(0, i + marker.length)}c_fill,g_center,w_900,h_600,q_auto,f_auto/${url.slice(i + marker.length)}`;
 }
 
 /**
@@ -62,7 +72,8 @@ function virtualTourAllowed(property: Record<string, unknown>): boolean {
 
 function buildVirtualTour(property: Record<string, unknown>): { available: boolean; panoramas: Array<{ id: string; roomName: string; imageUrl: string; hotspots: PanoramaHotspot[] }> } | undefined {
   const scenes = (property as { scenes3d?: Array<{ id: string; roomName: string; url: string; hotspots?: unknown }> }).scenes3d;
-  if (!scenes) return undefined; // relation non chargée (listes) — le flag hasVirtualTour suffit
+  // relation non chargée, ou chargée partiellement pour la couverture (listes) — le flag hasVirtualTour suffit
+  if (!scenes || scenes.some((s) => !s.id)) return undefined;
   // Formule sans visite 3D (ex. abonnement rétrogradé) : visite non proposée au client
   if (!virtualTourAllowed(property)) return { available: false, panoramas: [] };
   const validIds = new Set(scenes.map((s) => s.id));

@@ -57,6 +57,17 @@ describe('virtualTour — disponibilité', () => {
     expect((serializeProperty(prop(null) as any) as any).virtualTour.available).toBe(false);
   });
 
+  it("vignette de couverture allégée (pas le panorama 4096 px)", () => {
+    const out = serializeProperty(prop('entreprise') as any) as any;
+    expect(out.mainImageUrl).toBe('https://res.cloudinary.com/x/image/upload/c_fill,g_center,w_900,h_600,q_auto,f_auto/v1/a.jpg');
+  });
+
+  it('listes (1re scène, URL seule) : couverture sans objet virtualTour partiel', () => {
+    const out = serializeProperty({ id: 'p1', media: [], scenes3d: [{ url: scenes[0].url }] } as any) as any;
+    expect(out.mainImageUrl).toContain('c_fill,g_center,w_900');
+    expect(out.virtualTour).toBeUndefined();
+  });
+
   it('interrupteur admin désactivé : visite non proposée même en Entreprise', () => {
     mockOverrides.features = { virtualTourEnabled: false };
     expect((serializeProperty(prop('entreprise') as any) as any).virtualTour.available).toBe(false);

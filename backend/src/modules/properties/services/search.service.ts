@@ -119,6 +119,8 @@ export const searchService = {
         ],
         include: {
           media:  { where: { isPrimary: true }, take: 1 },
+          // Biens « visite 3D » sans photo : 1re scène servant de couverture (URL seule)
+          scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
           owner:  { select: { subscription: { select: { planType: true } } } },
         },
       }),
@@ -217,6 +219,7 @@ export const searchService = {
       where,
       include: {
         media:  { where: { isPrimary: true }, take: 1 },
+        scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
         owner:  { select: { subscription: { select: { planType: true } } } },
       },
     });
