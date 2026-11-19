@@ -89,7 +89,19 @@ export function FavoritesScreen({ navigation }: Props) {
     if (!silent) setLoading(true);
     try {
       const res = await favoritesApi.list();
-      const data: FavoriteProperty[] = res?.data?.data ?? res?.data ?? [];
+      const raw: FavoriteProperty[] = res?.data?.data ?? res?.data ?? [];
+      // L'API renvoie title / mainImageUrl (fiche sérialisée) : on les mappe vers name / coverImage
+      const data = raw.map((f) => {
+        const p = (f.property ?? {}) as FavoriteProperty['property'] & { title?: string; mainImageUrl?: string | null; images?: Array<{ url?: string }> };
+        return {
+          ...f,
+          property: {
+            ...p,
+            name: p.name ?? p.title ?? '',
+            coverImage: p.coverImage ?? p.mainImageUrl ?? p.images?.[0]?.url ?? undefined,
+          },
+        };
+      });
       setFavorites(data);
     } catch { /* keep stale */ } finally {
       setLoading(false);
