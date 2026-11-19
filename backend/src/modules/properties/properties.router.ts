@@ -1,6 +1,7 @@
 // Properties routes — search, CRUD, media, geo autocomplete, admin moderation
 // IMPORTANT: specific paths must be registered BEFORE /:id to avoid shadowing
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
+import { HttpError } from '../../common/handlers/http-error.handler';
 import { restaurantRouter } from '../restaurant/restaurant.router';
 import multer from 'multer';
 import {
@@ -33,6 +34,15 @@ import {
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 // Multer dédié aux photos 360° : 10 Mo max après compression
 const upload360 = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+// Photo 360° trop lourde : message explicite (413) au lieu d'une erreur 500 générique
+const uploadScene360: RequestHandler = (req, res, next) => {
+  upload360.single('file')(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return next(new HttpError(413, 'Photo 360° trop lourde (10 Mo maximum). Exportez-la en JPEG 4096×2048 puis réessayez.'));
+    }
+    return next(err as Error | undefined);
+  });
+};
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
@@ -123,7 +133,7 @@ propertiesRouter.delete('/:id/media/:mediaId', authenticate, authorize(...PROFES
 
 // Visite 3D — scènes panoramiques 360° (lecture publique, écriture Entreprise)
 propertiesRouter.get('/:id/3d-scenes', parseId, list3dScenes);
-propertiesRouter.post('/:id/3d-scenes', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, upload360.single('file'), upload3dScene);
+propertiesRouter.post('/:id/3d-scenes', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, uploadScene360, upload3dScene);
 propertiesRouter.patch('/:id/3d-scenes/:sceneId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, updateScene3d);
 propertiesRouter.delete('/:id/3d-scenes/:sceneId', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, delete3dScene);
 

@@ -620,7 +620,16 @@ function StepMedias({ data, onChange, subscriptionPlan }: any) {
   const pickTourImages = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'image/*', multiple: true, copyToCacheDirectory: true });
     if (result.canceled) return;
-    const assets = result.assets ?? [];
+    // Photos 360° > 10 Mo refusées par le serveur : on les écarte dès la sélection
+    const MAX_360_BYTES = 10 * 1024 * 1024;
+    const all = result.assets ?? [];
+    const assets = all.filter((a: any) => !(typeof a.size === 'number' && a.size > MAX_360_BYTES));
+    if (assets.length < all.length) {
+      Alert.alert(
+        'Photo 360° trop lourde',
+        `${all.length - assets.length} photo(s) dépassent 10 Mo et n'ont pas été ajoutées. Exportez-les en JPEG 4096×2048 (format panoramique 2:1) puis réessayez.`,
+      );
+    }
     // Max 10 photos 360° par bien (limite backend)
     const room = (n: number) => `Pièce ${n}`;
     const added = assets.slice(0, 10 - tourImages.length).map((a: any, idx: number) => ({
