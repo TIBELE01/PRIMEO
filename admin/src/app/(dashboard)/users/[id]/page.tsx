@@ -39,8 +39,8 @@ const statusLabel: Record<UserStatus, string> = {
   active: 'Actif', pending_kyc: 'KYC en attente', pending_email: 'Email en attente', banned: 'Banni', suspended: 'Suspendu',
 };
 const roleLabel: Record<string, string> = {
-  client: 'Client', professional_hebergement: 'Hébergement Pro',
-  professional_immobilier: 'Immobilier Pro', restaurateur: 'Restaurateur', admin: 'Admin',
+  client: 'Client', professional_hebergement: 'Pro · Propriétaire (résidences)', professional_hotel: 'Pro · Hôtelier',
+  professional_immobilier: 'Pro · Immobilier', restaurateur: 'Pro · Restaurateur', admin: 'Administrateur',
 };
 const kycDocTypes: Record<string, string> = {
   identity: "Pièce d'identité", rccm: 'RCCM', tax_number: 'Numéro fiscal',
