@@ -30,6 +30,9 @@ export function SuspendPropertyModal({ isOpen, onClose, propertyId, propertyTitl
       toast.success('Annonce suspendue — le propriétaire sera notifié');
       qc.invalidateQueries({ queryKey: ['property', propertyId] });
       qc.invalidateQueries({ queryKey: ['properties'] });
+      qc.invalidateQueries({ queryKey: ['properties-pending'] });
+      qc.invalidateQueries({ queryKey: ['moderation-properties-pending'] });
+      qc.invalidateQueries({ queryKey: ['admin-stats'] });
       setReason('');
       setCustom('');
       onClose();

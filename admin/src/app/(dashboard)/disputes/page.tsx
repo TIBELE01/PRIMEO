@@ -1,4 +1,6 @@
 'use client';
+import { disputeStatusVariant as statusVariant, disputeStatusLabel as statusLabel, disputeStatusOptions } from '@/lib/disputeStatus';
+import { listOf, pagesOf } from '@/lib/normalize';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { disputesService } from '@/services/api';
@@ -11,14 +13,6 @@ import { formatDate, formatAmount } from '@/lib/utils';
 import { AdminDispute } from '@/types/dispute';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
-
-const statusVariant: Record<string, 'warning' | 'info' | 'success' | 'danger' | 'default'> = {
-  open: 'warning', under_review: 'info', resolved_client: 'success', resolved_professional: 'success', rejected: 'default',
-};
-const statusLabel: Record<string, string> = {
-  open: 'Ouvert', under_review: 'En révision', resolved_client: 'Résolu (client)',
-  resolved_professional: 'Résolu (pro)', rejected: 'Rejeté',
-};
 
 function ageDays(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
@@ -40,7 +34,7 @@ export default function DisputesPage() {
     retry: 1,
   });
   useEffect(() => {
-    if (data?.total && data?.pageSize) setTotalPages(Math.ceil(data.total / data.pageSize));
+    if (data) setTotalPages(pagesOf(data));
   }, [data, setTotalPages]);
 
   const columns = [
@@ -95,7 +89,10 @@ export default function DisputesPage() {
     },
   ];
 
-  const allDisputes: AdminDispute[] = data?.disputes ?? data?.data ?? data?.items ?? [];
+  // Le filtre de priorité (ancienneté) n'existe pas côté API : appliqué sur la page affichée
+  const wanted = (queryParams as Record<string, string> | undefined)?.priority;
+  const priorityOf = (d: AdminDispute) => { const n = ageDays(d.createdAt); return n >= 7 ? 'critique' : n >= 2 ? 'elevee' : 'normale'; };
+  const allDisputes: AdminDispute[] = listOf(data).filter((d: AdminDispute) => !wanted || priorityOf(d) === wanted);
   const openCount    = allDisputes.filter(d => d.status === 'open').length;
   const reviewCount  = allDisputes.filter(d => d.status === 'under_review').length;
   const criticalCount = allDisputes.filter(d => ageDays(d.createdAt) >= 7).length;
@@ -144,11 +141,7 @@ export default function DisputesPage() {
           </div>
           <select onChange={(e) => handleFilter('status', e.target.value)} className="input w-44">
             <option value="">Tous les statuts</option>
-            <option value="open">Ouvert</option>
-            <option value="under_review">En révision</option>
-            <option value="resolved_client">Résolu (client)</option>
-            <option value="resolved_professional">Résolu (pro)</option>
-            <option value="rejected">Rejeté</option>
+            {disputeStatusOptions.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
           <select onChange={(e) => handleFilter('priority', e.target.value)} className="input w-40">
             <option value="">Toutes priorités</option>

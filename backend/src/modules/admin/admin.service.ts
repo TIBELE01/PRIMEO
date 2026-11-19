@@ -649,6 +649,7 @@ export const adminService = {
   async listAllProperties(query: {
     status?: string;
     sector?: string;
+    userId?: string;
     search?: string;
     page?: string;
     limit?: string;
@@ -658,6 +659,7 @@ export const adminService = {
     const where: Record<string, unknown> = {};
 
     if (query.status) where['status'] = query.status === 'pending_review' ? 'pending' : query.status;
+    if (query.userId) where['ownerId'] = query.userId; // fiche utilisateur : annonces de ce propriétaire
     if (query.sector) {
       // Mapper les secteurs frontend vers les valeurs PropertyType de la DB
       if (query.sector === 'hebergement') {

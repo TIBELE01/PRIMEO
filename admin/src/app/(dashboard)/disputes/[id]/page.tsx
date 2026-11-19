@@ -11,17 +11,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Send, ExternalLink, Paperclip } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { DisputeMessage } from '@/types/dispute';
+import { disputeStatusVariant as statusVariant, disputeStatusLabel as statusLabel, isDisputeClosed } from '@/lib/disputeStatus';
+
+const apiError = (e: any, fallback: string): string => e?.response?.data?.error ?? e?.response?.data?.message ?? fallback;
 
 type ActionFlow = 'reject' | 'partial' | 'full' | null;
 
-const statusVariant: Record<string, 'warning' | 'info' | 'success' | 'default'> = {
-  open: 'warning', under_review: 'info', resolved_client: 'success', resolved_professional: 'success', rejected: 'default',
-};
-const statusLabel: Record<string, string> = {
-  open: 'Ouvert', under_review: 'En révision', resolved_client: 'Résolu (client)',
-  resolved_professional: 'Résolu (pro)', rejected: 'Rejeté',
-};
 const resolutionLabel: Record<string, string> = {
+  resolved_refund_full: 'Remboursement total', resolved_refund_partial: 'Remboursement partiel', resolved_no_refund: 'Aucun remboursement',
   full_refund: 'Remboursement total', partial_refund: 'Remboursement partiel', no_refund: 'Aucun remboursement',
 };
 
@@ -54,25 +51,25 @@ export default function DisputeDetailPage() {
   }, [dispute?.messages?.length]);
 
   const fullRefund = useMutation({
-    mutationFn: () => disputesService.resolveDispute(id, 'full_refund'),
+    mutationFn: () => disputesService.refund(id, maxRefund, 'Remboursement total validé par l\'administration'),
     onSuccess: () => {
       toast.success('Remboursement total validé — Genius Pay initié, les deux parties notifiées');
       qc.invalidateQueries({ queryKey: ['dispute', id] });
       qc.invalidateQueries({ queryKey: ['disputes'] });
       setActiveFlow(null);
     },
-    onError: () => toast.error('Erreur lors du remboursement'),
+    onError: (e: any) => toast.error(apiError(e, 'Erreur lors du remboursement')),
   });
 
   const partialRefund = useMutation({
-    mutationFn: () => disputesService.resolveDispute(id, 'partial_refund', String(partialAmount)),
+    mutationFn: () => disputesService.refund(id, partialAmount, 'Remboursement partiel validé par l\'administration'),
     onSuccess: () => {
       toast.success(`Remboursement partiel de ${formatAmount(partialAmount)} initié via Genius Pay`);
       qc.invalidateQueries({ queryKey: ['dispute', id] });
       qc.invalidateQueries({ queryKey: ['disputes'] });
       setActiveFlow(null);
     },
-    onError: () => toast.error('Erreur lors du remboursement partiel'),
+    onError: (e: any) => toast.error(apiError(e, 'Erreur lors du remboursement partiel')),
   });
 
   const rejectDispute = useMutation({
@@ -84,7 +81,7 @@ export default function DisputeDetailPage() {
       setActiveFlow(null);
       setRejectReason('');
     },
-    onError: () => toast.error('Erreur lors du rejet'),
+    onError: (e: any) => toast.error(apiError(e, 'Erreur lors du rejet')),
   });
 
   const sendMsg = useMutation({
@@ -93,14 +90,14 @@ export default function DisputeDetailPage() {
       setMessage('');
       qc.invalidateQueries({ queryKey: ['dispute', id] });
     },
-    onError: () => toast.error("Erreur lors de l'envoi"),
+    onError: (e: any) => toast.error(apiError(e, "Erreur lors de l'envoi")),
   });
 
   if (isLoading) return <PageSpinner />;
   if (!dispute) return <p className="text-gray-500 p-8">Litige introuvable</p>;
 
   const messages: DisputeMessage[] = dispute.messages ?? [];
-  const isResolved = ['resolved_client', 'resolved_professional', 'rejected'].includes(dispute.status);
+  const isResolved = isDisputeClosed(dispute.status);
   const days = ageDays(dispute.createdAt);
   const maxRefund: number = dispute.requestedRefundAmount ?? 0;
 
@@ -298,14 +295,14 @@ export default function DisputeDetailPage() {
           </Card>
 
           {/* Resolution recap if already resolved */}
-          {isResolved && (dispute.resolvedAt || dispute.resolution) && (
+          {isResolved && (dispute.resolvedAt || dispute.resolution || dispute.status) && (
             <Card>
               <CardHeader><CardTitle>Résolution</CardTitle></CardHeader>
               <CardContent>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-gray-500 dark:text-gray-400">Décision</dt>
-                    <dd className="font-medium">{resolutionLabel[dispute.resolution] ?? dispute.resolution ?? '—'}</dd>
+                    <dd className="font-medium">{resolutionLabel[dispute.resolution ?? dispute.status] ?? dispute.resolution ?? statusLabel[dispute.status] ?? '—'}</dd>
                   </div>
                   {dispute.resolvedAmount !== null && dispute.resolvedAmount !== undefined && dispute.resolvedAmount > 0 && (
                     <div className="flex justify-between">

@@ -5,7 +5,7 @@ import { api, API_BASE } from '../lib/api';
 import type { PlatformUser, UserDetail } from '../types/user';
 import type { AdminProperty } from '../types/property';
 import type { AdminBooking } from '../types/booking';
-import { normalizeBooking, normalizeAuditLog } from '../lib/normalize';
+import { normalizeBooking, normalizeAuditLog, normalizeDispute } from '../lib/normalize';
 import type { AdminDispute } from '../types/dispute';
 
 export const usersService = {
@@ -73,19 +73,24 @@ export const bookingsService = {
 };
 
 export const disputesService = {
-  list: (params?: object) => api.get<any>('/admin/disputes', params),
-  getDisputes: (params?: object) => api.get<any>('/admin/disputes', params),
-  getById: (id: string) => api.get<AdminDispute>(`/admin/disputes/${id}`),
-  getDisputeById: (id: string) => api.get<AdminDispute>(`/admin/disputes/${id}`),
-  resolve: (id: string, resolution: string, notes?: string) =>
+  list: (params?: object) => disputesService.getDisputes(params),
+  getDisputes: (params?: object) => api.get<any>('/admin/disputes', params).then((r: any) => ({
+    ...r,
+    data: (Array.isArray(r) ? r : r?.data ?? []).map(normalizeDispute),
+  })),
+  getById: (id: string) => api.get<any>(`/admin/disputes/${id}`).then(normalizeDispute),
+  getDisputeById: (id: string) => api.get<any>(`/admin/disputes/${id}`).then(normalizeDispute),
+  // Clôture sans remboursement (l'API exige une note d'au moins 10 caractères)
+  resolve: (id: string, resolution: string, notes: string) =>
     api.post(`/admin/disputes/${id}/resolve`, { resolution, notes }),
-  resolveDispute: (id: string, resolution: string, notes?: string) =>
+  resolveDispute: (id: string, resolution: string, notes: string) =>
     api.post(`/admin/disputes/${id}/resolve`, { resolution, notes }),
+  // Remboursement via Genius Pay (total ou partiel selon le montant)
   refund: (id: string, amount: number, notes: string) =>
     api.post(`/admin/disputes/${id}/refund`, { amount, notes }),
   reject: (id: string, reason?: string) => api.post(`/admin/disputes/${id}/resolve`, {
     resolution: 'resolved_no_refund',
-    notes: reason ?? 'Litige rejeté par l\'administrateur',
+    notes: (reason ?? '').trim().length >= 10 ? (reason as string).trim() : 'Litige rejeté par l\'administrateur',
   }),
   sendMessage: (id: string, message: string) =>
     api.post(`/disputes/${id}/messages`, { content: message }),

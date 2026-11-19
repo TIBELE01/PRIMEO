@@ -29,6 +29,9 @@ export function RejectPropertyModal({ isOpen, onClose, propertyId, propertyTitle
       toast.success('Propriété rejetée');
       qc.invalidateQueries({ queryKey: ['property', propertyId] });
       qc.invalidateQueries({ queryKey: ['properties'] });
+      qc.invalidateQueries({ queryKey: ['properties-pending'] });
+      qc.invalidateQueries({ queryKey: ['moderation-properties-pending'] });
+      qc.invalidateQueries({ queryKey: ['admin-stats'] });
       onClose();
     },
     onError: () => toast.error('Erreur lors du rejet'),

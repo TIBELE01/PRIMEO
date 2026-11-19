@@ -1,6 +1,7 @@
 // Adaptateurs entre les réponses de l'API admin (objets Prisma imbriqués) et les types
 // plats utilisés par les écrans du back-office. Aucune logique métier : simple mise en forme.
 import type { AdminBooking } from '../types/booking';
+import type { AdminDispute } from '../types/dispute';
 
 type Rec = Record<string, any>;
 const fullName = (u?: Rec | null): string => (u ? [u.firstName, u.lastName].filter(Boolean).join(' ').trim() || u.email || '' : '');
@@ -55,4 +56,40 @@ export function normalizeAuditLog(l: Rec): Rec {
     ip: l.ip ?? l.ipAddress ?? null,
     level: l.level ?? levelOf(String(l.action ?? '')),
   };
+}
+
+export const disputeReasonLabel: Record<string, string> = {
+  non_conformity: 'Non-conformité', payment_issue: 'Problème de paiement', cancellation: 'Annulation',
+  no_show: 'Absence (no-show)', other: 'Autre motif',
+};
+
+/** Litige : aplatit client / professionnel / bien et les messages (auteur, rôle, date) attendus par les écrans. */
+export function normalizeDispute(d: Rec): AdminDispute & Rec {
+  const booking = d.booking ?? {};
+  const client = booking.client;
+  const owner = booking.property?.owner;
+  const messages = Array.isArray(d.messages)
+    ? d.messages.map((m: Rec) => ({
+        ...m,
+        authorId: m.authorId ?? m.senderId,
+        authorName: m.authorName ?? (fullName(m.sender) || '—'),
+        authorRole: m.authorRole ?? (m.senderId === client?.id ? 'client' : m.senderId === owner?.id ? 'professional' : 'admin'),
+        createdAt: m.createdAt ?? m.sentAt,
+      }))
+    : d.messages;
+  return {
+    ...d,
+    messages,
+    bookingId: d.bookingId ?? booking.id,
+    clientId: d.clientId ?? client?.id,
+    clientName: d.clientName ?? fullName(client),
+    professionalId: d.professionalId ?? owner?.id ?? booking.property?.ownerId,
+    professionalName: d.professionalName ?? fullName(owner),
+    propertyTitle: d.propertyTitle ?? booking.property?.title,
+    reasonCode: d.reason,
+    reason: disputeReasonLabel[d.reason] ?? d.reason,
+    // Le montant maximal remboursable est le montant payé en ligne de la réservation
+    requestedRefundAmount: d.requestedRefundAmount ?? booking.onlinePaidAmount ?? booking.totalAmount ?? 0,
+    bookingTotalAmount: booking.totalAmount,
+  } as unknown as AdminDispute & Rec;
 }
