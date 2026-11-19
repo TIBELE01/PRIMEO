@@ -143,11 +143,10 @@ export const PRODUCTS_DEFAULTS = {
 export const ABOUT_DEFAULTS = {
   history: {
     title: 'Notre histoire',
-    content: `<p>Fondée à Abidjan en 2022 par une équipe passionnée d'hospitalité et de technologie, Primeo est née d'un constat simple : la réservation d'hébergement en Côte d'Ivoire manquait de transparence, de confiance et d'outils adaptés aux réalités locales.</p>
-<h2>2022 — Création</h2><p>Fondée à Abidjan par une équipe passionnée d'hospitalité et de technologie.</p>
-<h2>2023 — Lancement</h2><p>Ouverture au public avec plus de 1 000 utilisateurs inscrits dès le premier mois.</p>
-<h2>2024 — Paiement mobile</h2><p>Intégration d'Orange Money, MTN MoMo et Wave pour des réservations payées en quelques secondes.</p>
-<h2>2025 — Expansion régionale</h2><p>Extension du service à 14 villes et lancement des boosts d'annonce et de la visite 3D immersive.</p>`,
+    content: `<p>Fondée à Abidjan en 2025 par une équipe passionnée d'hospitalité et de technologie, Primeo est née d'un constat simple : la réservation d'hébergement en Côte d'Ivoire manquait de transparence, de confiance et d'outils adaptés aux réalités locales.</p>
+<h2>2025 — Création</h2><p>Fondation de Primeo à Abidjan par une équipe passionnée d'hospitalité et de technologie.</p>
+<h2>Février 2025 — Lancement officiel</h2><p>Ouverture de la plateforme au public en Côte d'Ivoire : hébergements, restaurants et immobilier réunis sur une seule application.</p>
+<h2>Aujourd'hui — Une plateforme qui s'enrichit</h2><p>Paiement mobile (Orange Money, MTN MoMo, Wave), visites virtuelles 3D, messagerie et outils de gestion pour les professionnels.</p>`,
   },
   mission: {
     title: 'Notre mission',

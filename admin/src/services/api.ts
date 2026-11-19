@@ -411,6 +411,11 @@ export const websiteService = {
   updatePartnershipStatus: (id: string, status: string) =>
     api.put(`/website/admin/partnerships/${id}`, { status }),
   deletePartnership: (id: string) => api.delete(`/website/admin/partnerships/${id}`),
+  // Dossier de partenariat (PDF) téléchargé depuis la page « Devenir partenaire »
+  getPartnershipDossier: () => api.get<{ custom: boolean; filename: string; size: number | null; uploadedAt: string | null; defaultUrl: string }>('/website/admin/partnership-dossier'),
+  uploadPartnershipDossier: (file: File) => { const fd = new FormData(); fd.append('file', file); return api.uploadFile<any>('/website/admin/partnership-dossier', fd); },
+  resetPartnershipDossier: () => api.delete<any>('/website/admin/partnership-dossier'),
+  partnershipDossierPublicUrl: () => `${API_BASE}/website/partnership-dossier`,
 
   // Community — Posts
   listCommunityPosts: (page = 1, limit = 20, status?: string) =>

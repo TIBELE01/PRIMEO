@@ -1,6 +1,7 @@
 // website.controller.ts — Handlers pour les routes site vitrine
 import { Request, Response, NextFunction } from 'express';
 import { websiteService } from './website.service';
+import { partnershipDossierService, DOSSIER_DEFAULT_URL, DOSSIER_DOWNLOAD_NAME } from './partnership-dossier.service';
 
 // ── Public ────────────────────────────────────────────────────────────────────
 
@@ -1160,4 +1161,32 @@ export async function adminUploadContentImage(req: Request, res: Response, next:
     if (!req.file) { res.status(400).json({ message: 'Fichier manquant' }); return; }
     res.status(201).json(await websiteContentService.uploadImage(req.file.buffer, req.file.originalname));
   } catch (e) { next(e); }
+}
+
+// ── Dossier de partenariat (PDF) ─────────────────────────────────────────────
+
+export async function getPartnershipDossier(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const file = await partnershipDossierService.publicFile();
+    if (!file) { res.redirect(302, DOSSIER_DEFAULT_URL); return; }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${DOSSIER_DOWNLOAD_NAME}"`);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.send(file);
+  } catch (e) { next(e); }
+}
+
+export async function adminGetPartnershipDossier(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await partnershipDossierService.info()); } catch (e) { next(e); }
+}
+
+export async function adminUploadPartnershipDossier(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.file) { res.status(400).json({ message: 'Fichier manquant' }); return; }
+    res.status(201).json(await partnershipDossierService.upload(req.file.buffer, req.file.originalname, req.user!.sub, req.ip));
+  } catch (e) { next(e); }
+}
+
+export async function adminResetPartnershipDossier(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await partnershipDossierService.reset(req.user!.sub, req.ip)); } catch (e) { next(e); }
 }

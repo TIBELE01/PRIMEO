@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteService } from '@/services/api';
+import { PartnershipDossierCard } from '@/components/website/PartnershipDossierCard';
 import { Building2, Mail, Phone, Calendar, ChevronDown, Trash2, Eye, X } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -71,11 +72,13 @@ export default function PartnershipsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Demandes de partenariat</h1>
           <p className="mt-1 text-gray-500 text-sm">{total} demande{total !== 1 ? 's' : ''} au total</p>
         </div>
-        <a href="/devenir-partenaire/" target="_blank" rel="noopener noreferrer"
+        <a href={`${process.env.NEXT_PUBLIC_VITRINE_URL ?? 'https://primeo-vitrine-152o.onrender.com'}/devenir-partenaire/`} target="_blank" rel="noopener noreferrer"
            className="text-sm text-blue-600 hover:underline flex items-center gap-1">
           Voir la page →
         </a>
       </div>
+
+      <PartnershipDossierCard />
 
       {/* Status filters */}
       <div className="flex gap-2 mb-5 flex-wrap">

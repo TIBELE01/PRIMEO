@@ -63,6 +63,7 @@ websiteRouter.post('/careers/spontaneous', spontaneousLimiter, upload.single('cv
 
 // Blocs de contenu statique du site vitrine (valeurs modifiées d'une page)
 websiteRouter.get('/content', c.getPublicContent);
+websiteRouter.get('/partnership-dossier', c.getPartnershipDossier);
 
 // ── Admin (super_admin + moderateur) ──────────────────────────────────────────
 websiteRouter.use('/admin', authenticate, authorize('admin'));
@@ -71,6 +72,9 @@ websiteRouter.use('/admin', authenticate, authorize('admin'));
 websiteRouter.get('/admin/content/pages',    c.adminContentPages);
 websiteRouter.get('/admin/content',          c.adminListContent);
 websiteRouter.post('/admin/content/image',   upload.single('file'), c.adminUploadContentImage);
+websiteRouter.get('/admin/partnership-dossier',     c.adminGetPartnershipDossier);
+websiteRouter.post('/admin/partnership-dossier',    upload.single('file'), c.adminUploadPartnershipDossier);
+websiteRouter.delete('/admin/partnership-dossier',  c.adminResetPartnershipDossier);
 websiteRouter.put('/admin/content/:key',     c.adminUpsertContent);
 websiteRouter.delete('/admin/content/:key',  c.adminResetContent);
 

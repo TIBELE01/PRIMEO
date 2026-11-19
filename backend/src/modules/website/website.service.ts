@@ -969,7 +969,7 @@ export const websiteService = {
   async getAboutHistory() {
     return prisma.aboutHistory.findFirst() ?? {
       title: 'Notre histoire',
-      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2022 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
+      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2025 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
     };
   },
 
@@ -1006,7 +1006,7 @@ export const websiteService = {
   async adminGetAboutHistory() {
     return prisma.aboutHistory.findFirst() ?? {
       title: 'Notre histoire',
-      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2022 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
+      content: "Primeo est née d'une conviction simple : les Ivoiriens méritent une plateforme moderne et fiable pour trouver, réserver et gérer leurs biens immobiliers et leurs hébergements.\n\nFondée à Abidjan en 2025 par une équipe passionnée d'immobilier et de technologie, Primeo réunit en un seul endroit résidences meublées, hôtels, locations longue durée, terrains et réservations de restaurants — pensée mobile-first pour les réalités ivoiriennes.\n\nAujourd'hui présente dans plusieurs villes du pays, nous poursuivons notre mission avec ambition : devenir la référence de l'immobilier et de l'hospitalité en Afrique de l'Ouest.",
     };
   },
 
