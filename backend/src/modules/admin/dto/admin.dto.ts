@@ -61,7 +61,11 @@ export const CreatePromoCodeDto = z.object({
   isActive: z.boolean().default(true),
 });
 
-export const UpdatePromoCodeDto = CreatePromoCodeDto.partial();
+// En modification, null efface la limite (utilisations illimitées / aucun montant minimum)
+export const UpdatePromoCodeDto = CreatePromoCodeDto.partial().extend({
+  minAmount: z.number().int().positive().nullable().optional(),
+  maxUses: z.number().int().positive().nullable().optional(),
+});
 
 export const ChangeUserPlanDto = z.object({
   plan: z.enum(['starter', 'business', 'entreprise']),

@@ -46,8 +46,9 @@ export function PromoCodeForm({ onSuccess, onCancel, promo }: Props) {
         code: form.code.trim().toUpperCase(),
         discountType: form.discountType,
         discountValue: Number(form.discountValue),
-        minAmount: form.minAmount ? Number(form.minAmount) : undefined,
-        maxUses: form.maxUses ? Number(form.maxUses) : undefined,
+        // création : champ absent = pas de limite ; modification : null = effacer la limite existante
+        minAmount: form.minAmount ? Number(form.minAmount) : (editing ? null : undefined),
+        maxUses: form.maxUses ? Number(form.maxUses) : (editing ? null : undefined),
         validFrom: new Date(form.validFrom).toISOString(),
         validUntil: new Date(form.validUntil).toISOString(),
         isActive: form.isActive,

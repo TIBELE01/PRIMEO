@@ -1921,8 +1921,8 @@ export const adminService = {
     code: string;
     discountType: 'percent' | 'fixed_amount';
     discountValue: number;
-    minAmount: number;
-    maxUses: number;
+    minAmount: number | null;
+    maxUses: number | null;
     validFrom: string;
     validUntil: string;
     isActive: boolean;
