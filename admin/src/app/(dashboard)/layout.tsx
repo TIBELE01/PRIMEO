@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useAdminStore } from '@/store/adminStore';
@@ -14,7 +14,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { setStats } = useAdminStore();
   const router = useRouter();
 
+  // La session est persistée dans le navigateur (localStorage) et relue APRÈS le
+  // premier rendu : sans attendre cette relecture, un rechargement de page (F5) ou
+  // l'ouverture directe d'une URL renvoyait à tort vers /login.
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    if (useAuthStore.persist.hasHydrated()) setHydrated(true);
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -44,9 +55,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('click', handleActivity);
     };
-  }, [isAuthenticated, logout, router]);
+  }, [hydrated, isAuthenticated, logout, router]);
 
-  if (!isAuthenticated) return null;
+  if (!hydrated || !isAuthenticated) return null;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">

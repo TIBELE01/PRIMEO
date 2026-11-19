@@ -307,6 +307,7 @@ export const adminService = {
     role?: string;
     status?: string;
     search?: string;
+    kycPending?: string;
     page?: string;
     limit?: string;
   }) {
@@ -316,6 +317,8 @@ export const adminService = {
 
     if (query.role) where['accountType'] = query.role;
     if (query.status) where['status'] = query.status;
+    // File KYC : uniquement les professionnels dont le dossier attend une validation
+    if (query.kycPending === 'true') where['professionalProfile'] = { verificationStatus: 'pending' };
     if (query.search) {
       where['OR'] = [
         { firstName: { contains: query.search, mode: 'insensitive' } },
@@ -1043,13 +1046,16 @@ export const adminService = {
 
   // ── Bookings ───────────────────────────────────────────────────────────────
 
-  async listBookings(query: { status?: string; page?: string; limit?: string }) {
+  async listBookings(query: { status?: string; userId?: string; page?: string; limit?: string }) {
     const page = parseInt(query.page ?? '1');
-    const limit = parseInt(query.limit ?? '20');
-    const where = query.status ? { status: query.status as never } : {};
+    const limit = Math.min(parseInt(query.limit ?? '20'), 100);
+    const where: Record<string, unknown> = {};
+    if (query.status) where['status'] = query.status;
+    // Fiche utilisateur : réservations passées en tant que client OU reçues en tant que propriétaire
+    if (query.userId) where['OR'] = [{ clientId: query.userId }, { property: { ownerId: query.userId } }];
     const [data, total] = await Promise.all([
       prisma.booking.findMany({
-        where,
+        where: where as never,
         skip: (page - 1) * limit,
         take: limit,
         include: {
@@ -1058,7 +1064,7 @@ export const adminService = {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.booking.count({ where }),
+      prisma.booking.count({ where: where as never }),
     ]);
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   },
@@ -1556,6 +1562,35 @@ export const adminService = {
 
     const total = await prisma.auditLog.count({ where: where as never });
     return { data: logs, total, page, limit, pages: Math.ceil(total / limit) };
+  },
+
+  async getAuditLogById(id: string) {
+    const log = await prisma.auditLog.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+    });
+    if (!log) throw new HttpError(404, 'Entrée de journal introuvable');
+    return log;
+  },
+
+  async listUserTransactions(userId: string, query: { page?: string; limit?: string }) {
+    const page = Math.max(1, parseInt(query.page ?? '1'));
+    const limit = Math.min(parseInt(query.limit ?? '50'), 200);
+    const where = { userId };
+    const [data, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        orderBy: { initiatedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, type: true, amount: true, currency: true, fee: true, netAmount: true, status: true,
+          bookingId: true, notes: true, initiatedAt: true, completedAt: true,
+        },
+      }),
+      prisma.transaction.count({ where }),
+    ]);
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   },
 
   // ── Mode maintenance ────────────────────────────────────────────────────────

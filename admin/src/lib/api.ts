@@ -70,6 +70,10 @@ export const api = {
     apiClient.patch(url, body).then(r => unwrap<T>(r.data)),
   delete: <T = unknown>(url: string) =>
     apiClient.delete(url).then(r => unwrap<T>(r.data)),
+  uploadFilePut: <T = unknown>(url: string, formData: FormData) =>
+    apiClient.put(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(r => unwrap<T>(r.data)),
   uploadFile: <T = unknown>(url: string, formData: FormData) =>
     apiClient.post(url, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

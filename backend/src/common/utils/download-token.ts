@@ -7,11 +7,11 @@
 import { encryptSecret, decryptSecret } from './secret-crypto';
 import { HttpError } from '../handlers/http-error.handler';
 
-export type DownloadKind = 'binv' | 'sinv' | 'exp'; // facture résa / facture abo / export
+export type DownloadKind = 'binv' | 'sinv' | 'exp' | 'cv'; // facture résa / facture abo / export / CV candidat
 
 export interface DownloadTokenPayload {
   k: DownloadKind;
-  id?: string; // identifiant de ressource (export)
+  id?: string; // identifiant de ressource (export, candidature)
   d?: unknown; // données inline (facture)
   exp: number; // expiration (epoch ms)
 }

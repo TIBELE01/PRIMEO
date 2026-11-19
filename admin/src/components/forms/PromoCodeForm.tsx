@@ -47,8 +47,9 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
       toast.success('Code promo créé');
       onSuccess();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'Erreur lors de la création';
-      toast.error(msg);
+      const d = err?.response?.data;
+      const first = d?.details ? (Object.values(d.details)[0] as string[] | undefined)?.[0] : undefined;
+      toast.error(d?.message ?? (first ? `${d.error ?? 'Erreur'} : ${first}` : d?.error) ?? 'Erreur lors de la création');
     } finally {
       setSaving(false);
     }

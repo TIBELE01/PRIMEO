@@ -44,6 +44,8 @@ import {
   upsertConfig,
   // Audit logs
   listAuditLogs,
+  getAuditLog,
+  listUserTransactions,
   // Maintenance
   getMaintenance,
   setMaintenance,
@@ -105,6 +107,7 @@ adminRouter.get('/dashboard/advanced', getAdvancedStats);
 // ── User management ────────────────────────────────────────────────────────────
 adminRouter.get('/users', listUsers);
 adminRouter.get('/users/:id', parseId, getUser);
+adminRouter.get('/users/:id/transactions', parseId, listUserTransactions);
 adminRouter.post('/users/:id/suspend', parseId, validate(SuspendUserDto), suspendUser);
 adminRouter.post('/users/:id/reactivate', parseId, reactivateUser);
 adminRouter.post('/users/:id/ban', parseId, banUser);
@@ -161,6 +164,7 @@ adminRouter.patch('/config', validate(UpsertConfigDto), upsertConfig);
 
 // ── Audit logs ─────────────────────────────────────────────────────────────────
 adminRouter.get('/audit-logs', listAuditLogs);
+adminRouter.get('/audit-logs/:id', parseId, getAuditLog);
 
 // ── Mode maintenance ───────────────────────────────────────────────────────────
 adminRouter.get('/maintenance', getMaintenance);

@@ -5,6 +5,7 @@ import { api, API_BASE } from '../lib/api';
 import type { PlatformUser, UserDetail } from '../types/user';
 import type { AdminProperty } from '../types/property';
 import type { AdminBooking } from '../types/booking';
+import { normalizeBooking, normalizeAuditLog } from '../lib/normalize';
 import type { AdminDispute } from '../types/dispute';
 
 export const usersService = {
@@ -60,12 +61,15 @@ export const menuItemsService = {
 };
 
 export const bookingsService = {
-  list: (params?: object) => api.get<any>('/admin/bookings', params),
-  getBookings: (params?: object) => api.get<any>('/admin/bookings', params),
-  getById: (id: string) => api.get<AdminBooking>(`/admin/bookings/${id}`),
-  getBookingById: (id: string) => api.get<AdminBooking>(`/admin/bookings/${id}`),
-  cancelBooking: (id: string) => api.post(`/admin/bookings/${id}/cancel`),
-  refundBooking: (id: string, body: { amount: number; reason: string }) => api.post(`/admin/bookings/${id}/refund`, body),
+  list: (params?: object) => bookingsService.getBookings(params),
+  getBookings: (params?: object) => api.get<any>('/admin/bookings', params).then((r: any) => ({
+    ...r,
+    data: (Array.isArray(r) ? r : r?.data ?? []).map(normalizeBooking),
+  })),
+  getById: (id: string) => api.get<any>(`/admin/bookings/${id}`).then(normalizeBooking),
+  getBookingById: (id: string) => api.get<any>(`/admin/bookings/${id}`).then(normalizeBooking),
+  // Annulation par l'administration : route métier existante (remboursement intégral au portefeuille)
+  cancelBooking: (id: string, reason: string) => api.post(`/bookings/${id}/cancel`, { reason }),
 };
 
 export const disputesService = {
@@ -84,7 +88,7 @@ export const disputesService = {
     notes: reason ?? 'Litige rejeté par l\'administrateur',
   }),
   sendMessage: (id: string, message: string) =>
-    api.post(`/admin/disputes/${id}/messages`, { message }),
+    api.post(`/disputes/${id}/messages`, { content: message }),
 };
 
 export const analyticsService = {
@@ -128,8 +132,8 @@ export const logsService = {
   // Correct endpoint: /admin/audit-logs
   list: (params?: object) => api.get<any>('/admin/audit-logs', params),
   getAuditLogs: (params?: object) => api.get<any>('/admin/audit-logs', params),
-  getById: (id: string) => api.get<any>(`/admin/audit-logs/${id}`),
-  getLogById: (id: string) => api.get<any>(`/admin/audit-logs/${id}`),
+  getById: (id: string) => api.get<any>(`/admin/audit-logs/${id}`).then(normalizeAuditLog),
+  getLogById: (id: string) => api.get<any>(`/admin/audit-logs/${id}`).then(normalizeAuditLog),
   exportCsv: (params?: object) => api.get<string>('/admin/audit-logs', { ...params, format: 'csv' }),
 };
 
@@ -253,7 +257,7 @@ export const websiteService = {
   upsertCareersTeam: (text: string, photo?: File) => {
     const fd = new FormData(); fd.append('text', text);
     if (photo) fd.append('photo', photo);
-    return api.uploadFile('/website/admin/careers/team', fd);
+    return api.uploadFilePut('/website/admin/careers/team', fd);
   },
   listCareersValues: () => api.get<any[]>('/website/admin/careers/values'),
   createCareersValue: (d: object) => api.post('/website/admin/careers/values', d),

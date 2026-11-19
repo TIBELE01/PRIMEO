@@ -3,10 +3,13 @@ import { prisma } from '../../database/prisma.service';
 import { cacheGet, cacheSet } from '../../common/utils/redis-client';
 import { env } from '../../config/env.config';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
+import { CV_BUCKET, uploadPrivateFile, deletePrivateFile, parseStorageRef, isAllowedDocument } from '../../common/utils/private-storage';
+import { createDownloadToken } from '../../common/utils/download-token';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { sendEmail } from '../../common/utils/mailer';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { DEFAULT_FAQ } from './faq.defaults';
+import { logger } from '../../common/utils/logger';
 function createHttpError(status: number, msg: string) { return new HttpError(status, msg); }
 
 // ── Defaults (fallback si base vide) ──────────────────────────────────────────
@@ -748,10 +751,20 @@ export const websiteService = {
   }) {
     let cvUrl: string | undefined;
     let cvPublicId: string | undefined;
+    let cvError = false;
     if (data.cvBuffer && data.cvFilename) {
-      const result = await uploadToCloudinary(data.cvBuffer, cloudinaryPaths.careersCv(), data.cvFilename);
-      cvUrl = result.url;
-      cvPublicId = result.publicId;
+      if (!isAllowedDocument(data.cvFilename)) {
+        throw createHttpError(400, 'Format de CV non accepté. Formats autorisés : PDF, DOC, DOCX, RTF, ODT.');
+      }
+      // Stockage privé (Supabase) : le CV est ensuite servi par un lien signé de l'API
+      // (voir /api/downloads/cv). Une panne de stockage ne doit pas perdre la candidature.
+      try {
+        cvUrl = await uploadPrivateFile(CV_BUCKET, data.cvFilename, data.cvBuffer);
+        cvPublicId = cvUrl;
+      } catch (err) {
+        cvError = true;
+        logger.error('Candidature spontanée : stockage du CV impossible', err);
+      }
     }
     const app = await prisma.careersSpontaneous.create({
       data: {
@@ -775,7 +788,7 @@ export const websiteService = {
         <p><strong>Téléphone :</strong> ${data.phone ?? 'Non renseigné'}</p>
         <p><strong>Message :</strong></p>
         <p>${data.message ? data.message.replace(/\n/g, '<br>') : 'Aucun message'}</p>
-        ${cvUrl ? `<p><strong>CV :</strong> <a href="${cvUrl}">Télécharger le CV</a></p>` : ''}
+        ${cvUrl ? `<p><strong>CV :</strong> <a href="${websiteService.cvDownloadUrl(app.id)}">Télécharger le CV</a></p>` : cvError ? '<p><strong>CV :</strong> envoyé par le candidat mais non enregistré (erreur technique) — le contacter à l\'adresse ci-dessus.</p>' : ''}
         <hr>
         <p style="color:#888;font-size:12px">Candidature soumise le ${new Date().toLocaleString('fr-FR')}</p>
       `,
@@ -924,9 +937,17 @@ export const websiteService = {
     return prisma.careersJob.delete({ where: { id } });
   },
 
+  // Lien de téléchargement signé (30 jours) d'un CV — servi par l'API, pas par un CDN public.
+  cvDownloadUrl(applicationId: string): string {
+    const token = createDownloadToken({ k: 'cv', id: applicationId }, 30 * 24 * 60 * 60 * 1000);
+    return `${env.PUBLIC_URL}/api/downloads/cv?t=${token}`;
+  },
+
   async adminListApplications(status?: string) {
     const where = status ? { status } : {};
-    return prisma.careersSpontaneous.findMany({ where, orderBy: { createdAt: 'desc' } });
+    const rows = await prisma.careersSpontaneous.findMany({ where, orderBy: { createdAt: 'desc' } });
+    // cvUrl devient un lien de téléchargement valide (l'URL interne de stockage n'est jamais exposée)
+    return rows.map((r) => ({ ...r, cvUrl: r.cvUrl ? websiteService.cvDownloadUrl(r.id) : null }));
   },
 
   async adminUpdateApplicationStatus(id: string, status: string, notes?: string) {
@@ -938,7 +959,8 @@ export const websiteService = {
   async adminDeleteApplication(id: string) {
     const row = await prisma.careersSpontaneous.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Candidature introuvable');
-    if (row.cvPublicId) await deleteFromCloudinary(row.cvPublicId).catch(() => {});
+    if (parseStorageRef(row.cvPublicId)) await deletePrivateFile(row.cvPublicId!).catch(() => {});
+    else if (row.cvPublicId) await deleteFromCloudinary(row.cvPublicId).catch(() => {});
     return prisma.careersSpontaneous.delete({ where: { id } });
   },
 

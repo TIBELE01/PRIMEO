@@ -47,7 +47,8 @@ export interface PromoCode {
   discountValue: number;
   minAmount?: number;
   maxUses?: number | null;
-  usedCount: number;
+  usedCount?: number;
+  usesCount?: number;
   validFrom: string;
   validUntil: string;
   isActive: boolean;

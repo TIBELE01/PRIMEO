@@ -11,6 +11,11 @@ import {
   type InvoiceData,
 } from '../../common/utils/invoice';
 import { exportsService } from '../exports/exports.service';
+import axios from 'axios';
+import { prisma } from '../../database/prisma.service';
+import { logger } from '../../common/utils/logger';
+import { downloadPrivateFile, parseStorageRef, contentTypeFor, extensionOf } from '../../common/utils/private-storage';
+import { cloudinaryPrivateDownloadUrl } from '../../common/utils/s3-client';
 
 // Les dates transitent en ISO dans le jeton JSON → on les restaure en Date.
 function reviveBookingData(raw: unknown): BookingInvoiceData {
@@ -67,6 +72,43 @@ export async function downloadExportFile(req: Request, res: Response, next: Next
     const { buffer, filename, contentType } = await exportsService.regenerate(payload.id);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${safe(filename)}"`);
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// CV d'un candidat : lu côté serveur (stockage privé, ou API Cloudinary pour les anciens CV)
+// puis renvoyé en téléchargement. Le lien est signé et expire (30 jours).
+export async function downloadCv(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const payload = verifyDownloadToken(String(req.query.t ?? ''));
+    if (payload.k !== 'cv' || !payload.id) throw new HttpError(400, 'Lien de téléchargement invalide.');
+    const app = await prisma.careersSpontaneous.findUnique({ where: { id: payload.id } });
+    if (!app || !(app.cvUrl || app.cvPublicId)) throw new HttpError(404, 'CV introuvable.');
+
+    const ref = app.cvPublicId ?? app.cvUrl ?? '';
+    let buffer: Buffer;
+    let ext: string;
+    if (parseStorageRef(ref)) {
+      buffer = await downloadPrivateFile(ref);
+      ext = extensionOf(ref) || 'pdf';
+    } else {
+      // Ancien CV hébergé sur Cloudinary (envoyé comme « image ») : téléchargement signé via l'API
+      ext = extensionOf(app.cvUrl ?? '') || 'pdf';
+      const url = cloudinaryPrivateDownloadUrl(app.cvPublicId ?? '', ext, (app.cvUrl ?? '').includes('/raw/') ? 'raw' : 'image');
+      try {
+        const r = await axios.get(url, { responseType: 'arraybuffer', timeout: 20_000 });
+        buffer = Buffer.from(r.data);
+      } catch (err) {
+        logger.warn(`CV ${app.id} : téléchargement Cloudinary impossible`, err);
+        throw new HttpError(404, 'Ce CV n\'est plus disponible. Contactez le candidat directement par e-mail.');
+      }
+    }
+    const filename = safe(`CV_${app.firstName}_${app.lastName}.${ext}`);
+    res.setHeader('Content-Type', contentTypeFor(filename));
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Cache-Control', 'private, max-age=0, no-store');
     res.send(buffer);
   } catch (err) {

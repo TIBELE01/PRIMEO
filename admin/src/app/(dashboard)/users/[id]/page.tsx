@@ -1,4 +1,5 @@
 'use client';
+import { listOf } from '@/lib/normalize';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersService, propertiesService, bookingsService } from '@/services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -160,9 +161,9 @@ export default function UserDetailPage() {
     { id: 'logs',         label: 'Logs connexion' },
   ];
 
-  const properties   = propertiesData?.properties ?? propertiesData ?? [];
-  const bookings     = bookingsData?.bookings   ?? bookingsData   ?? [];
-  const transactions = transactionsData?.transactions ?? transactionsData ?? [];
+  const properties   = listOf(propertiesData);
+  const bookings     = listOf(bookingsData);
+  const transactions = listOf(transactionsData);
   const loginLogs    = user.loginLogs ?? [];
 
   return (
@@ -328,7 +329,7 @@ export default function UserDetailPage() {
               </CardHeader>
               <Table
                 columns={[
-                  { key: 'date', header: 'Date', render: (t: any) => formatDateTime(t.createdAt) },
+                  { key: 'date', header: 'Date', render: (t: any) => formatDateTime(t.initiatedAt ?? t.createdAt) },
                   { key: 'type', header: 'Type', render: (t: any) => <Badge variant="info">{t.type ?? '—'}</Badge> },
                   { key: 'amount', header: 'Montant', render: (t: any) => (
                     <span className={t.amount < 0 ? 'text-red-600 font-medium' : 'text-green-700 font-medium'}>
@@ -336,8 +337,8 @@ export default function UserDetailPage() {
                     </span>
                   )},
                   { key: 'status', header: 'Statut', render: (t: any) => (
-                    <Badge variant={t.status === 'completed' ? 'success' : t.status === 'failed' ? 'danger' : 'warning'}>
-                      {t.status ?? '—'}
+                    <Badge variant={t.status === 'success' || t.status === 'completed' ? 'success' : t.status === 'failed' ? 'danger' : 'warning'}>
+                      {({ success: 'Réussie', completed: 'Réussie', failed: 'Échouée', initiated: 'Initiée', refunded: 'Remboursée' } as Record<string, string>)[t.status] ?? t.status ?? '—'}
                     </Badge>
                   )},
                   { key: 'ref', header: 'Référence', render: (t: any) => (

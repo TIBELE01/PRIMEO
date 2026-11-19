@@ -206,3 +206,22 @@ export async function deleteFromCloudinary(
   );
   logger.debug(`Cloudinary delete (${type}): ${publicId}`);
 }
+
+/**
+ * Lien de téléchargement signé via l'API Cloudinary (et non le CDN) : fonctionne même
+ * quand la livraison publique des PDF est bloquée. Sert aux CV envoyés avant la
+ * migration vers le stockage privé.
+ */
+export function cloudinaryPrivateDownloadUrl(publicId: string, format: string, resourceType: 'image' | 'raw' = 'image'): string {
+  const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
+  if (!cloudName || !apiKey || !apiSecret) throw new Error('Cloudinary credentials not configured');
+  const params: Record<string, string> = {
+    format,
+    public_id: publicId,
+    timestamp: Math.floor(Date.now() / 1000).toString(),
+    type: 'upload',
+  };
+  const signature = signParams(params, apiSecret);
+  const qs = new URLSearchParams({ ...params, api_key: apiKey, signature }).toString();
+  return `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/download?${qs}`;
+}

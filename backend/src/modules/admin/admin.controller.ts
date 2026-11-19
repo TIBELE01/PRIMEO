@@ -531,3 +531,19 @@ export async function setMaintenance(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+export async function getAuditLog(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await adminService.getAuditLogById(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listUserTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await adminService.listUserTransactions(req.params.id, req.query as never));
+  } catch (err) {
+    next(err);
+  }
+}

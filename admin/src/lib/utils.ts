@@ -8,20 +8,32 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(iso: string): string {
-  return format(new Date(iso), 'dd/MM/yyyy', { locale: fr });
+// Les formateurs tolèrent une valeur absente ou invalide (« — ») : une donnée manquante
+// ne doit jamais faire planter toute la page.
+function toValidDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === '') return null;
+  const d = new Date(value as string);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function formatDateTime(iso: string): string {
-  return format(new Date(iso), 'dd/MM/yyyy HH:mm', { locale: fr });
+export function formatDate(iso?: string | null): string {
+  const d = toValidDate(iso);
+  return d ? format(d, 'dd/MM/yyyy', { locale: fr }) : '—';
 }
 
-export function formatRelative(iso: string): string {
-  return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: fr });
+export function formatDateTime(iso?: string | null): string {
+  const d = toValidDate(iso);
+  return d ? format(d, 'dd/MM/yyyy HH:mm', { locale: fr }) : '—';
 }
 
-export function formatAmount(amount: number, currency = 'XOF'): string {
-  return `${amount.toLocaleString('fr-FR')} ${currency}`;
+export function formatRelative(iso?: string | null): string {
+  const d = toValidDate(iso);
+  return d ? formatDistanceToNow(d, { addSuffix: true, locale: fr }) : '—';
+}
+
+export function formatAmount(amount?: number | null, currency = 'XOF'): string {
+  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return '—';
+  return `${Number(amount).toLocaleString('fr-FR')} ${currency}`;
 }
 
 export function formatPercent(value: number, decimals = 1): string {

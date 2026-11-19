@@ -47,7 +47,8 @@ export default function PromosPage() {
     onError: () => toast.error('Erreur lors de la suppression'),
   });
 
-  const promos: PromoCode[] = data ?? [];
+  // L'API renvoie une liste paginée { data, total, … } (ou un tableau selon la version)
+  const promos: PromoCode[] = Array.isArray(data) ? data : (data?.data ?? data?.items ?? []);
   const filtered = promos.filter((p) => {
     if (filterStatus === 'active') return p.isActive;
     if (filterStatus === 'inactive') return !p.isActive;
@@ -115,16 +116,16 @@ export default function PromosPage() {
                       <span>
                         Réduction :{' '}
                         <strong className="text-gray-700 dark:text-gray-300">
-                          {promo.discountType === 'percentage'
+                          {(promo.discountType === 'percentage' || promo.discountType === 'percent')
                             ? `${promo.discountValue}%`
                             : formatAmount(promo.discountValue)}
                         </strong>
                       </span>
-                      {(promo as any).minAmount && (
+                      {!!(promo as any).minAmount && (
                         <span>Min. : {formatAmount((promo as any).minAmount)}</span>
                       )}
                       <span>
-                        Utilisations : <strong className="text-gray-700 dark:text-gray-300">{promo.usedCount}</strong>
+                        Utilisations : <strong className="text-gray-700 dark:text-gray-300">{(promo as any).usesCount ?? promo.usedCount ?? 0}</strong>
                         {promo.maxUses !== null && promo.maxUses !== undefined ? ` / ${promo.maxUses}` : ' (illimité)'}
                       </span>
                       <span>

@@ -1,5 +1,8 @@
 // Admin booking types
-export type BookingStatus = 'interest_expressed' | 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'disputed' | 'refunded';
+export type BookingStatus =
+  | 'interest_expressed' | 'pending_payment' | 'confirmed' | 'completed'
+  | 'cancelled_by_client' | 'cancelled_by_professional'
+  | 'pending' | 'cancelled' | 'disputed' | 'refunded'; // anciens libellés conservés
 export type PaymentOption = 'full_online' | 'ten_percent_online' | 'zero_online';
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded' | 'failed';
 

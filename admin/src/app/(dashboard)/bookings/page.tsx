@@ -8,28 +8,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Table, Pagination } from '@/components/ui/Table';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { AdminBooking, BookingStatus } from '@/types/booking';
+import { AdminBooking } from '@/types/booking';
+import { bookingStatusVariant as statusVariant, bookingStatusLabel as statusLabel, bookingStatusOptions } from '@/lib/bookingStatus';
+import { listOf, pagesOf } from '@/lib/normalize';
 import { useRouter } from 'next/navigation';
-
-const statusVariant: Record<BookingStatus, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
-  interest_expressed: 'info',
-  confirmed: 'success',
-  pending: 'warning',
-  cancelled: 'danger',
-  completed: 'default',
-  refunded: 'default',
-  disputed: 'warning',
-};
-
-const statusLabel: Record<BookingStatus, string> = {
-  interest_expressed: 'Intérêt exprimé',
-  confirmed: 'Confirmée',
-  pending: 'En attente',
-  cancelled: 'Annulée',
-  completed: 'Terminée',
-  refunded: 'Remboursée',
-  disputed: 'Litige',
-};
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -40,10 +22,10 @@ export default function BookingsPage() {
     queryFn: () => bookingsService.getBookings(queryParams),
   });
   useEffect(() => {
-    if (data?.total && data?.pageSize) setTotalPages(Math.ceil(data.total / data.pageSize));
+    if (data) setTotalPages(pagesOf(data));
   }, [data, setTotalPages]);
 
-  const bookings = data?.bookings ?? data?.data ?? data?.items ?? [];
+  const bookings: AdminBooking[] = listOf(data);
 
   const columns = [
     { key: 'ref', header: 'Référence', render: (b: AdminBooking) => <span className="font-mono text-xs">{b.id.slice(0, 8)}</span> },
@@ -67,7 +49,7 @@ export default function BookingsPage() {
       key: 'status',
       header: 'Statut',
       render: (b: AdminBooking) => (
-        <Badge variant={statusVariant[b.status]}>{statusLabel[b.status] ?? b.status}</Badge>
+        <Badge variant={statusVariant[b.status] ?? 'default'}>{statusLabel[b.status] ?? b.status}</Badge>
       ),
     },
   ];
@@ -78,13 +60,9 @@ export default function BookingsPage() {
       <Card padding={false}>
         <div className="p-4 border-b border-gray-100 flex gap-3">
           <input type="search" placeholder="Rechercher…" onChange={(e) => handleSearch(e.target.value)} className="input flex-1" />
-          <select onChange={(e) => handleFilter('status', e.target.value)} className="input w-40">
+          <select onChange={(e) => handleFilter('status', e.target.value)} className="input w-56">
             <option value="">Tous</option>
-            <option value="interest_expressed">Intérêt exprimé</option>
-            <option value="confirmed">Confirmée</option>
-            <option value="pending">En attente</option>
-            <option value="cancelled">Annulée</option>
-            <option value="completed">Terminée</option>
+            {bookingStatusOptions.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
         {isLoading ? <PageSpinner /> : isError ? (
