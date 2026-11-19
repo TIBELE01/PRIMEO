@@ -1,5 +1,5 @@
 // Tests unitaires — utilitaires panorama (clampFov, panoramaTargetWidth, optimizePanoramaUrl)
-import { MIN_FOV, MAX_FOV, DEFAULT_FOV, clampFov, panoramaTargetWidth, optimizePanoramaUrl } from '../src/utils/panorama';
+import { MIN_FOV, MAX_FOV, DEFAULT_FOV, clampFov, panoramaTargetWidth, optimizePanoramaUrl, panoramaPreviewUrl } from '../src/utils/panorama';
 
 describe('clampFov', () => {
   it('retourne la valeur inchangée dans les bornes', () => {
@@ -59,9 +59,21 @@ describe('optimizePanoramaUrl', () => {
     expect(optimizePanoramaUrl(ext, 2048)).toBe(ext);
   });
 
-  it('retourne les URLs Cloudinary telles quelles', () => {
+  it('redimensionne et compresse les URLs Cloudinary (texture bornée)', () => {
     const cdn = 'https://res.cloudinary.com/dlnnxvepd/image/upload/v1/panorama.jpg';
-    expect(optimizePanoramaUrl(cdn, 2048)).toBe(cdn);
+    expect(optimizePanoramaUrl(cdn, 2048)).toBe(
+      'https://res.cloudinary.com/dlnnxvepd/image/upload/c_limit,w_2048,q_auto:good,f_jpg/v1/panorama.jpg',
+    );
+  });
+
+  it("n'applique pas deux fois la transformation Cloudinary", () => {
+    const once = optimizePanoramaUrl('https://res.cloudinary.com/x/image/upload/v1/p.jpg', 4096);
+    expect(optimizePanoramaUrl(once, 2048)).toBe(once);
+  });
+
+  it('panoramaPreviewUrl fournit une vignette légère', () => {
+    expect(panoramaPreviewUrl('https://res.cloudinary.com/x/image/upload/v1/p.jpg')).toContain('w_1200');
+    expect(panoramaPreviewUrl(undefined)).toBe('');
   });
 
   it('retourne une chaîne vide inchangée', () => {

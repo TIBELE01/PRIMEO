@@ -10,6 +10,9 @@ export interface UploadResult {
   publicId: string;
   format: string;
   bytes: number;
+  /** Dimensions renvoyées par Cloudinary (images/vidéos) */
+  width?: number;
+  height?: number;
 }
 
 // Type de ressource Cloudinary : 'image' pour les photos, 'video' pour les
@@ -71,6 +74,8 @@ export async function uploadToCloudinary(
     publicId: response.data.public_id,
     format: response.data.format,
     bytes: response.data.bytes,
+    width: response.data.width,
+    height: response.data.height,
   };
 }
 

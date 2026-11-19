@@ -38,6 +38,7 @@ import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } fr
 import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 import { trackEvent } from '../../../services/analytics';
+import { panoramaPreviewUrl } from '../../../utils/panorama';
 import { VideoView, useVideoPlayer } from 'expo-video';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
@@ -383,7 +384,7 @@ export function PropertyDetailScreen() {
                 accessibilityLabel="Faire une visite virtuelle 3D"
               >
                 {/* Aperçu statique (1ʳᵉ pièce) — le viewer 3D ne s'ouvre qu'au clic */}
-                <ImageBackground source={{ uri: tourPanoramas[0].imageUrl }} style={styles.mediaTour} resizeMode="cover">
+                <ImageBackground source={{ uri: panoramaPreviewUrl(tourPanoramas[0].imageUrl) }} style={styles.mediaTour} resizeMode="cover">
                   <View style={styles.mediaTourScrim} />
                   <View style={styles.mediaTourBadge}>
                     <Text style={styles.mediaTourBadgeText}>🥽 Visite 3D · {tourPanoramas.length} pièce{tourPanoramas.length > 1 ? 's' : ''}</Text>

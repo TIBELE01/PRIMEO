@@ -6,11 +6,11 @@
 // Fonction pure (aucun import natif) → testable unitairement.
 import type { Panorama } from '@/types/property';
 import { optimizePanoramaUrl } from '../../../utils/panorama';
+import { PANNELLUM_CSS, PANNELLUM_JS } from './pannellumAssets';
 
 const RAD2DEG = 180 / Math.PI;
-
-const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css';
-const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js';
+/** Largeur de repli quand le GPU ne supporte pas la texture cible (MAX_TEXTURE_SIZE). */
+const SAFE_WIDTH = 2048;
 
 /** Convertit les angles internes (radians) en pitch/yaw Pannellum (degrés). */
 function toPitchYaw(theta: number, phi: number): { pitch: number; yaw: number } {
@@ -43,6 +43,8 @@ export function buildTourConfig(
     scenes[p.id] = {
       type: 'equirectangular',
       panorama: optimizePanoramaUrl(p.imageUrl ?? '', targetWidth),
+      // Variante 2048 px utilisée si le GPU de l'appareil est limité (voir buildTourHtml).
+      panoramaSafe: optimizePanoramaUrl(p.imageUrl ?? '', Math.min(SAFE_WIDTH, targetWidth)),
       title: p.roomName ?? '',
       hfov: 100,
       hotSpots,
@@ -68,7 +70,16 @@ export function buildTourConfig(
   };
 }
 
-/** Page HTML complète prête à être passée à `<WebView source={{ html }} />`. */
+/**
+ * Page HTML complète prête à être passée à `<WebView source={{ html }} />`.
+ * Pannellum est embarqué (pas de CDN). Protocole WebView → RN (postMessage JSON) :
+ *  - ready            : première scène affichée
+ *  - scenechange      : début de changement de pièce (sceneId)
+ *  - sceneloaded      : pièce affichée (sceneId)
+ *  - sceneerror       : échec d'une pièce après le premier affichage (sceneId)
+ *  - error            : échec du premier affichage / contexte WebGL perdu
+ * RN → WebView : window.__goScene(id), window.__destroyTour().
+ */
 export function buildTourHtml(
   panoramas: Panorama[],
   firstSceneId: string,
@@ -83,29 +94,97 @@ export function buildTourHtml(
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link rel="stylesheet" href="${PANNELLUM_CSS}" />
+<style>${PANNELLUM_CSS}</style>
 <style>
-  html, body, #panorama { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; }
-  .pnlm-load-box, .pnlm-about-msg { display:none !important; }
+  html, body, #panorama { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; -webkit-user-select:none; user-select:none; }
+  .pnlm-load-box, .pnlm-about-msg, .pnlm-error-msg { display:none !important; }
+  /* Libellés des hotspots toujours visibles (pas de survol sur mobile) */
+  .pnlm-hotspot-base .pnlm-tooltip span { visibility:visible; font:600 13px -apple-system, Roboto, sans-serif; border-radius:8px; padding:6px 10px; background:rgba(0,0,0,.72); }
+  .pnlm-hotspot.pnlm-scene { width:34px; height:34px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.85); }
 </style>
 </head>
 <body>
 <div id="panorama"></div>
-<script src="${PANNELLUM_JS}"></script>
+<script>${PANNELLUM_JS}</script>
 <script>
 (function () {
   function send(m) { try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) {} }
   if (!window.pannellum) { send({ type: 'error', message: 'pannellum-unavailable' }); return; }
+
+  var cfg = ${json};
+  var v = null, firstLoaded = false, pending = null, destroyed = false, errored = false;
+
+  // GPU limité (MAX_TEXTURE_SIZE < cible) → bascule sur la variante 2048 px.
   try {
-    var cfg = ${json};
-    var v = pannellum.viewer('panorama', cfg);
-    window.__viewer = v;
-    v.on('load', function () { send({ type: 'ready' }); });
-    v.on('scenechange', function (id) { send({ type: 'scene', sceneId: id }); });
-    v.on('error', function (e) { send({ type: 'error', message: String(e) }); });
-  } catch (e) {
-    send({ type: 'error', message: String((e && e.message) || e) });
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) { send({ type: 'error', message: 'webgl-unavailable' }); return; }
+    var maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 2048;
+    var lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    Object.keys(cfg.scenes).forEach(function (k) {
+      var s = cfg.scenes[k];
+      if (maxTex < ${targetWidth}) { s.panorama = s.panoramaSafe || s.panorama; }
+      delete s.panoramaSafe;
+    });
+  } catch (e) {}
+
+  function watchContext() {
+    var cv = document.querySelector('#panorama canvas');
+    if (!cv || cv.__watched) return;
+    cv.__watched = true;
+    cv.addEventListener('webglcontextlost', function (ev) { ev.preventDefault(); send({ type: 'error', message: 'context-lost' }); }, false);
   }
+
+  function create(sceneId) {
+    if (v) { try { v.destroy(); } catch (e) {} v = null; }
+    cfg['default'].firstScene = sceneId;
+    v = pannellum.viewer('panorama', cfg);
+    window.__viewer = v;
+    v.on('load', function () {
+      watchContext();
+      var id = v.getScene();
+      pending = null; errored = false;
+      if (!firstLoaded) { firstLoaded = true; send({ type: 'ready', sceneId: id }); }
+      else send({ type: 'sceneloaded', sceneId: id });
+    });
+    v.on('scenechange', function (id) { pending = id; send({ type: 'scenechange', sceneId: id }); });
+    v.on('error', function (e) {
+      errored = true;
+      if (!firstLoaded) send({ type: 'error', message: String(e) });
+      else send({ type: 'sceneerror', sceneId: pending || v.getScene(), message: String(e) });
+    });
+  }
+
+  // Navigation pilotée par RN (puces de pièces / réessayer une pièce)
+  window.__goScene = function (id) {
+    if (destroyed || !cfg.scenes[id]) return;
+    try {
+      // Après une erreur, Pannellum reste bloqué : on recrée le viewer sur la pièce voulue
+      if (!v || errored) { errored = false; create(id); return; }
+      if (v.getScene() === id && v.isLoaded()) { send({ type: 'sceneloaded', sceneId: id }); return; }
+      pending = id;
+      v.loadScene(id);
+    } catch (e) {
+      try { create(id); } catch (e2) { send({ type: 'sceneerror', sceneId: id, message: String(e2) }); }
+    }
+  };
+
+  // Libération explicite de la mémoire GPU (textures + contexte WebGL) à la fermeture
+  window.__destroyTour = function () {
+    if (destroyed) return;
+    destroyed = true;
+    try {
+      var cv = document.querySelector('#panorama canvas');
+      var g = cv && (cv.getContext('webgl') || cv.getContext('experimental-webgl'));
+      if (v) v.destroy();
+      var ext = g && g.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext();
+    } catch (e) {}
+    v = null; window.__viewer = null;
+  };
+  window.addEventListener('pagehide', window.__destroyTour);
+
+  try { create(cfg['default'].firstScene); }
+  catch (e) { send({ type: 'error', message: String((e && e.message) || e) }); }
 })();
 </script>
 </body>

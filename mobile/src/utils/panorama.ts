@@ -19,20 +19,35 @@ export function panoramaTargetWidth(screenPx: number): 2048 | 4096 {
   return screenPx > 1200 ? 4096 : 2048;
 }
 
+const CLOUDINARY_UPLOAD = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.*)$/;
+
 /**
- * Réécrit une URL Supabase Storage publique vers l'endpoint de transformation
- * d'images (redimensionnement serveur + WebP automatique selon l'Accept header).
- * Les URLs non-Supabase sont retournées telles quelles.
- *
- * https://<proj>.supabase.co/storage/v1/object/public/bucket/path.jpg
- *   → https://<proj>.supabase.co/storage/v1/render/image/public/bucket/path.jpg?width=2048&quality=80
+ * Réécrit l'URL d'un panorama pour que le serveur d'images livre une texture
+ * déjà redimensionnée (jamais plus large que `targetWidth`) et compressée :
+ *  - Cloudinary : insertion de `c_limit,w_<w>,q_auto:good,f_jpg` (JPEG progressif
+ *    universellement décodable par les WebView iOS/Android, poids ÷5 à ÷10) ;
+ *  - Supabase Storage : endpoint `render/image` avec width/quality.
+ * Évite d'envoyer au GPU des textures de 8K/16K qui dépassent MAX_TEXTURE_SIZE
+ * (écran noir ou crash WebGL sur les téléphones d'entrée de gamme).
+ * Les autres URLs sont retournées telles quelles.
  */
 export function optimizePanoramaUrl(url: string, targetWidth: number): string {
   if (!url || typeof url !== 'string') return url;
+  const cld = CLOUDINARY_UPLOAD.exec(url);
+  if (cld) {
+    const rest = cld[2] ?? '';
+    if (/(^|\/)c_limit,w_\d+/.test(rest)) return url; // déjà optimisée
+    return `${cld[1]}c_limit,w_${targetWidth},q_auto:good,f_jpg/${rest}`;
+  }
   const marker = '/storage/v1/object/public/';
   const idx = url.indexOf(marker);
   if (idx === -1) return url;
   const base = url.slice(0, idx);
   const path = url.slice(idx + marker.length);
   return `${base}/storage/v1/render/image/public/${path}?width=${targetWidth}&quality=80`;
+}
+
+/** Vignette légère d'un panorama (aperçu fiche bien) — ~1200 px au lieu de 8K. */
+export function panoramaPreviewUrl(url: string | undefined | null): string {
+  return url ? optimizePanoramaUrl(url, 1200) : '';
 }

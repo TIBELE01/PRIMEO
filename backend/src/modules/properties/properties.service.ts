@@ -1,5 +1,6 @@
 // Properties service — CRUD, search, geo, media signing, admin moderation
 import * as crypto from 'crypto';
+import { getPlanDetails, isFeatureEnabled } from '../../common/constants/subscription-plans';
 import { sectorsService } from '../sectors/sectors.service';
 import { prisma } from '../../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -46,9 +47,24 @@ export function serializeProperty<T extends Record<string, unknown>>(property: T
  */
 interface PanoramaHotspot { id: string; targetPanoramaId: string; label: string; theta: number; phi: number }
 
+/**
+ * La visite 3D n'est servie que si l'interrupteur admin « Visites virtuelles 3D »
+ * est actif et que la formule du propriétaire l'inclut (Entreprise). Si l'offre
+ * du propriétaire n'est pas chargée (relation absente), on ne bloque pas.
+ */
+function virtualTourAllowed(property: Record<string, unknown>): boolean {
+  if (!isFeatureEnabled('virtualTourEnabled')) return false;
+  const owner = (property as { owner?: { subscription?: { planType?: string } | null } }).owner;
+  if (!owner || !('subscription' in owner)) return true;
+  const planType = owner.subscription?.planType;
+  return !!(planType && getPlanDetails(planType)?.virtualTour);
+}
+
 function buildVirtualTour(property: Record<string, unknown>): { available: boolean; panoramas: Array<{ id: string; roomName: string; imageUrl: string; hotspots: PanoramaHotspot[] }> } | undefined {
   const scenes = (property as { scenes3d?: Array<{ id: string; roomName: string; url: string; hotspots?: unknown }> }).scenes3d;
   if (!scenes) return undefined; // relation non chargée (listes) — le flag hasVirtualTour suffit
+  // Formule sans visite 3D (ex. abonnement rétrogradé) : visite non proposée au client
+  if (!virtualTourAllowed(property)) return { available: false, panoramas: [] };
   const validIds = new Set(scenes.map((s) => s.id));
   const panoramas = scenes.map((s) => {
     const raw = Array.isArray(s.hotspots) ? (s.hotspots as Array<Record<string, unknown>>) : [];
@@ -674,6 +690,11 @@ export const propertiesService = {
 
     // Type exclusif : le bien doit être configuré en « visite 3D »
     propertiesService._assertUploadMatchesChoice(property.mediaType, 'threed');
+    // La formule doit toujours inclure la visite 3D (abonnement rétrogradé depuis le choix du type)
+    await propertiesService._assertPlanAllowsMediaChoice(userId, 'threed');
+    if (!isFeatureEnabled('virtualTourEnabled')) {
+      throw new HttpError(403, 'Les visites virtuelles 3D sont momentanément désactivées.');
+    }
 
     const count = await prisma.property3dScene.count({ where: { propertyId } });
     if (count >= 10) throw new HttpError(400, 'Limite de 10 photos 360° par propriété atteinte');
@@ -686,6 +707,20 @@ export const propertiesService = {
     } catch (uploadError) {
       logger.error('Échec upload scène 3D Cloudinary', uploadError);
       throw new HttpError(502, 'Échec du stockage de la photo 360°. Réessayez.');
+    }
+
+    // Une visite 360° exige une image équirectangulaire (largeur = 2 × hauteur).
+    // Une photo classique ou un panorama partiel serait déformé dans le viewer.
+    if (uploaded.width && uploaded.height) {
+      const ratio = uploaded.width / uploaded.height;
+      if (ratio < 1.8 || ratio > 2.2) {
+        await deleteFromCloudinary(uploaded.publicId, 'image').catch(() => {});
+        throw new HttpError(
+          400,
+          `Cette image n'est pas une photo 360° (${uploaded.width}×${uploaded.height}). ` +
+          'Utilisez une photo panoramique équirectangulaire au format 2:1 (ex. 4096×2048).',
+        );
+      }
     }
 
     try {

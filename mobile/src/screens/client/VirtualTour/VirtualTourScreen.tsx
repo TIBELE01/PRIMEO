@@ -10,9 +10,15 @@
  *  • Pannellum gère nativement : rotation (drag), zoom (pinch/molette), multi-scènes
  *    et hotspots de navigation entre pièces.
  *  • Communication WebView → RN via postMessage : 'ready' | 'scene' | 'error'.
- *  • Aucune fuite : la WebView est démontée avec l'écran ; un re-essai recharge la page.
+ *  • Pannellum est embarqué dans l'app (aucun CDN) ; les panoramas sont livrés
+ *    redimensionnés/compressés par Cloudinary (texture ≤ 2048/4096 px).
+ *  • Le HTML n'est généré qu'une fois par montage : changer de pièce n'entraîne
+ *    plus de rechargement complet de la WebView (navigation fluide, pas de pic mémoire).
+ *  • Fermeture : destruction explicite du viewer + perte volontaire du contexte WebGL
+ *    (libère la mémoire GPU), puis démontage de la WebView.
+ *  • Crash du moteur web (mémoire) : rechargement automatique au lieu d'un crash app.
  */
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet,
   Dimensions, PixelRatio,
@@ -24,13 +30,18 @@ import { panoramaTargetWidth } from '../../../utils/panorama';
 import { buildTourHtml } from './panoramaTourHtml';
 
 const _targetWidth = panoramaTargetWidth(Dimensions.get('screen').width * PixelRatio.get());
-const LOAD_TIMEOUT_MS = 25000;
+const LOAD_TIMEOUT_MS = 30000;
+const SCENE_TIMEOUT_MS = 25000;
+const DESTROY_JS = 'window.__destroyTour && window.__destroyTour(); true;';
 
 type Props = ClientScreenProps<'VirtualTour'>;
 
 export function VirtualTourScreen({ navigation, route }: Props) {
   const params = route.params ?? ({} as Props['route']['params']);
-  const panoramas = Array.isArray(params.panoramas) ? params.panoramas : [];
+  const panoramas = useMemo(
+    () => (Array.isArray(params.panoramas) ? params.panoramas : []).filter(p => p && p.id && p.imageUrl),
+    [params.panoramas],
+  );
   const propertyName = params.propertyName ?? 'Visite virtuelle';
   const initialPanoramaIndex = params.initialPanoramaIndex ?? 0;
 
@@ -39,11 +50,22 @@ export function VirtualTourScreen({ navigation, route }: Props) {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [sceneLoading, setSceneLoading] = useState(false);
+  const [sceneError, setSceneError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [closing, setClosing] = useState(false);
 
   const webRef = useRef<WebView>(null);
+  const indexRef = useRef(currentIndex);
+  indexRef.current = currentIndex;
   const currentPanorama = panoramas[currentIndex];
-  const firstSceneId = currentPanorama?.id ?? '';
+
+  // HTML figé par montage/réessai : la pièce de départ est celle affichée au moment
+  // du (re)chargement ; les changements de pièce passent ensuite par injectJavaScript.
+  const html = useMemo(() => {
+    const start = panoramas[indexRef.current] ?? panoramas[0];
+    return start ? buildTourHtml(panoramas, start.id, _targetWidth) : '';
+  }, [panoramas, retryKey]);
 
   // Garde-fou anti-blocage : bascule sur le repli si rien n'est prêt après le délai.
   useEffect(() => {
@@ -52,35 +74,74 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     return () => clearTimeout(t);
   }, [isLoading, retryKey]);
 
+  useEffect(() => {
+    if (!sceneLoading) return;
+    const t = setTimeout(() => { setSceneLoading(false); setSceneError(true); }, SCENE_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [sceneLoading]);
+
+  // Libération GPU à la fermeture (retour, geste, navigation) puis démontage de la WebView.
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', () => {
+      webRef.current?.injectJavaScript(DESTROY_JS);
+      setClosing(true);
+    });
+    return () => {
+      unsub();
+      webRef.current?.injectJavaScript(DESTROY_JS);
+    };
+  }, [navigation]);
+
+  const syncIndex = useCallback((sceneId?: string) => {
+    if (!sceneId) return;
+    const idx = panoramas.findIndex(p => p.id === sceneId);
+    if (idx >= 0) setCurrentIndex(idx);
+  }, [panoramas]);
+
   const handleMessage = useCallback((e: WebViewMessageEvent) => {
     let msg: { type?: string; sceneId?: string } = {};
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
-    if (msg.type === 'ready') {
-      setIsLoading(false);
-      setLoadError(false);
-    } else if (msg.type === 'error') {
-      setIsLoading(false);
-      setLoadError(true);
-    } else if (msg.type === 'scene' && msg.sceneId) {
-      const idx = panoramas.findIndex(p => p.id === msg.sceneId);
-      if (idx >= 0) setCurrentIndex(idx);
+    switch (msg.type) {
+      case 'ready':
+        setIsLoading(false); setLoadError(false); setSceneLoading(false); setSceneError(false);
+        syncIndex(msg.sceneId);
+        break;
+      case 'error':
+        setIsLoading(false); setSceneLoading(false); setLoadError(true);
+        break;
+      case 'scenechange':
+        setSceneError(false); setSceneLoading(true); syncIndex(msg.sceneId);
+        break;
+      case 'sceneloaded':
+        setSceneLoading(false); setSceneError(false); syncIndex(msg.sceneId);
+        break;
+      case 'sceneerror':
+        setSceneLoading(false); setSceneError(true); syncIndex(msg.sceneId);
+        break;
     }
-  }, [panoramas]);
+  }, [syncIndex]);
 
   const goToScene = useCallback((index: number) => {
     const target = panoramas[index];
     if (!target) return;
     setCurrentIndex(index);
+    setSceneError(false);
+    if (isLoading) return; // la pièce sera prise en compte au prochain (re)chargement
+    setSceneLoading(true);
     webRef.current?.injectJavaScript(
-      `window.__viewer && window.__viewer.loadScene(${JSON.stringify(target.id)}); true;`,
+      `window.__goScene && window.__goScene(${JSON.stringify(target.id)}); true;`,
     );
-  }, [panoramas]);
+  }, [panoramas, isLoading]);
 
   const retry = useCallback(() => {
     setLoadError(false);
+    setSceneError(false);
+    setSceneLoading(false);
     setIsLoading(true);
-    setRetryKey(k => k + 1); // remonte la WebView
+    setRetryKey(k => k + 1); // remonte la WebView sur la pièce courante
   }, []);
+
+  const retryScene = useCallback(() => goToScene(indexRef.current), [goToScene]);
 
   // Aucun panorama exploitable → écran de repli (pas de crash).
   if (!currentPanorama) {
@@ -100,8 +161,6 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     );
   }
 
-  const html = buildTourHtml(panoramas, firstSceneId, _targetWidth);
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* ── Header ── */}
@@ -120,7 +179,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
 
       {/* ── Panorama (WebView + Pannellum) ── */}
       <View style={styles.canvasWrap}>
-        <WebView
+        {!closing && <WebView
           key={`tour-${retryKey}`}
           ref={webRef}
           originWhitelist={['*']}
@@ -137,7 +196,29 @@ export function VirtualTourScreen({ navigation, route }: Props) {
           onHttpError={() => { setIsLoading(false); setLoadError(true); }}
           // Évite d'ouvrir des liens externes hors du viewer
           onShouldStartLoadWithRequest={(req) => req.url === 'about:blank' || req.url.startsWith('data:') || req.url.startsWith('about:')}
-        />
+          setSupportMultipleWindows={false}
+          // Moteur web tué par le système (mémoire) : on recharge au lieu de laisser l'app planter.
+          onContentProcessDidTerminate={retry}
+          onRenderProcessGone={() => { retry(); }}
+        />}
+
+        {/* Changement de pièce en cours (non bloquant) */}
+        {sceneLoading && !isLoading && !loadError && (
+          <View style={styles.sceneLoading} pointerEvents="none">
+            <ActivityIndicator size="small" color="#fff" />
+            <Text style={styles.sceneLoadingText}>Chargement de la pièce…</Text>
+          </View>
+        )}
+
+        {/* Échec d'une pièce : le reste de la visite reste utilisable */}
+        {sceneError && !loadError && (
+          <View style={styles.sceneErrorBox}>
+            <Text style={styles.sceneErrorText}>Impossible d'afficher « {currentPanorama.roomName} ».</Text>
+            <TouchableOpacity onPress={retryScene} style={styles.sceneRetryBtn} activeOpacity={0.85}>
+              <Text style={styles.retryBtnText}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Loading overlay */}
         {isLoading && !loadError && (
@@ -222,6 +303,18 @@ const styles = StyleSheet.create({
   errorText:  { color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
   retryBtn:   { backgroundColor: '#D67309', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+  sceneLoading: {
+    position: 'absolute', top: 14, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
+  },
+  sceneLoadingText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  sceneErrorBox: {
+    position: 'absolute', left: 16, right: 16, bottom: 16, flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'rgba(17,17,17,0.94)', borderRadius: 14, padding: 12,
+  },
+  sceneErrorText: { flex: 1, color: '#fff', fontSize: 13, lineHeight: 18 },
+  sceneRetryBtn: { backgroundColor: '#D67309', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
 
   roomBar: {
     backgroundColor: 'rgba(0,0,0,0.88)', paddingVertical: 10,

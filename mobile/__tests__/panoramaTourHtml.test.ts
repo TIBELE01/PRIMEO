@@ -51,10 +51,16 @@ describe('buildTourConfig', () => {
 describe('buildTourHtml', () => {
   const html = buildTourHtml(PANS, 's0', 2048);
 
-  it('charge Pannellum (CSS + JS) depuis le CDN', () => {
-    expect(html).toContain('pannellum@2.5.6/build/pannellum.css');
-    expect(html).toContain('pannellum@2.5.6/build/pannellum.js');
+  it('embarque Pannellum (aucune dépendance CDN)', () => {
+    expect(html).not.toContain('cdn.jsdelivr.net');
+    expect(html).toContain('window.pannellum');
     expect(html).toContain("pannellum.viewer('panorama'");
+  });
+
+  it('expose la libération mémoire et le rechargement de scène', () => {
+    expect(html).toContain('window.__destroyTour');
+    expect(html).toContain('window.__goScene');
+    expect(html).toContain("type: 'sceneerror'");
   });
 
   it('embarque les scènes et notifie RN (ready/scene/error)', () => {

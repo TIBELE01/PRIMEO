@@ -21,14 +21,26 @@ import {
   SRGBColorSpace,
   MathUtils,
   Texture,
+  Vector3,
 } from 'three';
 import type { ClientScreenProps } from '@navigation/types';
 import type { Panorama } from '../../../types/property';
+import { optimizePanoramaUrl } from '../../../utils/panorama';
 
 type Props = ClientScreenProps<'VirtualTour'>;
 
 const MIN_FOV = 35;
 const MAX_FOV = 95;
+// lon = 180° ↔ centre de l'image équirectangulaire (= yaw 0 de Pannellum côté natif)
+const CENTER_LON = 180;
+const RAD2DEG = 180 / Math.PI;
+
+/** Direction 3D d'un hotspot (theta = azimut rad, phi = angle polaire rad), même repère que Pannellum. */
+function hotspotVector(theta: number, phi: number): Vector3 {
+  const lon = MathUtils.degToRad((theta ?? 0) * RAD2DEG + CENTER_LON);
+  const p = phi ?? Math.PI / 2;
+  return new Vector3(500 * Math.sin(p) * Math.cos(lon), 500 * Math.cos(p), 500 * Math.sin(p) * Math.sin(lon));
+}
 
 export function VirtualTourScreen({ navigation, route }: Props) {
   // Garde défensif : params absents si navigation directe par URL
@@ -42,6 +54,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
   const [sceneIndex, setSceneIndex] = useState(initialIndex);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const containerRef = useRef<View>(null);
   // Références Three.js persistantes entre les changements de scène
@@ -51,8 +64,17 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     camera: PerspectiveCamera;
     material: MeshBasicMaterial;
     frameId: number;
+    maxWidth: number;
+    hotspotLayer: HTMLDivElement;
+    hotspots: { el: HTMLElement; vec: Vector3 }[];
   } | null>(null);
-  const lookRef = useRef({ lon: 0, lat: 0 });
+  const lookRef = useRef({ lon: CENTER_LON, lat: 0 });
+  // Navigation depuis un hotspot DOM (fonction toujours à jour)
+  const goToRef = useRef<(id: string) => void>(() => {});
+  goToRef.current = (id: string) => {
+    const idx = panoramas.findIndex(p => p.id === id);
+    if (idx >= 0) setSceneIndex(idx);
+  };
 
   // ── Initialisation du viewer (une seule fois) ───────────────────────────────
   useEffect(() => {
@@ -69,8 +91,23 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     canvas.style.cursor = 'grab';
     host.appendChild(canvas);
 
-    const renderer = new WebGLRenderer({ canvas, antialias: true });
+    let renderer: WebGLRenderer;
+    try {
+      renderer = new WebGLRenderer({ canvas, antialias: true });
+    } catch {
+      canvas.remove();
+      setError('Votre navigateur ne prend pas en charge la 3D (WebGL).');
+      setLoading(false);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Texture bornée par la capacité GPU (et 4096 px max) : pas de texture géante
+    const maxWidth = Math.min(4096, renderer.capabilities.maxTextureSize || 2048);
+
+    // Calque DOM des hotspots (libellés cliquables projetés sur la sphère)
+    const hotspotLayer = document.createElement('div');
+    hotspotLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;';
+    host.appendChild(hotspotLayer);
 
     const scene = new Scene();
     const camera = new PerspectiveCamera(75, 1, 0.1, 1100);
@@ -82,7 +119,8 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     const material = new MeshBasicMaterial();
     scene.add(new Mesh(geometry, material));
 
-    glRef.current = { renderer, scene, camera, material, frameId: 0 };
+    glRef.current = { renderer, scene, camera, material, frameId: 0, maxWidth, hotspotLayer, hotspots: [] };
+    const tmp = new Vector3();
 
     // ── Boucle de rendu : la caméra suit lon/lat ──────────────────────────────
     const animate = () => {
@@ -97,6 +135,17 @@ export function VirtualTourScreen({ navigation, route }: Props) {
         500 * Math.sin(phi) * Math.sin(theta),
       );
       gl.renderer.render(gl.scene, gl.camera);
+      // Projection écran des hotspots ; masqués s'ils sont derrière la caméra
+      if (gl.hotspots.length) {
+        const w = host.clientWidth; const h = host.clientHeight;
+        gl.camera.updateMatrixWorld();
+        for (const hs of gl.hotspots) {
+          tmp.copy(hs.vec).project(gl.camera);
+          const visible = tmp.z < 1 && Math.abs(tmp.x) < 1.2 && Math.abs(tmp.y) < 1.2;
+          hs.el.style.display = visible ? 'flex' : 'none';
+          if (visible) hs.el.style.transform = `translate(${(tmp.x + 1) / 2 * w}px, ${(1 - tmp.y) / 2 * h}px) translate(-50%, -50%)`;
+        }
+      }
       gl.frameId = requestAnimationFrame(animate);
     };
     animate();
@@ -182,6 +231,8 @@ export function VirtualTourScreen({ navigation, route }: Props) {
       material.dispose();
       geometry.dispose();
       renderer.dispose();
+      renderer.forceContextLoss(); // libère immédiatement la mémoire GPU
+      hotspotLayer.remove();
       canvas.remove();
       glRef.current = null;
     };
@@ -198,8 +249,10 @@ export function VirtualTourScreen({ navigation, route }: Props) {
     setError(null);
     let cancelled = false;
 
-    new TextureLoader().load(
-      pano.imageUrl,
+    const loader = new TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load(
+      optimizePanoramaUrl(pano.imageUrl, gl.maxWidth),
       (texture: Texture) => {
         if (cancelled) { texture.dispose(); return; }
         texture.colorSpace = SRGBColorSpace;
@@ -207,7 +260,25 @@ export function VirtualTourScreen({ navigation, route }: Props) {
         gl.material.map = texture;
         gl.material.needsUpdate = true;
         // Réinitialise le regard au centre de la nouvelle pièce
-        lookRef.current = { lon: 0, lat: 0 };
+        lookRef.current = { lon: CENTER_LON, lat: 0 };
+        // Hotspots de navigation vers les autres pièces
+        gl.hotspotLayer.innerHTML = '';
+        const ids = new Set(panoramas.map(p => p.id));
+        gl.hotspots = (pano.hotspots ?? [])
+          .filter(hs => hs.targetPanoramaId && ids.has(hs.targetPanoramaId))
+          .map(hs => {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.setAttribute('data-hotspot', hs.targetPanoramaId);
+            el.setAttribute('aria-label', hs.label || 'Pièce suivante');
+            el.textContent = `➜ ${hs.label || 'Pièce suivante'}`;
+            el.style.cssText = 'position:absolute;left:0;top:0;display:none;align-items:center;pointer-events:auto;cursor:pointer;'
+              + 'background:rgba(16,86,224,.92);color:#fff;border:2px solid #fff;border-radius:999px;padding:7px 12px;'
+              + 'font:600 13px system-ui,-apple-system,Roboto,sans-serif;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);';
+            el.addEventListener('click', () => goToRef.current(hs.targetPanoramaId));
+            gl.hotspotLayer.appendChild(el);
+            return { el, vec: hotspotVector(hs.theta, hs.phi) };
+          });
         gl.camera.fov = 75;
         gl.camera.updateProjectionMatrix();
         setLoading(false);
@@ -223,7 +294,7 @@ export function VirtualTourScreen({ navigation, route }: Props) {
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneIndex]);
+  }, [sceneIndex, reloadKey]);
 
   const goBack = useCallback(() => navigation.goBack(), [navigation]);
 
@@ -256,9 +327,14 @@ export function VirtualTourScreen({ navigation, route }: Props) {
         </View>
       )}
       {error && (
-        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]} pointerEvents="none">
+        <View style={[StyleSheet.absoluteFill, styles.loadingOverlay]}>
           <Text style={styles.icon}>⚠️</Text>
           <Text style={styles.loadingText}>{error}</Text>
+          {glRef.current && (
+            <TouchableOpacity style={styles.retryBtn} onPress={() => setReloadKey(k => k + 1)} accessibilityRole="button">
+              <Text style={styles.retryText}>Réessayer</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -314,6 +390,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', gap: 12, zIndex: 5,
   },
   loadingText: { color: '#E5E7EB', fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
+  retryBtn:  { backgroundColor: '#1056E0', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4 },
+  retryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
   header: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
