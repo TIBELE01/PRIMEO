@@ -7,12 +7,12 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
+import { Download, ChevronDown, ChevronRight, Users, ShieldCheck, Building2, UtensilsCrossed, CalendarCheck, Scale, Tag, Globe, Settings, ListTree } from 'lucide-react';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { formatDateTime } from '@/lib/utils';
 import { toneAccent } from '@/lib/status';
 import { useRouter } from 'next/navigation';
-import { Download, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 
 interface AuditLog {
@@ -39,17 +39,18 @@ function deriveLevel(action: string): 'info' | 'warning' | 'danger' | 'default' 
 }
 
 // Catégories d'actions (onglets) — filtre « action contient … »
-const CATEGORY_TABS: TabItem[] = [
-  { value: '', label: 'Toutes' },
-  { value: 'admin.user', label: 'Utilisateurs' },
-  { value: 'admin.kyc', label: 'KYC' },
-  { value: 'admin.property', label: 'Propriétés' },
-  { value: 'admin.menu', label: 'Plats' },
-  { value: 'booking', label: 'Réservations' },
-  { value: 'admin.dispute', label: 'Litiges' },
-  { value: 'admin.promo_code', label: 'Codes promo' },
-  { value: 'admin.website', label: 'Site vitrine' },
-  { value: 'admin.config', label: 'Configuration' },
+const NAV = ['action'];
+const CATEGORY_CARDS: HubCard[] = [
+  { value: 'admin.user', label: 'Utilisateurs', description: 'Suspensions, bannissements, notes, plans', icon: <Users size={20} /> },
+  { value: 'admin.kyc', label: 'KYC', description: 'Validations et rejets de dossiers', icon: <ShieldCheck size={20} /> },
+  { value: 'admin.property', label: 'Propriétés', description: 'Validation, rejet, suspension d’annonces', icon: <Building2 size={20} /> },
+  { value: 'admin.menu', label: 'Plats', description: 'Modération des menus', icon: <UtensilsCrossed size={20} /> },
+  { value: 'booking', label: 'Réservations', description: 'Annulations et remboursements', icon: <CalendarCheck size={20} /> },
+  { value: 'admin.dispute', label: 'Litiges', description: 'Résolutions et remboursements', icon: <Scale size={20} /> },
+  { value: 'admin.promo_code', label: 'Codes promo', description: 'Création et modification', icon: <Tag size={20} /> },
+  { value: 'admin.website', label: 'Site vitrine', description: 'Contenus publics modifiés', icon: <Globe size={20} /> },
+  { value: 'admin.config', label: 'Configuration', description: 'Paramètres de la plateforme', icon: <Settings size={20} /> },
+  { value: 'all', label: 'Toutes les actions', description: 'Journal complet', icon: <ListTree size={20} /> },
 ];
 
 const levelTone: Record<string, 'info' | 'warning' | 'danger' | 'default'> = { info: 'info', warning: 'warning', danger: 'danger', default: 'default' };
@@ -123,21 +124,23 @@ function MetaDiff({ log }: { log: AuditLog }) {
 export default function LogsPage() {
   const router = useRouter();
   const toast = useToast();
-  const t = useTableState({ storageKey: 'logs', defaultPageSize: 50 });
+  const t = useTableState({ storageKey: 'logs', defaultPageSize: 50, restoreFromStorage: false, pushKeys: NAV });
   const [exporting, setExporting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const category = t.state.filters['action'] ?? '';
+  const depth = hubDepth(t.state.filters, NAV);
+  const categoryLabel = CATEGORY_CARDS.find((c) => c.value === category)?.label ?? '';
 
   // La période rapide est convertie en bornes ; les dates saisies ont priorité
   const f = t.state.filters;
-  const params: Record<string, string | number> = { ...t.queryParams };
+  const params: Record<string, string | number> = stripAll({ ...t.queryParams }, NAV);
   delete params['period'];
   if (f['period'] && !f['from']) params['from'] = periodStart(f['period']);
 
   const { data, isLoading, isError, isFetching } = useQuery<any>({
     queryKey: ['logs', params],
     queryFn: () => logsService.getAuditLogs(params),
-    enabled: t.hydrated,
+    enabled: t.hydrated && depth === -1,
     placeholderData: keepPreviousData,
   });
 
@@ -212,17 +215,29 @@ export default function LogsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Journaux d&apos;audit</h1>
           <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} entrée{total > 1 ? 's' : ''} · conservation 6 mois · journal non modifiable</p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} loading={exporting} onClick={handleExportCsv}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} loading={exporting} onClick={handleExportCsv}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-2"><StatusTabs variant="underline" tabs={CATEGORY_TABS} value={category} onChange={(v) => t.setFilter('action', v)} /></div>
+      <HubCrumbs items={[
+        { label: 'Journaux', onClick: depth === 0 ? undefined : () => { t.setFilter('action', ''); t.setSearch(''); } },
+        ...(category ? [{ label: categoryLabel }] : []),
+      ]} />
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez une catégorie d’actions.</p>
+          <HubCards cards={CATEGORY_CARDS} onSelect={(v) => t.setFilter('action', v)} />
+        </>
+      )}
+
+      {depth === -1 && (
+
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Rechercher une action, une description, un administrateur…"
-          activeCount={t.activeFilterCount}
-          onReset={() => t.reset()}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => t.reset(NAV)}
         >
           <select value={f['targetType'] ?? ''} onChange={(e) => t.setFilter('targetType', e.target.value)} className="input w-44" aria-label="Type de cible">
             {TARGET_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -253,6 +268,7 @@ export default function LogsPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

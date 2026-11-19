@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -30,17 +30,23 @@ interface Ticket {
   _count: { comments: number };
 }
 
+const NAV = ['status'];
+
 function TicketsContent() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'tickets', defaultSortKey: 'createdAt', defaultSortDir: 'desc' });
+  const t = useTableState({ storageKey: 'tickets', defaultSortKey: 'createdAt', defaultSortDir: 'desc', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const f = t.state.filters;
   const status = f['status'] ?? '';
 
+  const depth = hubDepth(t.state.filters, NAV);
+  const params = stripAll(t.queryParams, NAV);
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; }
+
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['tickets', t.queryParams],
-    queryFn: () => supportService.listTickets(t.queryParams),
+    queryKey: ['tickets', params],
+    queryFn: () => supportService.listTickets(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
   });
@@ -50,10 +56,13 @@ function TicketsContent() {
   const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
   const counts: Record<string, number> = data?.counts ?? {};
 
-  const tabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous', count: counts['all'] },
+  const statusCards: HubCard[] = useMemo(() => [
     ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l, tone: statusVariant[v] ?? 'default', count: counts[v] ?? 0 })),
+    { value: 'all', label: 'Tous les tickets', count: counts['all'] },
   ], [counts]);
+  const statusLabelOf = status === 'all' ? 'Tous les tickets' : STATUS_LABELS[status] ?? '';
+  const backTo = () => { setSelected(new Set()); t.setFilter('status', ''); t.setSearch(''); };
+
 
   const selectedRows = tickets.filter((x) => selected.has(x.id));
 
@@ -107,17 +116,29 @@ function TicketsContent() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tickets de support</h1>
           <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} ticket{total > 1 ? 's' : ''}</p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!tickets.length}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!tickets.length}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-4"><StatusTabs tabs={tabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
+      <div className="-mt-2"><HubCrumbs items={[
+        { label: 'Tickets de support', onClick: depth === 0 ? undefined : () => backTo() },
+        ...(status ? [{ label: statusLabelOf }] : []),
+      ]} /></div>
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un statut de ticket.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('status', v); }} />
+        </>
+      )}
+
+
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Sujet, nom ou email de l'utilisateur…"
-          activeCount={t.activeFilterCount}
-          onReset={() => { setSelected(new Set()); t.reset(); }}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <select value={f['category'] ?? ''} onChange={(e) => t.setFilter('category', e.target.value)} className="input w-40" aria-label="Catégorie">
             <option value="">Toutes catégories</option>
@@ -152,6 +173,7 @@ function TicketsContent() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

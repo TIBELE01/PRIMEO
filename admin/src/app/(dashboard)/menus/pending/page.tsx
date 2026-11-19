@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth } from '@/components/ui/Hub';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
@@ -35,15 +35,21 @@ const REJECT_REASONS = [
   'Contenu non conforme aux règles de la plateforme',
 ];
 
+const NAV = ['status'];
+
 export default function MenuItemsPage() {
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'menu-items', defaultSortKey: 'createdAt', defaultSortDir: 'asc', defaultFilters: { status: 'pending' } });
+  const t = useTableState({ storageKey: 'menu-items', defaultSortKey: 'createdAt', defaultSortDir: 'asc', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const status = t.state.filters['status'] ?? 'pending';
+  const status = t.state.filters['status'] ?? '';
+
+  const depth = hubDepth(t.state.filters, NAV);
+  const params: Record<string, string | number> = { ...t.queryParams }; // l'API gère « all » elle-même
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; params['status'] = 'all'; }
 
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['menu-items', t.queryParams],
-    queryFn: () => menuItemsService.getPending(t.queryParams),
+    queryKey: ['menu-items', params],
+    queryFn: () => menuItemsService.getPending(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
   });
@@ -53,12 +59,15 @@ export default function MenuItemsPage() {
   const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
   const counts: Record<string, number> = data?.counts ?? {};
 
-  const tabs: TabItem[] = useMemo(() => [
-    { value: 'pending', label: 'En attente', tone: 'warning', count: counts['pending'] ?? 0 },
-    { value: 'approved', label: 'Validés', tone: 'success', count: counts['approved'] ?? 0 },
-    { value: 'rejected', label: 'Rejetés', tone: 'danger', count: counts['rejected'] ?? 0 },
-    { value: 'all', label: 'Tous', count: counts['all'] },
+  const statusCards: HubCard[] = useMemo(() => [
+    { value: 'pending', label: 'En attente', tone: 'warning', count: counts['pending'] ?? 0, description: 'À valider ou rejeter' },
+    { value: 'approved', label: 'Validés', tone: 'success', count: counts['approved'] ?? 0, description: 'Visibles des clients' },
+    { value: 'rejected', label: 'Rejetés', tone: 'danger', count: counts['rejected'] ?? 0, description: 'Refusés avec motif' },
+    { value: 'all', label: 'Tous les plats', count: counts['all'] },
   ], [counts]);
+  const statusLabelOf = ({ pending: 'En attente', approved: 'Validés', rejected: 'Rejetés', all: 'Tous les plats' } as Record<string, string>)[status] ?? '';
+  const backTo = () => { setSelected(new Set()); t.setFilter('status', ''); t.setSearch(''); };
+
 
   const selectedRows = items.filter((i) => selected.has(i.id));
 
@@ -134,17 +143,29 @@ export default function MenuItemsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Plats</h1>
           <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} plat{total > 1 ? 's' : ''} · modération des menus de restaurant</p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!items.length}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!items.length}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-4"><StatusTabs tabs={tabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
+      <div className="-mt-2"><HubCrumbs items={[
+        { label: 'Plats', onClick: depth === 0 ? undefined : () => backTo() },
+        ...(status ? [{ label: statusLabelOf }] : []),
+      ]} /></div>
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un statut de plat.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('status', v); }} />
+        </>
+      )}
+
+
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Plat, section, restaurant, propriétaire…"
           activeCount={Object.entries(t.state.filters).filter(([k, v]) => k !== 'status' && v).length + (t.state.search ? 1 : 0)}
-          onReset={() => { setSelected(new Set()); t.reset(['status']); }}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <input type="search" value={t.state.filters['section'] ?? ''} onChange={(e) => t.setFilter('section', e.target.value)} placeholder="Section (Entrées, Plats…)" className="input w-48" aria-label="Filtrer par section" />
           <label className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -171,6 +192,7 @@ export default function MenuItemsPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

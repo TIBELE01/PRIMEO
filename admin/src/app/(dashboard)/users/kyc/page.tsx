@@ -2,13 +2,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, ShieldX } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, ShieldX, Home, Hotel, Building2, UtensilsCrossed } from 'lucide-react';
 import { usersService } from '@/services/api';
 import { useTableState } from '@/hooks/useTableState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
@@ -18,6 +18,11 @@ import { PlatformUser } from '@/types/user';
 
 type Row = PlatformUser & { kycStatus?: string | null; city?: string | null; businessName?: string | null };
 
+const NAV = ['role', 'kyc'];
+const PRO_ICON: Record<string, React.ReactNode> = {
+  professional_hebergement: <Home size={20} />, professional_hotel: <Hotel size={20} />,
+  professional_immobilier: <Building2 size={20} />, restaurateur: <UtensilsCrossed size={20} />,
+};
 const PRO_TYPES = ACCOUNT_TYPES.filter((a) => a.value !== 'client' && a.value !== 'admin');
 const REJECT_REASONS = [
   'Document illisible ou de mauvaise qualité',
@@ -30,13 +35,15 @@ const REJECT_REASONS = [
 export default function KycQueuePage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'kyc', defaultSortDir: 'asc', defaultFilters: { kyc: 'pending' } });
+  const t = useTableState({ storageKey: 'kyc', defaultSortDir: 'asc', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const kyc = t.state.filters['kyc'] ?? 'pending';
-  const role = t.state.filters['role'] ?? '';
+  const kyc = t.state.filters['kyc'] ?? '';
+  const role0 = t.state.filters['role'] ?? '';
+  const role = role0 === 'all' ? '' : role0;
+  const depth = hubDepth(t.state.filters, NAV); // 0 : types · 1 : statuts KYC · -1 : liste
 
-  const params = { ...t.queryParams, pro: 'true', withKycCounts: 'true' };
-  if (kyc === 'all') delete (params as Record<string, unknown>)['kyc'];
+  const params: Record<string, string | number> = { ...stripAll(t.queryParams, NAV), pro: 'true', withKycCounts: 'true' };
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; }
 
   const { data, isLoading, isError, isFetching } = useQuery<any>({
     queryKey: ['kyc-queue', params],
@@ -51,16 +58,22 @@ export default function KycQueuePage() {
   const kycCounts: Record<string, number> = data?.kycCounts ?? {};
   const typeCounts: Record<string, number> = data?.typeCounts ?? {};
 
-  const kycTabs: TabItem[] = useMemo(() => [
-    { value: 'pending', label: 'À valider', tone: 'warning', count: kycCounts['pending'] ?? 0 },
-    { value: 'approved', label: 'Validés', tone: 'success', count: kycCounts['approved'] ?? 0 },
-    { value: 'rejected', label: 'Rejetés', tone: 'danger', count: kycCounts['rejected'] ?? 0 },
-    { value: 'all', label: 'Tous', count: kycCounts['all'] },
-  ], [kycCounts]);
-  const typeTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous les professionnels', count: PRO_TYPES.reduce((a, x) => a + (typeCounts[x.value] ?? 0), 0) },
-    ...PRO_TYPES.map((x) => ({ value: x.value, label: x.label, count: typeCounts[x.value] ?? 0 })),
-  ], [typeCounts]);
+  const typeCards: HubCard[] = PRO_TYPES.map((x) => ({
+    value: x.value, label: x.label, count: typeCounts[x.value] ?? 0, icon: PRO_ICON[x.value], description: 'Dossiers KYC de ce type',
+  }));
+  const kycCards: HubCard[] = [
+    { value: 'pending', label: 'À valider', tone: 'warning', count: kycCounts['pending'] ?? 0, description: 'En attente de décision' },
+    { value: 'approved', label: 'Validés', tone: 'success', count: kycCounts['approved'] ?? 0, description: 'Comptes activés' },
+    { value: 'rejected', label: 'Rejetés', tone: 'danger', count: kycCounts['rejected'] ?? 0, description: 'Dossiers refusés' },
+    { value: 'all', label: 'Tous les dossiers', count: kycCounts['all'] },
+  ];
+  const roleLabelOf = PRO_TYPES.find((x) => x.value === role)?.label ?? 'Tous les professionnels';
+  const kycLabelOf = ({ pending: 'À valider', approved: 'Validés', rejected: 'Rejetés', all: 'Tous les dossiers' } as Record<string, string>)[kyc] ?? '';
+  const backTo = (d: number) => {
+    setSelected(new Set());
+    t.setFilters({ ...(d <= 1 ? { kyc: '' } : {}), ...(d <= 0 ? { role: '' } : {}) });
+    t.setSearch('');
+  };
 
   const selectedRows = rows.filter((r) => selected.has(r.id));
 
@@ -115,15 +128,36 @@ export default function KycQueuePage() {
         </div>
       </div>
 
+      <HubCrumbs items={[
+        { label: 'File KYC', onClick: depth === 0 ? undefined : () => backTo(0) },
+        ...(role0 ? [{ label: roleLabelOf, onClick: depth === 1 ? undefined : () => backTo(1) }] : []),
+        ...(kyc ? [{ label: kycLabelOf }] : []),
+      ]} />
+
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un type de professionnel.</p>
+          <HubCards cards={typeCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('role', v); }} />
+          <button type="button" onClick={() => { setSelected(new Set()); t.setFilters({ role: 'all', kyc: 'all' }); }} className="text-sm font-medium text-primary-700 hover:underline">
+            Voir tous les dossiers dans une seule liste
+          </button>
+        </>
+      )}
+      {depth === 1 && (
+        <>
+          <p className="text-sm text-gray-500">{roleLabelOf} — choisissez l’état du dossier.</p>
+          <HubCards cards={kycCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('kyc', v); }} />
+        </>
+      )}
+
+      {depth === -1 && (
       <Card padding={false}>
-        <div className="px-4 pt-2"><StatusTabs variant="underline" tabs={typeTabs} value={role} onChange={(v) => { setSelected(new Set()); t.setFilter('role', v); }} /></div>
-        <div className="px-4 pt-3"><StatusTabs tabs={kycTabs} value={kyc} onChange={(v) => { setSelected(new Set()); t.setFilter('kyc', v); }} /></div>
 
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Nom, email, téléphone, entreprise…"
-          activeCount={Object.entries(t.state.filters).filter(([k, v]) => k !== 'kyc' && v).length + (t.state.search ? 1 : 0)}
-          onReset={() => { setSelected(new Set()); t.reset(['kyc']); }}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <input type="search" value={t.state.filters['city'] ?? ''} onChange={(e) => t.setFilter('city', e.target.value)} placeholder="Ville…" className="input w-36" aria-label="Filtrer par ville" />
           <label className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -151,6 +185,7 @@ export default function KycQueuePage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

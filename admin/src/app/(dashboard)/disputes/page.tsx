@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
 import { formatDate, formatAmount, downloadCsv } from '@/lib/utils';
@@ -32,16 +32,22 @@ const PERIODS = [
 ];
 const OPEN = ['open', 'under_review'];
 
+const NAV = ['status'];
+
 export default function DisputesPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'disputes' });
+  const t = useTableState({ storageKey: 'disputes', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const status = t.state.filters['status'] ?? '';
 
+  const depth = hubDepth(t.state.filters, NAV);
+  const params = stripAll(t.queryParams, NAV);
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; }
+
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['disputes', t.queryParams],
-    queryFn: () => disputesService.getDisputes(t.queryParams),
+    queryKey: ['disputes', params],
+    queryFn: () => disputesService.getDisputes(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
     retry: 1,
@@ -52,10 +58,13 @@ export default function DisputesPage() {
   const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
   const counts: Record<string, number> = data?.counts ?? {};
 
-  const statusTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous', count: counts['all'] },
-    ...disputeStatusOptions.map(([v, l]) => ({ value: v, label: l, tone: disputeStatusVariant[v] ?? 'default', count: counts[v] ?? 0 })),
+  const statusCards: HubCard[] = useMemo(() => [
+    ...([['open', 'Ouvert'], ['under_review', 'En révision'], ...disputeStatusOptions.filter(([v]) => v !== 'open'), ['closed', 'Fermé']] as Array<[string, string]>).map(([v, l]) => ({ value: v, label: l, tone: disputeStatusVariant[v] ?? 'default', count: counts[v] ?? 0 })),
+    { value: 'all', label: 'Tous les litiges', count: counts['all'] },
   ], [counts]);
+  const statusLabelOf = status === 'all' ? 'Tous les litiges' : disputeStatusLabel[status] ?? '';
+  const backTo = () => { setSelected(new Set()); t.setFilter('status', ''); t.setSearch(''); };
+
 
   const selectedRows = disputes.filter((d) => selected.has(d.id));
 
@@ -123,17 +132,29 @@ export default function DisputesPage() {
             {total.toLocaleString('fr-FR')} litige{total > 1 ? 's' : ''} · conflits entre clients et professionnels
           </p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!disputes.length}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!disputes.length}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-4"><StatusTabs tabs={statusTabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
+      <div className="-mt-2"><HubCrumbs items={[
+        { label: 'Litiges', onClick: depth === 0 ? undefined : () => backTo() },
+        ...(status ? [{ label: statusLabelOf }] : []),
+      ]} /></div>
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un statut de litige.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('status', v); }} />
+        </>
+      )}
+
+
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Client, professionnel, annonce, objet…"
-          activeCount={t.activeFilterCount}
-          onReset={() => { setSelected(new Set()); t.reset(); }}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <select value={t.state.filters['priority'] ?? ''} onChange={(e) => t.setFilter('priority', e.target.value)} className="input w-44" aria-label="Priorité">
             <option value="">Toutes priorités</option>
@@ -169,6 +190,7 @@ export default function DisputesPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

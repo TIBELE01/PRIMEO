@@ -1,6 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usersService, propertiesService } from '@/services/api';
+import { usersService, propertiesService, menuItemsService } from '@/services/api';
+import { HubCards, HubCrumbs, HubCard } from '@/components/ui/Hub';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -8,13 +9,13 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { AdminProperty } from '@/types/property';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KycRejectModal } from '@/components/modals/KycRejectModal';
 import { RejectPropertyModal } from '@/components/modals/RejectPropertyModal';
 import { RequestModificationsModal } from '@/components/modals/RequestModificationsModal';
 import {
   ShieldCheck, Building2, FileCheck, FileX, CheckCircle, XCircle,
-  MessageSquare, ExternalLink, ImageOff, RefreshCw,
+  MessageSquare, ExternalLink, ImageOff, RefreshCw, UtensilsCrossed,
 } from 'lucide-react';
 
 // ── Utilitaires ───────────────────────────────────────────────────────────────
@@ -400,62 +401,58 @@ function PropertiesTab({ onCountChange }: { onCountChange: (n: number) => void }
 // ── Page principale ───────────────────────────────────────────────────────────
 
 export default function ModerationPage() {
-  const [tab, setTab]         = useState<Tab>('kyc');
-  const [kycCount, setKyc]    = useState(0);
-  const [propCount, setProp]  = useState(0);
+  const router = useRouter();
+  const [tab, setTabState] = useState<Tab | null>(null); // null : accueil en cartes
+
+  // Le niveau choisi vit dans l'URL (?file=kyc) : bouton Retour du navigateur et rafraîchissement fonctionnent
+  useEffect(() => {
+    const read = () => {
+      const f = new URLSearchParams(window.location.search).get('file');
+      setTabState(f === 'kyc' || f === 'properties' ? f : null);
+    };
+    read();
+    window.addEventListener('popstate', read);
+    return () => window.removeEventListener('popstate', read);
+  }, []);
+  const setTab = (t: Tab | null) => {
+    window.history.pushState(null, '', t ? `${window.location.pathname}?file=${t}` : window.location.pathname);
+    setTabState(t);
+  };
+
+  const kyc   = useQuery<any>({ queryKey: ['mod-count-kyc'], queryFn: () => usersService.getPendingKyc({ limit: 1 }) });
+  const props = useQuery<any>({ queryKey: ['mod-count-props'], queryFn: () => propertiesService.getProperties({ status: 'pending_review', limit: 1 }) });
+  const menus = useQuery<any>({ queryKey: ['mod-count-menus'], queryFn: () => menuItemsService.getPending({ limit: 1 }) });
+  const loading = kyc.isLoading || props.isLoading || menus.isLoading;
+
+  const cards: HubCard[] = [
+    { value: 'kyc', label: 'Dossiers KYC', description: 'Comptes professionnels à valider', icon: <ShieldCheck size={20} />, tone: 'warning', count: kyc.data?.total ?? 0 },
+    { value: 'properties', label: 'Annonces', description: 'Annonces soumises à validation', icon: <Building2 size={20} />, tone: 'warning', count: props.data?.total ?? 0 },
+    { value: 'menus', label: 'Plats', description: 'Plats de restaurant à valider', icon: <UtensilsCrossed size={20} />, tone: 'warning', count: menus.data?.total ?? 0 },
+  ];
+  const titleOf = tab === 'kyc' ? 'Dossiers KYC' : 'Annonces';
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Modération</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Validation des comptes professionnels et des annonces soumises sur la plateforme.
-        </p>
+        <div className="mt-1">
+          <HubCrumbs items={[{ label: 'Modération', onClick: tab ? () => setTab(null) : undefined }, ...(tab ? [{ label: titleOf }] : [])]} />
+        </div>
       </div>
 
-      {/* Onglets */}
-      <div className="flex gap-2 border-b border-gray-200">
-        <button
-          className={[
-            'flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors',
-            tab === 'kyc'
-              ? 'border-primary-600 text-primary-700'
-              : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300',
-          ].join(' ')}
-          onClick={() => setTab('kyc')}
-        >
-          <ShieldCheck size={16} />
-          KYC Professionnels
-          {kycCount > 0 && (
-            <span className="bg-orange-100 text-orange-700 text-[11px] font-bold rounded-full px-2 py-0.5 ml-1">
-              {kycCount}
-            </span>
-          )}
-        </button>
+      {tab === null && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez la file à traiter.</p>
+          <HubCards
+            cards={cards}
+            loading={loading}
+            onSelect={(v) => (v === 'menus' ? router.push('/menus/pending?status=pending') : setTab(v as Tab))}
+          />
+        </>
+      )}
 
-        <button
-          className={[
-            'flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-colors',
-            tab === 'properties'
-              ? 'border-primary-600 text-primary-700'
-              : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300',
-          ].join(' ')}
-          onClick={() => setTab('properties')}
-        >
-          <Building2 size={16} />
-          Annonces en attente
-          {propCount > 0 && (
-            <span className="bg-orange-100 text-orange-700 text-[11px] font-bold rounded-full px-2 py-0.5 ml-1">
-              {propCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Contenu de l'onglet actif */}
-      {tab === 'kyc'        && <KycTab        onCountChange={setKyc} />}
-      {tab === 'properties' && <PropertiesTab onCountChange={setProp} />}
+      {tab === 'kyc'        && <KycTab        onCountChange={() => {}} />}
+      {tab === 'properties' && <PropertiesTab onCountChange={() => {}} />}
     </div>
   );
 }

@@ -2,14 +2,14 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Download, ShieldCheck, ShieldX, PauseCircle, PlayCircle, ClipboardCheck } from 'lucide-react';
+import { Download, ShieldCheck, ShieldX, PauseCircle, PlayCircle, ClipboardCheck, Home, Hotel, Building2, UtensilsCrossed } from 'lucide-react';
 import { propertiesService } from '@/services/api';
 import { useTableState } from '@/hooks/useTableState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
@@ -17,6 +17,7 @@ import { formatDate, formatAmount, downloadCsv } from '@/lib/utils';
 import { PROPERTY_STATUS, PROPERTY_STATUS_ORDER, toneAccent } from '@/lib/status';
 import { AdminProperty } from '@/types/property';
 
+const NAV = ['sector', 'status'];
 const SECTORS = [
   { value: 'residence', label: 'Résidences meublées' },
   { value: 'hotel', label: 'Hôtels' },
@@ -44,15 +45,20 @@ const typeLabel: Record<string, string> = {
 export default function PropertiesPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'properties' });
+  const t = useTableState({ storageKey: 'properties', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const sector = t.state.filters['sector'] ?? '';
+  const sector0 = t.state.filters['sector'] ?? '';
+  const sector = sector0 === 'all' ? '' : sector0;
   const status = t.state.filters['status'] ?? '';
 
+  const depth = hubDepth(t.state.filters, NAV); // 0 : secteurs · 1 : statuts · -1 : liste
+  const params = stripAll(t.queryParams, NAV);
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; }
+
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['properties', t.queryParams],
-    queryFn: () => propertiesService.getProperties(t.queryParams),
+    queryKey: ['properties', params],
+    queryFn: () => propertiesService.getProperties(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
     retry: 1,
@@ -64,23 +70,30 @@ export default function PropertiesPage() {
   const counts: Record<string, number> = data?.counts ?? {};
   const typeCounts: Record<string, number> = data?.typeCounts ?? {};
 
-  const sectorTabs: TabItem[] = useMemo(() => {
-    const immo = (typeCounts['immobilier_location'] ?? 0) + (typeCounts['immobilier_terrain'] ?? 0) + (typeCounts['immobilier_achat'] ?? 0);
-    const byValue: Record<string, number> = { residence: typeCounts['residence'] ?? 0, hotel: typeCounts['hotel'] ?? 0, immobilier: immo, restaurant: typeCounts['restaurant'] ?? 0 };
-    return [
-      { value: '', label: 'Toutes', count: Object.values(byValue).reduce((a, b) => a + b, 0) },
-      ...SECTORS.map((s) => ({ ...s, count: byValue[s.value] ?? 0 })),
-    ];
-  }, [typeCounts]);
-
-  const statusTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous', count: counts['all'] },
-    ...PROPERTY_STATUS_ORDER.map((s) => ({ value: s, label: PROPERTY_STATUS[s]!.label, tone: PROPERTY_STATUS[s]!.tone, count: counts[s] ?? 0 })),
-  ], [counts]);
+  const SECTOR_META: Record<string, { icon: React.ReactNode; description: string }> = {
+    residence: { icon: <Home size={20} />, description: 'Appartements et résidences' },
+    hotel: { icon: <Hotel size={20} />, description: 'Hôtels et établissements' },
+    immobilier: { icon: <Building2 size={20} />, description: 'Location, achat, terrains' },
+    restaurant: { icon: <UtensilsCrossed size={20} />, description: 'Restaurants' },
+  };
+  const immo = (typeCounts['immobilier_location'] ?? 0) + (typeCounts['immobilier_terrain'] ?? 0) + (typeCounts['immobilier_achat'] ?? 0);
+  const sectorCount: Record<string, number> = { residence: typeCounts['residence'] ?? 0, hotel: typeCounts['hotel'] ?? 0, immobilier: immo, restaurant: typeCounts['restaurant'] ?? 0 };
+  const sectorCards: HubCard[] = SECTORS.map((s0) => ({ ...s0, count: sectorCount[s0.value] ?? 0, ...SECTOR_META[s0.value] }));
+  const statusCards: HubCard[] = [
+    ...PROPERTY_STATUS_ORDER.map((st) => ({ value: st, label: PROPERTY_STATUS[st]!.label, tone: PROPERTY_STATUS[st]!.tone, count: counts[st] ?? 0 })),
+    { value: 'all', label: 'Tous les statuts', count: counts['all'] },
+  ];
+  const sectorLabelOf = SECTORS.find((x) => x.value === sector)?.label ?? 'Toutes les annonces';
+  const statusLabelOf = status === 'all' ? 'Tous les statuts' : PROPERTY_STATUS[status]?.label ?? '';
 
   const selectedRows = properties.filter((p) => selected.has(p.id));
   const refresh = () => { qc.invalidateQueries({ queryKey: ['properties'] }); qc.invalidateQueries({ queryKey: ['properties-pending'] }); };
-  const changeTab = (key: 'sector' | 'status', value: string) => { setSelected(new Set()); t.setFilter(key, value); };
+  const choose = (key: 'sector' | 'status', value: string) => { setSelected(new Set()); t.setFilter(key, value); };
+  const backTo = (d: number) => {
+    setSelected(new Set());
+    t.setFilters({ ...(d <= 1 ? { status: '' } : {}), ...(d <= 0 ? { sector: '' } : {}) });
+    t.setSearch('');
+  };
 
   const columns: Column<AdminProperty>[] = [
     {
@@ -148,25 +161,43 @@ export default function PropertiesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Propriétés</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} annonce{total > 1 ? 's' : ''}</p>
+          <div className="mt-1">
+            <HubCrumbs items={[
+              { label: 'Propriétés', onClick: depth === 0 ? undefined : () => backTo(0) },
+              ...(sector0 ? [{ label: sectorLabelOf, onClick: depth === 1 ? undefined : () => backTo(1) }] : []),
+              ...(status ? [{ label: statusLabelOf }] : []),
+            ]} />
+          </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!properties.length}>Exporter la vue (CSV)</Button>
-          <Button size="sm" leftIcon={<ClipboardCheck size={14} />} onClick={() => router.push('/properties/pending')}>
-            Modération{counts['pending_review'] ? ` (${counts['pending_review']})` : ''}
-          </Button>
+          {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!properties.length}>Exporter la vue (CSV)</Button>}
+          <Button size="sm" leftIcon={<ClipboardCheck size={14} />} onClick={() => router.push('/properties/pending')}>Modération</Button>
         </div>
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-2"><StatusTabs variant="underline" tabs={sectorTabs} value={sector} onChange={(v) => changeTab('sector', v)} /></div>
-        <div className="px-4 pt-3"><StatusTabs tabs={statusTabs} value={status} onChange={(v) => changeTab('status', v)} /></div>
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un secteur.</p>
+          <HubCards cards={sectorCards} loading={isLoading || !t.hydrated} onSelect={(v) => choose('sector', v)} />
+          <button type="button" onClick={() => { setSelected(new Set()); t.setFilters({ sector: 'all', status: 'all' }); }} className="text-sm font-medium text-primary-700 hover:underline">
+            Voir toutes les annonces dans une seule liste
+          </button>
+        </>
+      )}
+      {depth === 1 && (
+        <>
+          <p className="text-sm text-gray-500">{sectorLabelOf} — choisissez un statut.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => choose('status', v)} />
+        </>
+      )}
 
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Rechercher par titre, ville ou propriétaire…"
-          activeCount={t.activeFilterCount}
-          onReset={() => { setSelected(new Set()); t.reset(); }}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <input
             type="search" value={t.state.filters['city'] ?? ''} onChange={(e) => t.setFilter('city', e.target.value)}
@@ -200,6 +231,7 @@ export default function PropertiesPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

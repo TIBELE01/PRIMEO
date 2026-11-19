@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
 import { formatDate, formatAmount, downloadCsv } from '@/lib/utils';
@@ -26,16 +26,22 @@ const PERIODS = [
   { value: '90d', label: '90 derniers jours' },
 ];
 
+const NAV = ['status'];
+
 export default function BookingsPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'bookings' });
+  const t = useTableState({ storageKey: 'bookings', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const status = t.state.filters['status'] ?? '';
 
+  const depth = hubDepth(t.state.filters, NAV); // 0 : statuts · -1 : liste
+  const params = stripAll(t.queryParams, NAV);
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; }
+
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['bookings', t.queryParams],
-    queryFn: () => bookingsService.getBookings(t.queryParams),
+    queryKey: ['bookings', params],
+    queryFn: () => bookingsService.getBookings(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
   });
@@ -45,10 +51,13 @@ export default function BookingsPage() {
   const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
   const counts: Record<string, number> = data?.counts ?? {};
 
-  const statusTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Toutes', count: counts['all'] },
+  const statusCards: HubCard[] = useMemo(() => [
     ...bookingStatusOptions.map(([v, l]) => ({ value: v, label: l, tone: bookingStatusVariant[v] ?? 'default', count: counts[v] ?? 0 })),
+    { value: 'all', label: 'Toutes les réservations', count: counts['all'] },
   ], [counts]);
+  const statusLabelOf = status === 'all' ? 'Toutes les réservations' : bookingStatusLabel[status] ?? '';
+  const backTo = () => { setSelected(new Set()); t.setFilter('status', ''); t.setSearch(''); };
+
 
   const selectedRows = bookings.filter((b) => selected.has(b.id));
 
@@ -108,17 +117,29 @@ export default function BookingsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Réservations</h1>
           <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} réservation{total > 1 ? 's' : ''}</p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!bookings.length}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!bookings.length}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-4"><StatusTabs tabs={statusTabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
+      <div className="-mt-2"><HubCrumbs items={[
+        { label: 'Réservations', onClick: depth === 0 ? undefined : () => backTo() },
+        ...(status ? [{ label: statusLabelOf }] : []),
+      ]} /></div>
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un statut de réservation.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('status', v); }} />
+        </>
+      )}
+
+
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Référence, client, annonce…"
-          activeCount={t.activeFilterCount}
-          onReset={() => { setSelected(new Set()); t.reset(); }}
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <input type="search" value={t.state.filters['city'] ?? ''} onChange={(e) => t.setFilter('city', e.target.value)} placeholder="Ville…" className="input w-36" aria-label="Filtrer par ville" />
           <select value={t.state.filters['period'] ?? ''} onChange={(e) => t.setFilters({ period: e.target.value, from: '', to: '' })} className="input w-44" aria-label="Période de création">
@@ -149,6 +170,7 @@ export default function BookingsPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

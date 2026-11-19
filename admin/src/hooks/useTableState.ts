@@ -21,6 +21,10 @@ interface Options {
   defaultPageSize?: number;
   /** Filtres par défaut (ex. { status: 'pending' }) */
   defaultFilters?: Record<string, string>;
+  /** false : n'ouvre pas le dernier contexte mémorisé quand l'URL est vide (modules en cartes : on repart du niveau 1) */
+  restoreFromStorage?: boolean;
+  /** Filtres de navigation (cartes) : leur changement crée une entrée d'historique (bouton Retour du navigateur) */
+  pushKeys?: string[];
 }
 
 const PAGE_SIZES = [10, 20, 50, 100];
@@ -39,6 +43,8 @@ export function useTableState({
   defaultSortDir = 'desc',
   defaultPageSize = 20,
   defaultFilters = {},
+  restoreFromStorage = true,
+  pushKeys = [],
 }: Options) {
   const defaults = useRef<TableState>({
     page: 1, pageSize: defaultPageSize, sortKey: defaultSortKey, sortDir: defaultSortDir, search: '',
@@ -66,13 +72,19 @@ export function useTableState({
     const url = new URLSearchParams(window.location.search);
     let restored: URLSearchParams | null = null;
     if ([...url.keys()].length > 0) restored = url;
-    else {
+    else if (restoreFromStorage) {
       const saved = safeGet(`primeo-admin:table:${storageKey}`);
       if (saved) restored = new URLSearchParams(saved);
     }
     if (restored) setState(fromParams(restored));
     setHydrated(true);
+    // Bouton Retour / Avant du navigateur : relit l'URL
+    const onPop = () => setState(fromParams(new URLSearchParams(window.location.search)));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
+  const lastNav = useRef<string | null>(null);
 
   // Écriture dans l'URL + localStorage à chaque changement
   useEffect(() => {
@@ -87,7 +99,13 @@ export function useTableState({
     const str = qs.toString();
     safeSet(`primeo-admin:table:${storageKey}`, str);
     const next = `${window.location.pathname}${str ? `?${str}` : ''}`;
-    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(null, '', next);
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      const navSig = pushKeys.map((k) => state.filters[k] ?? '').join('|');
+      const navChanged = lastNav.current !== null && lastNav.current !== navSig;
+      if (navChanged) window.history.pushState(null, '', next); else window.history.replaceState(null, '', next);
+    }
+    lastNav.current = pushKeys.map((k) => state.filters[k] ?? '').join('|');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, hydrated, storageKey]);
 
   const setFilter = useCallback((key: string, value: string) => {

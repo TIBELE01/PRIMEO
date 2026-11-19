@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
 import { formatAmount, formatDateTime, downloadCsv } from '@/lib/utils';
@@ -29,12 +29,15 @@ const STATUS: Record<string, { label: string; tone: 'warning' | 'success' | 'dan
   rejected: { label: 'Refusé', tone: 'danger' }, cancelled: { label: 'Annulé', tone: 'default' },
 };
 
+const NAV = ['status'];
+
 export default function WithdrawalsPage() {
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'withdrawals', defaultFilters: { status: 'pending' } });
+  const t = useTableState({ storageKey: 'withdrawals', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const f = t.state.filters;
-  const status = f['status'] ?? 'pending';
+  const status = f['status'] ?? '';
+  const depth = hubDepth(f, NAV);
 
   // L'API renvoie jusqu'à 200 demandes : filtrage, tri et pagination se font ici
   const { data, isLoading, isError } = useQuery<Withdrawal[]>({
@@ -77,13 +80,16 @@ export default function WithdrawalsPage() {
   const pageRows = filtered.slice((page - 1) * t.state.pageSize, page * t.state.pageSize);
   const selectedRows = all.filter((w) => selected.has(w.id));
 
-  const tabs: TabItem[] = [
-    { value: 'pending', label: 'À verser', tone: 'warning', count: counts['pending'] ?? 0 },
-    { value: 'paid', label: 'Versés', tone: 'success', count: counts['paid'] ?? 0 },
-    { value: 'rejected', label: 'Refusés', tone: 'danger', count: counts['rejected'] ?? 0 },
-    { value: 'cancelled', label: 'Annulés', tone: 'default', count: counts['cancelled'] ?? 0 },
-    { value: 'all', label: 'Toutes', count: counts['all'] },
+  const statusCards: HubCard[] = [
+    { value: 'pending', label: 'À verser', tone: 'warning', count: counts['pending'] ?? 0, description: 'Virement à effectuer' },
+    { value: 'paid', label: 'Versés', tone: 'success', count: counts['paid'] ?? 0, description: 'Virement effectué' },
+    { value: 'rejected', label: 'Refusés', tone: 'danger', count: counts['rejected'] ?? 0, description: 'Solde recrédité' },
+    { value: 'cancelled', label: 'Annulés', tone: 'default', count: counts['cancelled'] ?? 0, description: 'Annulés par le professionnel' },
+    { value: 'all', label: 'Toutes les demandes', count: counts['all'] },
   ];
+  const statusLabelOf = status === 'all' ? 'Toutes les demandes' : STATUS[status]?.label ?? '';
+  const backTo = () => { setSelected(new Set()); t.setFilter('status', ''); t.setSearch(''); };
+
 
   const columns: Column<Withdrawal>[] = [
     {
@@ -158,17 +164,29 @@ export default function WithdrawalsPage() {
             Le portefeuille Primeo est virtuel : effectuez le virement sur les coordonnées indiquées, puis marquez la demande comme versée.
           </p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!filtered.length}>Exporter la vue (CSV)</Button>
+        {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!filtered.length}>Exporter la vue (CSV)</Button>}
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-4"><StatusTabs tabs={tabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
+      <div className="-mt-2"><HubCrumbs items={[
+        { label: 'Versements', onClick: depth === 0 ? undefined : () => backTo() },
+        ...(status ? [{ label: statusLabelOf }] : []),
+      ]} /></div>
 
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un statut de demande.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => { setSelected(new Set()); t.setFilter('status', v); }} />
+        </>
+      )}
+
+
+      {depth === -1 && (
+      <Card padding={false}>
         <FilterBar
           search={t.state.search} onSearch={t.setSearch}
           placeholder="Nom, email, titulaire, n° de compte, référence…"
           activeCount={Object.entries(f).filter(([k, v]) => k !== 'status' && v).length + (t.state.search ? 1 : 0)}
-          onReset={() => { setSelected(new Set()); t.reset(['status']); }}
+          onReset={() => { setSelected(new Set()); t.reset(NAV); }}
         >
           <select value={f['method'] ?? ''} onChange={(e) => t.setFilter('method', e.target.value)} className="input w-44" aria-label="Moyen de versement">
             <option value="">Tous les moyens</option>
@@ -198,6 +216,7 @@ export default function WithdrawalsPage() {
           </>
         )}
       </Card>
+      )}
     </div>
   );
 }

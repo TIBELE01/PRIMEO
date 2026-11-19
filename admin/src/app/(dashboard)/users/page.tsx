@@ -2,14 +2,14 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Download, ShieldCheck, ShieldX, Ban, PauseCircle, PlayCircle, UserCheck } from 'lucide-react';
+import { Download, ShieldCheck, ShieldX, Ban, PauseCircle, PlayCircle, UserCheck, User, Home, Hotel, Building2, UtensilsCrossed, UserCog } from 'lucide-react';
 import { usersService } from '@/services/api';
 import { useTableState } from '@/hooks/useTableState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Table, Pagination, Column } from '@/components/ui/Table';
-import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { HubCards, HubCrumbs, HubCard, hubDepth, stripAll } from '@/components/ui/Hub';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
@@ -30,6 +30,16 @@ const PERIODS = [
   { value: '90d', label: '90 derniers jours' },
 ];
 
+const NAV = ['role', 'status'];
+const TYPE_META: Record<string, { icon: React.ReactNode; description: string }> = {
+  client: { icon: <User size={20} />, description: 'Particuliers qui réservent' },
+  professional_hebergement: { icon: <Home size={20} />, description: 'Résidences meublées' },
+  professional_hotel: { icon: <Hotel size={20} />, description: 'Hôtels et établissements' },
+  professional_immobilier: { icon: <Building2 size={20} />, description: 'Agents immobiliers' },
+  restaurateur: { icon: <UtensilsCrossed size={20} />, description: 'Restaurants et menus' },
+  admin: { icon: <UserCog size={20} />, description: 'Équipe d’administration' },
+};
+
 const isPro = (u: Row) => u.role !== 'client' && u.role !== 'admin';
 
 const REJECT_REASONS = [
@@ -42,15 +52,20 @@ const REJECT_REASONS = [
 export default function UsersPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const t = useTableState({ storageKey: 'users' });
+  const t = useTableState({ storageKey: 'users', restoreFromStorage: false, pushKeys: NAV });
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const role = t.state.filters['role'] ?? '';
+  const role0 = t.state.filters['role'] ?? '';
+  const role = role0 === 'all' ? '' : role0;
   const status = t.state.filters['status'] ?? '';
 
+  const depth = hubDepth(t.state.filters, NAV); // 0 : types · 1 : statuts · -1 : liste
+  const params = stripAll(t.queryParams, NAV);
+  if (depth !== -1) { params['limit'] = 1; params['page'] = 1; } // niveaux « cartes » : seuls les compteurs servent
+
   const { data, isLoading, isError, isFetching } = useQuery<any>({
-    queryKey: ['users', t.queryParams],
-    queryFn: () => usersService.getUsers(t.queryParams),
+    queryKey: ['users', params],
+    queryFn: () => usersService.getUsers(params),
     enabled: t.hydrated,
     placeholderData: keepPreviousData,
     retry: 1,
@@ -62,20 +77,25 @@ export default function UsersPage() {
   const counts: Record<string, number> = data?.counts ?? {};
   const typeCounts: Record<string, number> = data?.typeCounts ?? {};
 
-  const typeTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous', count: Object.values(typeCounts).reduce((a, b) => a + b, 0) },
-    ...ACCOUNT_TYPES.map((a) => ({ value: a.value, label: a.label, count: typeCounts[a.value] ?? 0 })),
-  ], [typeCounts]);
-
-  const statusTabs: TabItem[] = useMemo(() => [
-    { value: '', label: 'Tous', count: counts['all'] },
-    ...USER_STATUS_ORDER.map((s) => ({ value: s, label: USER_STATUS[s]!.label, tone: USER_STATUS[s]!.tone, count: counts[s] ?? 0 })),
-  ], [counts]);
+  const typeCards: HubCard[] = ACCOUNT_TYPES.map((a) => ({
+    value: a.value, label: a.label, count: typeCounts[a.value] ?? 0, ...TYPE_META[a.value],
+  }));
+  const statusCards: HubCard[] = [
+    ...USER_STATUS_ORDER.map((st) => ({ value: st, label: USER_STATUS[st]!.label, tone: USER_STATUS[st]!.tone, count: counts[st] ?? 0 })),
+    { value: 'all', label: 'Tous les statuts', count: counts['all'] },
+  ];
+  const roleLabelOf = ACCOUNT_TYPES.find((a) => a.value === role)?.label ?? 'Tous les comptes';
+  const statusLabelOf = status === 'all' ? 'Tous les statuts' : USER_STATUS[status]?.label ?? '';
 
   const selectedRows = users.filter((u) => selected.has(u.id));
   const refresh = () => { qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['kyc-pending'] }); };
 
-  const changeTab = (key: 'role' | 'status', value: string) => { setSelected(new Set()); t.setFilter(key, value); };
+  const choose = (key: 'role' | 'status', value: string) => { setSelected(new Set()); t.setFilter(key, value); };
+  const backTo = (d: number) => {
+    setSelected(new Set());
+    t.setFilters({ ...(d <= 1 ? { status: '' } : {}), ...(d <= 0 ? { role: '' } : {}) });
+    t.setSearch('');
+  };
 
   const handleExport = () => {
     downloadCsv(
@@ -175,99 +195,99 @@ export default function UsersPage() {
     },
   ];
 
+  const crumbs = [
+    { label: 'Utilisateurs', onClick: depth === 0 ? undefined : () => backTo(0) },
+    ...(role0 ? [{ label: roleLabelOf, onClick: depth === 1 ? undefined : () => backTo(1) }] : []),
+    ...(status ? [{ label: statusLabelOf }] : []),
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Utilisateurs</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {total.toLocaleString('fr-FR')} compte{total > 1 ? 's' : ''}
-            {role ? ` · ${ACCOUNT_TYPES.find((a) => a.value === role)?.label}` : ''}
-            {status ? ` · ${USER_STATUS[status]?.label}` : ''}
-          </p>
+          <div className="mt-1"><HubCrumbs items={crumbs} /></div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!users.length}>Exporter la vue (CSV)</Button>
+          {depth === -1 && <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!users.length}>Exporter la vue (CSV)</Button>}
           <Button size="sm" leftIcon={<UserCheck size={14} />} onClick={() => router.push('/users/kyc')}>File KYC</Button>
         </div>
       </div>
 
-      <Card padding={false}>
-        <div className="px-4 pt-2">
-          <StatusTabs variant="underline" tabs={typeTabs} value={role} onChange={(v) => changeTab('role', v)} />
-        </div>
-        <div className="px-4 pt-3">
-          <StatusTabs tabs={statusTabs} value={status} onChange={(v) => changeTab('status', v)} />
-        </div>
+      {depth === 0 && (
+        <>
+          <p className="text-sm text-gray-500">Choisissez un type de compte.</p>
+          <HubCards cards={typeCards} loading={isLoading || !t.hydrated} onSelect={(v) => choose('role', v)} />
+          <button type="button" onClick={() => { setSelected(new Set()); t.setFilters({ role: 'all', status: 'all' }); }} className="text-sm font-medium text-primary-700 hover:underline">
+            Voir tous les comptes dans une seule liste
+          </button>
+        </>
+      )}
 
-        <FilterBar
-          search={t.state.search}
-          onSearch={t.setSearch}
-          placeholder="Nom, email, téléphone…"
-          activeCount={t.activeFilterCount}
-          onReset={() => { setSelected(new Set()); t.reset(); }}
-        >
-          {role !== 'client' && role !== 'admin' && (
-            <input
-              type="search"
-              value={t.state.filters['city'] ?? ''}
-              onChange={(e) => t.setFilter('city', e.target.value)}
-              placeholder="Ville…"
-              className="input w-36"
-              aria-label="Filtrer par ville"
-            />
+      {depth === 1 && (
+        <>
+          <p className="text-sm text-gray-500">{roleLabelOf} — choisissez un statut.</p>
+          <HubCards cards={statusCards} loading={isLoading || !t.hydrated} onSelect={(v) => choose('status', v)} />
+        </>
+      )}
+
+      {depth === -1 && (
+        <Card padding={false}>
+          <FilterBar
+            search={t.state.search}
+            onSearch={t.setSearch}
+            placeholder="Nom, email, téléphone…"
+            activeCount={Object.entries(t.state.filters).filter(([k, v]) => !NAV.includes(k) && v).length + (t.state.search ? 1 : 0)}
+            onReset={() => { setSelected(new Set()); t.reset(NAV); }}
+          >
+            {role !== 'client' && role !== 'admin' && (
+              <input type="search" value={t.state.filters['city'] ?? ''} onChange={(e) => t.setFilter('city', e.target.value)} placeholder="Ville…" className="input w-36" aria-label="Filtrer par ville" />
+            )}
+            <select value={t.state.filters['period'] ?? ''} onChange={(e) => t.setFilters({ period: e.target.value, from: '', to: '' })} className="input w-44" aria-label="Période d'inscription">
+              {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+            <label className="flex items-center gap-1.5 text-xs text-gray-500">
+              Du
+              <input type="date" value={t.state.filters['from'] ?? ''} onChange={(e) => t.setFilters({ from: e.target.value, period: '' })} className="input !py-1.5 w-36" />
+              au
+              <input type="date" value={t.state.filters['to'] ?? ''} onChange={(e) => t.setFilters({ to: e.target.value, period: '' })} className="input !py-1.5 w-36" />
+            </label>
+          </FilterBar>
+
+          <BulkActionBar<Row>
+            items={selectedRows}
+            getId={(u) => u.id}
+            getName={(u) => `${u.firstName} ${u.lastName}`.trim() || u.email}
+            actions={actions}
+            noun="compte"
+            onClear={() => setSelected(new Set())}
+            onDone={refresh}
+          />
+
+          {isError ? (
+            <p className="text-center text-gray-400 py-10">Impossible de charger les utilisateurs.</p>
+          ) : (
+            <div className={isFetching && !isLoading ? 'opacity-70 transition-opacity' : ''}>
+              <Table<Row>
+                columns={columns}
+                data={users}
+                loading={isLoading || !t.hydrated}
+                keyExtractor={(u) => u.id}
+                emptyMessage="Aucun compte ne correspond à ces filtres"
+                onRowClick={(u) => router.push(`/users/${u.id}`)}
+                sortKey={t.state.sortKey}
+                sortDir={t.state.sortDir}
+                onSort={t.setSort}
+                selectable
+                selectedIds={selected}
+                onSelectionChange={setSelected}
+                rowAccent={(u) => toneAccent[USER_STATUS[u.displayStatus]?.tone ?? 'default']}
+              />
+              <Pagination page={t.state.page} totalPages={totalPages} onPageChange={t.setPage} total={total} pageSize={t.state.pageSize} onPageSizeChange={t.setPageSize} />
+            </div>
           )}
-          <select value={t.state.filters['period'] ?? ''} onChange={(e) => t.setFilters({ period: e.target.value, from: '', to: '' })} className="input w-44" aria-label="Période d'inscription">
-            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-          </select>
-          <label className="flex items-center gap-1.5 text-xs text-gray-500">
-            Du
-            <input type="date" value={t.state.filters['from'] ?? ''} onChange={(e) => t.setFilters({ from: e.target.value, period: '' })} className="input !py-1.5 w-36" />
-            au
-            <input type="date" value={t.state.filters['to'] ?? ''} onChange={(e) => t.setFilters({ to: e.target.value, period: '' })} className="input !py-1.5 w-36" />
-          </label>
-        </FilterBar>
-
-        <BulkActionBar<Row>
-          items={selectedRows}
-          getId={(u) => u.id}
-          getName={(u) => `${u.firstName} ${u.lastName}`.trim() || u.email}
-          actions={actions}
-          noun="compte"
-          onClear={() => setSelected(new Set())}
-          onDone={refresh}
-        />
-
-        {isError ? (
-          <p className="text-center text-gray-400 py-10">Impossible de charger les utilisateurs.</p>
-        ) : (
-          <div className={isFetching && !isLoading ? 'opacity-70 transition-opacity' : ''}>
-            <Table<Row>
-              columns={columns}
-              data={users}
-              loading={isLoading || !t.hydrated}
-              keyExtractor={(u) => u.id}
-              emptyMessage="Aucun compte ne correspond à ces filtres"
-              onRowClick={(u) => router.push(`/users/${u.id}`)}
-              sortKey={t.state.sortKey}
-              sortDir={t.state.sortDir}
-              onSort={t.setSort}
-              selectable
-              selectedIds={selected}
-              onSelectionChange={setSelected}
-              rowAccent={(u) => toneAccent[USER_STATUS[u.displayStatus]?.tone ?? 'default']}
-            />
-            <Pagination
-              page={t.state.page}
-              totalPages={totalPages}
-              onPageChange={t.setPage}
-              total={total}
-              pageSize={t.state.pageSize}
-              onPageSizeChange={t.setPageSize}
-            />
-          </div>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
