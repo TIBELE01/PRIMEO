@@ -24,6 +24,7 @@ import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal'
 import { trackEvent } from '../../../services/analytics';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledOptions, filterEnabledProperties, sectorOfPropertyType } from '../../../utils/sectors';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -238,7 +239,7 @@ export function SearchScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" backgroundColor={HEADER_BG} />
       <NetworkStatus />
 
       {/* Header */}
@@ -466,13 +467,13 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, backgroundColor: '#808080',
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, backgroundColor: HEADER_BG,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
   },
   backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
-  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111111', textAlign: 'center' },
+  backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: HEADER_FG, textAlign: 'center' },
   searchBox: { backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#E5E7EB', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   inputIcon: { fontSize: 18 },

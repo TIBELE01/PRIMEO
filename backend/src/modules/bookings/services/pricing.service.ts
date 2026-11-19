@@ -100,11 +100,8 @@ export const pricingService = {
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.status !== 'active') throw new HttpError(400, 'Cette propriété n\'est pas disponible à la réservation');
 
-    // Valider l'option de paiement — si paymentOptions vide/null, toutes les options sont acceptées
-    const allowedOptions = Array.isArray(property.paymentOptions) ? property.paymentOptions : [];
-    if (allowedOptions.length > 0 && !allowedOptions.includes(params.paymentOption)) {
-      throw new HttpError(400, `Cette propriété n'accepte pas l'option de paiement "${params.paymentOption}"`);
-    }
+    // Les 3 modes de paiement (100 % en ligne, 10 % + 90 % sur place, 100 % sur place) sont toujours
+    // proposés pour un séjour ; restaurants et immobilier sont déjà ramenés à « sur place » en amont.
 
     const nights = Math.round(
       (params.endDate.getTime() - params.startDate.getTime()) / (1000 * 60 * 60 * 24),

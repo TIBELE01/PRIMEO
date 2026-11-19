@@ -7,6 +7,7 @@ import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { foodOrdersApi, type CartItem, type FoodOrderDeliveryType } from '../../../services/api/endpoints/foodOrdersApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Props = ClientScreenProps<'RestaurantOrderCart'>;
 
@@ -208,10 +209,10 @@ export default function RestaurantOrderCartScreen({ navigation, route }: Props) 
 function makeStyles(t: Theme) {
   return StyleSheet.create({
     safe:               { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    header:             { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+    header:             { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
     backBtn:            { marginRight: 12 },
-    backText:           { fontSize: 16, color: t.colors.primary },
-    title:              { flex: 1, fontSize: 17, fontWeight: '700', color: t.colors.text },
+    backText:           { fontSize: 16, color: HEADER_FG},
+    title:              { flex: 1, fontSize: 17, fontWeight: '700', color: HEADER_FG},
     section:            { marginTop: 12, paddingHorizontal: 16 },
     sectionTitle:       { fontSize: 13, fontWeight: '700', color: t.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
     deliveryRow:        { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },

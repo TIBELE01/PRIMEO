@@ -1,6 +1,7 @@
 // NavigationHeader: custom header bar with title and optional left/right actions
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { HEADER_BG, HEADER_FG } from '../../theme/header';
 
 interface NavigationHeaderProps {
   title: string;
@@ -18,7 +19,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({ title, leftA
 );
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG },
   side: { width: 40, alignItems: 'center' },
-  title: { flex: 1, fontSize: 16, fontWeight: '700', color: '#1056E0', textAlign: 'center' },
+  title: { flex: 1, fontSize: 16, fontWeight: '700', color: HEADER_FG, textAlign: 'center' },
 });

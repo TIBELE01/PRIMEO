@@ -11,6 +11,7 @@ import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { uploadToCloudinary } from '../../../services/cloudinary';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // Couleur principale restaurant
 const PRIMARY  = '#DC2626';
@@ -462,8 +463,8 @@ export default function MenuManagementScreen() {
       {/* Stats + action */}
       <View style={styles.header}>
         <Text style={styles.headerSub}>{totalItems} article{totalItems !== 1 ? 's' : ''} · {availableCount} disponible{availableCount !== 1 ? 's' : ''}</Text>
-        <TouchableOpacity style={[styles.addBtn, { backgroundColor: PRIMARY }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
-          <Ionicons name="add" size={18} color="#fff" />
+        <TouchableOpacity style={[styles.addBtn, { backgroundColor: HEADER_FG }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
+          <Ionicons name="add" size={18} color={HEADER_BG} />
           <Text style={styles.addBtnText}>Ajouter</Text>
         </TouchableOpacity>
       </View>
@@ -875,10 +876,10 @@ const styles = StyleSheet.create({
   onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   // Header
-  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  headerSub:  { fontSize: 12, color: '#6B7280' },
+  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
+  headerSub:  { fontSize: 12, color: HEADER_SUBTLE},
   addBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  addBtnText: { color: HEADER_BG, fontWeight: '700', fontSize: 14 },
 
   // Onglets
   tabsRow:     { maxHeight: 50, flexGrow: 0, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },

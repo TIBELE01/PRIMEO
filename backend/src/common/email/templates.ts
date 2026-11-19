@@ -404,7 +404,7 @@ export function renderLocalTemplate(
     // ── 15 · Nouveau message ────────────────────────────────────────────────
     case 15:
       return {
-        subject: `Nouveau message de ${p('senderName') || 'un utilisateur'}`,
+        subject: p('senderName') ? `Nouveau message de ${p('senderName')}` : 'Nouveau message sur Primeo',
         html: renderEmail({
           title: 'Nouveau message',
           accent: 'primary',

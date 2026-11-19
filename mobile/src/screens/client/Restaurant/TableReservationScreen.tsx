@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { usersApi } from '../../../services/api/endpoints/users';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 const PRIMARY = '#DC2626';
 type Props = ClientScreenProps<'TableReservation'>;
@@ -145,7 +146,7 @@ export default function TableReservationScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => (step === 0 ? navigation.goBack() : setStep(s => s - 1))} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#111827" />
+          <Ionicons name="chevron-back" size={24} color={HEADER_FG} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Réserver une table</Text>
         <View style={{ width: 32 }} />
@@ -297,9 +298,9 @@ function Recap({ k, v }: { k: string; v: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
   backBtn: { width: 32, height: 32, justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '800', color: '#111827' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '800', color: HEADER_FG},
   progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingTop: 14 },
   progressItem: { flexDirection: 'row', alignItems: 'center' },
   progressDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },

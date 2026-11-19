@@ -22,55 +22,67 @@ function accentColor(accent: Accent): string {
   }
 }
 
-// ─── En-tête (logo + bandeau bleu officiel + liseré vert) ──────────────────────
-// L'en-tête est toujours bleu (couleur officielle Primeo), quel que soit le type
-// d'email, pour une identité de marque cohérente. Un fin liseré vert apporte une
-// touche de design.
+// ─── En-tête : logo officiel sur fond blanc + bandeau bleu Primeo + liseré orange ──
+// Le logo (texte bleu nuit) reste lisible sur fond blanc ; le bandeau bleu porte la
+// signature de la marque. Identique pour tous les emails (cohérence de marque).
 
 function renderHeader(_accent: Accent): string {
   const logo = EMAIL_LOGO_URL
-    ? `<img src="${EMAIL_LOGO_URL}" alt="Primeo" width="150" style="display:block;margin:0 auto;border:0;height:auto;max-width:150px;" />`
-    : `<span style="font-family:'Trebuchet MS',Arial,sans-serif;font-size:32px;font-weight:800;color:#ffffff;letter-spacing:3px;">PRIMEO</span>`;
+    ? `<a href="${EMAIL_LINKS.vitrine}" target="_blank" style="text-decoration:none;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="170" style="display:block;margin:0 auto;border:0;height:auto;max-width:170px;" /></a>`
+    : `<span style="font-family:'Trebuchet MS',Arial,sans-serif;font-size:32px;font-weight:800;color:${C.primary};letter-spacing:2px;">Primeo</span>`;
 
   return `
   <tr>
-    <td class="primeo-header" style="background:${C.primary};background-image:${G.primary};padding:36px 40px;text-align:center;">
+    <td class="primeo-header" style="background-color:#ffffff;padding:28px 40px 22px;text-align:center;">
       ${logo}
-      <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;font-family:Arial,sans-serif;letter-spacing:0.5px;">${COMPANY.tagline}</p>
     </td>
   </tr>
-  <tr><td style="height:4px;background:${C.success};background-image:${G.success};font-size:0;line-height:0;">&nbsp;</td></tr>`;
+  <tr>
+    <td style="background:${C.primary};background-image:${G.primary};padding:12px 40px;text-align:center;">
+      <p style="margin:0;color:#ffffff;font-size:13px;font-family:Arial,sans-serif;font-weight:600;letter-spacing:0.4px;">${COMPANY.tagline}</p>
+    </td>
+  </tr>
+  <tr><td style="height:4px;background:${C.secondary};background-image:${G.secondary};font-size:0;line-height:0;">&nbsp;</td></tr>`;
 }
 
-// ─── Pied de page (réseaux sociaux + liens légaux) ─────────────────────────────
+// ─── Pied de page : coordonnées, réseaux sociaux, liens légaux ──────────────────
 
 function renderSocialIcons(): string {
   const cells = EMAIL_SOCIALS.map(
     (s) => `
         <td style="padding:0 6px;">
           <a href="${s.url}" target="_blank" style="text-decoration:none;display:inline-block;">
-            <img src="${s.icon}" alt="${s.name}" width="34" height="34" style="display:block;border:0;border-radius:8px;" />
+            <img src="${s.icon}" alt="${s.name}" width="32" height="32" style="display:block;border:0;border-radius:8px;" />
           </a>
         </td>`,
   ).join('');
   return `<table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;"><tr>${cells}</tr></table>`;
 }
 
+function footerLink(url: string, label: string, strong = false): string {
+  return `<a href="${url}" target="_blank" style="color:#B9CBF2;font-family:Arial,sans-serif;font-size:13px;text-decoration:none;${strong ? 'font-weight:700;' : ''}">${label}</a>`;
+}
+
 function renderFooter(): string {
+  const sep = `<span style="color:#3C5488;font-size:13px;"> &nbsp;•&nbsp; </span>`;
   return `
+  <tr><td style="height:4px;background:${C.secondary};background-image:${G.secondary};font-size:0;line-height:0;">&nbsp;</td></tr>
   <tr>
-    <td style="background-color:${C.footerBg};padding:32px 40px;text-align:center;">
-      ${renderSocialIcons()}
-      <p style="margin:20px 0 0;">
-        <a href="${EMAIL_LINKS.vitrine}" target="_blank" style="color:#9FB4E0;font-family:Arial,sans-serif;font-size:13px;text-decoration:none;font-weight:600;">Visiter Primeo</a>
-        <span style="color:#3C5488;font-size:13px;"> &nbsp;•&nbsp; </span>
-        <a href="${EMAIL_LINKS.privacy}" target="_blank" style="color:#9FB4E0;font-family:Arial,sans-serif;font-size:13px;text-decoration:none;">Confidentialité</a>
-        <span style="color:#3C5488;font-size:13px;"> &nbsp;•&nbsp; </span>
-        <a href="${EMAIL_LINKS.terms}" target="_blank" style="color:#9FB4E0;font-family:Arial,sans-serif;font-size:13px;text-decoration:none;">Conditions</a>
+    <td style="background-color:${C.footerBg};padding:30px 40px 28px;text-align:center;">
+      <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:15px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">Besoin d’aide ? Nous sommes là.</p>
+      <p style="margin:0 0 18px;font-family:Arial,sans-serif;font-size:13px;line-height:1.8;color:#B9CBF2;">
+        <a href="mailto:${COMPANY.email}" style="color:#ffffff;text-decoration:none;font-weight:600;">${COMPANY.email}</a>
+        &nbsp;·&nbsp;
+        <a href="${COMPANY.phoneHref}" style="color:#ffffff;text-decoration:none;font-weight:600;">${COMPANY.phone}</a><br>
+        ${COMPANY.address}
       </p>
-      <p style="margin:18px 0 0;color:#6E82AC;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;">
+      ${renderSocialIcons()}
+      <p style="margin:20px 0 0;line-height:1.9;">
+        ${footerLink(EMAIL_LINKS.vitrine, 'Site Primeo', true)}${sep}${footerLink(EMAIL_LINKS.help, 'Centre d’aide')}${sep}${footerLink(EMAIL_LINKS.privacy, 'Politique de confidentialité')}${sep}${footerLink(EMAIL_LINKS.terms, 'Conditions d’utilisation')}${sep}${footerLink(EMAIL_LINKS.legal, 'Mentions légales')}
+      </p>
+      <p style="margin:16px 0 0;color:#7F93BD;font-family:Arial,sans-serif;font-size:11px;line-height:1.6;">
         © ${COMPANY.year} ${COMPANY.name} — ${COMPANY.address}<br>
-        Cet email vous a été envoyé suite à une action sur votre compte Primeo.
+        Vous recevez cet email suite à une action sur votre compte Primeo ou une demande de votre part.
       </p>
     </td>
   </tr>`;

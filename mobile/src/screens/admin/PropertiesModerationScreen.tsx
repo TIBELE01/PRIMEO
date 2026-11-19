@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 interface PendingProperty {
   id: string;
@@ -354,11 +355,11 @@ export default function PropertiesModerationScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Modération des annonces</Text>
         <TouchableOpacity onPress={() => load(true)}>
-          <Ionicons name="refresh-outline" size={20} color="#1056E0" />
+          <Ionicons name="refresh-outline" size={20} color={HEADER_FG} />
         </TouchableOpacity>
       </View>
 
@@ -440,11 +441,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB',
+    backgroundColor: HEADER_BG, paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
   },
   backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: HEADER_FG},
   scroll:      { padding: 16 },
   countBadge:  { backgroundColor: '#FEF3C7', borderRadius: 10, padding: 10, marginBottom: 12 },
   countText:   { fontSize: 14, fontWeight: '700', color: '#D97706', textAlign: 'center' },

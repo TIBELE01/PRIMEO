@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -227,7 +228,7 @@ function KycDetailModal({
         {/* Header */}
         <View style={det.header}>
           <TouchableOpacity onPress={onClose} style={det.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#111111" />
+            <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
           </TouchableOpacity>
           <Text style={det.headerTitle} numberOfLines={1}>
             {user.firstName} {user.lastName}
@@ -414,7 +415,7 @@ export default function UsersModerationScreen() {
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#111111" />
+          <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
         <View style={s.headerText}>
           <Text style={s.title}>Modération KYC</Text>
@@ -543,11 +544,11 @@ export default function UsersModerationScreen() {
 
 const s = StyleSheet.create({
   safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
-  header:        { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
+  header:        { backgroundColor: HEADER_BG, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:       { padding: 4 },
   headerText:    { flex: 1 },
-  title:         { fontSize: 18, fontWeight: '800', color: '#111111' },
-  subtitle:      { fontSize: 12, color: '#6B7280', marginTop: 1 },
+  title:         { fontSize: 18, fontWeight: '800', color: HEADER_FG},
+  subtitle:      { fontSize: 12, color: HEADER_SUBTLE, marginTop: 1 },
   searchWrap:    { flexDirection: 'row', alignItems: 'center', margin: 12, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E5E7EB', gap: 8 },
   searchIcon:    {},
   searchInput:   { flex: 1, fontSize: 14, color: '#111827' },
@@ -578,9 +579,9 @@ const s = StyleSheet.create({
 
 const det = StyleSheet.create({
   safe:       { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
-  header:     { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
+  header:     { backgroundColor: HEADER_BG, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:    { padding: 4 },
-  headerTitle:{ flex: 1, fontSize: 17, fontWeight: '800', color: '#111111' },
+  headerTitle:{ flex: 1, fontSize: 17, fontWeight: '800', color: HEADER_FG},
   statusBadge:{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   statusText: { fontSize: 11, fontWeight: '700' },
   section:    { margin: 12, backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },

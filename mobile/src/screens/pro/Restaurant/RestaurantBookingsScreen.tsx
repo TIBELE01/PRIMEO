@@ -151,8 +151,9 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
       try {
         await fn();
         onRefresh();
-      } catch {
-        Alert.alert('Erreur', errorMsg ?? 'Une erreur est survenue. Veuillez réessayer.');
+      } catch (e: any) {
+        const d = e?.response?.data;
+        Alert.alert('Erreur', d?.error ?? d?.message ?? errorMsg ?? 'Une erreur est survenue. Veuillez réessayer.');
       } finally {
         setLoadingAction(null);
       }
@@ -174,22 +175,19 @@ function BookingCard({ booking, tab, onRefresh }: BookingCardProps) {
     );
   };
 
+  // Alert.prompt n'existe que sur iOS : confirmation simple, compatible Android et iOS
   const handleRefuse = () => {
-    Alert.prompt(
+    Alert.alert(
       'Refuser la réservation',
-      'Motif du refus (optionnel)',
+      `Refuser la réservation de ${booking.client?.firstName ?? ''} ${booking.client?.lastName ?? ''} ? Le client sera notifié.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Refuser',
           style: 'destructive',
-          onPress: (value?: string) => {
-            const reason = value?.trim() || 'Refus par le restaurant';
-            runAction('refuse', () => bookingsApi.cancel(booking.id, reason));
-          },
+          onPress: () => runAction('refuse', () => bookingsApi.cancel(booking.id, 'Refus par le restaurant')),
         },
       ],
-      'plain-text',
     );
   };
 

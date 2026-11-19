@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const DAY_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -377,10 +378,10 @@ const CELL_SIZE = `${Math.floor(100/7)}%`;
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  header: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: 10, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
   headerActions: { flexDirection: 'row', gap: 8 },
-  icalBtn: { backgroundColor: '#EFF6FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE' },
-  icalBtnText: { fontSize: 12, color: '#1D4ED8', fontWeight: '700' },
+  icalBtn: { backgroundColor: HEADER_BUTTON_BG, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)'},
+  icalBtnText: { fontSize: 12, color: HEADER_FG, fontWeight: '700' },
   viewToggleRow: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   toggleBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5, borderColor: '#D1D5DB', alignItems: 'center' },
   toggleBtnActive: { borderColor: '#1056E0', backgroundColor: '#F0FDF4' },

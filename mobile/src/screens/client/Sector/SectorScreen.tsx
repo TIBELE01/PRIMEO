@@ -10,6 +10,7 @@ import { propertiesApi } from '@services/api/endpoints/properties';
 import type { Property } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../Home/PropertyCard';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -107,10 +108,10 @@ export function SectorScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={meta.color} />
+      <StatusBar barStyle="light-content" backgroundColor={HEADER_BG} />
 
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: meta.color }]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -204,13 +205,13 @@ export function SectorScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: HEADER_BG },
   backBtn: {},
-  backArrow: { fontSize: 22, color: '#fff', fontWeight: '300' },
+  backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '300' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerIcon: { fontSize: 20 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  filterBtn: { fontSize: 13, color: '#fff', fontWeight: '600', borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: HEADER_FG},
+  filterBtn: { fontSize: 13, color: HEADER_FG, fontWeight: '600', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   descBanner: { paddingHorizontal: 16, paddingVertical: 10 },
   descText: { fontSize: 13, color: '#374151', lineHeight: 18 },
   searchRow: { paddingHorizontal: 16, paddingVertical: 10 },

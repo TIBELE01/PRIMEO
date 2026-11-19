@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Props = ClientScreenProps<'RestaurantOrderTracking'>;
 
@@ -169,10 +170,10 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
 function makeStyles(t: Theme) {
   return StyleSheet.create({
     safe:         { flex: 1, backgroundColor: t.colors.background },
-    header:       { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+    header:       { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
     backBtn:      { marginRight: 12 },
-    backText:     { fontSize: 16, color: t.colors.primary },
-    title:        { fontSize: 17, fontWeight: '700', color: t.colors.text },
+    backText:     { fontSize: 16, color: HEADER_FG},
+    title:        { fontSize: 17, fontWeight: '700', color: HEADER_FG},
     emptyText:    { textAlign: 'center', marginTop: 40, color: t.colors.textSecondary },
     statusBanner: { margin: 16, borderRadius: 14, borderWidth: 1.5, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
     statusIcon:   { fontSize: 32 },

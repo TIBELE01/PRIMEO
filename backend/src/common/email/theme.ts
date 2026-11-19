@@ -34,17 +34,16 @@ export const EMAIL_GRADIENTS = {
 // Liens publics — réseaux sociaux officiels + site vitrine + mentions légales.
 // Les URLs des services sont configurables via variables d'environnement afin de
 // suivre les déploiements (Render, domaine personnalisé…) sans toucher au code.
-const VITRINE_FALLBACK = 'https://primeo-vitrine-gp6a.onrender.com';
-const LEGAL_FALLBACK = 'https://primeo-legal.onrender.com';
+const VITRINE_FALLBACK = 'https://primeo-vitrine-152o.onrender.com';
+const LEGAL_FALLBACK = 'https://primeo-legal-kg6t.onrender.com';
+const LEGAL_BASE = process.env['LEGAL_URL']?.trim() || LEGAL_FALLBACK;
 
 export const EMAIL_LINKS = {
   vitrine: process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK,
-  privacy:
-    process.env['PRIVACY_URL']?.trim() ||
-    `${process.env['LEGAL_URL']?.trim() || LEGAL_FALLBACK}/confidentialite`,
-  terms:
-    process.env['TERMS_URL']?.trim() ||
-    `${process.env['LEGAL_URL']?.trim() || LEGAL_FALLBACK}/conditions`,
+  help: `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/aide/`,
+  privacy: process.env['PRIVACY_URL']?.trim() || `${LEGAL_BASE}/confidentialite/`,
+  terms: process.env['TERMS_URL']?.trim() || `${LEGAL_BASE}/cgu/`,
+  legal: `${LEGAL_BASE}/mentions-legales/`,
 } as const;
 
 // Réseaux sociaux — icônes PNG (compatibles tous clients email, contrairement au
@@ -67,12 +66,16 @@ export const EMAIL_SOCIALS: ReadonlyArray<{ name: string; url: string; icon: str
   },
 ];
 
-// Logo : URL d'image (Cloudinary/CDN) si configurée, sinon wordmark texte stylisé.
-export const EMAIL_LOGO_URL = process.env['EMAIL_LOGO_URL']?.trim() || '';
+// Logo officiel (PNG, compatible tous clients email) — hébergé sur le site vitrine, surchargeable par variable d'environnement.
+export const EMAIL_LOGO_URL =
+  process.env['EMAIL_LOGO_URL']?.trim() || `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/assets/img/email-logo.png`;
 
 export const COMPANY = {
   name: 'Primeo CI',
-  tagline: 'La plateforme immobilière ivoirienne',
+  tagline: 'Résidences · Hôtels · Restaurants · Immobilier en Côte d’Ivoire',
   address: 'Abidjan, Côte d’Ivoire',
+  email: 'support.primeo@gmail.com',
+  phone: '+225 07 07 16 16 84',
+  phoneHref: 'tel:+2250707161684',
   year: new Date().getFullYear(),
 } as const;

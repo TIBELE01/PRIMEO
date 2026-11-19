@@ -11,6 +11,7 @@ import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscription } from '../../../hooks/useSubscription';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 const { width } = Dimensions.get('window');
 
@@ -229,13 +230,13 @@ export default function DashboardScreen({ navigation }: any) {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => load(true)} tintColor={theme.primary} />}
       >
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: theme.primary }]}>
+        <View style={styles.header}>
           <View>
             <Text style={styles.headerGreeting}>Bonjour, {firstName} 👋</Text>
             <Text style={styles.headerSub}>Voici votre tableau de bord</Text>
           </View>
           <TouchableOpacity onPress={() => load(true)} style={styles.refreshBtn} accessibilityRole="button" accessibilityLabel="Rafraîchir le tableau de bord">
-            <Ionicons name="refresh" size={20} color="#fff" />
+            <Ionicons name="refresh" size={20} color={HEADER_FG} />
           </TouchableOpacity>
         </View>
 
@@ -456,10 +457,9 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20,
-  },
-  headerGreeting: { fontSize: 20, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+    paddingHorizontal: 20, paddingVertical: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: HEADER_BG },
+  headerGreeting: { fontSize: 20, fontWeight: '800', color: HEADER_FG},
+  headerSub: { fontSize: 13, color: HEADER_SUBTLE, marginTop: 2 },
   refreshBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8 },
 
   body: { padding: 16, gap: 12 },

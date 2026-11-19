@@ -11,6 +11,7 @@ import { messagesApi } from '../../../services/api/endpoints/messages';
 import { socketService } from '../../../services/socket/socketService';
 import { useChatStore, type Message } from '../../../store/chatStore';
 import { useAuth } from '../../../hooks/useAuth';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // Stable reference so the Zustand selector never returns a new [] on each call
 // when messages[bookingId] is undefined — Object.is([], []) is false and would
@@ -467,16 +468,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16,
-    backgroundColor: '#808080',
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    backgroundColor: HEADER_BG,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
   },
   backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
-  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
+  backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
   headerInfo: { alignItems: 'center' },
-  headerName: { fontSize: 18, fontWeight: '800', color: '#111111', textAlign: 'center' },
-  typingLabel: { fontSize: 12, color: '#6B7280', fontStyle: 'italic', textAlign: 'center' },
+  headerName: { fontSize: 18, fontWeight: '800', color: HEADER_FG, textAlign: 'center' },
+  typingLabel: { fontSize: 12, color: HEADER_SUBTLE, fontStyle: 'italic', textAlign: 'center' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 12, gap: 6 },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },

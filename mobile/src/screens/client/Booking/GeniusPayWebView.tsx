@@ -5,6 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // Import conditionnel : WebView n'existe pas sur le web (iframe bloqué par CSP Genius Pay)
 let WebView: React.ComponentType<{
@@ -311,17 +312,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
-  },
+    borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   lockIcon: { fontSize: 16 },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: HEADER_FG},
   closeBtn: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: HEADER_BUTTON_BG,
     justifyContent: 'center', alignItems: 'center',
   },
-  closeText: { fontSize: 14, color: '#6B7280', fontWeight: '600' },
+  closeText: { fontSize: 14, color: HEADER_FG, fontWeight: '600' },
   webviewContainer: { flex: 1 },
   webview: { flex: 1 },
   loadingOverlay: {

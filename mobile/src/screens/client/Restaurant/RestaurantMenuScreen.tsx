@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ClientScreenProps, RestaurantDish } from '../../../navigation/types';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { useCurrency } from '../../../hooks/useCurrency';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 const PRIMARY = '#DC2626';
 const ALL = 'Tout';
@@ -84,7 +85,7 @@ export default function RestaurantMenuScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityLabel="Retour">
-          <Ionicons name="chevron-back" size={24} color="#111827" />
+          <Ionicons name="chevron-back" size={24} color={HEADER_FG} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{restaurantName ?? 'Menu'}</Text>
         <View style={{ width: 32 }} />
@@ -142,9 +143,9 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: '#6B7280', textAlign: 'center' },
   retryBtn: { backgroundColor: PRIMARY, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 },
   retryText: { color: '#fff', fontWeight: '700' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, backgroundColor: HEADER_BG, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG},
   backBtn: { width: 32, height: 32, justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '800', color: '#111827' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '800', color: HEADER_FG},
   filterWrap: { backgroundColor: '#fff', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   chips: { gap: 8, paddingHorizontal: 16, paddingVertical: 10 },
   chip: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },

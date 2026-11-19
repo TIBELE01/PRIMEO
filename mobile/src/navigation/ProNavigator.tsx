@@ -60,6 +60,7 @@ import RestaurantTablesScreen    from '../screens/pro/Restaurant/RestaurantTable
 // ─── Messaging (shared with client) ──────────────────────────────────────────
 import { ConversationsScreen } from '../screens/client/Messaging/ConversationsScreen';
 import { ChatScreen }          from '../screens/client/Messaging/ChatScreen';
+import { NATIVE_HEADER_OPTIONS } from '../theme/header';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyComp = React.ComponentType<any>;
@@ -103,13 +104,7 @@ function buildRoleNavigator(screens: ScreenDef[], tabs: TabDef[], themeColor = '
       return (
         <TabStack.Navigator
           initialRouteName={initialRoute}
-          screenOptions={{
-            headerStyle: { backgroundColor: '#808080' },
-            headerTintColor: '#111111',
-            headerTitleAlign: 'center' as const,
-            headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
-            headerShadowVisible: true,
-          }}
+          screenOptions={NATIVE_HEADER_OPTIONS}
         >
           {screens.map((s) => (
             <TabStack.Screen

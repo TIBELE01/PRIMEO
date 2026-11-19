@@ -13,6 +13,7 @@ import { useProTheme } from '../../../hooks/useProTheme';
 // The backend uses these status values
 type BookingStatus =
   | 'pending_payment'
+  | 'interest_expressed'
   | 'confirmed'
   | 'completed'
   | 'cancelled_by_client'
@@ -68,6 +69,7 @@ function RatingBar({ label, value }: { label: string; value: number }) {
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   pending_payment:           { bg: '#FEF3C7', text: '#D97706' },
+  interest_expressed:        { bg: '#DBEAFE', text: '#1E40AF' },
   confirmed:                 { bg: '#D1FAE5', text: '#065F46' },
   completed:                 { bg: '#F3F4F6', text: '#6B7280' },
   cancelled_by_client:       { bg: '#FEE2E2', text: '#DC2626' },
@@ -76,6 +78,7 @@ const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
 };
 const STATUS_LABEL: Record<string, string> = {
   pending_payment:           'En attente de confirmation',
+  interest_expressed:        'Intérêt exprimé',
   confirmed:                 'Confirmée',
   completed:                 'Terminée',
   cancelled_by_client:       'Annulée par le client',
@@ -147,7 +150,7 @@ export default function BookingDetailScreen() {
               await bookingsApi.confirm(bookingId);
               load();
             } catch (e: any) {
-              Alert.alert('Erreur', e?.response?.data?.message ?? 'Impossible de confirmer.');
+              Alert.alert('Erreur', e?.response?.data?.error ?? e?.response?.data?.message ?? 'Impossible de confirmer.');
             } finally {
               setActionLoading(null);
             }
@@ -172,7 +175,7 @@ export default function BookingDetailScreen() {
               await bookingsApi.cancel(bookingId, 'Refusé par le professionnel');
               load();
             } catch (e: any) {
-              Alert.alert('Erreur', e?.response?.data?.message ?? 'Impossible de refuser.');
+              Alert.alert('Erreur', e?.response?.data?.error ?? e?.response?.data?.message ?? 'Impossible de refuser.');
             } finally {
               setActionLoading(null);
             }
@@ -193,7 +196,7 @@ export default function BookingDetailScreen() {
             await bookingsApi.cancel(bookingId, 'Annulation par le professionnel');
             load();
           } catch (e: any) {
-            Alert.alert('Erreur', e?.response?.data?.message ?? "Impossible d'annuler.");
+            Alert.alert('Erreur', e?.response?.data?.error ?? e?.response?.data?.message ?? "Impossible d'annuler.");
           } finally {
             setActionLoading(null);
           }
@@ -208,7 +211,7 @@ export default function BookingDetailScreen() {
       await bookingsApi.markCashReceived(bookingId);
       load();
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.message ?? 'Impossible de marquer le paiement.');
+      Alert.alert('Erreur', e?.response?.data?.error ?? e?.response?.data?.message ?? 'Impossible de marquer le paiement.');
     } finally {
       setActionLoading(null);
     }
@@ -242,7 +245,7 @@ export default function BookingDetailScreen() {
   if (!booking) return null;
 
   const nights = nightCount(booking.checkIn, booking.checkOut);
-  const isPending  = booking.status === 'pending_payment';
+  const isPending  = booking.status === 'pending_payment' || booking.status === 'interest_expressed';
   const isConfirmed = booking.status === 'confirmed';
   const isCompleted = booking.status === 'completed';
   const isCancelled = booking.status.startsWith('cancelled') || booking.status === 'cancelled_by_professional';

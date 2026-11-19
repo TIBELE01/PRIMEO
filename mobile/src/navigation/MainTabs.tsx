@@ -56,6 +56,7 @@ import TableReservationScreen       from '../screens/client/Restaurant/TableRese
 import RestaurantOrderCartScreen    from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen     from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
+import { NATIVE_HEADER_OPTIONS } from '../theme/header';
 
 // ── Shared tab bar options factory ────────────────────────────────────────────
 
@@ -79,13 +80,7 @@ const MessagesStack = createNativeStackNavigator();
 const FavoritesStack = createNativeStackNavigator();
 const ProfileStack  = createNativeStackNavigator();
 
-const GREY_HEADER = {
-  headerStyle: { backgroundColor: '#808080' },
-  headerTintColor: '#111111',
-  headerTitleAlign: 'center' as const,
-  headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
-  headerShadowVisible: true,
-};
+const GREY_HEADER = NATIVE_HEADER_OPTIONS; // en-tête bleu Primeo, titre blanc
 
 /** Home tab: browse + category pages + property detail + booking */
 function HomeTabStack() {

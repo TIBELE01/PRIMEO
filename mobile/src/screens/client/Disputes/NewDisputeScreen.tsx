@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Props = ClientScreenProps<'NewDispute'>;
 
@@ -222,9 +223,9 @@ export function NewDisputeScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   scroll: { padding: 20, paddingBottom: 40 },
-  header: { marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#6B7280', lineHeight: 20 },
+  header: { marginBottom: 20, backgroundColor: HEADER_BG },
+  title: { fontSize: 24, fontWeight: '800', color: HEADER_FG, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: HEADER_SUBTLE, lineHeight: 20 },
   section: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 4 },
   minChars: { fontSize: 12, fontWeight: '400', color: '#9CA3AF' },

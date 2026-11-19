@@ -1,6 +1,7 @@
 // ChatHeader: top bar showing conversation participant name and online status
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 interface ChatHeaderProps {
   name: string;
@@ -22,10 +23,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ name, isOnline, onBack }
 };
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#1056E0' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: HEADER_BG},
   back: { marginRight: 12 },
-  backIcon: { color: '#fff', fontSize: 22 },
+  backIcon: { color: HEADER_FG, fontSize: 22 },
   info: {},
-  name: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  name: { color: HEADER_FG, fontSize: 16, fontWeight: '700' },
   status: { fontSize: 12 },
 });

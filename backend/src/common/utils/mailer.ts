@@ -90,6 +90,28 @@ async function sendViaBrevoApi(
   );
 }
 
+// ─── Habillage systématique aux couleurs de Primeo ─────────────────────────────
+
+/**
+ * Garantit que tout email envoyé porte la charte Primeo (logo, bandeau, pied de page
+ * avec coordonnées, réseaux et liens légaux). Un contenu déjà mis en page par
+ * renderEmail est conservé tel quel ; un contenu HTML simple est enveloppé.
+ */
+export function ensureBrandedEmail(html: string, subject: string): string {
+  if (!html || html.includes('primeo-card')) return html;
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const inner = (bodyMatch ? bodyMatch[1]! : html).replace(/<!DOCTYPE[^>]*>/gi, '').trim();
+  const title = subject.replace(/^\[?Primeo\]?\s*[—:-]?\s*/i, '').trim() || 'Primeo';
+  return renderEmail({
+    title,
+    preheader: title,
+    body:
+      heading(title) +
+      `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#333333;">${inner}</div>` +
+      `<p style="margin:24px 0 0;font-family:Arial,sans-serif;font-size:14px;color:#6B7280;">L'équipe Primeo</p>`,
+  });
+}
+
 // ─── Client bas niveau ────────────────────────────────────────────────────────
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -108,6 +130,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
   }
 
   const finalSubject = subject || 'Notification Primeo';
+  htmlContent = ensureBrandedEmail(htmlContent, finalSubject);
 
   for (const recipient of options.to) {
     // Vérifie si l'adresse a déjà bouncé

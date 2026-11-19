@@ -22,6 +22,7 @@ import {
   useSingleAccordion,
 } from '../../../components/ui/ProfileAccordion';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
@@ -228,7 +229,7 @@ export function ProfileScreen({ navigation }: Props) {
 
         {/* En-tête : avatar + nom + badge rôle */}
         <View style={styles.header}>
-          {loading && <ActivityIndicator color={ACCENT} style={styles.loadingIndicator} />}
+          {loading && <ActivityIndicator color={HEADER_FG} style={styles.loadingIndicator} />}
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
@@ -457,7 +458,7 @@ const styles = StyleSheet.create({
 
   // En-tête
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: HEADER_BG,
     alignItems: 'center',
     paddingTop: 36,
     paddingBottom: 28,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  avatar: { width: 88, height: 88, borderRadius: 44, marginBottom: 14 },
+  avatar: { width: 88, height: 88, borderRadius: 44, marginBottom: 14, borderWidth: 3, borderColor: HEADER_FG },
   avatarFallback: {
     width: 88,
     height: 88,
@@ -477,10 +478,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
+    borderWidth: 3,
+    borderColor: HEADER_FG,
   },
   avatarInitials: { color: '#fff', fontSize: 34, fontWeight: '800' },
-  headerName: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 4 },
-  headerEmail: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
+  headerName: { fontSize: 22, fontWeight: '800', color: HEADER_FG, marginBottom: 4 },
+  headerEmail: { fontSize: 14, color: HEADER_SUBTLE, marginBottom: 8 },
   roleBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 8 },
   roleBadgeText: { fontSize: 13, fontWeight: '700' },
   kycBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 4 },

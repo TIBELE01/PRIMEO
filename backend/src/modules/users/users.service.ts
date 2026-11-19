@@ -9,6 +9,7 @@ import { supabaseAdmin, supabaseAuth } from '../../config/supabase.config';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { renameCloudinaryAsset, setCloudinaryAssetFolder } from '../../common/utils/s3-client';
 import type { AccountType } from '@prisma/client';
+import { renderEmail, heading, signature } from '../../common/email/layout';
 
 // Reclasse un avatar uploadé en staging vers Primeo/Users/<Type>/<userId>/profile.
 // Best-effort : en cas d'échec, on conserve l'URL d'origine (toujours valide).
@@ -42,18 +43,13 @@ async function writeAudit(userId: string, action: string, meta?: Record<string, 
 
 // ── Aide email simple ──────────────────────────────────────────────────────────
 
+// Emails du module utilisateurs : charte Primeo commune (logo, bandeau, pied de page complet)
 function emailHtml(title: string, body: string): string {
-  return `<!DOCTYPE html><html lang="fr"><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:40px 0;">
-<table width="600" cellpadding="0" cellspacing="0" style="margin:auto;background:#fff;border-radius:8px;overflow:hidden;">
-  <tr><td style="background:#03154A;padding:28px 36px;color:#fff;font-size:22px;font-weight:700;">PRIMEO</td></tr>
-  <tr><td style="padding:36px;">
-    <h2 style="color:#03154A;margin:0 0 16px;">${title}</h2>
-    ${body}
-  </td></tr>
-  <tr><td style="background:#f9f9f9;padding:16px 36px;font-size:12px;color:#aaa;text-align:center;">
-    © ${new Date().getFullYear()} Primeo CI — Abidjan, Côte d'Ivoire
-  </td></tr>
-</table></body></html>`;
+  return renderEmail({
+    title,
+    preheader: title,
+    body: heading(title) + `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#333333;">${body}</div>` + signature(),
+  });
 }
 
 // ── Service ────────────────────────────────────────────────────────────────────

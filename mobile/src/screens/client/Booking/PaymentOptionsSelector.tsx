@@ -9,11 +9,11 @@ interface Props {
   totalAmount: number;
   onSelect: (option: PaymentChoice) => void;
   selected: PaymentChoice;
-  /** Modes acceptés par la propriété ; absent = tous. */
+  /** Conservé pour compatibilité : les 3 modes sont désormais toujours proposés. */
   allowed?: PaymentChoice[];
 }
 
-export const PaymentOptionsSelector: React.FC<Props> = ({ totalAmount, onSelect, selected, allowed }) => {
+export const PaymentOptionsSelector: React.FC<Props> = ({ totalAmount, onSelect, selected }) => {
   const tenPercent = Math.round(totalAmount * 0.1);
   const ninetyPercent = totalAmount - tenPercent;
 
@@ -53,7 +53,8 @@ export const PaymentOptionsSelector: React.FC<Props> = ({ totalAmount, onSelect,
     <View>
       <Text style={styles.title}>Mode de paiement</Text>
       <Text style={styles.subtitle}>Choisissez comment vous souhaitez payer</Text>
-      {options.filter(opt => !allowed || allowed.includes(opt.option)).map(opt => (
+      {/* Les 3 modes (100 % en ligne, 10 % + 90 % sur place, 100 % sur place) sont toujours proposés */}
+      {options.map(opt => (
         <PaymentOptionCard
           key={opt.option}
           testID={`payment-option-${opt.option}`}

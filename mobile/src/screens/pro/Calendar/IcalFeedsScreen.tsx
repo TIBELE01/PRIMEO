@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 interface IcalFeed {
   id: string;
@@ -229,11 +230,11 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#1056E0',
+    paddingHorizontal: 12, paddingVertical: 12, backgroundColor: HEADER_BG,
   },
   backBtn: { padding: 8, width: 40 },
-  backArrow: { fontSize: 22, color: '#FFFFFF', fontWeight: '600' },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#FFFFFF' },
+  backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
+  headerTitle: { fontSize: 17, fontWeight: '800', color: HEADER_FG},
   body: { padding: 16, paddingBottom: 40 },
   intro: { fontSize: 13, color: '#6B7280', lineHeight: 19, marginBottom: 16 },
   card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#EEF0F3' },

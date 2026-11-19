@@ -35,16 +35,11 @@ import RestaurantMenuScreen from '../screens/client/Restaurant/RestaurantMenuScr
 import RestaurantOrderCartScreen from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
+import { NATIVE_HEADER_OPTIONS } from '../theme/header';
 
 const Stack = createNativeStackNavigator<ClientStackParamList>();
 
-const BLUE_HEADER = {
-  headerStyle: { backgroundColor: '#808080' },
-  headerTintColor: '#111111',
-  headerTitleAlign: 'center' as const,
-  headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: '#111111' },
-  headerShadowVisible: true,
-};
+const BLUE_HEADER = NATIVE_HEADER_OPTIONS; // en-tête bleu Primeo, titre blanc
 
 export function ClientStack() {
   return (

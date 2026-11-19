@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG } from '../../theme/header';
 
 interface HeaderProps {
   title: string;
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: HEADER_BG,
     shadowColor: '#0F1729',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -48,13 +49,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: HEADER_BUTTON_BG,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 6,
   },
-  backArrow: { fontSize: 20, color: '#1056E0', fontWeight: '700' },
-  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#0F1729' },
+  backArrow: { fontSize: 20, color: HEADER_FG, fontWeight: '700' },
+  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: HEADER_FG },
   side: { width: 56, paddingHorizontal: 8 },
-  rightTxt: { color: '#1056E0', fontWeight: '600', fontSize: 14, textAlign: 'right' },
+  rightTxt: { color: HEADER_FG, fontWeight: '600', fontSize: 14, textAlign: 'right' },
 });

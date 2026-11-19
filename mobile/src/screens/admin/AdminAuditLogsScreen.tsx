@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminAuditApi } from '../../services/api/endpoints/adminApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 interface AuditLog {
   id: string;
@@ -131,13 +132,13 @@ export default function AdminAuditLogsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button">
-          <Ionicons name="arrow-back" size={24} color="#16224D" />
+          <Ionicons name="arrow-back" size={24} color={HEADER_FG} />
         </TouchableOpacity>
         <Text style={styles.title}>Journal d'audit</Text>
         <TouchableOpacity onPress={onExport} disabled={exporting} accessibilityRole="button">
           {exporting
-            ? <ActivityIndicator size="small" color="#1056E0" />
-            : <Ionicons name="download-outline" size={24} color="#1056E0" />}
+            ? <ActivityIndicator size="small" color={HEADER_FG} />
+            : <Ionicons name="download-outline" size={24} color={HEADER_FG} />}
         </TouchableOpacity>
       </View>
 
@@ -198,8 +199,8 @@ export default function AdminAuditLogsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 16, backgroundColor: '#F7F9FC' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-  title: { fontSize: 18, fontWeight: '800', color: '#16224D' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG },
+  title: { fontSize: 18, fontWeight: '800', color: HEADER_FG},
   searchBox: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 16,
     borderRadius: 10, paddingHorizontal: 12, height: 42, gap: 8, borderWidth: 1, borderColor: '#E5E9F0',

@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { boostsApi } from '../../../services/api/endpoints/boosts';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -500,9 +501,9 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   scroll: { padding: 16, paddingBottom: 48 },
 
-  header: { marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 14, color: '#6B7280', marginTop: 2 },
+  header: { marginBottom: 20, backgroundColor: HEADER_BG },
+  title: { fontSize: 24, fontWeight: '800', color: HEADER_FG},
+  subtitle: { fontSize: 14, color: HEADER_SUBTLE, marginTop: 2 },
 
   // Balance card
   balanceCard: {

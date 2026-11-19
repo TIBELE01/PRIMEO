@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { HEADER_BG, HEADER_FG } from '../../theme/header';
 
 interface PageHeaderProps {
   title: string;
@@ -9,7 +10,7 @@ interface PageHeaderProps {
 
 /**
  * En-tête uniforme de l'application.
- * — Fond gris doux et professionnel
+ * — Fond bleu Primeo, titre blanc
  * — Ombre portée marquée pour se détacher du contenu
  * — Titre centré, en gras
  * — Espace confortable en haut (le parent gère l'encoche via SafeAreaView)
@@ -25,7 +26,7 @@ export function PageHeader({ title, right }: PageHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#808080',
+    backgroundColor: HEADER_BG,
     paddingTop: 18,
     paddingBottom: 18,
     paddingHorizontal: 20,
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E2E6',
+    borderBottomColor: HEADER_BG,
     // Ombre portée forte (iOS + Android)
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#111111',
+    color: HEADER_FG,
     textAlign: 'center',
     letterSpacing: 0.5,
     textTransform: 'uppercase',

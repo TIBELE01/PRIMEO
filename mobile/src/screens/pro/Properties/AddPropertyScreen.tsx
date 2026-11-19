@@ -785,14 +785,6 @@ const ALL_PAYMENT_OPTIONS = ['full_online', 'ten_percent_online', 'zero_online']
 
 function StepTarification({ data, onChange, errors }: any) {
   const type: string = data.type ?? '';
-  const paymentOptions: string[] = data.paymentOptions ?? [];
-
-  const togglePayment = (key: string) => {
-    const updated = paymentOptions.includes(key)
-      ? paymentOptions.filter((p: string) => p !== key)
-      : [...paymentOptions, key];
-    onChange('paymentOptions', updated);
-  };
 
   if (isRealEstate(type)) {
     return (
@@ -858,29 +850,18 @@ function StepTarification({ data, onChange, errors }: any) {
       />
 
       <View style={styles.field}>
-        <FieldLabel label="Options de paiement acceptées" required />
-        <Text style={styles.fieldHint}>Sélectionnez au moins une option.</Text>
-        {ALL_PAYMENT_OPTIONS.map(key => {
-          const active = paymentOptions.includes(key);
-          return (
-            <TouchableOpacity
-              key={key}
-              style={[styles.paymentOptionRow, active && styles.paymentOptionRowActive]}
-              onPress={() => togglePayment(key)}
-              accessibilityRole="button"
-              accessibilityLabel={PAYMENT_OPTION_LABELS[key]}
-              accessibilityState={{ selected: active }}
-            >
-              <View style={[styles.paymentCheckbox, active && styles.paymentCheckboxActive]}>
-                {active && <Text style={styles.paymentCheckmark}>✓</Text>}
-              </View>
-              <Text style={[styles.paymentOptionText, active && styles.paymentOptionTextActive]}>
-                {PAYMENT_OPTION_LABELS[key]}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-        {errors.paymentOptions && <Text style={styles.fieldError}>{errors.paymentOptions}</Text>}
+        <FieldLabel label="Modes de paiement proposés au client" />
+        <Text style={styles.fieldHint}>Les trois modes sont toujours proposés lors de la réservation.</Text>
+        {ALL_PAYMENT_OPTIONS.map(key => (
+          <View key={key} style={[styles.paymentOptionRow, styles.paymentOptionRowActive]} accessibilityLabel={PAYMENT_OPTION_LABELS[key]}>
+            <View style={[styles.paymentCheckbox, styles.paymentCheckboxActive]}>
+              <Text style={styles.paymentCheckmark}>✓</Text>
+            </View>
+            <Text style={[styles.paymentOptionText, styles.paymentOptionTextActive]}>
+              {PAYMENT_OPTION_LABELS[key]}
+            </Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -1194,8 +1175,6 @@ function validateStep(stepName: string, data: Record<string, any>): Record<strin
       errors.pricePerMonth = 'Loyer mensuel requis';
     if ((type === 'immobilier_terrain' || type === 'immobilier_achat') && (!data.priceSale || data.priceSale <= 0))
       errors.priceSale = 'Prix de vente requis';
-    if (type === 'residence' && (!data.paymentOptions || (data.paymentOptions as string[]).length === 0))
-      errors.paymentOptions = 'Sélectionnez au moins une option de paiement';
   }
 
   return errors;
@@ -1232,7 +1211,7 @@ export default function AddPropertyScreen({ navigation, route }: any) {
     videoFiles:     [],
     mediaChoice:    'photos', // type de média exclusif : photos | video | threed
     roomTypes:      [],
-    paymentOptions: lockedType === 'restaurant' ? ['zero_online'] : ['full_online'],
+    paymentOptions: lockedType === 'restaurant' ? ['zero_online'] : ALL_PAYMENT_OPTIONS,
     instantBooking: true,
     // Type déterminé par le rôle ou les paramètres de navigation
     ...(initialType ? { type: initialType } : {}),
@@ -1366,7 +1345,8 @@ export default function AddPropertyScreen({ navigation, route }: any) {
         city:          formData.city,
         street:        formData.street,
         amenities:     formData.amenities ?? [],
-        paymentOptions:(formData.paymentOptions as string[]) ?? ['zero_online'],
+        // Séjours : les 3 modes toujours proposés ; restaurants et immobilier : paiement sur place
+        paymentOptions: (type === 'residence' || type === 'hotel') ? ALL_PAYMENT_OPTIONS : ((formData.paymentOptions as string[]) ?? ['zero_online']),
         capacity:      formData.capacity,
         surface:       formData.surface,
         cuisineType:   formData.cuisineType,

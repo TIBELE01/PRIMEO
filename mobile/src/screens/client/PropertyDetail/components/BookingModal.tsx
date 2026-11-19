@@ -26,13 +26,8 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
   const [checkIn, setCheckIn] = useState(todayStr());
   const [checkOut, setCheckOut] = useState(addDays(todayStr(), 3));
   const [guests, setGuests] = useState(1);
-  // Seuls les modes acceptés par la propriété sont proposés (sinon l'API refuse la réservation)
-  const allowed = (property.paymentOptions ?? []).filter((o): o is PaymentChoice =>
-    o === 'full_online' || o === 'ten_percent_online' || o === 'zero_online');
-  const allowedList = allowed.length > 0 ? allowed : undefined;
-  const [paymentOption, setPaymentOption] = useState<PaymentChoice>(
-    !allowedList || allowedList.includes('ten_percent_online') ? 'ten_percent_online' : allowedList[0],
-  );
+  // Les 3 modes de paiement sont toujours proposés (l'API les accepte tous pour un séjour)
+  const [paymentOption, setPaymentOption] = useState<PaymentChoice>('ten_percent_online');
   const [showCheckinCal, setShowCheckinCal] = useState(false);
   const [showCheckoutCal, setShowCheckoutCal] = useState(false);
 
@@ -117,7 +112,7 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
             totalAmount={totalAmount}
             selected={paymentOption}
             onSelect={setPaymentOption}
-            allowed={allowedList}
+            
           />
         </ScrollView>
 

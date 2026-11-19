@@ -8,6 +8,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { BookingInvoiceDownload } from '../../../components/booking/BookingInvoiceDownload';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -546,13 +547,13 @@ const styles = StyleSheet.create({
   // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, backgroundColor: '#808080',
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6',
+    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, backgroundColor: HEADER_BG,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backArrow: { fontSize: 26, color: '#111111', fontWeight: '700' },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: '#111111', textAlign: 'center' },
+  backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: HEADER_FG, textAlign: 'center' },
 
   scrollContent: { paddingBottom: 16 },
   heroImage: { width: '100%', height: 220 },

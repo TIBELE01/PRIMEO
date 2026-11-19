@@ -23,6 +23,7 @@ import { PaymentOptionsSelector, type PaymentChoice } from './PaymentOptionsSele
 import { useCurrency } from '../../../hooks/useCurrency';
 import { generateUUID } from '../../../utils/uuid';
 import { trackEvent } from '../../../services/analytics';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Props = {
   navigation: NativeStackNavigationProp<ClientStackParamList, 'Booking'>;
@@ -163,11 +164,7 @@ export function BookingScreen({ navigation, route }: Props) {
           if (paramPricePerNight == null && prop.pricePerNight != null) setPricePerNight(prop.pricePerNight);
           const cap = Number(prop.maxGuests ?? prop.capacity);
           if (Number.isFinite(cap) && cap > 0) setMaxGuests(cap);
-          if (Array.isArray(prop.paymentOptions)) {
-            const ok = (prop.paymentOptions as string[]).filter((o): o is PaymentChoice =>
-              o === 'full_online' || o === 'ten_percent_online' || o === 'zero_online');
-            if (ok.length > 0) setAllowedPayments(ok);
-          }
+          // Les 3 modes de paiement sont toujours proposés pour un séjour (plus de filtrage par annonce)
           if (prop.name && !propertyName) setResolvedPropertyName(prop.name);
         }
       }
@@ -836,7 +833,6 @@ export function BookingScreen({ navigation, route }: Props) {
               totalAmount={totalAmount}
               selected={paymentOption}
               onSelect={setPaymentOption}
-              allowed={allowedPayments ?? undefined}
             />
           </View>
         )}
@@ -1008,11 +1004,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
+    borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backArrow: { fontSize: 28, color: '#1056E0', lineHeight: 32 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  backArrow: { fontSize: 28, color: HEADER_FG, lineHeight: 32 },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: HEADER_FG},
 
   // Progression
   progressContainer: {

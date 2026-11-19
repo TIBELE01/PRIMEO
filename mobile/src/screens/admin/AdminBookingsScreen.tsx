@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function BookingDetailModal({ bookingId, onClose }: { bookingId: string; onClose
         {/* En-tête */}
         <View style={dm.header}>
           <TouchableOpacity onPress={onClose} style={dm.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#111111" />
+            <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
           </TouchableOpacity>
           <Text style={dm.headerTitle}>Détail de la réservation</Text>
           {cfg && (
@@ -254,14 +255,14 @@ export default function AdminBookingsScreen() {
       {/* En-tête */}
       <View style={sc.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={sc.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#111111" />
+          <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
         <View style={sc.headerText}>
           <Text style={sc.title}>Réservations</Text>
           <Text style={sc.subtitle}>{bookings.length} réservation{bookings.length !== 1 ? 's' : ''} au total</Text>
         </View>
         <TouchableOpacity onPress={() => fetchBookings(true)} style={sc.refreshBtn}>
-          <Ionicons name="refresh-outline" size={20} color="rgba(255,255,255,0.8)" />
+          <Ionicons name="refresh-outline" size={20} color={HEADER_FG} />
         </TouchableOpacity>
       </View>
 
@@ -345,11 +346,11 @@ export default function AdminBookingsScreen() {
 
 const sc = StyleSheet.create({
   safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
-  header:        { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
+  header:        { backgroundColor: HEADER_BG, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:       { padding: 4 },
   headerText:    { flex: 1 },
-  title:         { fontSize: 18, fontWeight: '800', color: '#111111' },
-  subtitle:      { fontSize: 12, color: '#6B7280', marginTop: 1 },
+  title:         { fontSize: 18, fontWeight: '800', color: HEADER_FG},
+  subtitle:      { fontSize: 12, color: HEADER_SUBTLE, marginTop: 1 },
   refreshBtn:    { padding: 4 },
   searchWrap:    { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1.5, borderColor: '#E5E7EB', gap: 8 },
   searchInput:   { flex: 1, fontSize: 14, color: '#111827' },
@@ -375,9 +376,9 @@ const sc = StyleSheet.create({
 
 const dm = StyleSheet.create({
   safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
-  header:        { backgroundColor: '#808080', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2E6', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
+  header:        { backgroundColor: HEADER_BG, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
   backBtn:       { padding: 4 },
-  headerTitle:   { flex: 1, fontSize: 17, fontWeight: '800', color: '#111111' },
+  headerTitle:   { flex: 1, fontSize: 17, fontWeight: '800', color: HEADER_FG},
   statusBadge:   { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   statusText:    { fontSize: 11, fontWeight: '700' },
   centered:      { flex: 1, alignItems: 'center', justifyContent: 'center' },

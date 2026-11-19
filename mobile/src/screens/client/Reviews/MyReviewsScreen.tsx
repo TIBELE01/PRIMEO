@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 interface Review {
   id: string;
@@ -267,10 +268,10 @@ export function MyReviewsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
   backBtn: { padding: 4, marginRight: 8 },
-  backArrow: { fontSize: 22, color: '#1056E0', fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
+  title: { fontSize: 20, fontWeight: '800', color: HEADER_FG},
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: 16 },
   emptyFlex: { flex: 1 },

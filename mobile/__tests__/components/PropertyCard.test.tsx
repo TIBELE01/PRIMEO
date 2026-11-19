@@ -39,8 +39,11 @@ describe('<PropertyCard />', () => {
     expect(onFavorite).toHaveBeenCalled();
   });
 
-  it('affiche le badge Premium selon badgeType', () => {
-    const { getByText } = render(<PropertyCard property={{ ...property, badgeType: 'premium' }} onPress={() => {}} />);
-    expect(getByText(/Premium/)).toBeTruthy();
+  // Les formules (dont « Premium ») ne sont plus affichées publiquement : seul le badge « Vérifié » subsiste
+  it('n\'affiche plus de badge Premium et conserve le badge Vérifié', () => {
+    const premium = render(<PropertyCard property={{ ...property, badgeType: 'premium' }} onPress={() => {}} />);
+    expect(premium.queryByText(/Premium/)).toBeNull();
+    const verified = render(<PropertyCard property={{ ...property, badgeType: 'verified' }} onPress={() => {}} />);
+    expect(verified.getByText(/Vérifié/)).toBeTruthy();
   });
 });

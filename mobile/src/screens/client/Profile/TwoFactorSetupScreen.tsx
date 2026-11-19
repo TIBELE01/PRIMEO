@@ -9,6 +9,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { usersApi } from '../../../services/api/endpoints/users';
 import { useAuthStore } from '../../../store/authStore';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ export default function TwoFactorSetupScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6FB" />
+      <StatusBar barStyle="light-content" backgroundColor={HEADER_BG} />
 
       {/* En-tête */}
       <View style={styles.topBar}>
@@ -295,13 +296,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#fff',
+    backgroundColor: HEADER_BG,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: HEADER_BG,
   },
   backBtn: { minWidth: 64 },
-  backText: { color: '#1056E0', fontSize: 15, fontWeight: '600' },
-  topTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  backText: { color: HEADER_FG, fontSize: 15, fontWeight: '600' },
+  topTitle: { fontSize: 17, fontWeight: '800', color: HEADER_FG},
   scroll: { padding: 16, paddingBottom: 48 },
 
   // Statut

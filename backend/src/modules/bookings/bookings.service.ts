@@ -676,8 +676,10 @@ export const bookingsService = {
     });
     if (!booking) throw new HttpError(404, 'Réservation introuvable');
     if (booking.property.ownerId !== professionalId) throw new HttpError(403, 'Accès non autorisé');
-    if (booking.status !== 'pending_payment') {
-      throw new HttpError(400, 'Seules les réservations en attente de paiement peuvent être confirmées');
+    // Réservation en attente (paiement ou, pour l'immobilier, intérêt exprimé sans paiement)
+    const CONFIRMABLE = ['pending_payment', 'interest_expressed'] as const;
+    if (!CONFIRMABLE.includes(booking.status as (typeof CONFIRMABLE)[number])) {
+      throw new HttpError(400, 'Seules les réservations en attente peuvent être confirmées');
     }
 
     // Confirmation manuelle par le professionnel : mêmes garanties que la
@@ -696,7 +698,7 @@ export const bookingsService = {
       }
       // Mise à jour conditionnelle : la réservation doit toujours être en attente
       const claimed = await tx.booking.updateMany({
-        where: { id, status: 'pending_payment' },
+        where: { id, status: { in: [...CONFIRMABLE] } },
         data: { status: 'confirmed', confirmedAt: new Date() },
       });
       if (claimed.count !== 1) {

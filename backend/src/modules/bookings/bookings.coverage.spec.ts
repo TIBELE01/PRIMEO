@@ -117,6 +117,15 @@ describe('confirm / complete / markCashReceived', () => {
     const r = await bookingsService.confirm('bk-1', 'o1');
     expect(r).toMatchObject({ status: 'confirmed' });
   });
+  it('confirm : accepte une demande « intérêt exprimé » (immobilier)', async () => {
+    mockPrisma.booking.findUnique.mockResolvedValue({
+      clientId: 'c1', propertyId: 'p1', status: 'interest_expressed',
+      startDate: new Date('2026-09-01'), endDate: new Date('2026-09-02'),
+      property: { ownerId: 'o1', propertyType: 'immobilier_location' },
+    });
+    const r = await bookingsService.confirm('bk-1', 'o1');
+    expect(r).toMatchObject({ status: 'confirmed' });
+  });
   it('complete : refuse si pas confirmé', async () => {
     mockPrisma.booking.findUnique.mockResolvedValue({ status: 'pending_payment', property: { ownerId: 'o1' } });
     mockPrisma.user.findUnique.mockResolvedValue({ accountType: 'professional_hotel' });

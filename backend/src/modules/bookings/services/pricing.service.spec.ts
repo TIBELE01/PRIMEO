@@ -69,12 +69,11 @@ describe('pricingService.compute', () => {
     await expect(pricingService.compute(baseParams)).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it('throws 400 when payment option is not allowed', async () => {
-    db.property!.findUnique.mockResolvedValueOnce(
-      makeProperty({ paymentOptions: ['zero_online'] }),
-    );
-    await expect(pricingService.compute({ ...baseParams, paymentOption: 'full_online' }))
-      .rejects.toMatchObject({ statusCode: 400 });
+  it('accepte les 3 modes de paiement quelle que soit la configuration de l\'annonce', async () => {
+    for (const paymentOption of ['full_online', 'ten_percent_online', 'zero_online'] as const) {
+      db.property!.findUnique.mockResolvedValueOnce(makeProperty({ paymentOptions: ['full_online'] }));
+      await expect(pricingService.compute({ ...baseParams, paymentOption })).resolves.toBeDefined();
+    }
   });
 
   it('throws 400 when endDate <= startDate (0 nights)', async () => {

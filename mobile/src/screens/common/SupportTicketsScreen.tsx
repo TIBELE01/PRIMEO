@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useState } from 'react';
 import { supportApi } from '../../services/api/endpoints/support';
 import type { SupportTicket, TicketStatus, TicketCategory } from '../../types/support';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 // ── Display helpers ───────────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ export default function SupportTicketsScreen() {
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={22} color="#0F1729" />
+          <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
         <Text style={s.headerText}>Mes tickets de support</Text>
         <TouchableOpacity
@@ -107,7 +108,7 @@ export default function SupportTicketsScreen() {
           style={s.newBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="add" size={20} color="#fff" />
+          <Ionicons name="add" size={20} color={HEADER_BG} />
         </TouchableOpacity>
       </View>
 
@@ -157,14 +158,14 @@ const s = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    backgroundColor: HEADER_BG,
+    borderBottomWidth: 1, borderBottomColor: HEADER_BG,
     shadowColor: '#0F1729', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
-  backBtn:    { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
-  headerText: { fontSize: 16, fontWeight: '700', color: '#0F1729', flex: 1, textAlign: 'center' },
-  newBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1056E0', alignItems: 'center', justifyContent: 'center' },
+  backBtn:    { width: 36, height: 36, borderRadius: 18, backgroundColor: HEADER_BUTTON_BG, alignItems: 'center', justifyContent: 'center' },
+  headerText: { fontSize: 16, fontWeight: '700', color: HEADER_FG, flex: 1, textAlign: 'center' },
+  newBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: HEADER_FG, alignItems: 'center', justifyContent: 'center' },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   listPad: { padding: 12, gap: 10 },

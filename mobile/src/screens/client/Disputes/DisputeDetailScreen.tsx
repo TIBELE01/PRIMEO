@@ -7,6 +7,7 @@ import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
 import { socketService } from '../../../services/socket/socketService';
 import { useAuth } from '../../../hooks/useAuth';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type DisputeStatus =
   | 'open'
@@ -370,11 +371,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12,
-    backgroundColor: '#1056E0', gap: 8,
+    backgroundColor: HEADER_BG, gap: 8,
   },
   backBtn: { padding: 6 },
-  backArrow: { fontSize: 22, color: '#FFFFFF', fontWeight: '600' },
-  headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
+  headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: HEADER_FG},
   headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)' },
   headerBadgeIcon: { fontSize: 12 },
   headerBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },

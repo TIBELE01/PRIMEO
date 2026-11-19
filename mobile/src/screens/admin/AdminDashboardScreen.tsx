@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
 import { useAuth } from '../../hooks/useAuth';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
 
 interface Stats {
   totalUsers?: number;
@@ -172,7 +173,7 @@ export default function AdminDashboardScreen() {
             <Text style={styles.role}>Administrateur PRIMEO</Text>
           </View>
           <TouchableOpacity onPress={() => logout().catch(() => null)} style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={22} color="#DC2626" />
+            <Ionicons name="log-out-outline" size={22} color={HEADER_FG} />
           </TouchableOpacity>
         </View>
 
@@ -371,11 +372,11 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#1056E0', borderRadius: 16, padding: 16, marginBottom: 20,
+    backgroundColor: HEADER_BG, borderRadius: 16, padding: 16, marginBottom: 20,
   },
   avatar:      { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   avatarText:  { fontSize: 18, fontWeight: '700', color: '#fff' },
-  greeting:    { fontSize: 16, fontWeight: '700', color: '#fff' },
+  greeting:    { fontSize: 16, fontWeight: '700', color: HEADER_FG},
   role:        { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   logoutBtn:   { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
 

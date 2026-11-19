@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
 
 type Props = ClientScreenProps<'MyRestaurantOrders'>;
 
@@ -121,10 +122,10 @@ export default function MyRestaurantOrdersScreen({ navigation }: Props) {
 function makeStyles(t: Theme) {
   return StyleSheet.create({
     safe:           { flex: 1, paddingTop: 16, backgroundColor: t.colors.background },
-    header:         { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+    header:         { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
     backBtn:        { marginRight: 12 },
-    backText:       { fontSize: 16, color: t.colors.primary },
-    title:          { fontSize: 17, fontWeight: '700', color: t.colors.text },
+    backText:       { fontSize: 16, color: HEADER_FG},
+    title:          { fontSize: 17, fontWeight: '700', color: HEADER_FG},
     card:           { backgroundColor: t.colors.surface, borderRadius: 14, marginBottom: 10, padding: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
     cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
     orderRef:       { fontSize: 15, fontWeight: '800', color: t.colors.text },
