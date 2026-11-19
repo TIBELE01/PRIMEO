@@ -8,7 +8,11 @@ export const favoritesService = {
     const favorites = await prisma.favorite.findMany({
       where: { userId },
       include: {
-        property: { include: { media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] } } },
+        property: { include: {
+          media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
+          // Biens « visite 3D » sans photo : 1re scène = couverture (URL seule)
+          scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
+        } },
       },
       orderBy: { createdAt: 'desc' },
     });
