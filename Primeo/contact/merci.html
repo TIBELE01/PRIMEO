@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Message envoyé — Primeo. Merci de nous avoir contactés, nous vous répondrons sous 24 heures ouvrées.">
   <meta name="robots" content="noindex, follow">
-  <title>Message envoyé — Primeo</title>
+  <title data-cms="contact-merci.meta.title" data-cms-type="text">Message envoyé — Primeo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -139,7 +139,7 @@
     }
   </style>
 </head>
-<body>
+<body data-cms-page="contact-merci">
   <div id="header-placeholder"></div>
 
   <main>
@@ -156,10 +156,10 @@
         </div>
 
         <!-- Title -->
-        <h1 class="merci-title">Message envoyé&nbsp;!</h1>
+        <h1 class="merci-title" data-cms="contact-merci.merci-page.h11" data-cms-type="text">Message envoyé&nbsp;!</h1>
 
         <!-- Subtitle -->
-        <p class="merci-text">
+        <p class="merci-text" data-cms="contact-merci.merci-page.p1" data-cms-type="html">
           Merci de nous avoir contactés. Notre équipe vous répondra
           dans les plus brefs délais
           <strong style="color:var(--color-text)">(généralement sous 24&nbsp;heures ouvrées)</strong>.
@@ -169,13 +169,13 @@
         <div class="merci-card">
           <div class="merci-card__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
           <div class="merci-card__body">
-            <p>Un email de confirmation vous a été envoyé à votre adresse.</p>
-            <p>Pensez à vérifier vos <strong>spams</strong> si vous ne le recevez pas d'ici quelques minutes.</p>
+            <p data-cms="contact-merci.merci-page.p2" data-cms-type="text">Un email de confirmation vous a été envoyé à votre adresse.</p>
+            <p data-cms="contact-merci.merci-page.p3" data-cms-type="html">Pensez à vérifier vos <strong>spams</strong> si vous ne le recevez pas d'ici quelques minutes.</p>
           </div>
         </div>
 
         <!-- CTA buttons -->
-        <div class="merci-actions">
+        <div class="merci-actions" data-cms="contact-merci.merci-page.div1" data-cms-type="html">
           <a href="/" class="btn btn-primary">← Retour à l'accueil</a>
           <a href="/aide/" class="btn btn-outline">Consulter le centre d'aide</a>
         </div>

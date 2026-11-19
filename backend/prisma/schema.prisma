@@ -1459,6 +1459,20 @@ model FoodOrderItem {
 // SITE VITRINE — Contenu administrable de la page d'accueil
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Blocs de contenu statique du site vitrine (textes, liens, images, compteurs) modifiables depuis
+// l'administration. Seules les valeurs MODIFIÉES sont stockées : le registre des blocs (clé, page,
+// valeur par défaut) est versionné dans le code ; une clé absente = texte d'origine de la page.
+model WebsiteContentBlock {
+  key       String   @id
+  page      String
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([page])
+  @@map("website_content_blocks")
+}
+
 model WebsiteHero {
   id            String   @id @default(cuid())
   title         String

@@ -6,7 +6,7 @@
   <meta name="description" content="Découvrez les services Primeo : Shooting Photo professionnel (panoramiques 360°), PrimeoPay (paiement sécurisé Mobile Money & carte bancaire) et formations en ligne pour les professionnels.">
   <meta name="robots" content="index, follow">
   <meta name="api-url" content="https://api-primeo.onrender.com">
-  <title>Nos Produits — Primeo</title>
+  <title data-cms="produits.meta.title" data-cms-type="text">Nos Produits — Primeo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
@@ -35,16 +35,16 @@
   {"@context":"https://schema.org","@type":"ItemList","url":"https://primeo.ci/produits/","name":"Produits & Services Primeo","description":"Shooting photo professionnel, PrimeoPay (paiement sécurisé) et formations en ligne pour les professionnels.","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"Service","name":"Shooting Photo","description":"Shooting photo professionnel incluant des panoramiques 360°, une retouche professionnelle et une livraison rapide.","brand":{"@id":"https://primeo.ci/#organization"}}},{"@type":"ListItem","position":2,"item":{"@type":"Service","name":"PrimeoPay","description":"Solution de paiement sécurisée et intégrée : Mobile Money (Orange, MTN, Wave), cartes bancaires et reversements automatiques aux professionnels.","brand":{"@id":"https://primeo.ci/#organization"}}},{"@type":"ListItem","position":3,"item":{"@type":"Service","name":"Formation","description":"Formations en ligne pour optimiser ses annonces, utiliser la visite 3D, gérer ses réservations et développer son activité.","brand":{"@id":"https://primeo.ci/#organization"}}}]}
   </script>
 </head>
-<body>
+<body data-cms-page="produits">
   <div id="header-placeholder"></div>
 
   <main>
     <!-- Hero -->
     <section class="page-hero">
       <div class="container">
-        <p class="page-hero__label">Nos services</p>
-        <h1>Nos Produits</h1>
-        <p>Des services pensés pour valoriser vos biens, sécuriser vos paiements et développer votre activité sur Primeo.</p>
+        <p class="page-hero__label" data-cms="produits.page-hero.p1" data-cms-type="text">Nos services</p>
+        <h1 data-cms="produits.page-hero.h11" data-cms-type="text">Nos Produits</h1>
+        <p data-cms="produits.page-hero.p2" data-cms-type="text">Des services pensés pour valoriser vos biens, sécuriser vos paiements et développer votre activité sur Primeo.</p>
       </div>
     </section>
 
@@ -52,8 +52,8 @@
     <section class="section">
       <div class="container">
         <div class="section-header reveal">
-          <h2>Des services conçus pour votre réussite</h2>
-          <p>Au-delà de la plateforme, Primeo met à votre disposition des services professionnels pour mettre en valeur vos biens, encaisser vos paiements en toute sécurité et monter en compétence. Découvrez nos trois offres.</p>
+          <h2 data-cms="produits.section.h21" data-cms-type="text">Des services conçus pour votre réussite</h2>
+          <p data-cms="produits.section.p1" data-cms-type="text">Au-delà de la plateforme, Primeo met à votre disposition des services professionnels pour mettre en valeur vos biens, encaisser vos paiements en toute sécurité et monter en compétence. Découvrez nos trois offres.</p>
         </div>
       </div>
     </section>
@@ -66,62 +66,62 @@
           <!-- Produit 1 : Shooting Photo -->
           <article class="product-showcase reveal" id="shooting-photo">
             <div class="product-showcase__media">
-              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433592/primeo/Website/products/shooting-photo.jpg" alt="Shooting photo professionnel d'un bien Primeo" loading="lazy" width="900" height="780" />
+              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433592/primeo/Website/products/shooting-photo.jpg" alt="Shooting photo professionnel d'un bien Primeo" loading="lazy" width="900" height="780"  data-cms-src="produits.shooting-photo.img1"/>
             </div>
             <div class="product-showcase__body">
-              <span class="prod-eyebrow">Service professionnel</span>
-              <h2>Shooting Photo</h2>
-              <p>Sublimez vos biens avec des images haute définition et des panoramiques&nbsp;360°. Nos photographes capturent vos espaces sous leur meilleur jour pour attirer l'œil et multiplier vos réservations.</p>
+              <span class="prod-eyebrow" data-cms="produits.shooting-photo.span1" data-cms-type="text">Service professionnel</span>
+              <h2 data-cms="produits.shooting-photo.h21" data-cms-type="text">Shooting Photo</h2>
+              <p data-cms="produits.shooting-photo.p1" data-cms-type="text">Sublimez vos biens avec des images haute définition et des panoramiques&nbsp;360°. Nos photographes capturent vos espaces sous leur meilleur jour pour attirer l'œil et multiplier vos réservations.</p>
               <ul class="prod-benefits">
-                <li>Photos haute définition</li>
-                <li>Panoramiques 360° immersifs</li>
-                <li>Retouche professionnelle</li>
-                <li>Livraison rapide (48–72&nbsp;h)</li>
+                <li data-cms="produits.shooting-photo.li1" data-cms-type="text">Photos haute définition</li>
+                <li data-cms="produits.shooting-photo.li2" data-cms-type="text">Panoramiques 360° immersifs</li>
+                <li data-cms="produits.shooting-photo.li3" data-cms-type="text">Retouche professionnelle</li>
+                <li data-cms="produits.shooting-photo.li4" data-cms-type="text">Livraison rapide (48–72&nbsp;h)</li>
               </ul>
-              <p class="prod-audience"><strong>Pour qui&nbsp;?</strong> Propriétaires, hôteliers, agents immobiliers et restaurateurs.</p>
-              <a href="/contact/?produit=shooting-photo" class="btn btn-primary btn-lg">Demander un devis</a>
+              <p class="prod-audience" data-cms="produits.shooting-photo.p2" data-cms-type="html"><strong>Pour qui&nbsp;?</strong> Propriétaires, hôteliers, agents immobiliers et restaurateurs.</p>
+              <a href="/contact/?produit=shooting-photo" class="btn btn-primary btn-lg" data-cms-href="produits.shooting-photo.a1-href" data-cms="produits.shooting-photo.a1" data-cms-type="text">Demander un devis</a>
             </div>
           </article>
 
           <!-- Produit 2 : PrimeoPay -->
           <article class="product-showcase product-showcase--reverse reveal" id="primeopay">
             <div class="product-showcase__media">
-              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433599/primeo/Website/products/primeopay.jpg" alt="PrimeoPay — paiement Mobile Money et carte bancaire" loading="lazy" width="900" height="780" />
-              <span class="product-showcase__badge">Sécurisé</span>
+              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433599/primeo/Website/products/primeopay.jpg" alt="PrimeoPay — paiement Mobile Money et carte bancaire" loading="lazy" width="900" height="780"  data-cms-src="produits.primeopay.img1"/>
+              <span class="product-showcase__badge" data-cms="produits.primeopay.span1" data-cms-type="text">Sécurisé</span>
             </div>
             <div class="product-showcase__body">
-              <span class="prod-eyebrow">Paiement sécurisé</span>
-              <h2>PrimeoPay</h2>
-              <p>Encaissez en toute sérénité. PrimeoPay permet à vos clients de payer en ligne via Mobile Money ou carte bancaire, et vous reverse automatiquement vos paiements&nbsp;— rapidement et sans tracas.</p>
+              <span class="prod-eyebrow" data-cms="produits.primeopay.span2" data-cms-type="text">Paiement sécurisé</span>
+              <h2 data-cms="produits.primeopay.h21" data-cms-type="text">PrimeoPay</h2>
+              <p data-cms="produits.primeopay.p1" data-cms-type="text">Encaissez en toute sérénité. PrimeoPay permet à vos clients de payer en ligne via Mobile Money ou carte bancaire, et vous reverse automatiquement vos paiements&nbsp;— rapidement et sans tracas.</p>
               <ul class="prod-benefits">
-                <li>Paiement 100&nbsp;% sécurisé</li>
-                <li>Mobile Money — Orange, MTN, Wave</li>
-                <li>Cartes bancaires (Visa, Mastercard)</li>
-                <li>Reversements automatiques aux professionnels</li>
-                <li>Historique des transactions</li>
+                <li data-cms="produits.primeopay.li1" data-cms-type="text">Paiement 100&nbsp;% sécurisé</li>
+                <li data-cms="produits.primeopay.li2" data-cms-type="text">Mobile Money — Orange, MTN, Wave</li>
+                <li data-cms="produits.primeopay.li3" data-cms-type="text">Cartes bancaires (Visa, Mastercard)</li>
+                <li data-cms="produits.primeopay.li4" data-cms-type="text">Reversements automatiques aux professionnels</li>
+                <li data-cms="produits.primeopay.li5" data-cms-type="text">Historique des transactions</li>
               </ul>
-              <p class="prod-audience"><strong>Pour qui&nbsp;?</strong> Clients et professionnels.</p>
-              <a href="/documentation/" class="btn btn-primary btn-lg">En savoir plus</a>
+              <p class="prod-audience" data-cms="produits.primeopay.p2" data-cms-type="html"><strong>Pour qui&nbsp;?</strong> Clients et professionnels.</p>
+              <a href="/documentation/" class="btn btn-primary btn-lg" data-cms-href="produits.primeopay.a1-href" data-cms="produits.primeopay.a1" data-cms-type="text">En savoir plus</a>
             </div>
           </article>
 
           <!-- Produit 3 : Formation -->
           <article class="product-showcase reveal" id="formation">
             <div class="product-showcase__media">
-              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433604/primeo/Website/products/formation.jpg" alt="Formations en ligne Primeo pour professionnels" loading="lazy" width="900" height="780" />
+              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_900,h_780/v1782433604/primeo/Website/products/formation.jpg" alt="Formations en ligne Primeo pour professionnels" loading="lazy" width="900" height="780"  data-cms-src="produits.formation.img1"/>
             </div>
             <div class="product-showcase__body">
-              <span class="prod-eyebrow">Formations en ligne</span>
-              <h2>Formation</h2>
-              <p>Montez en compétence et développez votre activité. Nos formations en ligne vous apprennent à créer des annonces percutantes, à exploiter la visite&nbsp;3D, à gérer vos réservations et à maximiser vos revenus.</p>
+              <span class="prod-eyebrow" data-cms="produits.formation.span1" data-cms-type="text">Formations en ligne</span>
+              <h2 data-cms="produits.formation.h21" data-cms-type="text">Formation</h2>
+              <p data-cms="produits.formation.p1" data-cms-type="text">Montez en compétence et développez votre activité. Nos formations en ligne vous apprennent à créer des annonces percutantes, à exploiter la visite&nbsp;3D, à gérer vos réservations et à maximiser vos revenus.</p>
               <ul class="prod-benefits">
-                <li>Optimisation des annonces</li>
-                <li>Gestion locative</li>
-                <li>Outils Primeo (visites 3D, vidéos)</li>
-                <li>Techniques de fidélisation client</li>
+                <li data-cms="produits.formation.li1" data-cms-type="text">Optimisation des annonces</li>
+                <li data-cms="produits.formation.li2" data-cms-type="text">Gestion locative</li>
+                <li data-cms="produits.formation.li3" data-cms-type="text">Outils Primeo (visites 3D, vidéos)</li>
+                <li data-cms="produits.formation.li4" data-cms-type="text">Techniques de fidélisation client</li>
               </ul>
-              <p class="prod-audience"><strong>Pour qui&nbsp;?</strong> Professionnels — propriétaires, hôteliers et restaurants.</p>
-              <a href="/contact/?produit=formation" class="btn btn-primary btn-lg">Découvrir nos formations</a>
+              <p class="prod-audience" data-cms="produits.formation.p2" data-cms-type="html"><strong>Pour qui&nbsp;?</strong> Professionnels — propriétaires, hôteliers et restaurants.</p>
+              <a href="/contact/?produit=formation" class="btn btn-primary btn-lg" data-cms-href="produits.formation.a1-href" data-cms="produits.formation.a1" data-cms-type="text">Découvrir nos formations</a>
             </div>
           </article>
 
@@ -133,9 +133,9 @@
     <section class="section">
       <div class="container text-center">
         <div class="reveal">
-          <h2>Intéressé par l'un de nos services ?</h2>
-          <p class="text-muted mt-2" style="margin-bottom:2rem;">Contactez notre équipe pour un accompagnement personnalisé et un devis adapté à vos besoins.</p>
-          <div class="hero-actions">
+          <h2 data-cms="produits.section.h22" data-cms-type="text">Intéressé par l'un de nos services ?</h2>
+          <p class="text-muted mt-2" style="margin-bottom:2rem;" data-cms="produits.section.p2" data-cms-type="text">Contactez notre équipe pour un accompagnement personnalisé et un devis adapté à vos besoins.</p>
+          <div class="hero-actions" data-cms="produits.section.div1" data-cms-type="html">
             <a href="/contact/" class="btn btn-primary btn-lg">Contacter notre équipe</a>
             <a href="/telechargement/" class="btn btn-outline btn-lg">Télécharger l'application</a>
           </div>

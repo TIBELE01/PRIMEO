@@ -4,15 +4,20 @@ import Link from 'next/link';
 import {
   Globe, Type, Megaphone, Package, HelpCircle, Star, LayoutList,
   Briefcase, Info, MessageSquare, Rss, LifeBuoy, Handshake, Users,
-  CheckCircle2, AlertCircle, Loader2, RefreshCw, CloudUpload, ExternalLink,
+  CheckCircle2, AlertCircle, Loader2, RefreshCw, CloudUpload, ExternalLink, FileText,
 } from 'lucide-react';
-import { websiteService, analyticsService } from '@/services/api';
+import { websiteService, websiteContentService, analyticsService } from '@/services/api';
 import { syncWebsiteDefaults, SyncResult } from '@/services/websiteSync';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
 // ── Section definitions ───────────────────────────────────────────────────────
 const SECTIONS = [
+  {
+    href: '/website/content', icon: FileText, label: 'Contenu des pages',
+    desc: 'Tous les textes, liens, images et chiffres de chaque page (accueil, produits, contact, documentation…).',
+    check: () => websiteContentService.pages().then(d => (d?.total ?? 0) > 0),
+  },
   {
     href: '/website/hero', icon: Type, label: 'Hero',
     desc: "Titre, sous-titre, bouton et image de la section d'en-tête.",

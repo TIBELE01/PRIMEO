@@ -165,6 +165,24 @@ export const supportService = {
 };
 
 // ── Site vitrine — administration de la page d'accueil ───────────────────────
+export interface ContentBlock {
+  key: string; page: string; section: string; tag: string; type: 'text' | 'html' | 'link' | 'image' | 'number';
+  default: string; suffix?: string; alt?: string; value: string | null; isModified: boolean; updatedAt: string | null;
+}
+export interface ContentPage { page: string; label: string; total: number; modified: number }
+
+// Blocs de contenu statique du site vitrine (textes, liens, images, compteurs de chaque page)
+export const websiteContentService = {
+  pages: () => api.get<{ data: ContentPage[]; total: number }>('/website/admin/content/pages'),
+  list: (page: string, q?: string) => api.get<{ data: ContentBlock[] }>('/website/admin/content', { page, q: q || undefined }),
+  save: (key: string, value: string) => api.put<any>(`/website/admin/content/${encodeURIComponent(key)}`, { value }),
+  reset: (key: string) => api.delete<any>(`/website/admin/content/${encodeURIComponent(key)}`),
+  uploadImage: (file: File) => {
+    const fd = new FormData(); fd.append('file', file);
+    return api.uploadFile<{ url: string }>('/website/admin/content/image', fd);
+  },
+};
+
 export const websiteService = {
   // Hero
   getHero: () => api.get<any>('/website/home/hero'),

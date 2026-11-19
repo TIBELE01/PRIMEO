@@ -1123,3 +1123,41 @@ export async function adminUpdateChallenge(req: Request, res: Response, next: Ne
 export async function adminDeleteChallenge(req: Request, res: Response, next: NextFunction): Promise<void> {
   try { res.json(await websiteService.adminDeleteChallenge(req.params.id)); } catch (e) { next(e); }
 }
+
+// ── Blocs de contenu statique (site vitrine) ─────────────────────────────────
+
+import { websiteContentService, REGISTRY as CONTENT_REGISTRY } from './website-content.service';
+
+export async function getPublicContent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const page = String(req.query['page'] ?? '');
+    const blocks = await websiteContentService.publicBlocks(page);
+    res.setHeader('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
+    res.json({ page, blocks });
+  } catch (e) { next(e); }
+}
+
+export async function adminContentPages(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json({ data: await websiteContentService.adminPages(), total: CONTENT_REGISTRY.length }); } catch (e) { next(e); }
+}
+
+export async function adminListContent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json({ data: await websiteContentService.adminList({ page: req.query['page'] as string | undefined, q: req.query['q'] as string | undefined }) });
+  } catch (e) { next(e); }
+}
+
+export async function adminUpsertContent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await websiteContentService.upsert(decodeURIComponent(req.params['key']!), req.body?.value, req.user!.sub, req.ip)); } catch (e) { next(e); }
+}
+
+export async function adminResetContent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await websiteContentService.reset(decodeURIComponent(req.params['key']!), req.user!.sub, req.ip)); } catch (e) { next(e); }
+}
+
+export async function adminUploadContentImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.file) { res.status(400).json({ message: 'Fichier manquant' }); return; }
+    res.status(201).json(await websiteContentService.uploadImage(req.file.buffer, req.file.originalname));
+  } catch (e) { next(e); }
+}

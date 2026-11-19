@@ -61,8 +61,18 @@ websiteRouter.get('/careers/jobs',                c.getCareersJobs);
 websiteRouter.get('/careers/jobs/:id',            c.getCareersJobById);
 websiteRouter.post('/careers/spontaneous', spontaneousLimiter, upload.single('cv'), c.submitSpontaneous);
 
+// Blocs de contenu statique du site vitrine (valeurs modifiées d'une page)
+websiteRouter.get('/content', c.getPublicContent);
+
 // ── Admin (super_admin + moderateur) ──────────────────────────────────────────
 websiteRouter.use('/admin', authenticate, authorize('admin'));
+
+// Blocs de contenu statique : liste, modification, rétablissement, image
+websiteRouter.get('/admin/content/pages',    c.adminContentPages);
+websiteRouter.get('/admin/content',          c.adminListContent);
+websiteRouter.post('/admin/content/image',   upload.single('file'), c.adminUploadContentImage);
+websiteRouter.put('/admin/content/:key',     c.adminUpsertContent);
+websiteRouter.delete('/admin/content/:key',  c.adminResetContent);
 
 // Hero
 websiteRouter.put('/admin/hero',              c.adminUpdateHero);

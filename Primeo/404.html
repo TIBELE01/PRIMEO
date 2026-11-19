@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Page introuvable — Primeo. Cette page n'existe pas ou a été déplacée.">
   <meta name="robots" content="noindex, follow">
-  <title>404 — Page introuvable · Primeo</title>
+  <title data-cms="erreur-404.meta.title" data-cms-type="text">404 — Page introuvable · Primeo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -165,7 +165,7 @@
     }
   </style>
 </head>
-<body>
+<body data-cms-page="erreur-404">
   <div id="header-placeholder"></div>
 
   <main>
@@ -199,23 +199,23 @@
         </div>
 
         <!-- 404 code -->
-        <p class="error-code" aria-label="Erreur 404">404</p>
+        <p class="error-code" aria-label="Erreur 404" data-cms="erreur-404.error-page.p1" data-cms-type="text">404</p>
 
         <!-- Title + description -->
-        <h1 class="error-title">Oups&nbsp;! Cette page n'existe pas ou a été déplacée.</h1>
-        <p class="error-subtitle">
+        <h1 class="error-title" data-cms="erreur-404.error-page.h11" data-cms-type="text">Oups&nbsp;! Cette page n'existe pas ou a été déplacée.</h1>
+        <p class="error-subtitle" data-cms="erreur-404.error-page.p2" data-cms-type="text">
           L'adresse que vous avez saisie est introuvable.
           Elle a peut-être été supprimée, renommée, ou n'a jamais existé.
         </p>
 
         <!-- CTA buttons -->
-        <div class="error-actions">
+        <div class="error-actions" data-cms="erreur-404.error-page.div1" data-cms-type="html">
           <a href="/" class="btn btn-primary">← Retour à l'accueil</a>
           <a href="/aide/" class="btn btn-outline">Consulter le centre d'aide</a>
         </div>
 
         <!-- Search bar -->
-        <p class="error-divider">Ou recherchez ce que vous cherchez</p>
+        <p class="error-divider" data-cms="erreur-404.error-page.p3" data-cms-type="text">Ou recherchez ce que vous cherchez</p>
         <form
           class="error-search-wrap"
           role="search"
@@ -238,33 +238,33 @@
 
         <!-- Quick nav links -->
         <nav class="error-quick-links" aria-label="Pages principales">
-          <a href="/solutions/" class="error-quick-link">
+          <a href="/solutions/" class="error-quick-link" data-cms-href="erreur-404.error-quick-links.a1-href" data-cms="erreur-404.error-quick-links.a1" data-cms-type="text">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
             </svg>
             Solutions
           </a>
-          <a href="/produits/" class="error-quick-link">
+          <a href="/produits/" class="error-quick-link" data-cms-href="erreur-404.error-quick-links.a2-href" data-cms="erreur-404.error-quick-links.a2" data-cms-type="text">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zm14 4H2v6a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             </svg>
             Produits
           </a>
-          <a href="/blog/" class="error-quick-link">
+          <a href="/blog/" class="error-quick-link" data-cms-href="erreur-404.error-quick-links.a3-href" data-cms="erreur-404.error-quick-links.a3" data-cms-type="text">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/>
               <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/>
             </svg>
             Blog
           </a>
-          <a href="/carrieres/" class="error-quick-link">
+          <a href="/carrieres/" class="error-quick-link" data-cms-href="erreur-404.error-quick-links.a4-href" data-cms="erreur-404.error-quick-links.a4" data-cms-type="text">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
               <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15a24.98 24.98 0 01-8-1.308z"/>
             </svg>
             Carrières
           </a>
-          <a href="/contact/" class="error-quick-link">
+          <a href="/contact/" class="error-quick-link" data-cms-href="erreur-404.error-quick-links.a5-href" data-cms="erreur-404.error-quick-links.a5" data-cms-type="text">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
               <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>

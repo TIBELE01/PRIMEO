@@ -131,3 +131,71 @@ function later(nodes){todo=todo.concat(nodes);if(q)return;q=true;requestAnimatio
 function start(){run(document.body);if("MutationObserver"in window)new MutationObserver(function(ms){var l=[];ms.forEach(function(m){m.addedNodes.forEach(function(x){if(x.nodeType===1)l.push(x);else if(x.nodeType===3&&x.parentNode)l.push(x.parentNode)})});if(l.length)later(l)}).observe(document.body,{childList:true,subtree:true})}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()
 }();
+
+/* Contenu éditable depuis l'administration : les éléments portant data-cms / data-cms-href / data-cms-src
+   reçoivent la valeur enregistrée dans le back-office (API /website/content). Sans valeur enregistrée,
+   le texte d'origine de la page reste affiché. Dernière réponse conservée en cache local pour un
+   affichage immédiat, puis rafraîchie à chaque visite. */
+!function(){"use strict";
+var meta=document.querySelector('meta[name="api-url"]');
+var API=(meta&&meta.content?meta.content:"https://api-primeo.onrender.com").replace(/\/+$/,"");
+var ALLOWED={A:1,BR:1,STRONG:1,B:1,EM:1,I:1,U:1,SPAN:1,SMALL:1,MARK:1,SUP:1,SUB:1,CODE:1};
+var SAFE=/^(\/(?!\/)|#|https?:\/\/|mailto:|tel:)/i;
+var blocks={};
+function clean(html){
+  var t=document.createElement("template");t.innerHTML=html;
+  (function walk(n){Array.from(n.childNodes).forEach(function(c){
+    if(c.nodeType===1){
+      if(!ALLOWED[c.tagName]){c.replaceWith.apply(c,Array.from(c.childNodes));return}
+      Array.from(c.attributes).forEach(function(a){
+        if(!(c.tagName==="A"&&(a.name==="href"||a.name==="target"||a.name==="rel")))c.removeAttribute(a.name);
+      });
+      if(c.tagName==="A"&&!SAFE.test(c.getAttribute("href")||""))c.removeAttribute("href");
+      walk(c);
+    }else if(c.nodeType!==3){c.remove()}
+  })})(t.content);
+  return t.innerHTML;
+}
+function setText(el,v){
+  if(el.tagName==="TITLE"){document.title=v;return}
+  if(!el.children.length){el.textContent=v;return}
+  // élément contenant une icône : on remplace uniquement le texte propre
+  var nodes=Array.from(el.childNodes).filter(function(n){return n.nodeType===3&&n.data.trim()});
+  if(nodes.length){var lead=/^\s/.test(nodes[0].data)?" ":"",tail=/\s$/.test(nodes[0].data)?" ":"";nodes[0].data=lead+v+tail;for(var i=1;i<nodes.length;i++)nodes[i].data=""}
+  else el.appendChild(document.createTextNode(" "+v));
+}
+function applyIn(root){
+  if(!root||!root.querySelectorAll)return;
+  var all=root.matches&&root.matches("[data-cms],[data-cms-href],[data-cms-src]")?[root]:[];
+  all=all.concat(Array.from(root.querySelectorAll("[data-cms],[data-cms-href],[data-cms-src]")));
+  all.forEach(function(el){
+    var k=el.getAttribute("data-cms"),v=k!=null?blocks[k]:undefined;
+    if(v!=null){
+      var type=el.getAttribute("data-cms-type");
+      if(type==="html")el.innerHTML=clean(v);
+      else if(type==="number"){
+        var suffix=el.getAttribute("data-suffix")||"";
+        el.setAttribute(el.hasAttribute("data-target")?"data-target":"data-count",v);
+        el.textContent=Number(v).toLocaleString("fr-FR")+suffix;
+      }else setText(el,v);
+    }
+    var hk=el.getAttribute("data-cms-href");if(hk&&blocks[hk]!=null&&SAFE.test(blocks[hk]))el.setAttribute("href",blocks[hk]);
+    var sk=el.getAttribute("data-cms-src");if(sk&&blocks[sk]!=null){el.setAttribute("src",blocks[sk]);el.removeAttribute("srcset")}
+  });
+}
+function start(){
+  var page=document.body&&document.body.getAttribute("data-cms-page")||"global";
+  var ck="primeo_cms_"+page;
+  try{var c=JSON.parse(localStorage.getItem(ck)||"null");if(c&&c.blocks){blocks=c.blocks;applyIn(document.body)}}catch(e){}
+  var ctrl=typeof AbortController!=="undefined"?new AbortController():null;if(ctrl)setTimeout(function(){ctrl.abort()},6000);
+  fetch(API+"/api/website/content?page="+encodeURIComponent(page),{headers:{Accept:"application/json"},signal:ctrl?ctrl.signal:undefined})
+    .then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(!d||!d.blocks)return;
+      blocks=d.blocks;applyIn(document.body);
+      try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),blocks:blocks}))}catch(e){}
+    }).catch(function(){});
+  // en-tête / pied de page injectés après coup
+  if("MutationObserver"in window)new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType===1)applyIn(n)})})}).observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()
+}();
