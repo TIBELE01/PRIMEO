@@ -1462,9 +1462,21 @@ export default function AddPropertyScreen({ navigation, route }: any) {
       }
       setUploadStatus(null);
 
+      const mediaLabel = mediaChoice === 'video' ? 'vidéo' : mediaChoice === 'threed' ? 'photo(s) 360°' : 'photo(s)';
       const warn = mediaResult.failed > 0
-        ? `\n(${mediaResult.failed} photo(s) n'ont pas pu être envoyées — vous pourrez les ajouter depuis votre liste d'annonces.)`
+        ? `\n(${mediaResult.failed} ${mediaLabel} n'ont pas pu être envoyée(s) — vous pourrez les ajouter en modifiant l'annonce.)`
         : '';
+      // Annonce vidéo / visite 3D sans aucun média envoyé : on le dit clairement au lieu d'un succès
+      const allMediaFailed = mediaResult.uploaded === 0 && mediaResult.failed > 0 && mediaChoice !== 'photos';
+      if (allMediaFailed) {
+        showFeedback(
+          false,
+          mediaChoice === 'video' ? 'Vidéo non envoyée' : 'Photos 360° non envoyées',
+          `"${formData.name}" a été enregistrée, mais ${mediaChoice === 'video' ? 'la vidéo n\'a' : 'aucune photo 360° n\'a'} pu être envoyée. Vérifiez votre connexion puis ajoutez-la en modifiant l'annonce avant la validation.`,
+          () => navigation.goBack(),
+        );
+        return;
+      }
 
       showFeedback(
         true,
