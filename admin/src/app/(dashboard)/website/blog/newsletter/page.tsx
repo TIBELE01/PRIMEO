@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { websiteService } from '@/services/api';
 import { Trash2, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
+const toastError = (m: string) => toast.error(m);
 
 type Subscriber = { id: string; email: string; subscribedAt: string; confirmedAt: string | null; status?: string };
 
@@ -43,13 +45,13 @@ export default function NewsletterPage() {
           <h1 className="text-2xl font-bold text-gray-900">Newsletter</h1>
           <p className="text-sm text-gray-500 mt-1">{total} abonné{total !== 1 ? 's' : ''}</p>
         </div>
-        <a
-          href={websiteService.exportNewsletterUrl()}
-          download="newsletter-subscribers.csv"
+        <button
+          type="button"
+          onClick={async () => { try { await websiteService.downloadNewsletterCsv(); } catch { toastError('Export impossible'); } }}
           className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <Download size={16} /> Exporter CSV
-        </a>
+        </button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">

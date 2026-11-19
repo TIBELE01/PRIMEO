@@ -23,6 +23,7 @@ const PALETTE  = ['#1B5E20', '#2E7D32', '#43A047', '#F9A825', '#E65100', '#6A1B9
 const PALETTE2 = ['#0277BD', '#00838F', '#2E7D32', '#F57F17', '#6A1B9A', '#C62828', '#37474F'];
 
 const STATUS_LABELS: Record<string, string> = {
+  interest_expressed: 'Intérêt exprimé',
   confirmed: 'Confirmées',
   pending_payment: 'En attente',
   completed: 'Terminées',
@@ -34,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'default' | 'info' | 'danger'> = {
   confirmed: 'success', pending_payment: 'warning', completed: 'info',
-  cancelled_by_client: 'danger', cancelled_by_professional: 'danger',
+  interest_expressed: 'info', cancelled_by_client: 'danger', cancelled_by_professional: 'danger',
   cancelled: 'danger', refunded: 'default', disputed: 'warning',
 };
 const SOURCE_LABELS: Record<string, string> = {

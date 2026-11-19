@@ -10,7 +10,7 @@ import { PromoCode } from '@/types/config';
 import { useState } from 'react';
 import { PromoCodeForm } from '@/components/forms/PromoCodeForm';
 import { useToast } from '@/hooks/useToast';
-import { ToggleLeft, ToggleRight, Trash2, Plus, Filter } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Trash2, Plus, Filter, Pencil } from 'lucide-react';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
 
 type FilterStatus = 'all' | 'active' | 'inactive';
@@ -21,6 +21,7 @@ export default function PromosPage() {
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [deleteTarget, setDeleteTarget] = useState<PromoCode | null>(null);
+  const [editTarget, setEditTarget] = useState<PromoCode | null>(null);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ['promo-codes'],
@@ -65,10 +66,19 @@ export default function PromosPage() {
           <h1 className="text-2xl font-bold text-gray-900">Codes promotionnels</h1>
           <p className="text-sm text-gray-500">{promos.length} code{promos.length > 1 ? 's' : ''} au total</p>
         </div>
-        <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setShowForm(true)}>
+        <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => { setEditTarget(null); setShowForm(true); }}>
           Nouveau code
         </Button>
       </div>
+
+      {editTarget && (
+        <PromoCodeForm
+          key={editTarget.id}
+          promo={editTarget}
+          onSuccess={() => { setEditTarget(null); queryClient.invalidateQueries({ queryKey: ['promo-codes'] }); }}
+          onCancel={() => setEditTarget(null)}
+        />
+      )}
 
       {showForm && (
         <PromoCodeForm
@@ -145,6 +155,13 @@ export default function PromosPage() {
                       {promo.isActive
                         ? <ToggleRight size={20} className="text-green-600" />
                         : <ToggleLeft size={20} className="text-gray-400 dark:text-gray-500" />}
+                    </button>
+                    <button
+                      onClick={() => { setShowForm(false); setEditTarget(promo); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      title="Modifier"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+                    >
+                      <Pencil size={16} />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(promo)}

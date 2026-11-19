@@ -1,12 +1,25 @@
 // Shared Axios API client re-export — alias of src/lib/api.ts for compatibility
 export { api, apiClient } from '../lib/api';
 
-import { api, API_BASE } from '../lib/api';
+import { api, apiClient, API_BASE } from '../lib/api';
 import type { PlatformUser, UserDetail } from '../types/user';
 import type { AdminProperty } from '../types/property';
 import type { AdminBooking } from '../types/booking';
 import { normalizeBooking, normalizeAuditLog, normalizeDispute } from '../lib/normalize';
 import type { AdminDispute } from '../types/dispute';
+
+/** Télécharge un fichier protégé : requête avec le jeton, puis enregistrement du contenu reçu. */
+export async function downloadAuthenticated(path: string, filename: string): Promise<void> {
+  const res = await apiClient.get(path, { responseType: 'blob' });
+  const url = URL.createObjectURL(res.data as Blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export const usersService = {
   list: (params?: object) => api.get<any>('/admin/users', params),
@@ -174,7 +187,9 @@ export interface ContentPage { page: string; label: string; total: number; modif
 // Blocs de contenu statique du site vitrine (textes, liens, images, compteurs de chaque page)
 export const websiteContentService = {
   pages: () => api.get<{ data: ContentPage[]; total: number }>('/website/admin/content/pages'),
-  list: (page: string, q?: string) => api.get<{ data: ContentBlock[] }>('/website/admin/content', { page, q: q || undefined }),
+  // l'intercepteur retire l'enveloppe { data } : on la normalise pour que l'écran reçoive toujours { data: [...] }
+  list: (page: string, q?: string) => api.get<ContentBlock[] | { data: ContentBlock[] }>('/website/admin/content', { page, q: q || undefined })
+    .then((r) => ({ data: Array.isArray(r) ? r : (r?.data ?? []) })),
   save: (key: string, value: string) => api.put<any>(`/website/admin/content/${encodeURIComponent(key)}`, { value }),
   reset: (key: string) => api.delete<any>(`/website/admin/content/${encodeURIComponent(key)}`),
   uploadImage: (file: File) => {
@@ -343,6 +358,8 @@ export const websiteService = {
   replyMessage: (id: string, replyText: string) =>
     api.post(`/website/admin/messages/${id}/reply`, { replyText }),
   exportMessagesUrl: () => `${API_BASE}/website/admin/messages/export`,
+  // Téléchargement authentifié (un lien direct n'envoie pas le jeton → 401)
+  downloadMessagesCsv: () => downloadAuthenticated('/website/admin/messages/export', `messages-contact-${new Date().toISOString().slice(0, 10)}.csv`),
 
   // Blog — Posts
   listBlogPosts: (page = 1, limit = 20, search = '') =>
@@ -372,6 +389,7 @@ export const websiteService = {
   deleteNewsletterSubscriber: (id: string) =>
     api.delete(`/website/admin/blog/newsletter/${id}`),
   exportNewsletterUrl: () => `${API_BASE}/website/admin/blog/newsletter/export`,
+  downloadNewsletterCsv: () => downloadAuthenticated('/website/admin/blog/newsletter/export', `newsletter-${new Date().toISOString().slice(0, 10)}.csv`),
 
   // Blog — Comments
   listBlogComments: (status?: string) =>

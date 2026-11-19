@@ -9,7 +9,15 @@ const labels: Record<string, string> = {
   disputes: 'Litiges', configuration: 'Configuration', subscriptions: 'Abonnements',
   boosts: 'Boosts', promos: 'Codes promo', appearance: 'Apparence',
   logs: 'Journaux', support: 'Support', tickets: 'Tickets',
-  analytics: 'Analytiques', reports: 'Rapports',
+  analytics: 'Analytiques', reports: 'Rapports', cards: "Cartes de l'accueil", flags: 'Feature Flags',
+  emails: 'Templates emails', admins: 'Comptes admin', website: 'Site vitrine', moderation: 'Modération',
+  menus: 'Plats', withdrawals: 'Versements', communication: 'Communication', chatbot: 'Chatbot',
+  content: 'Contenu des pages', hero: 'Hero', mission: 'Mission', why: 'Pourquoi Primeo', blog: 'Blog',
+  careers: 'Carrières', about: 'À propos', faq: 'FAQ', messages: 'Messages', testimonials: 'Témoignages',
+  partnerships: 'Partenariats', community: 'Communauté', posts: 'Articles', categories: 'Catégories',
+  comments: 'Commentaires', newsletter: 'Newsletter', jobs: 'Offres d\'emploi', applications: 'Candidatures',
+  team: 'Équipe', values: 'Valeurs', partners: 'Partenaires', history: 'Histoire', benefits: 'Avantages',
+  presentation: 'Présentation',
 };
 
 export function Breadcrumbs() {
@@ -22,7 +30,8 @@ export function Breadcrumbs() {
       {parts.map((part, i) => {
         const href = '/' + parts.slice(0, i + 1).join('/');
         const isLast = i === parts.length - 1;
-        const label = labels[part] ?? part;
+        // Les identifiants (UUID, cuid) ne sont pas des libellés : on les raccourcit
+        const label = labels[part] ?? (part.length > 18 ? `${part.slice(0, 8)}…` : part);
         return (
           <span key={href} className="flex items-center gap-1">
             <ChevronRight size={14} />

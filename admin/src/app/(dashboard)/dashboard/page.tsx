@@ -14,7 +14,7 @@ import {
 const PALETTE = ['#1B5E20', '#2E7D32', '#43A047', '#F9A825', '#E65100', '#6A1B9A', '#0277BD'];
 
 const BOOKING_STATUS_LABELS: Record<string, string> = {
-  confirmed: 'Confirmées', pending_payment: 'En attente', completed: 'Terminées',
+  interest_expressed: 'Intérêt exprimé', confirmed: 'Confirmées', pending_payment: 'En attente', completed: 'Terminées',
   cancelled_by_client: 'Annul. client', cancelled_by_professional: 'Annul. pro',
   cancelled: 'Annulées', refunded: 'Remboursées', disputed: 'Litiges',
 };

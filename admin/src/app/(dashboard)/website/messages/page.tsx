@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteService } from '@/services/api';
 import { ArrowLeft, Mail, MailOpen, Download, Send, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
+const toastError = (m: string) => toast.error(m);
 
 type Status = 'all' | 'read' | 'unread';
 
@@ -57,14 +59,8 @@ export default function MessagesPage() {
     if (!m.isRead) markReadMut.mutate({ id: m.id, isRead: true });
   }
 
-  function handleExport() {
-    const url = websiteService.exportMessagesUrl();
-    const a   = document.createElement('a');
-    a.href    = url;
-    a.download = `messages-contact-${Date.now()}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  async function handleExport() {
+    try { await websiteService.downloadMessagesCsv(); } catch { toastError("Export impossible"); }
   }
 
   return (

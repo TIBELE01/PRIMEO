@@ -15,6 +15,7 @@ import { syncSupabaseRole } from '../../common/utils/role-sync';
 import { getMaintenanceState, invalidateMaintenanceCache } from '../../common/middleware/maintenance.middleware';
 import { sendPushBroadcast } from '../../common/utils/push';
 import { AccountType } from '@prisma/client';
+import { readTwoFactor } from '../../common/utils/two-factor';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -468,10 +469,43 @@ export const adminService = {
       include: {
         professionalProfile: { include: { documents: true } },
         subscription: true,
+        _count: { select: { properties: true, clientBookings: true } },
       },
     });
     if (!user) throw new HttpError(404, 'Utilisateur introuvable');
-    return user;
+
+    // Champs attendus par la fiche admin : rôle, KYC, dernière connexion et 2FA (issus de Supabase Auth)
+    let lastLoginAt: string | null = null;
+    let twoFactorEnabled = false;
+    try {
+      const { data } = await supabaseAdmin.auth.admin.getUserById(id);
+      lastLoginAt = data?.user?.last_sign_in_at ?? null;
+      twoFactorEnabled = readTwoFactor(data?.user as never).enabled === true;
+    } catch (err) {
+      logger.warn('getUser: lecture Supabase impossible', err);
+    }
+    const kycStatus = user.professionalProfile?.verificationStatus ?? null;
+    return {
+      ...user,
+      role: user.accountType,
+      kycStatus,
+      kycVerified: kycStatus === 'approved',
+      isProfessional: !['client', 'admin'].includes(user.accountType),
+      internalNote: user.adminNotes ?? null,
+      propertiesCount: user._count.properties,
+      bookingsCount: user._count.clientBookings,
+      // Documents KYC au format attendu par l'écran (statut déduit de la vérification)
+      kycDocuments: (user.professionalProfile?.documents ?? []).map((d) => ({
+        id: d.id,
+        userId: user.id,
+        type: d.type,
+        fileUrl: d.url,
+        uploadedAt: d.uploadedAt,
+        status: d.verifiedAt ? 'approved' : d.rejectedReason ? 'rejected' : 'pending',
+      })),
+      lastLoginAt,
+      twoFactorEnabled,
+    };
   },
 
   async suspendUser(id: string, adminId: string, reason: string) {

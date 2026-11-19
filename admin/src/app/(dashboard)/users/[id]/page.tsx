@@ -181,7 +181,7 @@ export default function UserDetailPage() {
           <p className="text-sm text-gray-500">{user.email}</p>
         </div>
         <Badge variant={statusBadgeVariant[status]}>{statusLabel[status]}</Badge>
-        {kycVerified && <Badge variant="success">KYC vérifié</Badge>}
+        {user.isProfessional && kycVerified && <Badge variant="success">KYC vérifié</Badge>}
         {user.twoFactorEnabled && <Badge variant="info">2FA actif</Badge>}
       </div>
 
@@ -218,7 +218,7 @@ export default function UserDetailPage() {
                   <FieldRow label="Téléphone" value={user.phone ?? '—'} />
                   <FieldRow label="Rôle" value={roleLabel[user.role] ?? user.role} />
                   <FieldRow label="Statut" value={statusLabel[status]} />
-                  <FieldRow label="KYC" value={kycVerified ? 'Vérifié' : 'Non vérifié'} />
+                  <FieldRow label="KYC" value={!user.isProfessional ? 'Non applicable' : ({ approved: 'Vérifié', pending: 'À valider', rejected: 'Rejeté' } as Record<string, string>)[user.kycStatus] ?? 'Non soumis'} />
                   <FieldRow label="2FA" value={user.twoFactorEnabled ? 'Activé' : 'Désactivé'} />
                   <FieldRow label="Inscription" value={formatDate(user.createdAt)} />
                   <FieldRow label="Dernière connexion" value={user.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—'} />
@@ -229,6 +229,11 @@ export default function UserDetailPage() {
                 </dl>
 
                 {/* KYC Documents */}
+                {can(role, 'support') && user.isProfessional && !(user.kycDocuments?.length > 0) && (
+                  <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    Aucun document KYC déposé par ce professionnel.
+                  </div>
+                )}
                 {can(role, 'support') && user.kycDocuments?.length > 0 && (
                   <div className="mt-6">
                     <h4 className="text-sm font-semibold text-gray-700 mb-3">Documents KYC</h4>
@@ -471,7 +476,7 @@ export default function UserDetailPage() {
           </Card>
 
           {/* KYC actions */}
-          {can(role, 'moderateur') && !kycVerified && (
+          {can(role, 'moderateur') && user.isProfessional && !kycVerified && (
             <Card>
               <CardHeader><CardTitle>Validation KYC</CardTitle></CardHeader>
               <CardContent>

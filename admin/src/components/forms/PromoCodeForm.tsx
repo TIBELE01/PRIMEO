@@ -4,23 +4,31 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { configService } from '@/services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import type { PromoCode } from '@/types/config';
 
-interface Props { onSuccess: () => void; onCancel: () => void }
+interface Props { onSuccess: () => void; onCancel: () => void; /** Fourni : le formulaire modifie ce code au lieu d'en créer un */ promo?: PromoCode }
 
 const today = () => new Date().toISOString().slice(0, 16);
+// ISO (UTC) → valeur d'un champ datetime-local (heure locale)
+const toLocalInput = (iso?: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+};
 
-export function PromoCodeForm({ onSuccess, onCancel }: Props) {
+export function PromoCodeForm({ onSuccess, onCancel, promo }: Props) {
+  const editing = !!promo;
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    code: '',
-    discountType: 'percent',
-    discountValue: 10,
-    minAmount: '',
-    maxUses: '',
-    validFrom: today(),
-    validUntil: '',
-    isActive: true,
+    code: promo?.code ?? '',
+    discountType: promo ? (promo.discountType === 'percentage' || promo.discountType === 'percent' ? 'percent' : 'fixed_amount') : 'percent',
+    discountValue: promo?.discountValue ?? 10,
+    minAmount: promo?.minAmount ? String(promo.minAmount) : '',
+    maxUses: promo?.maxUses ? String(promo.maxUses) : '',
+    validFrom: promo ? toLocalInput(promo.validFrom ?? promo.createdAt) : today(),
+    validUntil: promo ? toLocalInput(promo.validUntil) : '',
+    isActive: promo?.isActive ?? true,
   });
 
   const set = (key: string, value: unknown) => setForm((p) => ({ ...p, [key]: value }));
@@ -34,7 +42,7 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
     }
     setSaving(true);
     try {
-      await configService.createPromoCode({
+      const payload = {
         code: form.code.trim().toUpperCase(),
         discountType: form.discountType,
         discountValue: Number(form.discountValue),
@@ -43,13 +51,15 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
         validFrom: new Date(form.validFrom).toISOString(),
         validUntil: new Date(form.validUntil).toISOString(),
         isActive: form.isActive,
-      });
-      toast.success('Code promo créé');
+      };
+      if (promo) await configService.updatePromoCode(promo.id, payload);
+      else await configService.createPromoCode(payload);
+      toast.success(editing ? 'Code promo modifié' : 'Code promo créé');
       onSuccess();
     } catch (err: any) {
       const d = err?.response?.data;
       const first = d?.details ? (Object.values(d.details)[0] as string[] | undefined)?.[0] : undefined;
-      toast.error(d?.message ?? (first ? `${d.error ?? 'Erreur'} : ${first}` : d?.error) ?? 'Erreur lors de la création');
+      toast.error(d?.message ?? (first ? `${d.error ?? 'Erreur'} : ${first}` : d?.error) ?? (editing ? 'Erreur lors de la modification' : 'Erreur lors de la création'));
     } finally {
       setSaving(false);
     }
@@ -57,7 +67,7 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Nouveau code promo</CardTitle></CardHeader>
+      <CardHeader><CardTitle>{editing ? `Modifier le code ${promo!.code}` : 'Nouveau code promo'}</CardTitle></CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Code */}
@@ -68,6 +78,8 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
               onChange={(e) => set('code', e.target.value.toUpperCase())}
               required
               maxLength={30}
+              readOnly={editing}
+              title={editing ? 'Le code ne peut pas être renommé' : undefined}
               className="input w-full font-mono tracking-widest"
               placeholder="EX: SUMMER25"
             />
@@ -168,7 +180,7 @@ export function PromoCodeForm({ onSuccess, onCancel }: Props) {
           {/* Actions */}
           <div className="sm:col-span-2 flex gap-2 justify-end pt-2 border-t border-gray-100">
             <Button variant="outline" type="button" onClick={onCancel} disabled={saving}>Annuler</Button>
-            <Button type="submit" loading={saving}>Créer le code</Button>
+            <Button type="submit" loading={saving}>{editing ? 'Enregistrer' : 'Créer le code'}</Button>
           </div>
         </form>
       </CardContent>

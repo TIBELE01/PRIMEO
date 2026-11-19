@@ -120,7 +120,7 @@ export default function PropertyDetailPage() {
             <Badge variant={statusVariant[property.status]}>{statusLabel[property.status] ?? property.status}</Badge>
             {property.isBoosted && <Badge variant="warning">Boosté</Badge>}
           </div>
-          <p className="text-sm text-gray-500 mt-0.5">{property.city}, {property.country} · {property.type}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{[property.city, property.country].filter(Boolean).join(', ')} · {property.type}</p>
         </div>
       </div>
 
@@ -194,7 +194,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-500 dark:text-gray-400">Ville</dt>
-                  <dd>{property.city}, {property.country}</dd>
+                  <dd>{[property.city, property.country].filter(Boolean).join(', ') || '—'}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-500 dark:text-gray-400">Note</dt>
