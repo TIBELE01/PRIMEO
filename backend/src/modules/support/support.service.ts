@@ -95,16 +95,34 @@ export const supportService = {
   // ── Admin methods ─────────────────────────────────────────────────────────
 
   async adminListAll(query: AdminListTicketsInput) {
-    const { status, category, priority, page, limit } = query;
-    const where = {
-      ...(status   ? { status:   status as TicketStatus }   : {}),
+    const { status, category, priority, search, from, to, sortBy, sortDir, page, limit } = query;
+    // Filtres communs : les compteurs par statut tiennent compte de tout sauf du statut lui-même
+    const base: Record<string, unknown> = {
       ...(category ? { category: category as TicketCategory } : {}),
       ...(priority ? { priority: priority as TicketPriority } : {}),
+      ...(from || to
+        ? { createdAt: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(`${to.slice(0, 10)}T23:59:59.999Z`) } : {}) } }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { subject: { contains: search, mode: 'insensitive' } },
+              { user: { email: { contains: search, mode: 'insensitive' } } },
+              { user: { firstName: { contains: search, mode: 'insensitive' } } },
+              { user: { lastName: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
     };
-    const [data, total] = await Promise.all([
+    const where = { ...base, ...(status ? { status: status as TicketStatus } : {}) };
+    const STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
+    const orderBy = sortBy
+      ? [{ [sortBy]: sortDir ?? 'desc' }, { id: 'asc' as const }]
+      : [{ priority: 'desc' as const }, { createdAt: 'asc' as const }];
+    const [data, total, statusCounts] = await Promise.all([
       prisma.supportTicket.findMany({
-        where,
-        orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+        where: where as never,
+        orderBy: orderBy as never,
         skip: (page - 1) * limit,
         take: limit,
         include: {
@@ -113,9 +131,12 @@ export const supportService = {
           _count:   { select: { comments: true } },
         },
       }),
-      prisma.supportTicket.count({ where }),
+      prisma.supportTicket.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.supportTicket.count({ where: { ...base, status: st } as never }))),
     ]);
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st] = statusCounts[i]!; });
+    return { data, total, page, limit, pages: Math.ceil(total / limit), counts };
   },
 
   async adminGetById(id: string) {

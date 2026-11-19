@@ -139,7 +139,7 @@ export default function PaymentFailuresPage() {
           <p className="text-center text-gray-400 py-10">Impossible de charger les données.</p>
         ) : items.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-gray-500 text-sm">Aucun défaut de paiement cette semaine 🎉</p>
+            <p className="text-gray-500 text-sm">Aucun défaut de paiement cette semaine</p>
           </div>
         ) : (
           <>
@@ -149,11 +149,7 @@ export default function PaymentFailuresPage() {
               keyExtractor={(row: any) => row.userId}
               emptyMessage="Aucun défaut de paiement"
             />
-            {pages > 1 && (
-              <div className="p-4 border-t border-gray-100">
-                <Pagination page={page} totalPages={pages} onPageChange={setPage} />
-              </div>
-            )}
+            <Pagination page={page} totalPages={pages} onPageChange={setPage} total={total} pageSize={20} />
           </>
         )}
       </Card>

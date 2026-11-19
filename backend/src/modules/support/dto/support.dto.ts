@@ -34,6 +34,11 @@ export const AdminListTicketsDto = z.object({
   status:   z.enum(['open', 'in_progress', 'resolved', 'closed']).optional(),
   category: z.enum(['technical', 'dispute', 'information', 'complaint']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  search:   z.string().trim().max(100).optional(),
+  from:     z.string().regex(/^\d{4}-\d{2}-\d{2}/).optional(),
+  to:       z.string().regex(/^\d{4}-\d{2}-\d{2}/).optional(),
+  sortBy:   z.enum(['createdAt', 'priority', 'status', 'category']).optional(),
+  sortDir:  z.enum(['asc', 'desc']).optional(),
   page:     z.coerce.number().int().min(1).optional().default(1),
   limit:    z.coerce.number().int().min(1).max(100).optional().default(20),
 });

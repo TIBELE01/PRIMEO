@@ -1,169 +1,172 @@
 'use client';
-import { disputeStatusVariant as statusVariant, disputeStatusLabel as statusLabel, disputeStatusOptions } from '@/lib/disputeStatus';
-import { listOf, pagesOf } from '@/lib/normalize';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { Download, XCircle } from 'lucide-react';
 import { disputesService } from '@/services/api';
-import { useDataTable } from '@/hooks/useDataTable';
+import { useTableState } from '@/hooks/useTableState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Table, Pagination } from '@/components/ui/Table';
-import { PageSpinner } from '@/components/ui/Spinner';
-import { formatDate, formatAmount } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { Table, Pagination, Column } from '@/components/ui/Table';
+import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
+import { formatDate, formatAmount, downloadCsv } from '@/lib/utils';
 import { AdminDispute } from '@/types/dispute';
-import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { disputeStatusVariant, disputeStatusLabel, disputeStatusOptions } from '@/lib/disputeStatus';
+import { toneAccent } from '@/lib/status';
+import { listOf } from '@/lib/normalize';
 
-function ageDays(dateStr: string): number {
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function getPriority(days: number): { label: string; variant: 'danger' | 'warning' | 'default' } {
+const ageDays = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
+function priorityOf(days: number): { label: string; variant: 'danger' | 'warning' | 'default' } {
   if (days >= 7) return { label: 'Critique', variant: 'danger' };
   if (days >= 2) return { label: 'Élevée', variant: 'warning' };
   return { label: 'Normale', variant: 'default' };
 }
+const PERIODS = [
+  { value: '', label: 'Toute période' },
+  { value: '7d', label: '7 derniers jours' },
+  { value: '30d', label: '30 derniers jours' },
+  { value: '90d', label: '90 derniers jours' },
+];
+const OPEN = ['open', 'under_review'];
 
 export default function DisputesPage() {
   const router = useRouter();
-  const { queryParams, page, totalPages, handleSearch, handleFilter, handlePageChange, setTotalPages } = useDataTable();
+  const qc = useQueryClient();
+  const t = useTableState({ storageKey: 'disputes' });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const status = t.state.filters['status'] ?? '';
 
-  const { data, isLoading, isError } = useQuery<any>({
-    queryKey: ['disputes', queryParams],
-    queryFn: () => disputesService.getDisputes(queryParams),
+  const { data, isLoading, isError, isFetching } = useQuery<any>({
+    queryKey: ['disputes', t.queryParams],
+    queryFn: () => disputesService.getDisputes(t.queryParams),
+    enabled: t.hydrated,
+    placeholderData: keepPreviousData,
     retry: 1,
   });
-  useEffect(() => {
-    if (data) setTotalPages(pagesOf(data));
-  }, [data, setTotalPages]);
 
-  const columns = [
+  const disputes: AdminDispute[] = listOf(data);
+  const total: number = data?.total ?? 0;
+  const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
+  const counts: Record<string, number> = data?.counts ?? {};
+
+  const statusTabs: TabItem[] = useMemo(() => [
+    { value: '', label: 'Tous', count: counts['all'] },
+    ...disputeStatusOptions.map(([v, l]) => ({ value: v, label: l, tone: disputeStatusVariant[v] ?? 'default', count: counts[v] ?? 0 })),
+  ], [counts]);
+
+  const selectedRows = disputes.filter((d) => selected.has(d.id));
+
+  const columns: Column<AdminDispute>[] = [
     {
-      key: 'priority',
-      header: 'Priorité',
-      render: (d: AdminDispute) => {
-        const p = getPriority(ageDays(d.createdAt));
+      key: 'priority', header: 'Priorité',
+      render: (d) => {
+        if (!OPEN.includes(d.status)) return <span className="text-xs text-gray-400">—</span>;
+        const p = priorityOf(ageDays(d.createdAt));
         return <Badge variant={p.variant}>{p.label}</Badge>;
       },
     },
     {
-      key: 'reason',
-      header: 'Objet',
-      render: (d: AdminDispute) => (
+      key: 'reason', header: 'Objet',
+      render: (d) => (
         <div>
-          <p className="text-sm font-medium text-gray-900">{d.reason}</p>
-          {d.propertyTitle && <p className="text-xs text-gray-400">{d.propertyTitle}</p>}
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 max-w-xs truncate">{d.reason}</p>
+          {d.propertyTitle && <p className="text-xs text-gray-400 max-w-xs truncate">{d.propertyTitle}</p>}
         </div>
       ),
     },
-    { key: 'clientName', header: 'Client', render: (d: AdminDispute) => <span className="text-sm">{d.clientName}</span> },
-    { key: 'professionalName', header: 'Professionnel', render: (d: AdminDispute) => <span className="text-sm">{d.professionalName}</span> },
+    { key: 'clientName', header: 'Client', render: (d) => <span className="text-xs">{d.clientName}</span> },
+    { key: 'professionalName', header: 'Professionnel', render: (d) => <span className="text-xs">{d.professionalName}</span> },
     {
-      key: 'requestedRefundAmount',
-      header: 'Remb. demandé',
-      render: (d: AdminDispute) => d.requestedRefundAmount
-        ? <span className="text-sm font-medium text-gray-900">{formatAmount(d.requestedRefundAmount)}</span>
-        : <span className="text-gray-400 text-xs">—</span>,
+      key: 'requestedRefundAmount', header: 'Remb. demandé',
+      render: (d) => (d.requestedRefundAmount ? <span className="text-xs font-medium">{formatAmount(d.requestedRefundAmount, 'FCFA')}</span> : <span className="text-gray-400 text-xs">—</span>),
     },
+    { key: 'status', header: 'Statut', sortable: true, render: (d) => <Badge variant={disputeStatusVariant[d.status] ?? 'default'}>{disputeStatusLabel[d.status] ?? d.status}</Badge> },
     {
-      key: 'status',
-      header: 'Statut',
-      render: (d: AdminDispute) => <Badge variant={statusVariant[d.status] ?? 'default'}>{statusLabel[d.status] ?? d.status}</Badge>,
-    },
-    {
-      key: 'age',
-      header: 'Ancienneté',
-      render: (d: AdminDispute) => {
+      key: 'createdAt', header: 'Ouvert le', sortable: true,
+      render: (d) => {
         const days = ageDays(d.createdAt);
-        return (
-          <span className={`text-xs ${days >= 7 ? 'text-red-600 font-semibold' : days >= 2 ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'}`}>
-            {days}j
-          </span>
-        );
+        const late = OPEN.includes(d.status) && days >= 7;
+        return <span className={`text-xs ${late ? 'text-danger-600 font-semibold' : ''}`}>{formatDate(d.createdAt)} · {days}j</span>;
       },
-    },
-    {
-      key: 'createdAt',
-      header: 'Ouvert le',
-      render: (d: AdminDispute) => <span className="text-xs text-gray-500">{formatDate(d.createdAt)}</span>,
     },
   ];
 
-  // Le filtre de priorité (ancienneté) n'existe pas côté API : appliqué sur la page affichée
-  const wanted = (queryParams as Record<string, string> | undefined)?.priority;
-  const priorityOf = (d: AdminDispute) => { const n = ageDays(d.createdAt); return n >= 7 ? 'critique' : n >= 2 ? 'elevee' : 'normale'; };
-  const allDisputes: AdminDispute[] = listOf(data).filter((d: AdminDispute) => !wanted || priorityOf(d) === wanted);
-  const openCount    = allDisputes.filter(d => d.status === 'open').length;
-  const reviewCount  = allDisputes.filter(d => d.status === 'under_review').length;
-  const criticalCount = allDisputes.filter(d => ageDays(d.createdAt) >= 7).length;
-  const total        = data?.total ?? 0;
+  const actions: BulkAction<AdminDispute>[] = [
+    {
+      key: 'close', label: 'Clore sans remboursement', icon: <XCircle size={14} />, variant: 'danger',
+      confirmTitle: 'Clore les litiges sans remboursement',
+      confirmMessage: 'Les litiges seront rejetés, sans aucun remboursement, pour :',
+      confirmLabel: 'Confirmer la clôture',
+      reasonLabel: 'Note de clôture (communiquée aux parties)',
+      appliesTo: (d) => OPEN.includes(d.status),
+      run: (d, reason) => disputesService.reject(d.id, reason),
+    },
+  ];
+
+  const handleExport = () => downloadCsv(
+    disputes.map((d) => ({
+      id: d.id, objet: d.reason, annonce: d.propertyTitle, client: d.clientName, professionnel: d.professionalName,
+      remboursement_demande: d.requestedRefundAmount ?? '', statut: disputeStatusLabel[d.status] ?? d.status, ouvert_le: formatDate(d.createdAt),
+    })),
+    `litiges_${status || 'tous'}_${new Date().toISOString().slice(0, 10)}`,
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Litiges</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestion des conflits entre clients et professionnels</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Litiges</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {total.toLocaleString('fr-FR')} litige{total > 1 ? 's' : ''} · conflits entre clients et professionnels
+          </p>
         </div>
-        {total > 0 && (
-          <p className="text-sm text-gray-500">{total.toLocaleString('fr-FR')} litige{total > 1 ? 's' : ''}</p>
-        )}
+        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!disputes.length}>Exporter la vue (CSV)</Button>
       </div>
 
-      {/* Summary KPIs */}
-      {(openCount > 0 || criticalCount > 0) && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-amber-700">{openCount}</p>
-            <p className="text-xs text-amber-600 mt-0.5">Ouverts</p>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-blue-700">{reviewCount}</p>
-            <p className="text-xs text-blue-600 mt-0.5">En révision</p>
-          </div>
-          <div className={`${criticalCount > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3 text-center`}>
-            <p className={`text-2xl font-bold ${criticalCount > 0 ? 'text-red-700' : 'text-gray-500 dark:text-gray-400'}`}>{criticalCount}</p>
-            <p className={`text-xs mt-0.5 ${criticalCount > 0 ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>Critiques (+7j)</p>
-          </div>
-        </div>
-      )}
-
       <Card padding={false}>
-        <div className="p-4 border-b border-gray-100 flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-48">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="search"
-              placeholder="Rechercher par client, professionnel, annonce…"
-              onChange={(e) => handleSearch(e.target.value)}
-              className="input pl-9 w-full"
-            />
-          </div>
-          <select onChange={(e) => handleFilter('status', e.target.value)} className="input w-44">
-            <option value="">Tous les statuts</option>
-            {disputeStatusOptions.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-          <select onChange={(e) => handleFilter('priority', e.target.value)} className="input w-40">
-            <option value="">Toutes priorités</option>
-            <option value="critique">Critique (+7j)</option>
-            <option value="elevee">Élevée (2–7j)</option>
-            <option value="normale">Normale (&lt;2j)</option>
-          </select>
-        </div>
+        <div className="px-4 pt-4"><StatusTabs tabs={statusTabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
 
-        {isLoading ? <PageSpinner /> : isError ? (
-          <p className="text-center text-gray-400 py-10">Impossible de charger les litiges.</p>
-        ) : (
-          <>
-            <Table
-              columns={columns}
-              data={allDisputes}
-              keyExtractor={(d: AdminDispute) => d.id}
-              emptyMessage="Aucun litige trouvé"
-              onRowClick={(d: AdminDispute) => router.push(`/disputes/${d.id}`)}
+        <FilterBar
+          search={t.state.search} onSearch={t.setSearch}
+          placeholder="Client, professionnel, annonce, objet…"
+          activeCount={t.activeFilterCount}
+          onReset={() => { setSelected(new Set()); t.reset(); }}
+        >
+          <select value={t.state.filters['priority'] ?? ''} onChange={(e) => t.setFilter('priority', e.target.value)} className="input w-44" aria-label="Priorité">
+            <option value="">Toutes priorités</option>
+            <option value="critique">Critique (+7 j)</option>
+            <option value="elevee">Élevée (2–7 j)</option>
+            <option value="normale">Normale (&lt; 2 j)</option>
+          </select>
+          <select value={t.state.filters['period'] ?? ''} onChange={(e) => t.setFilters({ period: e.target.value, from: '', to: '' })} className="input w-44" aria-label="Période">
+            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+          <label className="flex items-center gap-1.5 text-xs text-gray-500">
+            Du <input type="date" value={t.state.filters['from'] ?? ''} onChange={(e) => t.setFilters({ from: e.target.value, period: '' })} className="input !py-1.5 w-36" />
+            au <input type="date" value={t.state.filters['to'] ?? ''} onChange={(e) => t.setFilters({ to: e.target.value, period: '' })} className="input !py-1.5 w-36" />
+          </label>
+        </FilterBar>
+
+        <BulkActionBar<AdminDispute>
+          items={selectedRows} getId={(d) => d.id} getName={(d) => d.reason} actions={actions} noun="litige"
+          onClear={() => setSelected(new Set())} onDone={() => qc.invalidateQueries({ queryKey: ['disputes'] })}
+        />
+
+        {isError ? <p className="text-center text-gray-400 py-10">Impossible de charger les litiges.</p> : (
+          <div className={isFetching && !isLoading ? 'opacity-70 transition-opacity' : ''}>
+            <Table<AdminDispute>
+              columns={columns} data={disputes} loading={isLoading || !t.hydrated} keyExtractor={(d) => d.id}
+              emptyMessage="Aucun litige ne correspond à ces filtres"
+              onRowClick={(d) => router.push(`/disputes/${d.id}`)}
+              sortKey={t.state.sortKey} sortDir={t.state.sortDir} onSort={t.setSort}
+              selectable selectedIds={selected} onSelectionChange={setSelected}
+              rowAccent={(d) => toneAccent[disputeStatusVariant[d.status] ?? 'default']}
             />
-            <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
-          </>
+            <Pagination page={t.state.page} totalPages={totalPages} onPageChange={t.setPage} total={total} pageSize={t.state.pageSize} onPageSizeChange={t.setPageSize} />
+          </div>
         )}
       </Card>
     </div>

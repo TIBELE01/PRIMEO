@@ -53,6 +53,11 @@ export async function adminListTickets(req: Request, res: Response, next: NextFu
       status:   req.query.status,
       category: req.query.category,
       priority: req.query.priority,
+      search:   req.query.search || undefined,
+      from:     req.query.from || undefined,
+      to:       req.query.to || undefined,
+      sortBy:   req.query.sortBy,
+      sortDir:  req.query.sortDir,
       page:     req.query.page,
       limit:    req.query.limit,
     });

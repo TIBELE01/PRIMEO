@@ -54,6 +54,32 @@ function toSector(propertyType: string): string {
 
 // ─── service ──────────────────────────────────────────────────────────────────
 
+// ── Aides communes aux listes d'administration (période, tri, pagination) ─────
+interface ListQueryBase { period?: string; from?: string; to?: string; sortBy?: string; sortDir?: string; page?: string; limit?: string }
+
+/** Filtre de période sur une colonne de date : period=1d|7d|30d|90d ou from/to (YYYY-MM-DD). */
+function dateRangeFilter(query: ListQueryBase): Record<string, Date> | null {
+  const days: Record<string, number> = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 };
+  const r: Record<string, Date> = {};
+  if (query.period && days[query.period]) r['gte'] = new Date(Date.now() - days[query.period]! * 86_400_000);
+  if (query.from && !Number.isNaN(Date.parse(query.from))) r['gte'] = new Date(query.from);
+  if (query.to && !Number.isNaN(Date.parse(query.to))) r['lte'] = new Date(`${query.to.slice(0, 10)}T23:59:59.999Z`);
+  return Object.keys(r).length ? r : null;
+}
+
+/** Tri sur une liste blanche de colonnes (jamais de nom de colonne arbitraire). */
+function sortOrder(query: ListQueryBase, allowed: string[], fallback = 'createdAt'): Record<string, 'asc' | 'desc'>[] {
+  const key = allowed.includes(query.sortBy ?? '') ? (query.sortBy as string) : fallback;
+  return [{ [key]: query.sortDir === 'asc' ? 'asc' : 'desc' }, { id: 'asc' }];
+}
+
+function pageParams(query: ListQueryBase, def = 20, max = 100): { page: number; limit: number } {
+  return {
+    page: Math.max(parseInt(query.page ?? '1') || 1, 1),
+    limit: Math.min(Math.max(parseInt(query.limit ?? String(def)) || def, 1), max),
+  };
+}
+
 export const adminService = {
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
@@ -308,32 +334,73 @@ export const adminService = {
     status?: string;
     search?: string;
     kycPending?: string;
+    kyc?: string;
+    pro?: string;
+    withKycCounts?: string;
+    city?: string;
+    period?: string;
+    from?: string;
+    to?: string;
+    sortBy?: string;
+    sortDir?: string;
     page?: string;
     limit?: string;
   }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = Math.min(parseInt(query.limit ?? '20'), 100);
-    const where: Record<string, unknown> = {};
+    const page = Math.max(parseInt(query.page ?? '1') || 1, 1);
+    const limit = Math.min(Math.max(parseInt(query.limit ?? '20') || 20, 1), 100);
 
-    if (query.role) where['accountType'] = query.role;
-    if (query.status) where['status'] = query.status;
-    // File KYC : uniquement les professionnels dont le dossier attend une validation
-    if (query.kycPending === 'true') where['professionalProfile'] = { verificationStatus: 'pending' };
+    // Filtres communs (tout sauf le type de compte et le statut) — servent aussi aux compteurs
+    const base: Record<string, unknown>[] = [];
+    if (query.kycPending === 'true') base.push({ professionalProfile: { verificationStatus: 'pending' } });
+    // Comptes professionnels uniquement (file KYC)
+    if (query.pro === 'true') base.push({ accountType: { in: ['professional_hebergement', 'professional_hotel', 'professional_immobilier', 'restaurateur'] } });
+    const kycWhere = (k?: string): Record<string, unknown> | null =>
+      k === 'pending' || k === 'approved' || k === 'rejected' ? { professionalProfile: { is: { verificationStatus: k } } } : null;
     if (query.search) {
-      where['OR'] = [
-        { firstName: { contains: query.search, mode: 'insensitive' } },
-        { lastName: { contains: query.search, mode: 'insensitive' } },
-        { email: { contains: query.search, mode: 'insensitive' } },
-        { phone: { contains: query.search } },
-      ];
+      base.push({
+        OR: [
+          { firstName: { contains: query.search, mode: 'insensitive' } },
+          { lastName: { contains: query.search, mode: 'insensitive' } },
+          { email: { contains: query.search, mode: 'insensitive' } },
+          { phone: { contains: query.search } },
+        ],
+      });
     }
+    if (query.city) base.push({ professionalProfile: { city: { contains: query.city, mode: 'insensitive' } } });
+    const days: Record<string, number> = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 };
+    const createdAt: Record<string, Date> = {};
+    if (query.period && days[query.period]) createdAt['gte'] = new Date(Date.now() - days[query.period]! * 86_400_000);
+    if (query.from && !Number.isNaN(Date.parse(query.from))) createdAt['gte'] = new Date(query.from);
+    if (query.to && !Number.isNaN(Date.parse(query.to))) createdAt['lte'] = new Date(`${query.to.slice(0, 10)}T23:59:59.999Z`);
+    if (Object.keys(createdAt).length) base.push({ createdAt });
 
-    const [rawData, total] = await Promise.all([
+    // Statut affiché : validé (active) · en attente (pending) · rejeté (KYC refusé) · suspendu · banni
+    const statusWhere = (st?: string): Record<string, unknown> | null => {
+      switch (st) {
+        case 'active': return { status: 'active', NOT: { professionalProfile: { is: { verificationStatus: 'rejected' } } } };
+        case 'pending': return { status: 'pending', NOT: { professionalProfile: { is: { verificationStatus: 'rejected' } } } };
+        case 'rejected': return { status: { in: ['pending', 'active'] }, professionalProfile: { is: { verificationStatus: 'rejected' } } };
+        case 'suspended': return { status: 'suspended' };
+        case 'banned': return { status: 'banned' };
+        default: return null;
+      }
+    };
+    const roleWhere = query.role ? { accountType: query.role } : null;
+    const and = (...parts: (Record<string, unknown> | null)[]) => ({ AND: [...base, ...parts.filter(Boolean)] as never[] });
+
+    const where = and(roleWhere, statusWhere(query.status), kycWhere(query.kyc));
+
+    const sortable = ['createdAt', 'firstName', 'lastName', 'email', 'status', 'accountType'];
+    const sortBy = sortable.includes(query.sortBy ?? '') ? (query.sortBy as string) : 'createdAt';
+    const sortDir = query.sortDir === 'asc' ? 'asc' : 'desc';
+    const STATUSES = ['active', 'pending', 'rejected', 'suspended', 'banned'] as const;
+
+    const [rawData, total, statusCounts, typeGroups, kycCountList] = await Promise.all([
       prisma.user.findMany({
         where: where as never,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ [sortBy]: sortDir }, { id: 'asc' }] as never,
         select: {
           id: true,
           email: true,
@@ -344,32 +411,55 @@ export const adminService = {
           status: true,
           walletBalance: true,
           createdAt: true,
-          professionalProfile: { select: { verificationStatus: true } },
+          professionalProfile: { select: { verificationStatus: true, city: true, businessName: true } },
           subscription: { select: { planType: true, status: true } },
         },
       }),
       prisma.user.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.user.count({ where: and(roleWhere, statusWhere(st)) as never }))),
+      prisma.user.groupBy({ by: ['accountType'], where: and(statusWhere(query.status), kycWhere(query.kyc)) as never, _count: { _all: true } }),
+      query.withKycCounts === 'true'
+        ? Promise.all(['pending', 'approved', 'rejected'].map((k) => prisma.user.count({ where: and(roleWhere, kycWhere(k)) as never })))
+        : Promise.resolve(null),
     ]);
 
     // Mapper les champs Prisma vers le format attendu par les clients (web admin + mobile)
-    const data = rawData.map((u) => ({
-      id: u.id,
-      email: u.email,
-      phone: u.phone ?? null,
-      firstName: u.firstName ?? '',
-      lastName: u.lastName ?? '',
-      role: u.accountType,         // web admin reads 'role'
-      accountType: u.accountType,  // mobile reads 'accountType'
-      status: u.status,
-      kycVerified: u.professionalProfile?.verificationStatus === 'approved', // web admin (boolean)
-      kycStatus: u.professionalProfile?.verificationStatus ?? null,           // mobile (string)
-      walletBalance: u.walletBalance,
-      subscription: u.subscription ? { planType: u.subscription.planType, status: u.subscription.status } : null, // colonne « Formule »
-      createdAt: u.createdAt,
-      lastLoginAt: null,
-    }));
+    const data = rawData.map((u) => {
+      const kyc = u.professionalProfile?.verificationStatus ?? null;
+      const displayStatus =
+        u.status === 'banned' ? 'banned'
+        : u.status === 'suspended' ? 'suspended'
+        : kyc === 'rejected' ? 'rejected'
+        : u.status === 'pending' ? 'pending'
+        : 'active';
+      return {
+        id: u.id,
+        email: u.email,
+        phone: u.phone ?? null,
+        firstName: u.firstName ?? '',
+        lastName: u.lastName ?? '',
+        role: u.accountType,         // web admin reads 'role'
+        accountType: u.accountType,  // mobile reads 'accountType'
+        status: u.status,
+        displayStatus,
+        kycVerified: kyc === 'approved', // web admin (boolean)
+        kycStatus: kyc,                  // mobile (string)
+        city: u.professionalProfile?.city ?? null,
+        businessName: u.professionalProfile?.businessName ?? null,
+        walletBalance: u.walletBalance,
+        subscription: u.subscription ? { planType: u.subscription.planType, status: u.subscription.status } : null, // colonne « Formule »
+        createdAt: u.createdAt,
+        lastLoginAt: null,
+      };
+    });
 
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st] = statusCounts[i]!; });
+    const typeCounts: Record<string, number> = {};
+    for (const g of typeGroups) typeCounts[g.accountType] = g._count._all;
+
+    const kycCounts = kycCountList ? { pending: kycCountList[0]!, approved: kycCountList[1]!, rejected: kycCountList[2]!, all: kycCountList[0]! + kycCountList[1]! + kycCountList[2]! } : undefined;
+    return { data, total, page, limit, pages: Math.ceil(total / limit), counts, typeCounts, kycCounts };
   },
 
   async getUser(id: string) {
@@ -646,45 +736,49 @@ export const adminService = {
 
   // ── Liste complète des propriétés ─────────────────────────────────────────
 
-  async listAllProperties(query: {
+  async listAllProperties(query: ListQueryBase & {
     status?: string;
     sector?: string;
     userId?: string;
     search?: string;
-    page?: string;
-    limit?: string;
+    city?: string;
   }) {
-    const page = parseInt(query.page ?? '1');
-    const pageLimit = Math.min(parseInt(query.limit ?? '20'), 100);
-    const where: Record<string, unknown> = {};
+    const { page, limit: pageLimit } = pageParams(query);
+    const and: Record<string, unknown>[] = [];
 
-    if (query.status) where['status'] = query.status === 'pending_review' ? 'pending' : query.status;
-    if (query.userId) where['ownerId'] = query.userId; // fiche utilisateur : annonces de ce propriétaire
-    if (query.sector) {
+    if (query.userId) and.push({ ownerId: query.userId }); // fiche utilisateur : annonces de ce propriétaire
+    const sectorWhere: Record<string, unknown> | null = (() => {
+      if (!query.sector) return null;
       // Mapper les secteurs frontend vers les valeurs PropertyType de la DB
-      if (query.sector === 'hebergement') {
-        where['propertyType'] = { in: ['residence', 'hotel'] };
-      } else if (query.sector === 'immobilier') {
-        where['propertyType'] = { in: ['immobilier_location', 'immobilier_terrain', 'immobilier_achat'] };
-      } else {
-        where['propertyType'] = query.sector;
-      }
-    }
+      if (query.sector === 'hebergement') return { propertyType: { in: ['residence', 'hotel'] } };
+      if (query.sector === 'immobilier') return { propertyType: { in: ['immobilier_location', 'immobilier_terrain', 'immobilier_achat'] } };
+      return { propertyType: query.sector };
+    })();
     if (query.search) {
-      where['OR'] = [
-        { title: { contains: query.search, mode: 'insensitive' } },
-        { city: { contains: query.search, mode: 'insensitive' } },
-        { owner: { firstName: { contains: query.search, mode: 'insensitive' } } },
-        { owner: { lastName: { contains: query.search, mode: 'insensitive' } } },
-      ];
+      and.push({
+        OR: [
+          { title: { contains: query.search, mode: 'insensitive' } },
+          { city: { contains: query.search, mode: 'insensitive' } },
+          { owner: { firstName: { contains: query.search, mode: 'insensitive' } } },
+          { owner: { lastName: { contains: query.search, mode: 'insensitive' } } },
+          { owner: { email: { contains: query.search, mode: 'insensitive' } } },
+        ],
+      });
     }
+    if (query.city) and.push({ city: { contains: query.city, mode: 'insensitive' } });
+    const created = dateRangeFilter(query);
+    if (created) and.push({ createdAt: created });
 
-    const [rawData, total] = await Promise.all([
+    const statusValue = query.status === 'pending_review' ? 'pending' : query.status;
+    const where = { AND: [...and, ...(sectorWhere ? [sectorWhere] : []), ...(statusValue ? [{ status: statusValue }] : [])] };
+    const STATUSES = ['active', 'pending', 'rejected', 'suspended', 'draft', 'archived'] as const;
+
+    const [rawData, total, statusCounts, typeGroups] = await Promise.all([
       prisma.property.findMany({
         where: where as never,
         skip: (page - 1) * pageLimit,
         take: pageLimit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: sortOrder(query, ['createdAt', 'title', 'city', 'status', 'pricePerNight', 'propertyType']) as never,
         include: {
           owner: {
             select: {
@@ -696,7 +790,13 @@ export const adminService = {
         },
       }),
       prisma.property.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.property.count({ where: { AND: [...and, ...(sectorWhere ? [sectorWhere] : []), { status: st }] } as never }))),
+      prisma.property.groupBy({ by: ['propertyType'], where: { AND: [...and, ...(statusValue ? [{ status: statusValue }] : [])] } as never, _count: { _all: true } }),
     ]);
+    const typeCounts: Record<string, number> = {};
+    for (const g of typeGroups) typeCounts[g.propertyType] = g._count._all;
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st === 'pending' ? 'pending_review' : st] = statusCounts[i]!; });
 
     // Mapper vers le format AdminProperty attendu par le frontend
     const data = rawData.map((p) => {
@@ -733,7 +833,7 @@ export const adminService = {
       };
     });
 
-    return { data, total, page, limit: pageLimit, pages: Math.ceil(total / pageLimit) };
+    return { data, total, page, limit: pageLimit, pages: Math.ceil(total / pageLimit), counts, typeCounts };
   },
 
   async getPropertyDetail(id: string) {
@@ -906,16 +1006,32 @@ export const adminService = {
   },
 
   // ── Modération des plats (menus restaurant) ──────────────────────────────────
-  async listPendingMenuItems(query: { page?: string; limit?: string }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = parseInt(query.limit ?? '20');
-    const where = { status: 'pending' as const };
-    const [data, total] = await Promise.all([
+  async listPendingMenuItems(query: ListQueryBase & { status?: string; search?: string; section?: string }) {
+    const { page, limit } = pageParams(query);
+    const and: Record<string, unknown>[] = [];
+    if (query.search) {
+      and.push({
+        OR: [
+          { name: { contains: query.search, mode: 'insensitive' } },
+          { section: { contains: query.search, mode: 'insensitive' } },
+          { property: { title: { contains: query.search, mode: 'insensitive' } } },
+          { property: { owner: { email: { contains: query.search, mode: 'insensitive' } } } },
+        ],
+      });
+    }
+    if (query.section) and.push({ section: query.section });
+    const created = dateRangeFilter(query);
+    if (created) and.push({ createdAt: created });
+    // Sans paramètre : file de modération (plats en attente) ; status=all : tous les plats
+    const statusValue = query.status === undefined ? 'pending' : query.status === 'all' ? '' : query.status;
+    const where = { AND: [...and, ...(statusValue ? [{ status: statusValue }] : [])] };
+    const STATUSES = ['pending', 'approved', 'rejected'] as const;
+    const [data, total, statusCounts] = await Promise.all([
       prisma.restaurantMenuItem.findMany({
-        where,
+        where: where as never,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'asc' },
+        orderBy: sortOrder(query, ['createdAt', 'name', 'price', 'section', 'status'], 'createdAt').map((o, i) => (i === 0 && query.sortBy === undefined ? { createdAt: 'asc' as const } : o)) as never,
         include: {
           property: {
             select: {
@@ -925,9 +1041,12 @@ export const adminService = {
           },
         },
       }),
-      prisma.restaurantMenuItem.count({ where }),
+      prisma.restaurantMenuItem.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.restaurantMenuItem.count({ where: { AND: [...and, { status: st }] } as never }))),
     ]);
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st] = statusCounts[i]!; });
+    return { data, total, page, limit, pages: Math.ceil(total / limit), counts };
   },
 
   async approveMenuItem(itemId: string, adminId: string) {
@@ -1048,14 +1167,29 @@ export const adminService = {
 
   // ── Bookings ───────────────────────────────────────────────────────────────
 
-  async listBookings(query: { status?: string; userId?: string; page?: string; limit?: string }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = Math.min(parseInt(query.limit ?? '20'), 100);
-    const where: Record<string, unknown> = {};
-    if (query.status) where['status'] = query.status;
+  async listBookings(query: ListQueryBase & { status?: string; userId?: string; search?: string; city?: string }) {
+    const { page, limit } = pageParams(query);
+    const and: Record<string, unknown>[] = [];
     // Fiche utilisateur : réservations passées en tant que client OU reçues en tant que propriétaire
-    if (query.userId) where['OR'] = [{ clientId: query.userId }, { property: { ownerId: query.userId } }];
-    const [data, total] = await Promise.all([
+    if (query.userId) and.push({ OR: [{ clientId: query.userId }, { property: { ownerId: query.userId } }] });
+    if (query.search) {
+      and.push({
+        OR: [
+          { id: { contains: query.search, mode: 'insensitive' } },
+          { client: { firstName: { contains: query.search, mode: 'insensitive' } } },
+          { client: { lastName: { contains: query.search, mode: 'insensitive' } } },
+          { client: { email: { contains: query.search, mode: 'insensitive' } } },
+          { property: { title: { contains: query.search, mode: 'insensitive' } } },
+        ],
+      });
+    }
+    if (query.city) and.push({ property: { city: { contains: query.city, mode: 'insensitive' } } });
+    const created = dateRangeFilter(query);
+    if (created) and.push({ createdAt: created });
+    const where = { AND: [...and, ...(query.status ? [{ status: query.status }] : [])] };
+    const STATUSES = ['interest_expressed', 'pending_payment', 'confirmed', 'completed', 'cancelled_by_client', 'cancelled_by_professional'] as const;
+
+    const [data, total, statusCounts] = await Promise.all([
       prisma.booking.findMany({
         where: where as never,
         skip: (page - 1) * limit,
@@ -1064,11 +1198,14 @@ export const adminService = {
           client: { select: { id: true, firstName: true, lastName: true, email: true } },
           property: { select: { id: true, title: true, city: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: sortOrder(query, ['createdAt', 'startDate', 'endDate', 'totalAmount', 'status']) as never,
       }),
       prisma.booking.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.booking.count({ where: { AND: [...and, { status: st }] } as never }))),
     ]);
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st] = statusCounts[i]!; });
+    return { data, total, page, limit, pages: Math.ceil(total / limit), counts };
   },
 
   async getBookingById(id: string) {
@@ -1091,12 +1228,31 @@ export const adminService = {
 
   // ── Disputes ───────────────────────────────────────────────────────────────
 
-  async listDisputes(query: { status?: string; page?: string; limit?: string }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = parseInt(query.limit ?? '20');
-    const where = query.status ? { status: query.status as never } : {};
+  async listDisputes(query: ListQueryBase & { status?: string; search?: string; priority?: string }) {
+    const { page, limit } = pageParams(query);
+    const and: Record<string, unknown>[] = [];
+    if (query.search) {
+      and.push({
+        OR: [
+          { reason: { contains: query.search, mode: 'insensitive' } },
+          { booking: { client: { firstName: { contains: query.search, mode: 'insensitive' } } } },
+          { booking: { client: { lastName: { contains: query.search, mode: 'insensitive' } } } },
+          { booking: { client: { email: { contains: query.search, mode: 'insensitive' } } } },
+          { booking: { property: { title: { contains: query.search, mode: 'insensitive' } } } },
+        ],
+      });
+    }
+    const created = dateRangeFilter(query);
+    if (created) and.push({ createdAt: created });
+    // Priorité = ancienneté du litige : critique ≥ 7 j · élevée 2–7 j · normale < 2 j
+    const dayMs = 86_400_000;
+    if (query.priority === 'critique') and.push({ createdAt: { lte: new Date(Date.now() - 7 * dayMs) } });
+    else if (query.priority === 'elevee') and.push({ createdAt: { gt: new Date(Date.now() - 7 * dayMs), lte: new Date(Date.now() - 2 * dayMs) } });
+    else if (query.priority === 'normale') and.push({ createdAt: { gt: new Date(Date.now() - 2 * dayMs) } });
+    const where = { AND: [...and, ...(query.status ? [{ status: query.status }] : [])] };
+    const STATUSES = ['open', 'under_review', 'resolved_refund_full', 'resolved_refund_partial', 'resolved_no_refund', 'closed'] as const;
 
-    const [data, total] = await Promise.all([
+    const [data, total, statusCounts] = await Promise.all([
       prisma.dispute.findMany({
         where: where as never,
         skip: (page - 1) * limit,
@@ -1123,12 +1279,15 @@ export const adminService = {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: sortOrder(query, ['createdAt', 'status', 'resolvedAt']) as never,
       }),
       prisma.dispute.count({ where: where as never }),
+      Promise.all(STATUSES.map((st) => prisma.dispute.count({ where: { AND: [...and, { status: st }] } as never }))),
     ]);
+    const counts: Record<string, number> = { all: statusCounts.reduce((a, b) => a + b, 0) };
+    STATUSES.forEach((st, i) => { counts[st] = statusCounts[i]!; });
 
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+    return { data, total, page, limit, pages: Math.ceil(total / limit), counts };
   },
 
   async getDisputeById(id: string) {
@@ -1512,7 +1671,8 @@ export const adminService = {
 
   // ── Audit logs ─────────────────────────────────────────────────────────────
 
-  async listAuditLogs(query: {
+  async listAuditLogs(query: ListQueryBase & {
+    search?: string;
     userId?: string;
     action?: string;
     targetType?: string;
@@ -1522,10 +1682,18 @@ export const adminService = {
     limit?: string;
     format?: string;
   }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = Math.min(parseInt(query.limit ?? '50'), 200);
+    const page = Math.max(parseInt(query.page ?? '1') || 1, 1);
+    const limit = Math.min(Math.max(parseInt(query.limit ?? '50') || 50, 1), query.format === 'csv' ? 10_000 : 200);
     const where: Record<string, unknown> = {};
 
+    if (query.search) {
+      where['OR'] = [
+        { action: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+        { user: { email: { contains: query.search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: query.search, mode: 'insensitive' } } },
+      ];
+    }
     if (query.userId) where['userId'] = query.userId;
     if (query.action) where['action'] = { contains: query.action };
     if (query.targetType) where['targetType'] = query.targetType;
@@ -1533,14 +1701,18 @@ export const adminService = {
     if (query.from || query.to) {
       where['createdAt'] = {};
       if (query.from) (where['createdAt'] as Record<string, unknown>)['gte'] = new Date(query.from);
-      if (query.to) (where['createdAt'] as Record<string, unknown>)['lte'] = new Date(query.to);
+      if (query.to) {
+        // une date seule (YYYY-MM-DD) couvre toute la journée
+        const end = /^\d{4}-\d{2}-\d{2}$/.test(query.to) ? new Date(`${query.to}T23:59:59.999Z`) : new Date(query.to);
+        (where['createdAt'] as Record<string, unknown>)['lte'] = end;
+      }
     }
 
     const logs = await prisma.auditLog.findMany({
       where: where as never,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: sortOrder(query, ['createdAt', 'action', 'targetType']) as never,
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
       },

@@ -1,131 +1,176 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { CheckCircle, XCircle, ImageOff, Download } from 'lucide-react';
 import { menuItemsService } from '@/services/api';
+import { useTableState } from '@/hooks/useTableState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { PageSpinner } from '@/components/ui/Spinner';
-import { formatDate } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/useToast';
-import { CheckCircle, XCircle, ArrowLeft, ImageOff } from 'lucide-react';
+import { Table, Pagination, Column } from '@/components/ui/Table';
+import { StatusTabs, TabItem } from '@/components/ui/StatusTabs';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { BulkActionBar, BulkAction } from '@/components/ui/BulkActions';
+import { formatDate, formatAmount, downloadCsv } from '@/lib/utils';
+import { MENU_STATUS, toneAccent } from '@/lib/status';
 
-interface PendingMenuItem {
+interface MenuItem {
   id: string;
   name: string;
   section: string;
   description: string | null;
   price: number;
   photoUrl: string | null;
+  status: string;
+  rejectionReason?: string | null;
   createdAt: string;
   property: { id: string; title: string; owner?: { firstName: string; lastName: string; email: string } };
 }
 
-export default function PendingMenuItemsPage() {
-  const router = useRouter();
+const REJECT_REASONS = [
+  'Photo absente ou de mauvaise qualité',
+  'Description insuffisante',
+  'Prix incohérent',
+  'Contenu non conforme aux règles de la plateforme',
+];
+
+export default function MenuItemsPage() {
   const qc = useQueryClient();
-  const toast = useToast();
+  const t = useTableState({ storageKey: 'menu-items', defaultSortKey: 'createdAt', defaultSortDir: 'asc', defaultFilters: { status: 'pending' } });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const status = t.state.filters['status'] ?? 'pending';
 
-  const { data, isLoading } = useQuery<any>({
-    queryKey: ['menu-items-pending'],
-    queryFn: () => menuItemsService.getPending(),
+  const { data, isLoading, isError, isFetching } = useQuery<any>({
+    queryKey: ['menu-items', t.queryParams],
+    queryFn: () => menuItemsService.getPending(t.queryParams),
+    enabled: t.hydrated,
+    placeholderData: keepPreviousData,
   });
 
-  const approve = useMutation({
-    mutationFn: (id: string) => menuItemsService.approve(id),
-    onSuccess: () => {
-      toast.success('Plat validé');
-      qc.invalidateQueries({ queryKey: ['menu-items-pending'] });
+  const items: MenuItem[] = data?.data ?? [];
+  const total: number = data?.total ?? 0;
+  const totalPages: number = data?.pages ?? Math.max(Math.ceil(total / t.state.pageSize), 1);
+  const counts: Record<string, number> = data?.counts ?? {};
+
+  const tabs: TabItem[] = useMemo(() => [
+    { value: 'pending', label: 'En attente', tone: 'warning', count: counts['pending'] ?? 0 },
+    { value: 'approved', label: 'Validés', tone: 'success', count: counts['approved'] ?? 0 },
+    { value: 'rejected', label: 'Rejetés', tone: 'danger', count: counts['rejected'] ?? 0 },
+    { value: 'all', label: 'Tous', count: counts['all'] },
+  ], [counts]);
+
+  const selectedRows = items.filter((i) => selected.has(i.id));
+
+  const columns: Column<MenuItem>[] = [
+    {
+      key: 'name', header: 'Plat', sortable: true,
+      render: (it) => (
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-14 shrink-0 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            {it.photoUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={it.photoUrl} alt={it.name} className="h-full w-full object-cover" />
+              : <ImageOff size={18} className="text-gray-300" />}
+          </div>
+          <div>
+            <p className="font-medium text-gray-900 dark:text-gray-100">{it.name}</p>
+            {it.description && <p className="text-xs text-gray-500 max-w-xs truncate">{it.description}</p>}
+          </div>
+        </div>
+      ),
     },
-    onError: () => toast.error('Erreur lors de la validation'),
-  });
-
-  const reject = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => menuItemsService.reject(id, reason),
-    onSuccess: () => {
-      toast.success('Plat refusé');
-      qc.invalidateQueries({ queryKey: ['menu-items-pending'] });
+    { key: 'section', header: 'Section', sortable: true, render: (it) => <Badge variant="info">{it.section}</Badge> },
+    { key: 'price', header: 'Prix', sortable: true, render: (it) => <span className="text-xs">{formatAmount(it.price, 'FCFA')}</span> },
+    {
+      key: 'restaurant', header: 'Restaurant',
+      render: (it) => (
+        <div>
+          <p className="text-xs font-medium">{it.property?.title}</p>
+          {it.property?.owner && <p className="text-xs text-gray-500">{it.property.owner.firstName} {it.property.owner.lastName}</p>}
+        </div>
+      ),
     },
-    onError: () => toast.error('Erreur lors du rejet'),
-  });
+    {
+      key: 'status', header: 'Statut', sortable: true,
+      render: (it) => (
+        <div>
+          <StatusBadge value={it.status} map={MENU_STATUS} />
+          {it.status === 'rejected' && it.rejectionReason && <p className="text-xs text-gray-500 mt-1 max-w-[12rem] truncate" title={it.rejectionReason}>{it.rejectionReason}</p>}
+        </div>
+      ),
+    },
+    { key: 'createdAt', header: 'Soumis le', sortable: true, render: (it) => <span className="text-xs">{formatDate(it.createdAt)}</span> },
+  ];
 
-  const onReject = (item: PendingMenuItem) => {
-    const reason = window.prompt(`Motif du rejet pour « ${item.name} » :`, '');
-    if (reason === null) return;
-    reject.mutate({ id: item.id, reason: reason.trim() || 'Non conforme' });
-  };
+  const actions: BulkAction<MenuItem>[] = [
+    {
+      key: 'approve', label: 'Valider', icon: <CheckCircle size={14} />, variant: 'cta',
+      confirmTitle: 'Valider les plats', confirmMessage: 'Les plats deviendront visibles des clients :',
+      appliesTo: (it) => it.status !== 'approved',
+      run: (it) => menuItemsService.approve(it.id),
+    },
+    {
+      key: 'reject', label: 'Rejeter', icon: <XCircle size={14} />, variant: 'danger',
+      confirmTitle: 'Rejeter les plats', confirmMessage: 'Le motif sera communiqué aux restaurateurs :', confirmLabel: 'Rejeter',
+      reasonLabel: 'Motif du rejet', reasonPresets: REJECT_REASONS,
+      appliesTo: (it) => it.status !== 'rejected',
+      run: (it, reason) => menuItemsService.reject(it.id, reason),
+    },
+  ];
 
-  const items: PendingMenuItem[] = data?.data ?? [];
+  const handleExport = () => downloadCsv(
+    items.map((i) => ({
+      id: i.id, plat: i.name, section: i.section, prix: i.price, restaurant: i.property?.title,
+      statut: MENU_STATUS[i.status]?.label ?? i.status, soumis_le: formatDate(i.createdAt),
+    })),
+    `plats_${status}_${new Date().toISOString().slice(0, 10)}`,
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-700 p-1">
-          <ArrowLeft size={20} />
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Modération des plats</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Plats de restaurant en attente de validation</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Plats</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{total.toLocaleString('fr-FR')} plat{total > 1 ? 's' : ''} · modération des menus de restaurant</p>
         </div>
+        <Button variant="outline" size="sm" leftIcon={<Download size={14} />} onClick={handleExport} disabled={!items.length}>Exporter la vue (CSV)</Button>
       </div>
 
-      {isLoading ? <PageSpinner /> : (
-        items.length === 0 ? (
-          <Card>
-            <p className="text-center text-gray-400 py-10">Aucun plat en attente de modération.</p>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600 font-medium">
-              {items.length} plat{items.length > 1 ? 's' : ''} en attente
-            </p>
-            {items.map((it) => (
-              <Card key={it.id} padding={false}>
-                <div className="flex">
-                  <div className="w-36 shrink-0 rounded-l-xl overflow-hidden bg-gray-100 flex items-center justify-center min-h-[110px]">
-                    {it.photoUrl ? (
-                      <img src={it.photoUrl} alt={it.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <ImageOff size={28} className="text-gray-300" />
-                    )}
-                  </div>
+      <Card padding={false}>
+        <div className="px-4 pt-4"><StatusTabs tabs={tabs} value={status} onChange={(v) => { setSelected(new Set()); t.setFilter('status', v); }} /></div>
 
-                  <div className="flex-1 p-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-semibold text-gray-900">{it.name}</h2>
-                      <Badge variant="info">{it.section}</Badge>
-                      <Badge variant="warning">{it.price.toLocaleString('fr-CI')} FCFA</Badge>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Restaurant : <span className="font-medium text-gray-600">{it.property?.title}</span>
-                      {it.property?.owner && <span className="ml-1">· {it.property.owner.firstName} {it.property.owner.lastName}</span>}
-                      {' · '}Soumis le {formatDate(it.createdAt)}
-                    </p>
-                    {it.description && (
-                      <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{it.description}</p>
-                    )}
+        <FilterBar
+          search={t.state.search} onSearch={t.setSearch}
+          placeholder="Plat, section, restaurant, propriétaire…"
+          activeCount={Object.entries(t.state.filters).filter(([k, v]) => k !== 'status' && v).length + (t.state.search ? 1 : 0)}
+          onReset={() => { setSelected(new Set()); t.reset(['status']); }}
+        >
+          <input type="search" value={t.state.filters['section'] ?? ''} onChange={(e) => t.setFilter('section', e.target.value)} placeholder="Section (Entrées, Plats…)" className="input w-48" aria-label="Filtrer par section" />
+          <label className="flex items-center gap-1.5 text-xs text-gray-500">
+            Du <input type="date" value={t.state.filters['from'] ?? ''} onChange={(e) => t.setFilter('from', e.target.value)} className="input !py-1.5 w-36" />
+            au <input type="date" value={t.state.filters['to'] ?? ''} onChange={(e) => t.setFilter('to', e.target.value)} className="input !py-1.5 w-36" />
+          </label>
+        </FilterBar>
 
-                    <div className="flex items-center gap-2 mt-4 flex-wrap">
-                      <Button size="sm" leftIcon={<CheckCircle size={14} />} loading={approve.isPending} onClick={() => approve.mutate(it.id)}>
-                        Approuver
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                        leftIcon={<XCircle size={14} />}
-                        onClick={() => onReject(it)}
-                      >
-                        Rejeter
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
+        <BulkActionBar<MenuItem>
+          items={selectedRows} getId={(i) => i.id} getName={(i) => i.name} actions={actions} noun="plat"
+          onClear={() => setSelected(new Set())} onDone={() => qc.invalidateQueries({ queryKey: ['menu-items'] })}
+        />
+
+        {isError ? <p className="text-center text-gray-400 py-10">Impossible de charger les plats.</p> : (
+          <div className={isFetching && !isLoading ? 'opacity-70 transition-opacity' : ''}>
+            <Table<MenuItem>
+              columns={columns} data={items} loading={isLoading || !t.hydrated} keyExtractor={(i) => i.id}
+              emptyMessage={status === 'pending' ? 'Aucun plat en attente de modération.' : 'Aucun plat ne correspond à ces filtres'}
+              sortKey={t.state.sortKey} sortDir={t.state.sortDir} onSort={t.setSort}
+              selectable selectedIds={selected} onSelectionChange={setSelected}
+              rowAccent={(i) => toneAccent[MENU_STATUS[i.status]?.tone ?? 'default']}
+            />
+            <Pagination page={t.state.page} totalPages={totalPages} onPageChange={t.setPage} total={total} pageSize={t.state.pageSize} onPageSizeChange={t.setPageSize} />
           </div>
-        )
-      )}
+        )}
+      </Card>
     </div>
   );
 }

@@ -21,7 +21,7 @@ export const usersService = {
   addNote: (id: string, note: string) => api.patch(`/admin/users/${id}/notes`, { notes: note }),
   approveKyc: (id: string) => api.post(`/admin/users/${id}/kyc/approve`),
   verifyKyc: (id: string) => api.post(`/admin/users/${id}/kyc/approve`),
-  getPendingKyc: (params?: object) => api.get('/admin/users', { ...params, kycPending: true }),
+  getPendingKyc: (params?: object) => api.get('/admin/users', { limit: 100, sortBy: 'createdAt', sortDir: 'asc', ...params, kycPending: true }),
   rejectKyc: (id: string, reason: string) => api.post(`/admin/users/${id}/kyc/reject`, { reason }),
   revoke2fa: (id: string) => api.post(`/admin/users/${id}/revoke-2fa`),
   getTransactions: (id: string, params?: object) => api.get<any>(`/admin/users/${id}/transactions`, params),
@@ -55,7 +55,7 @@ export const propertiesService = {
 };
 
 export const menuItemsService = {
-  getPending: () => api.get<any>('/admin/menu-items/pending'),
+  getPending: (params?: object) => api.get<any>('/admin/menu-items/pending', params),
   approve: (id: string) => api.post(`/admin/menu-items/${id}/approve`),
   reject: (id: string, reason: string) => api.post(`/admin/menu-items/${id}/reject`, { reason }),
 };
