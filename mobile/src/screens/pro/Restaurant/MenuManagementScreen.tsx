@@ -11,7 +11,8 @@ import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { uploadToCloudinary } from '../../../services/cloudinary';
 import { PageHeader } from '../../../components/layout/PageHeader';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // Couleur principale restaurant
 const PRIMARY  = '#DC2626';
@@ -462,6 +463,7 @@ export default function MenuManagementScreen() {
       <PageHeader title="Menu" />
       {/* Stats + action */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <Text style={styles.headerSub}>{totalItems} article{totalItems !== 1 ? 's' : ''} · {availableCount} disponible{availableCount !== 1 ? 's' : ''}</Text>
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: HEADER_FG }]} onPress={openCreate} accessibilityRole="button" accessibilityLabel="Ajouter un article au menu">
           <Ionicons name="add" size={18} color={HEADER_BG} />
@@ -876,7 +878,7 @@ const styles = StyleSheet.create({
   onboardingBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   // Header
-  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
+  header:     { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, },
   headerSub:  { fontSize: 12, color: HEADER_SUBTLE},
   addBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20 },
   addBtnText: { color: HEADER_BG, fontWeight: '700', fontSize: 14 },

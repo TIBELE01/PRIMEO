@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
 import { useAuth } from '../../hooks/useAuth';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 interface Stats {
   totalUsers?: number;
@@ -165,6 +166,7 @@ export default function AdminDashboardScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
+          <HeaderBackdrop />
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
@@ -370,10 +372,8 @@ const styles = StyleSheet.create({
   safe:   { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   scroll: { padding: 16, paddingBottom: 40 },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: HEADER_BG, borderRadius: 16, padding: 16, marginBottom: 20,
-  },
+  header: { ...HEADER_SHAPE,
+    flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 16, marginBottom: 20, },
   avatar:      { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   avatarText:  { fontSize: 18, fontWeight: '700', color: '#fff' },
   greeting:    { fontSize: 16, fontWeight: '700', color: HEADER_FG},

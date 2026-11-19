@@ -11,7 +11,8 @@ import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscription } from '../../../hooks/useSubscription';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const { width } = Dimensions.get('window');
 
@@ -231,6 +232,7 @@ export default function DashboardScreen({ navigation }: any) {
       >
         {/* Header */}
         <View style={styles.header}>
+          <HeaderBackdrop />
           <View>
             <Text style={styles.headerGreeting}>Bonjour, {firstName} 👋</Text>
             <Text style={styles.headerSub}>Voici votre tableau de bord</Text>
@@ -455,9 +457,9 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, fontWeight: '600' },
 
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: HEADER_BG },
+    paddingHorizontal: 20, paddingVertical: 20, },
   headerGreeting: { fontSize: 20, fontWeight: '800', color: HEADER_FG},
   headerSub: { fontSize: 13, color: HEADER_SUBTLE, marginTop: 2 },
   refreshBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8 },

@@ -26,6 +26,8 @@ import {
   ProfileInfoRow,
   useSingleAccordion,
 } from '../../components/ui/ProfileAccordion';
+import { HEADER_BG, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 const ROLE_LABELS: Record<string, string> = {
   professional_hebergement: 'Professionnel — Résidence',
@@ -146,9 +148,10 @@ export default function ProSettingsScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Header band */}
-        <View style={[s.headerBand, { backgroundColor: accent }]}>
+        <View style={s.headerBand}>
+          <HeaderBackdrop />
           <View style={s.avatar}>
-            <Text style={[s.avatarInitials, { color: accent }]}>
+            <Text style={[s.avatarInitials, { color: HEADER_BG }]}>
               {user ? `${user.firstName?.[0] ?? '?'}${user.lastName?.[0] ?? ''}`.toUpperCase() : '?'}
             </Text>
           </View>
@@ -343,9 +346,9 @@ const s = StyleSheet.create({
   scroll: { paddingBottom: 40, paddingTop: 4 },
 
   headerBand: {
+    ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', gap: 14,
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 28,
-    borderBottomLeftRadius: 20, borderBottomRightRadius: 20,
     marginBottom: 20,
   },
   avatar:          { width: 54, height: 54, borderRadius: 27, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },

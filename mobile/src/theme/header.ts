@@ -6,12 +6,21 @@ export const HEADER_FG = '#FFFFFF';
 export const HEADER_BUTTON_BG = 'rgba(255,255,255,0.18)';
 /** Texte secondaire (sous-titre) sur l'en-tête bleu */
 export const HEADER_SUBTLE = 'rgba(255,255,255,0.82)';
+/** Dégradé de l'en-tête (diagonale bleu profond → bleu lumineux) */
+export const HEADER_GRADIENT = ['#0047D9', '#0055FF', '#3B82FF'] as const;
+/** Arrondi des coins bas de l'en-tête */
+export const HEADER_RADIUS = 28;
 
-/** Options des en-têtes natifs (react-navigation) */
-export const NATIVE_HEADER_OPTIONS = {
-  headerStyle: { backgroundColor: HEADER_BG },
-  headerTintColor: HEADER_FG,
-  headerTitleAlign: 'center' as const,
-  headerTitleStyle: { fontWeight: '800' as const, fontSize: 20, color: HEADER_FG },
-  headerShadowVisible: true,
-};
+/** Forme commune des en-têtes : coins bas arrondis + ombre bleutée */
+export const HEADER_SHAPE = {
+  backgroundColor: HEADER_BG,
+  borderBottomLeftRadius: HEADER_RADIUS,
+  borderBottomRightRadius: HEADER_RADIUS,
+  borderBottomWidth: 0,
+  shadowColor: '#0B3BB0',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.28,
+  shadowRadius: 16,
+  elevation: 10,
+  zIndex: 10,
+} as const;

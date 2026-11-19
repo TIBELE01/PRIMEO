@@ -19,7 +19,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { boostsApi } from '../../../services/api/endpoints/boosts';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -262,6 +263,7 @@ export default function BoostsScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
+          <HeaderBackdrop />
           <Text style={styles.title}>Mes boosts</Text>
           <Text style={styles.subtitle}>Mettez vos annonces en avant</Text>
         </View>
@@ -501,7 +503,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   scroll: { padding: 16, paddingBottom: 48 },
 
-  header: { marginBottom: 20, backgroundColor: HEADER_BG },
+  header: { ...HEADER_SHAPE, marginBottom: 20, },
   title: { fontSize: 24, fontWeight: '800', color: HEADER_FG},
   subtitle: { fontSize: 14, color: HEADER_SUBTLE, marginTop: 2 },
 

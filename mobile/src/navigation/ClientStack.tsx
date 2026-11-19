@@ -35,7 +35,7 @@ import RestaurantMenuScreen from '../screens/client/Restaurant/RestaurantMenuScr
 import RestaurantOrderCartScreen from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
-import { NATIVE_HEADER_OPTIONS } from '../theme/header';
+import { NATIVE_HEADER_OPTIONS } from '../components/layout/nativeHeader';
 
 const Stack = createNativeStackNavigator<ClientStackParamList>();
 

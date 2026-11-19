@@ -4,7 +4,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const DAY_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -259,6 +260,7 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
     <SafeAreaView style={styles.safe}>
       {/* iCal actions */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => navigation.navigate('IcalFeeds', { propertyId })} style={styles.icalBtn}>
             <Text style={styles.icalBtnText}>Import iCal</Text>
@@ -378,7 +380,7 @@ const CELL_SIZE = `${Math.floor(100/7)}%`;
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: 10, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
+  header: { ...HEADER_SHAPE, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: 10, },
   headerActions: { flexDirection: 'row', gap: 8 },
   icalBtn: { backgroundColor: HEADER_BUTTON_BG, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)'},
   icalBtnText: { fontSize: 12, color: HEADER_FG, fontWeight: '700' },

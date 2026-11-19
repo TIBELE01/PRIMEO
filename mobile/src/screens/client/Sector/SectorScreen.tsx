@@ -10,7 +10,8 @@ import { propertiesApi } from '@services/api/endpoints/properties';
 import type { Property } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../Home/PropertyCard';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -112,6 +113,7 @@ export function SectorScreen() {
 
       {/* Header */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -205,7 +207,7 @@ export function SectorScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: HEADER_BG },
+  header: { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, },
   backBtn: {},
   backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '300' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },

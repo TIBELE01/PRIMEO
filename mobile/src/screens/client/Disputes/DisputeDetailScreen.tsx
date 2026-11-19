@@ -7,7 +7,8 @@ import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
 import { socketService } from '../../../services/socket/socketService';
 import { useAuth } from '../../../hooks/useAuth';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type DisputeStatus =
   | 'open'
@@ -189,6 +190,7 @@ export function DisputeDetailScreen({ navigation, route }: Props) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
+          <HeaderBackdrop />
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
@@ -204,6 +206,7 @@ export function DisputeDetailScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -369,10 +372,8 @@ export function DisputeDetailScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   flex: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12,
-    backgroundColor: HEADER_BG, gap: 8,
-  },
+  header: { ...HEADER_SHAPE,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12, gap: 8, },
   backBtn: { padding: 6 },
   backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
   headerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: HEADER_FG},

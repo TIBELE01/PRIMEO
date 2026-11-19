@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 interface IcalFeed {
   id: string;
@@ -122,6 +123,7 @@ export default function IcalFeedsScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -228,10 +230,9 @@ function badgeStyle(source: string) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingVertical: 12, backgroundColor: HEADER_BG,
-  },
+    paddingHorizontal: 12, paddingVertical: 12, },
   backBtn: { padding: 8, width: 40 },
   backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
   headerTitle: { fontSize: 17, fontWeight: '800', color: HEADER_FG},

@@ -24,7 +24,8 @@ import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal'
 import { trackEvent } from '../../../services/analytics';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledOptions, filterEnabledProperties, sectorOfPropertyType } from '../../../utils/sectors';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -244,6 +245,7 @@ export function SearchScreen() {
 
       {/* Header */}
       <View style={s.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={12} accessibilityRole="button" accessibilityLabel="Retour">
           <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
@@ -465,12 +467,9 @@ export function SearchScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F9FAFB' },
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, backgroundColor: HEADER_BG,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
-  },
+    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, },
   backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
   backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: HEADER_FG, textAlign: 'center' },

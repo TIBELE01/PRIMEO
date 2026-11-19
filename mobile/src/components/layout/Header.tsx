@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from './HeaderBackdrop';
 
 interface HeaderProps {
   title: string;
@@ -13,6 +14,7 @@ export function Header({ title, showBack = true, rightAction }: HeaderProps) {
   const navigation = useNavigation();
   return (
     <View style={styles.header}>
+      <HeaderBackdrop />
       {showBack ? (
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
           <Text style={styles.backArrow}>←</Text>
@@ -33,18 +35,11 @@ export function Header({ title, showBack = true, rightAction }: HeaderProps) {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 10,
-    backgroundColor: HEADER_BG,
-    shadowColor: '#0F1729',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
+    paddingVertical: 10, },
   backBtn: {
     width: 44,
     height: 44,

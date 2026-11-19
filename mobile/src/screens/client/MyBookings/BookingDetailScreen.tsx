@@ -8,7 +8,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { BookingInvoiceDownload } from '../../../components/booking/BookingInvoiceDownload';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -278,6 +279,7 @@ export function BookingDetailScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
@@ -545,12 +547,9 @@ const styles = StyleSheet.create({
   retryBtnText: { color: '#fff', fontWeight: '600' },
 
   // Header
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, backgroundColor: HEADER_BG,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
-  },
+    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: HEADER_FG, textAlign: 'center' },

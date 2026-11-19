@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { supportApi } from '../../services/api/endpoints/support';
 import type { SupportTicket, TicketMessage, TicketStatus, TicketCategory, TicketPriority } from '../../types/support';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 // ── Display helpers ───────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ export default function SupportTicketDetailScreen() {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
+          <HeaderBackdrop />
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
             <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
           </TouchableOpacity>
@@ -124,6 +126,7 @@ export default function SupportTicketDetailScreen() {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.header}>
+          <HeaderBackdrop />
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
             <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
           </TouchableOpacity>
@@ -153,6 +156,7 @@ export default function SupportTicketDetailScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
@@ -222,14 +226,9 @@ const s = StyleSheet.create({
   flex:  { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: HEADER_BG,
-    borderBottomWidth: 1, borderBottomColor: HEADER_BG,
-    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
-  },
+    paddingHorizontal: 16, paddingVertical: 12, },
   backBtn:    { width: 36, height: 36, borderRadius: 18, backgroundColor: HEADER_BUTTON_BG, alignItems: 'center', justifyContent: 'center' },
   headerText: { fontSize: 15, fontWeight: '700', color: HEADER_FG, flex: 1, marginHorizontal: 8 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },

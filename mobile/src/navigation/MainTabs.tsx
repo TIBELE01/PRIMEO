@@ -56,7 +56,7 @@ import TableReservationScreen       from '../screens/client/Restaurant/TableRese
 import RestaurantOrderCartScreen    from '../screens/client/Restaurant/RestaurantOrderCartScreen';
 import RestaurantOrderTrackingScreen from '../screens/client/Restaurant/RestaurantOrderTrackingScreen';
 import MyRestaurantOrdersScreen     from '../screens/client/Restaurant/MyRestaurantOrdersScreen';
-import { NATIVE_HEADER_OPTIONS } from '../theme/header';
+import { NATIVE_HEADER_OPTIONS } from '../components/layout/nativeHeader';
 
 // ── Shared tab bar options factory ────────────────────────────────────────────
 

@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 interface Review {
   id: string;
@@ -193,6 +194,7 @@ export function MyReviewsScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -268,7 +270,7 @@ export function MyReviewsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
+  header: { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, },
   backBtn: { padding: 4, marginRight: 8 },
   backArrow: { fontSize: 22, color: HEADER_FG, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: '800', color: HEADER_FG},

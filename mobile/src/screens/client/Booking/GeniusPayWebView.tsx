@@ -5,7 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // Import conditionnel : WebView n'existe pas sur le web (iframe bloqué par CSP Genius Pay)
 let WebView: React.ComponentType<{
@@ -83,6 +84,7 @@ function WebPaymentWaitingScreen({
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <View style={styles.headerLeft}>
           <Text style={styles.lockIcon}>🔒</Text>
           <Text style={styles.headerTitle}>Paiement sécurisé</Text>
@@ -263,6 +265,7 @@ export function GeniusPayWebViewScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <View style={styles.headerLeft}>
           <Text style={styles.lockIcon}>🔒</Text>
           <Text style={styles.headerTitle}>Paiement sécurisé</Text>
@@ -305,14 +308,12 @@ export function GeniusPayWebViewScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#fff' },
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
+    paddingVertical: 12, },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   lockIcon: { fontSize: 16 },
   headerTitle: { fontSize: 16, fontWeight: '700', color: HEADER_FG},

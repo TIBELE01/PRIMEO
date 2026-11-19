@@ -17,6 +17,9 @@ function authHeaders(): Record<string, string> {
     'X-API-Secret': geniusPayConfig.secretKey ?? '',
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    // Identification explicite du serveur Primeo : le pare-feu de Genius Pay (Imunify360) bloque les
+    // clients génériques (« axios/x.y ») ; cet en-tête permet aussi à leur support de créer une règle d'autorisation.
+    'User-Agent': 'Primeo-Backend/1.0 (+https://primeo.ci)',
   };
 }
 

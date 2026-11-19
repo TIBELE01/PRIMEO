@@ -9,7 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { collaboratorsApi, CollaboratorRole } from '../../../services/api/endpoints/collaboratorsApi';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -295,6 +296,7 @@ export default function AccessManagementScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <Text style={styles.title}>Gestion des accès</Text>
         {isPremium && tab === 'team' && (
           <TouchableOpacity style={styles.inviteHeaderBtn} onPress={() => setShowInviteModal(true)}>
@@ -536,7 +538,7 @@ const styles = StyleSheet.create({
   container:       { flex: 1, backgroundColor: '#F9FAFB' },
   center:          { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: HEADER_BG, borderBottomWidth: 1, borderBottomColor: HEADER_BG},
+  header:          { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, },
   title:           { fontSize: 20, fontWeight: '700', color: HEADER_FG},
   inviteHeaderBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: HEADER_FG, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, gap: 6 },
   inviteHeaderBtnText: { color: HEADER_BG, fontWeight: '600', fontSize: 14 },

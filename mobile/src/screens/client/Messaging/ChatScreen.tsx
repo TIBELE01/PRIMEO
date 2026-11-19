@@ -11,7 +11,8 @@ import { messagesApi } from '../../../services/api/endpoints/messages';
 import { socketService } from '../../../services/socket/socketService';
 import { useChatStore, type Message } from '../../../store/chatStore';
 import { useAuth } from '../../../hooks/useAuth';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // Stable reference so the Zustand selector never returns a new [] on each call
 // when messages[bookingId] is undefined — Object.is([], []) is false and would
@@ -324,6 +325,7 @@ export function ChatScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -465,14 +467,9 @@ export function ChatScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
   flex: { flex: 1 },
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16,
-    backgroundColor: HEADER_BG,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10,
-  },
+    paddingHorizontal: 52, paddingTop: 16, paddingBottom: 16, },
   backBtn: { position: 'absolute', left: 8, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8, zIndex: 11 },
   backArrow: { fontSize: 26, color: HEADER_FG, fontWeight: '700' },
   headerInfo: { alignItems: 'center' },

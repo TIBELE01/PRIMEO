@@ -25,6 +25,7 @@ export const EMAIL_COLORS = {
 
 // Dégradés (réutilisés dans l'en-tête et les bandeaux d'accent)
 export const EMAIL_GRADIENTS = {
+  hero: 'linear-gradient(135deg, #0047D9 0%, #0055FF 55%, #3B82FF 100%)',
   primary: 'linear-gradient(135deg, #0055FF 0%, #2E7BFF 100%)',
   success: 'linear-gradient(135deg, #00CC66 0%, #19E07E 100%)',
   danger: 'linear-gradient(135deg, #FF3333 0%, #FF6A6A 100%)',
@@ -44,6 +45,8 @@ export const EMAIL_LINKS = {
   privacy: process.env['PRIVACY_URL']?.trim() || `${LEGAL_BASE}/confidentialite/`,
   terms: process.env['TERMS_URL']?.trim() || `${LEGAL_BASE}/cgu/`,
   legal: `${LEGAL_BASE}/mentions-legales/`,
+  /** Espace client : application web si configurée, sinon page de téléchargement de l'app */
+  app: process.env['FRONTEND_URL']?.trim() || `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/telechargement/`,
 } as const;
 
 // Réseaux sociaux — icônes PNG (compatibles tous clients email, contrairement au
@@ -67,8 +70,16 @@ export const EMAIL_SOCIALS: ReadonlyArray<{ name: string; url: string; icon: str
 ];
 
 // Logo officiel (PNG, compatible tous clients email) — hébergé sur le site vitrine, surchargeable par variable d'environnement.
-export const EMAIL_LOGO_URL =
-  process.env['EMAIL_LOGO_URL']?.trim() || `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/assets/img/email-logo.png`;
+const ASSETS = `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/assets/img`;
+export const EMAIL_LOGO_URL = process.env['EMAIL_LOGO_URL']?.trim() || `${ASSETS}/email-logo.png`;
+/** Variante au texte blanc, pour le pied de page sombre */
+export const EMAIL_LOGO_WHITE_URL = process.env['EMAIL_LOGO_WHITE_URL']?.trim() || `${ASSETS}/email-logo-white.png`;
+
+/** Badges des stores (PNG) — mènent à la page de téléchargement de l'application */
+export const EMAIL_STORE_BADGES: ReadonlyArray<{ name: string; image: string; url: string }> = [
+  { name: 'Télécharger dans l’App Store', image: `${ASSETS}/stores/app-store-badge.png`, url: `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/telechargement/` },
+  { name: 'Disponible sur Google Play', image: `${ASSETS}/stores/google-play-badge.png`, url: `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/telechargement/` },
+];
 
 export const COMPANY = {
   name: 'Primeo CI',

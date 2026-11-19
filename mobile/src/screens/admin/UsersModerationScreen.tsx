@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../../services/api/endpoints/adminApi';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -227,6 +228,7 @@ function KycDetailModal({
       <SafeAreaView style={det.safe}>
         {/* Header */}
         <View style={det.header}>
+          <HeaderBackdrop />
           <TouchableOpacity onPress={onClose} style={det.backBtn}>
             <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
           </TouchableOpacity>
@@ -414,6 +416,7 @@ export default function UsersModerationScreen() {
     <SafeAreaView style={s.safe}>
       {/* Header */}
       <View style={s.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
@@ -544,7 +547,7 @@ export default function UsersModerationScreen() {
 
 const s = StyleSheet.create({
   safe:          { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
-  header:        { backgroundColor: HEADER_BG, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: HEADER_BG, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8, zIndex: 10 },
+  header:        { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 12, },
   backBtn:       { padding: 4 },
   headerText:    { flex: 1 },
   title:         { fontSize: 18, fontWeight: '800', color: HEADER_FG},

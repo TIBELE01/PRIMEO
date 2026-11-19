@@ -22,7 +22,8 @@ import {
   useSingleAccordion,
 } from '../../../components/ui/ProfileAccordion';
 import { PageHeader } from '../../../components/layout/PageHeader';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
@@ -224,11 +225,12 @@ export function ProfileScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#1056E0" />
-      <PageHeader title="Mon profil" />
+      <PageHeader title="Mon profil" flat />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* En-tête : avatar + nom + badge rôle */}
         <View style={styles.header}>
+          <HeaderBackdrop />
           {loading && <ActivityIndicator color={HEADER_FG} style={styles.loadingIndicator} />}
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
@@ -239,7 +241,7 @@ export function ProfileScreen({ navigation }: Props) {
           )}
           <Text style={styles.headerName}>{fullName}</Text>
           <Text style={styles.headerEmail}>{user.email}</Text>
-          <View style={[styles.roleBadge, { backgroundColor: roleBadgeColor(user.role) + '22' }]}>
+          <View style={[styles.roleBadge, { backgroundColor: '#FFFFFF' }]}>
             <Text style={[styles.roleBadgeText, { color: roleBadgeColor(user.role) }]}>
               {roleBadgeLabel(user.role)}
             </Text>
@@ -457,19 +459,12 @@ const styles = StyleSheet.create({
   loadingIndicator: { position: 'absolute', top: 12, right: 12 },
 
   // En-tête
-  header: {
-    backgroundColor: HEADER_BG,
+  header: { ...HEADER_SHAPE,
     alignItems: 'center',
     paddingTop: 36,
     paddingBottom: 28,
     paddingHorizontal: 24,
-    marginBottom: 14,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
+    marginBottom: 14, },
   avatar: { width: 88, height: 88, borderRadius: 44, marginBottom: 14, borderWidth: 3, borderColor: HEADER_FG },
   avatarFallback: {
     width: 88,

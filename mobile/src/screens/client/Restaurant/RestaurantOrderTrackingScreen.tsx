@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, type Theme } from '../../../theme/ThemeProvider';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { foodOrdersApi, type FoodOrder, type FoodOrderStatus } from '../../../services/api/endpoints/foodOrdersApi';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Props = ClientScreenProps<'RestaurantOrderTracking'>;
 
@@ -80,6 +81,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
           <Text style={s.backText}>‹ Retour</Text>
         </TouchableOpacity>
@@ -170,7 +172,7 @@ export default function RestaurantOrderTrackingScreen({ navigation, route }: Pro
 function makeStyles(t: Theme) {
   return StyleSheet.create({
     safe:         { flex: 1, backgroundColor: t.colors.background },
-    header:       { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
+    header:       { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', padding: 16, },
     backBtn:      { marginRight: 12 },
     backText:     { fontSize: 16, color: HEADER_FG},
     title:        { fontSize: 17, fontWeight: '700', color: HEADER_FG},

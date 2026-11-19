@@ -9,7 +9,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { usersApi } from '../../../services/api/endpoints/users';
 import { useAuthStore } from '../../../store/authStore';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -172,6 +173,7 @@ export default function EditProfileScreen() {
 
       {/* En-tête */}
       <View style={styles.topBar}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Retour</Text>
         </TouchableOpacity>
@@ -256,16 +258,12 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F6FB' },
-  topBar: {
+  topBar: { ...HEADER_SHAPE,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: HEADER_BG,
-    borderBottomWidth: 1,
-    borderBottomColor: HEADER_BG,
-  },
+    paddingVertical: 14, },
   backBtn: { minWidth: 64 },
   backText: { color: HEADER_FG, fontSize: 15, fontWeight: '600' },
   topTitle: { fontSize: 17, fontWeight: '800', color: HEADER_FG},

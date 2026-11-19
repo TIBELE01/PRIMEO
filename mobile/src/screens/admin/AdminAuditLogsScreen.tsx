@@ -11,7 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminAuditApi } from '../../services/api/endpoints/adminApi';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 interface AuditLog {
   id: string;
@@ -131,6 +132,7 @@ export default function AdminAuditLogsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button">
           <Ionicons name="arrow-back" size={24} color={HEADER_FG} />
         </TouchableOpacity>
@@ -199,7 +201,7 @@ export default function AdminAuditLogsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 16, backgroundColor: '#F7F9FC' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG },
+  header: { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, },
   title: { fontSize: 18, fontWeight: '800', color: HEADER_FG},
   searchBox: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 16,

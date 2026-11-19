@@ -48,7 +48,7 @@ function emailHtml(title: string, body: string): string {
   return renderEmail({
     title,
     preheader: title,
-    body: heading(title) + `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#333333;">${body}</div>` + signature(),
+    body: heading(title) + `<div class="txt" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333333;">${body}</div>` + signature(),
   });
 }
 

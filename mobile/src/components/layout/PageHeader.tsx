@@ -1,24 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { HEADER_BG, HEADER_FG } from '../../theme/header';
+import { HEADER_FG, HEADER_SHAPE, HEADER_SUBTLE } from '../../theme/header';
+import { HeaderBackdrop } from './HeaderBackdrop';
 
 interface PageHeaderProps {
   title: string;
+  /** Sous-titre facultatif affiché sous le titre */
+  subtitle?: string;
   /** Élément optionnel aligné à droite (bouton d'action, etc.). */
   right?: React.ReactNode;
+  /** Élément optionnel aligné à gauche (bouton retour, etc.). */
+  left?: React.ReactNode;
+  /** true : coins bas droits (quand un bloc bleu prolonge l'en-tête, ex. carte de profil) */
+  flat?: boolean;
 }
 
 /**
  * En-tête uniforme de l'application.
- * — Fond bleu Primeo, titre blanc
- * — Ombre portée marquée pour se détacher du contenu
- * — Titre centré, en gras
- * — Espace confortable en haut (le parent gère l'encoche via SafeAreaView)
+ * — Dégradé bleu Primeo avec halos lumineux discrets
+ * — Coins bas arrondis et ombre bleutée
+ * — Titre centré, blanc, en gras (+ sous-titre facultatif)
  */
-export function PageHeader({ title, right }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, right, left, flat }: PageHeaderProps) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, flat && styles.flat]}>
+      <HeaderBackdrop radius={flat ? 0 : undefined} />
+      {left ? <View style={styles.left}>{left}</View> : null}
       <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
       {right ? <View style={styles.right}>{right}</View> : null}
     </View>
   );
@@ -26,36 +35,25 @@ export function PageHeader({ title, right }: PageHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: HEADER_BG,
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 20,
+    ...HEADER_SHAPE,
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 56,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: HEADER_BG,
-    // Ombre portée forte (iOS + Android)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 10,
+    marginBottom: 6,
   },
+  flat: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, shadowOpacity: 0, elevation: 0, marginBottom: 0 },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: HEADER_FG,
     textAlign: 'center',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  right: {
-    position: 'absolute',
-    right: 16,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
+  subtitle: { marginTop: 4, fontSize: 13, fontWeight: '500', color: HEADER_SUBTLE, textAlign: 'center' },
+  left: { position: 'absolute', left: 16, top: 0, bottom: 0, justifyContent: 'center' },
+  right: { position: 'absolute', right: 16, top: 0, bottom: 0, justifyContent: 'center' },
 });

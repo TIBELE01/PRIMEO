@@ -10,7 +10,8 @@ import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const { width } = Dimensions.get('window');
 const PRIMARY = '#DC2626';
@@ -180,6 +181,7 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
       >
         {/* ── En-tête coloré ──────────────────────────────────────────────── */}
         <View style={styles.header}>
+          <HeaderBackdrop />
           <View>
             <Text style={styles.headerGreeting}>Bonjour, {firstName} 👋</Text>
             <Text style={styles.headerSub} numberOfLines={1}>{propertyName}</Text>
@@ -355,10 +357,9 @@ const styles = StyleSheet.create({
 
 
   // Header coloré
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 20,
-    borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: HEADER_BG },
+    paddingHorizontal: 20, paddingVertical: 20, },
   headerGreeting: { fontSize: 20, fontWeight: '800', color: HEADER_FG},
   headerSub:      { fontSize: 13, color: HEADER_SUBTLE, marginTop: 2 },
   refreshBtn:     { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8 },

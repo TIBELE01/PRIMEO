@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { supportApi } from '../../services/api/endpoints/support';
 import type { TicketCategory } from '../../types/support';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 type ChatMsg = { id: string; from: 'bot' | 'user'; text: string };
 type QReply  = { id: string; label: string };
@@ -243,6 +244,7 @@ export default function SupportScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
+        <HeaderBackdrop />
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color={HEADER_FG} />
         </TouchableOpacity>
@@ -334,12 +336,9 @@ export default function SupportScreen() {
 const s = StyleSheet.create({
   safe:    { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   flex:    { flex: 1 },
-  header:  {
+  header:  { ...HEADER_SHAPE,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: HEADER_BG,
-    borderBottomWidth: 1, borderBottomColor: HEADER_BG,
-    shadowColor: '#0F1729', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
-  },
+    paddingHorizontal: 16, paddingVertical: 12, },
   backBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: HEADER_BUTTON_BG, alignItems: 'center', justifyContent: 'center' },
   headerTitle:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   botDot:       { width: 10, height: 10, borderRadius: 5, backgroundColor: '#5BBD15' },

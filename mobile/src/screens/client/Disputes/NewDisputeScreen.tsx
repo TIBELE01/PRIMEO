@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Props = ClientScreenProps<'NewDispute'>;
 
@@ -115,6 +116,7 @@ export function NewDisputeScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
+          <HeaderBackdrop />
           <Text style={styles.title}>Signaler un problème</Text>
           <Text style={styles.subtitle}>Notre équipe traitera votre litige dans les meilleurs délais</Text>
         </View>
@@ -223,7 +225,7 @@ export function NewDisputeScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F9FAFB' },
   scroll: { padding: 20, paddingBottom: 40 },
-  header: { marginBottom: 20, backgroundColor: HEADER_BG },
+  header: { ...HEADER_SHAPE, marginBottom: 20, },
   title: { fontSize: 24, fontWeight: '800', color: HEADER_FG, marginBottom: 4 },
   subtitle: { fontSize: 14, color: HEADER_SUBTLE, lineHeight: 20 },
   section: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12 },

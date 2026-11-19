@@ -23,7 +23,8 @@ import { PaymentOptionsSelector, type PaymentChoice } from './PaymentOptionsSele
 import { useCurrency } from '../../../hooks/useCurrency';
 import { generateUUID } from '../../../utils/uuid';
 import { trackEvent } from '../../../services/analytics';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type Props = {
   navigation: NativeStackNavigationProp<ClientStackParamList, 'Booking'>;
@@ -373,6 +374,7 @@ export function BookingScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.safe}>
       {/* En-tête */}
       <View style={styles.header}>
+        <HeaderBackdrop />
         <TouchableOpacity
           onPress={handleBack}
           style={styles.backBtn}
@@ -997,14 +999,12 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 14, color: '#6B7280', marginTop: 8 },
 
   // En-tête
-  header: {
+  header: { ...HEADER_SHAPE,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: HEADER_BG, backgroundColor: HEADER_BG },
+    paddingVertical: 12, },
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backArrow: { fontSize: 28, color: HEADER_FG, lineHeight: 32 },
   headerTitle: { fontSize: 18, fontWeight: '700', color: HEADER_FG},

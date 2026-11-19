@@ -60,7 +60,7 @@ import RestaurantTablesScreen    from '../screens/pro/Restaurant/RestaurantTable
 // ─── Messaging (shared with client) ──────────────────────────────────────────
 import { ConversationsScreen } from '../screens/client/Messaging/ConversationsScreen';
 import { ChatScreen }          from '../screens/client/Messaging/ChatScreen';
-import { NATIVE_HEADER_OPTIONS } from '../theme/header';
+import { NATIVE_HEADER_OPTIONS } from '../components/layout/nativeHeader';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyComp = React.ComponentType<any>;
