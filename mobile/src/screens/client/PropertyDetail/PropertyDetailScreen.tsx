@@ -784,7 +784,8 @@ const styles = StyleSheet.create({
   mediaVideoOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
   mediaVideoError: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center', paddingHorizontal: 24, textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 },
   mediaVideoBadge: {
-    position: 'absolute', top: 10, left: 10,
+    // en bas à gauche : le haut de la carte est occupé par les boutons retour / favori / partage
+    position: 'absolute', bottom: 12, left: 12,
     backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
     paddingHorizontal: 9, paddingVertical: 4,
   },
@@ -799,7 +800,8 @@ const styles = StyleSheet.create({
   mediaTour: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, justifyContent: 'center' },
   mediaTourScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(11,18,32,0.35)' },
   mediaTourBadge: {
-    position: 'absolute', top: 10, left: 10,
+    // en bas à gauche : le haut de la carte est occupé par les boutons retour / favori / partage
+    position: 'absolute', bottom: 12, left: 12,
     backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
     paddingHorizontal: 9, paddingVertical: 4,
   },
