@@ -203,7 +203,7 @@ export default function UsersPage() {
         <FilterBar
           search={t.state.search}
           onSearch={t.setSearch}
-          placeholder="Rechercher par nom, email ou téléphone…"
+          placeholder="Nom, email, téléphone…"
           activeCount={t.activeFilterCount}
           onReset={() => { setSelected(new Set()); t.reset(); }}
         >
