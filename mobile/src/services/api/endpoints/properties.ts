@@ -17,7 +17,10 @@ const TYPE_TO_API: Record<string, string> = {
  * utilise `type` (apartment, real_estate…). Sans cette conversion le filtre était ignoré.
  */
 export function toApiSearchParams(params: Record<string, unknown>): Record<string, unknown> {
-  const { type, ...rest } = params;
+  const { type, guests, ...restAll } = params;
+  // Nombre de voyageurs (écran de recherche) → filtre de capacité de l'API
+  const rest: Record<string, unknown> = { ...restAll };
+  if (typeof guests === 'number' && guests > 1 && rest.minCapacity === undefined) rest.minCapacity = guests;
   if (typeof type !== 'string' || !type) return rest;
   const mapped = TYPE_TO_API[type];
   return mapped && rest.propertyType === undefined ? { ...rest, propertyType: mapped } : rest;

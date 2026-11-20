@@ -100,3 +100,23 @@ describe('searchService.filterSearch — tris demandés par l\'app', () => {
     expect((r.data as any[])[0].id).toBe('BOOST');
   });
 });
+
+describe('searchService.filterSearch — lieu et capacité', () => {
+  it('le lieu saisi est cherché dans la ville, la rue (quartier) et le titre', async () => {
+    mockPrisma.property.findMany.mockResolvedValue([]); mockPrisma.property.count.mockResolvedValue(0);
+    await searchService.filterSearch({ page: 1, limit: 20, city: 'Cocody' } as never);
+    const where = mockPrisma.property.findMany.mock.calls.at(-1)[0].where;
+    const or = where.AND.find((c: any) => c.OR && c.OR.some((o: any) => o.street)).OR;
+    expect(or).toEqual([
+      { city: { contains: 'Cocody', mode: 'insensitive' } },
+      { street: { contains: 'Cocody', mode: 'insensitive' } },
+      { title: { contains: 'Cocody', mode: 'insensitive' } },
+    ]);
+  });
+  it('capacité minimale : les annonces sans capacité renseignée restent visibles', async () => {
+    mockPrisma.property.findMany.mockResolvedValue([]); mockPrisma.property.count.mockResolvedValue(0);
+    await searchService.filterSearch({ page: 1, limit: 20, minCapacity: 4 } as never);
+    const where = mockPrisma.property.findMany.mock.calls.at(-1)[0].where;
+    expect(where.AND).toContainEqual({ OR: [{ capacity: { gte: 4 } }, { capacity: null }] });
+  });
+});

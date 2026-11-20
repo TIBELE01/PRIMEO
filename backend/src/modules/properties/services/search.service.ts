@@ -94,6 +94,34 @@ function prismaOrder(sort: SortKey | undefined): Prisma.PropertyOrderByWithRelat
   }
 }
 
+/** Lieu saisi par l'utilisateur (ville, quartier, commune…) : cherché dans la ville, la rue
+ *  (quartier/adresse) et le titre — « Cocody » trouve les annonces d'Abidjan situées à Cocody. */
+function locationFilter(city?: string): Prisma.PropertyWhereInput {
+  const q = city?.trim();
+  if (!q) return {};
+  return {
+    AND: [{
+      OR: [
+        { city: { contains: q, mode: 'insensitive' } },
+        { street: { contains: q, mode: 'insensitive' } },
+        { title: { contains: q, mode: 'insensitive' } },
+      ],
+    }],
+  };
+}
+
+/** Capacité minimale : les annonces sans capacité renseignée restent visibles. */
+function capacityFilter(min?: number): Prisma.PropertyWhereInput {
+  if (!min) return {};
+  return { AND: [{ OR: [{ capacity: { gte: min } }, { capacity: null }] }] };
+}
+
+/** Fusionne plusieurs filtres contenant chacun un tableau AND. */
+function mergeAnd(...filters: Prisma.PropertyWhereInput[]): Prisma.PropertyWhereInput {
+  const and = filters.flatMap((f) => (Array.isArray(f.AND) ? f.AND : f.AND ? [f.AND] : []));
+  return and.length ? { AND: and } : {};
+}
+
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {
     if (params.lat !== undefined && params.lon !== undefined && params.radiusKm !== undefined) {
@@ -121,11 +149,9 @@ export const searchService = {
           }
         : {}),
       ...buildTypeFilter(params.propertyType),
-      ...hiddenTypesFilter,
-      ...(params.city ? { city: { contains: params.city, mode: 'insensitive' } } : {}),
+      ...mergeAnd(hiddenTypesFilter, locationFilter(params.city), capacityFilter(params.minCapacity)),
       ...(params.minRating ? { rating: { gte: new Prisma.Decimal(params.minRating) } } : {}),
       ...(params.paymentOption ? { paymentOptions: { has: params.paymentOption } } : {}),
-      ...(params.minCapacity ? { capacity: { gte: params.minCapacity } } : {}),
       ...(amenities.length > 0 ? { amenities: { hasEvery: amenities } } : {}),
       ...(params.minPrice !== undefined || params.maxPrice !== undefined
         ? {
@@ -255,11 +281,9 @@ export const searchService = {
     const where: Prisma.PropertyWhereInput = {
       id: { in: allIds },
       ...buildTypeFilter(params.propertyType),
-      ...hiddenTypesFilter,
-      ...(params.city ? { city: { contains: params.city, mode: 'insensitive' } } : {}),
+      ...mergeAnd(hiddenTypesFilter, locationFilter(params.city), capacityFilter(params.minCapacity)),
       ...(params.minRating ? { rating: { gte: new Prisma.Decimal(params.minRating) } } : {}),
       ...(params.paymentOption ? { paymentOptions: { has: params.paymentOption } } : {}),
-      ...(params.minCapacity ? { capacity: { gte: params.minCapacity } } : {}),
       ...(amenities.length > 0 ? { amenities: { hasEvery: amenities } } : {}),
       ...(params.checkIn && params.checkOut
         ? {
