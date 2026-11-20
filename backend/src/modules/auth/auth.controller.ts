@@ -23,7 +23,7 @@ export async function verifyPhone(req: Request, res: Response, next: NextFunctio
 export async function resendOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     await authService.resendOtp(req.body.phone);
-    res.json({ message: 'Code OTP renvoyé par SMS' });
+    res.json({ message: 'Un nouveau code de vérification a été envoyé par email. Valable 10 minutes.' });
   } catch (err) {
     next(err);
   }
