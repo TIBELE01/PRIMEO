@@ -19,7 +19,7 @@ Sentry.init({
     return event;
   },
 });
-import { Platform, View, Text, Alert } from 'react-native';
+import { Platform, View, Text, Alert, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -130,15 +130,43 @@ if (Platform.OS !== 'web') {
 
 // ── Error boundary — catches JS crashes and shows a message instead of blank ──
 
-interface EBState { hasError: boolean; message: string; stack: string }
+interface EBState { hasError: boolean; message: string; stack: string; resetKey: number }
+
+// Erreurs de réconciliation DOM (web) : le DOM a été modifié hors de React (traduction
+// automatique, extension du navigateur…). Récupérables en ré-affichant l'arbre.
+const isRecoverableDomError = (err: Error) =>
+  Platform.OS === 'web' && /removeChild|insertBefore|NotFoundError|not a child of this node/i.test(`${err?.name} ${err?.message}`);
+
 class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
-  state: EBState = { hasError: false, message: '', stack: '' };
-  static getDerivedStateFromError(err: Error): EBState {
-    return { hasError: true, message: err.message, stack: '' };
+  state: EBState = { hasError: false, message: '', stack: '', resetKey: 0 };
+  private recoveries: number[] = [];
+
+  static getDerivedStateFromError(err: Error): Partial<EBState> {
+    return { hasError: true, message: err?.message ?? String(err), stack: '' };
   }
-  componentDidCatch(err: Error, info: { componentStack: string }) {
-    this.setState({ stack: info.componentStack ?? '' });
+
+  componentDidCatch(err: Error, info: { componentStack?: string | null }) {
+    const componentStack = info?.componentStack ?? '';
+    try { Sentry.captureException(err, { contexts: { react: { componentStack } } }); } catch { /* Sentry indisponible */ }
+
+    // Récupération automatique (max 3 fois en 30 s pour éviter une boucle)
+    if (isRecoverableDomError(err)) {
+      const now = Date.now();
+      this.recoveries = this.recoveries.filter((t) => now - t < 30_000);
+      if (this.recoveries.length < 3) {
+        this.recoveries.push(now);
+        this.setState((s) => ({ hasError: false, message: '', stack: '', resetKey: s.resetKey + 1 }));
+        return;
+      }
+    }
+    this.setState({ stack: componentStack });
   }
+
+  private retry = () => {
+    this.recoveries = [];
+    this.setState((s) => ({ hasError: false, message: '', stack: '', resetKey: s.resetKey + 1 }));
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -151,6 +179,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
               {this.state.message}
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={this.retry}
+            accessibilityRole="button"
+            accessibilityLabel="Réessayer"
+            style={{ backgroundColor: '#1056E0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 16 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Réessayer</Text>
+          </TouchableOpacity>
           <View style={{ backgroundColor: '#2d2d2d', borderRadius: 8, padding: 12, flex: 1 }}>
             <Text style={{ color: '#ff9', fontSize: 10, fontFamily: 'monospace' }}>
               {this.state.stack.slice(0, 1200)}
@@ -159,7 +195,8 @@ class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
         </View>
       );
     }
-    return this.props.children;
+    // La clé permet de remonter proprement tout l'arbre après une récupération
+    return <React.Fragment key={this.state.resetKey}>{this.props.children}</React.Fragment>;
   }
 }
 

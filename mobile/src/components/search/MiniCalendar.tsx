@@ -181,7 +181,7 @@ export function MiniCalendar({
       </View>
 
       {/* Effacer les dates */}
-      {(checkIn || checkOut) && (
+      {!!(checkIn || checkOut) && (
         <TouchableOpacity
           style={mc.clearWrap}
           onPress={() => { onChangeCheckIn(''); onChangeCheckOut(''); setPhase('ci'); }}

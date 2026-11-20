@@ -339,7 +339,7 @@ export function SearchScreen() {
           </View>
         </View>
 
-        {(checkIn || checkOut) && (
+        {!!(checkIn || checkOut) && (
           <TouchableOpacity onPress={() => { setCheckIn(''); setCheckOut(''); }}>
             <Text style={s.clearDates}>✕ Effacer les dates</Text>
           </TouchableOpacity>

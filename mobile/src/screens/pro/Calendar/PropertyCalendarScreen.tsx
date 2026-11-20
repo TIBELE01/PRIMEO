@@ -191,7 +191,7 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
               activeOpacity={info.status === 'past' ? 1 : 0.7}
             >
               <Text style={[styles.cellDay, { color: colors.text }]}>{day}</Text>
-              {info.price && info.status !== 'past' && (
+              {!!info.price && info.status !== 'past' && (
                 <Text style={[styles.cellPrice, { color: isSelected ? '#A7F3D0' : '#6B7280' }]}>
                   {(info.price/1000).toFixed(0)}k
                 </Text>
@@ -236,7 +236,7 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
                     {info.status === 'available' ? 'Disponible' : info.status === 'blocked' ? 'Bloqué' : info.status === 'booked' ? 'Réservé' : 'Passé'}
                   </Text>
                 </View>
-                {info.price && <Text style={styles.weekPrice}>{info.price.toLocaleString('fr-CI')} FCFA</Text>}
+                {!!info.price && <Text style={styles.weekPrice}>{info.price.toLocaleString('fr-CI')} FCFA</Text>}
               </View>
             </TouchableOpacity>
           );

@@ -1,6 +1,6 @@
-// PropertyReviewsList: scrollable list of property reviews
+// PropertyReviewsList: aperçu (3 avis max) destiné à une page déjà défilante
 import React from 'react';
-import { FlatList, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { ReviewCard } from '../review/ReviewCard';
 
 interface Review { id: string; author: string; rating: number; comment: string; createdAt: string }
@@ -9,15 +9,14 @@ export const PropertyReviewsList: React.FC<{ reviews?: Review[]; onSeeAll?: () =
   // Garde défensif : reviews peut être undefined/null
   const safeReviews = Array.isArray(reviews) ? reviews : [];
   return (
-    <FlatList
-      data={safeReviews.slice(0, 3)}
-      keyExtractor={r => r.id}
-      scrollEnabled={false}
-      renderItem={({ item }) => <ReviewCard review={item} />}
-      ListFooterComponent={onSeeAll && safeReviews.length > 3 ? (
+    // 3 avis max : rendu simple (pas de FlatList) — une liste virtualisée placée dans le
+    // ScrollView de la fiche casse le « windowing » et provoque des erreurs DOM sur le web.
+    <View>
+      {safeReviews.slice(0, 3).map((item) => <ReviewCard key={item.id} review={item} />)}
+      {onSeeAll && safeReviews.length > 3 ? (
         <Text style={styles.seeAll} onPress={onSeeAll}>Voir tous les avis →</Text>
       ) : null}
-    />
+    </View>
   );
 };
 

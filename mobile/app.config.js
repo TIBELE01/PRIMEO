@@ -57,6 +57,8 @@ module.exports = ({ config }) => ({
     ],
   },
   web: {
+    // Contenu en français : évite la traduction automatique du navigateur (cause de crash removeChild)
+    lang: 'fr',
     bundler: 'metro',
     output: 'single',
     favicon: './assets/icon.png',

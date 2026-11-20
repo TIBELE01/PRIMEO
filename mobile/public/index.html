@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  Modèle HTML de l'application web Primeo (export Expo / react-native-web).
+  - lang="fr" : le contenu est en français. Avec lang="en", Chrome proposait (ou appliquait)
+    la traduction automatique ; le traducteur réécrit les textes dans le DOM et React plante
+    ensuite au changement d'écran (« Failed to execute 'removeChild' on 'Node' »).
+  - translate="no" + meta google notranslate : désactive la traduction automatique de la page.
+-->
+<html lang="fr" translate="no" class="notranslate">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="google" content="notranslate" />
+    <title>%WEB_TITLE%</title>
+    <script>
+      // Garde-fou DOM (contournement documenté par React, issue #11538) : une extension du
+      // navigateur ou un traducteur peut déplacer/envelopper des nœuds gérés par React. Au
+      // lieu de faire planter toute l'application, on retire le nœud de son parent réel /
+      // on l'insère en fin de conteneur.
+      (function () {
+        if (typeof Node !== 'function' || !Node.prototype) return;
+        var removeChild = Node.prototype.removeChild;
+        Node.prototype.removeChild = function (child) {
+          if (child && child.parentNode !== this) {
+            if (child.parentNode) return removeChild.call(child.parentNode, child);
+            return child;
+          }
+          return removeChild.apply(this, arguments);
+        };
+        var insertBefore = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function (newNode, referenceNode) {
+          if (referenceNode && referenceNode.parentNode !== this) {
+            return this.appendChild(newNode);
+          }
+          return insertBefore.apply(this, arguments);
+        };
+      })();
+    </script>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>
+      Activez JavaScript pour utiliser l'application Primeo.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root" translate="no"></div>
+  </body>
+</html>
