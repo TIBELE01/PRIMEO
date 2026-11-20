@@ -197,7 +197,8 @@ function LineChart({ data, color = '#1056E0', height = 90 }: {
 function FunnelStep({ label, value, total, color }: {
   label: string; value: number; total: number; color: string;
 }) {
-  const pct = total > 0 ? (value / total) * 100 : 0;
+  // Plafonné à 100 % : des réservations peuvent provenir de visites non suivies
+  const pct = total > 0 ? Math.min(100, (value / total) * 100) : 0;
   const barWidth = `${Math.max(pct, 2)}%`;
   return (
     <View style={{ marginBottom: 8 }}>

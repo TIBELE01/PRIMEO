@@ -293,6 +293,9 @@ export const analyticsService = {
       };
     });
 
+    // Annonces les plus actives en premier (vues, puis réservations, puis revenus)
+    perProperty.sort((a, b) => (b.views - a.views) || (b.bookings - a.bookings) || (b.revenue - a.revenue));
+
     const sum = (k: 'views' | 'clicks' | 'bookingAttempts' | 'bookings' | 'revenue' | 'commissions') =>
       perProperty.reduce((s, p) => s + p[k], 0);
     const views = sum('views');
