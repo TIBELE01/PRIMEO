@@ -11,7 +11,7 @@ import { applyRequestId } from './common/middleware/request-id.middleware';
 import { maintenanceGate, getMaintenanceState } from './common/middleware/maintenance.middleware';
 import { handleHttpError, HttpError } from './common/handlers/http-error.handler';
 import { handlePrismaError } from './common/handlers/prisma-error.handler';
-import { errorAlertMiddleware } from './common/middleware/error-alert.middleware';
+import { errorAlertMiddleware, isExpectedError } from './common/middleware/error-alert.middleware';
 import { healthRouter } from './modules/health/health.router';
 import { env } from './config/env.config';
 import swaggerUi from 'swagger-ui-express';
@@ -161,7 +161,9 @@ export function createApp(): Application {
 
   // Sentry error handler — must come AFTER all routes and BEFORE custom error handlers
   if (env.SENTRY_DSN) {
-    Sentry.setupExpressErrorHandler(app);
+    Sentry.setupExpressErrorHandler(app, {
+      shouldHandleError: (error) => !isExpectedError(error),
+    });
   }
 
   // Error rate tracking + Slack alerts — after Sentry, before formatters

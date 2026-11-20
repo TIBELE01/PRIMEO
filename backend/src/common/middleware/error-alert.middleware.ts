@@ -48,6 +48,22 @@ async function sendSlackAlert(text: string): Promise<void> {
   }
 }
 
+/** Codes métier volontairement renvoyés en 5xx (secteur coupé, maintenance) : pas des pannes. */
+const EXPECTED_CODES = new Set(['SECTOR_DISABLED', 'MAINTENANCE']);
+
+/**
+ * Vrai pour une erreur attendue (refus 4xx, secteur désactivé…) qui ne doit ni
+ * déclencher d'alerte « taux d'erreur élevé » ni créer d'incident Sentry.
+ */
+export function isExpectedError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { statusCode?: unknown; status?: unknown; details?: unknown };
+  const status = Number(e.statusCode ?? e.status);
+  if (Number.isFinite(status) && status > 0 && status < 500) return true;
+  const code = (e.details as { code?: unknown } | undefined)?.code;
+  return typeof code === 'string' && EXPECTED_CODES.has(code);
+}
+
 // Must be registered AFTER Sentry error handler, BEFORE custom error formatters.
 // Has 4 params so Express recognises it as an error-handling middleware.
 export function errorAlertMiddleware(
@@ -56,6 +72,10 @@ export function errorAlertMiddleware(
   _res: Response,
   next: NextFunction,
 ): void {
+  if (isExpectedError(err) && !req.path.includes('/webhooks/')) {
+    next(err);
+    return;
+  }
   const now = Date.now();
 
   // Rotate hourly bucket on hour boundary
