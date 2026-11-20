@@ -23,6 +23,7 @@ import { HomeHeader } from './HomeHeader';
 import { HomeFooter } from './HomeFooter';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../../utils/sectors';
+import { trackPropertyClick } from '../../../utils/propertyStats';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -262,7 +263,7 @@ export function HomeScreen() {
   }, [favoriteIds, isAuthenticated]);
 
   const goSearch   = (p?: any) => navigation.navigate('Search', p ?? {});
-  const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
+  const goProperty = (id: string) => { trackPropertyClick(id, 'home'); navigation.navigate('PropertyDetail', { propertyId: id }); };
 
   /* Données réelles uniquement — aucune propriété de démonstration */
   // Les annonces d'un secteur désactivé par l'admin ne sont pas affichées (le

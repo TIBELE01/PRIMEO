@@ -1,4 +1,5 @@
 // Bookings service — availability check, Genius Pay initiation, status transitions
+import { propertyEventsService } from '../analytics/property-events.service';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { TokenPayload } from '../../common/middleware/jwt-auth.middleware';
@@ -56,6 +57,10 @@ export const bookingsService = {
     // Secteur désactivé par l'admin : aucune nouvelle réservation ni demande
     // d'intérêt pour ce type d'annonce (les réservations existantes restent gérables).
     await sectorsService.assertPropertyTypeEnabled(property.propertyType);
+
+    // Statistiques du pro : toute réservation initiée compte comme une tentative,
+    // qu'elle aboutisse ou non (indisponibilité, paiement abandonné…).
+    propertyEventsService.track({ propertyId: property.id, type: 'booking_attempt', userId: clientId });
 
     // ── Aiguillage par secteur ──────────────────────────────────────────────
     const isRealEstate = property.propertyType.startsWith('immobilier');

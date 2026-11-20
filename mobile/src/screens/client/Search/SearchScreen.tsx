@@ -26,6 +26,7 @@ import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledOptions, filterEnabledProperties, sectorOfPropertyType } from '../../../utils/sectors';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
+import { trackPropertyClick } from '../../../utils/propertyStats';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -236,7 +237,7 @@ export function SearchScreen() {
     v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)
   ).length;
 
-  const goProperty = (id: string) => navigation.navigate('PropertyDetail', { propertyId: id });
+  const goProperty = (id: string) => { trackPropertyClick(id, 'search'); navigation.navigate('PropertyDetail', { propertyId: id }); };
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>

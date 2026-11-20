@@ -62,25 +62,47 @@ describe('activatePaidBoost', () => {
     await boostsService.activatePaidBoost('tx-1');
     expect(mockPrisma.boost.create).not.toHaveBeenCalled();
   });
-  it('no-op si annonce déjà boostée (anti-doublon)', async () => {
+  it('annonce déjà boostée : le boost payé PROLONGE le boost en cours (paiement jamais perdu)', async () => {
+    const current = new Date(Date.now() + 10 * 3600_000); // boost gratuit encore actif 10 h
     mockPrisma.transaction.findUnique.mockResolvedValue({ id: 'tx-1', type: 'boost_purchase', notes: 'prop-1', userId: 'u1', amount: 2000 });
-    mockPrisma.property.findUnique.mockResolvedValueOnce({ isBoosted: true });
+    mockPrisma.property.findUnique
+      .mockResolvedValueOnce({ isBoosted: true, boostExpiresAt: current })
+      .mockResolvedValueOnce({ title: 'Villa', ownerId: 'u1' });
     await boostsService.activatePaidBoost('tx-1');
-    expect(mockPrisma.boost.create).not.toHaveBeenCalled();
+    const data = mockPrisma.property.update.mock.calls[0][0].data;
+    expect(data.isBoosted).toBe(true);
+    expect(data.boostExpiresAt.getTime()).toBe(current.getTime() + 3 * 86_400_000);
+  });
+  it('drapeau resté actif mais boost expiré : nouveau boost de 72 h à partir de maintenant', async () => {
+    mockPrisma.transaction.findUnique.mockResolvedValue({ id: 'tx-1', type: 'boost_purchase', notes: 'prop-1', userId: 'u1', amount: 2000 });
+    mockPrisma.property.findUnique
+      .mockResolvedValueOnce({ isBoosted: true, boostExpiresAt: new Date(Date.now() - 60_000) })
+      .mockResolvedValueOnce({ title: 'Villa', ownerId: 'u1' });
+    const before = Date.now();
+    await boostsService.activatePaidBoost('tx-1');
+    const end = mockPrisma.property.update.mock.calls[0][0].data.boostExpiresAt.getTime();
+    expect(end).toBeGreaterThanOrEqual(before + 72 * 3600_000);
+    expect(end).toBeLessThan(before + 72 * 3600_000 + 5_000);
   });
 });
 
 describe('expireBoosts', () => {
-  it('désactive les boosts arrivés à échéance', async () => {
-    mockPrisma.boost.findMany.mockResolvedValue([{ propertyId: 'p1' }, { propertyId: 'p2' }, { propertyId: 'p1' }]);
+  it('désactive les annonces dont la date d\'expiration du boost est passée', async () => {
+    mockPrisma.property.updateMany.mockResolvedValue({ count: 2 });
     const n = await boostsService.expireBoosts();
-    expect(mockPrisma.property.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: { in: ['p1', 'p2'] } }, data: { isBoosted: false, boostExpiresAt: null },
-    }));
+    const arg = mockPrisma.property.updateMany.mock.calls[0][0];
+    expect(arg.where.isBoosted).toBe(true);
+    expect(arg.where.OR[0].boostExpiresAt.lte).toBeInstanceOf(Date);
+    expect(arg.data).toEqual({ isBoosted: false, boostExpiresAt: null });
     expect(n).toBe(2);
   });
+  it('se base sur l\'annonce et non sur l\'historique : un ancien boost expiré ne coupe pas un nouveau boost', async () => {
+    mockPrisma.property.updateMany.mockResolvedValue({ count: 0 });
+    await boostsService.expireBoosts();
+    expect(mockPrisma.boost.findMany).not.toHaveBeenCalled();
+  });
   it('renvoie 0 si rien à expirer', async () => {
-    mockPrisma.boost.findMany.mockResolvedValue([]);
+    mockPrisma.property.updateMany.mockResolvedValue({ count: 0 });
     expect(await boostsService.expireBoosts()).toBe(0);
   });
 });

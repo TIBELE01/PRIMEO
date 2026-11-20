@@ -62,3 +62,15 @@ describe('runBoostExpiryReminders', () => {
     expect(notificationsService.notify).not.toHaveBeenCalled();
   });
 });
+
+describe('runBoostExpiryReminders — fenêtre de sélection', () => {
+  it('cible tous les boosts en cours expirant dans les 24 prochaines heures (job horaire)', async () => {
+    mockPrisma.boost.findMany.mockResolvedValue([]);
+    const before = Date.now();
+    await runBoostExpiryReminders();
+    const where = mockPrisma.boost.findMany.mock.calls[0][0].where;
+    expect(where.endDate.gt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(where.endDate.lte.getTime() - where.endDate.gt.getTime()).toBe(24 * 3600_000);
+    expect(where.property).toEqual({ isBoosted: true });
+  });
+});

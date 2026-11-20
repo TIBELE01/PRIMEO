@@ -23,6 +23,7 @@ import { GeoSearchInput } from '@components/search/GeoSearchInput';
 import { GuestPicker } from '@components/search/GuestPicker';
 import { CalendarPickerModal } from '../PropertyDetail/components/CalendarPickerModal';
 import { propertyCoverUrl } from '@/utils/propertyCover';
+import { trackPropertyClick } from '../../../utils/propertyStats';
 
 // Activer les animations LayoutAnimation sur Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -545,6 +546,7 @@ export function CategoryScreen() {
   // (parcours dédié) au lieu de la fiche propriété générique. Le design de la
   // liste reste strictement identique aux autres types de biens.
   const goProperty = (id: string) => {
+    trackPropertyClick(id, 'category');
     if (categoryKey === 'restaurant') {
       const it = results.find(r => r.id === id) ?? config.demo.find(d => d.id === id);
       navigation.navigate('RestaurantMenu', {

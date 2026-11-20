@@ -107,6 +107,34 @@ const linking = {
       };
     }
 
+    // Lien de parrainage partagé : /register?ref=CODE → écran d'inscription, code prérempli.
+    // Un utilisateur déjà connecté est simplement ramené à son accueil.
+    if (pathPart.replace(/^\//, '').toLowerCase() === 'register') {
+      const ref = (params.get('ref') ?? '').trim().toUpperCase().slice(0, 12);
+      if (useAuthStore.getState().user) return { routes: [{ name: 'MainTabs' }] };
+      return {
+        routes: [
+          {
+            name: 'PublicTabs',
+            state: {
+              index: 2,
+              routes: [
+                { name: 'Accueil' },
+                { name: 'Recherche' },
+                {
+                  name: 'Connexion',
+                  state: {
+                    index: 1,
+                    routes: [{ name: 'Welcome' }, { name: 'Register', params: ref ? { ref } : {} }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
+
     // Fallback to default React Navigation linking handler
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getStateFromPath: defaultParser } = require('@react-navigation/native');

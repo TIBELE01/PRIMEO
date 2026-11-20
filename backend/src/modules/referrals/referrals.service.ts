@@ -15,6 +15,9 @@ import { env } from '../../config/env.config';
 import { notificationsService } from '../notifications/notifications.service';
 import { walletService } from '../wallets/wallets.service';
 import { logger } from '../../common/utils/logger';
+import { REFERRAL_CODE_PATTERN, normalizeReferralCode } from './referral-code';
+
+export { REFERRAL_CODE_PATTERN, normalizeReferralCode };
 
 export const REFERRAL_REWARD_CLIENT_FCFA = 250;
 export const REFERRAL_REWARD_PRO_FCFA = 1_000;
@@ -106,15 +109,14 @@ export const referralsService = {
 
   // Ajout d'un code de parrainage APRÈS l'inscription (un seul ajout possible).
   async applyCode(userId: string, rawCode: string) {
-    const code = rawCode?.trim();
+    const code = normalizeReferralCode(rawCode);
     if (!code) throw new HttpError(400, 'Code de parrainage requis');
+    if (!REFERRAL_CODE_PATTERN.test(code)) throw new HttpError(404, 'Code de parrainage invalide');
 
     // Un seul parrainage reçu par utilisateur (refereeId @unique le garantit aussi en base)
     const already = await prisma.referral.findUnique({ where: { refereeId: userId } });
     if (already) throw new HttpError(409, 'Vous avez déjà renseigné un code de parrainage');
 
-    // Recherche INSENSIBLE À LA CASSE : les codes clients sont des cuid en minuscules
-    // et les codes pros en majuscules — la saisie manuelle ne doit pas échouer sur la casse.
     const referrer = await prisma.user.findFirst({
       where: { referralCode: { equals: code, mode: 'insensitive' } },
     });

@@ -35,6 +35,7 @@ import { RealEstateDocsSection } from './sections/RealEstateDocsSection';
 import { CancellationPolicySection } from './sections/CancellationPolicySection';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
 import { favoritesApi } from '../../../services/api/endpoints/favorites';
+import { trackPropertyView } from '../../../utils/propertyStats';
 import { kindOf, themeColor, actionLabel, priceDisplay, defaultAmenitiesFor } from './detailContent';
 import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
@@ -131,6 +132,7 @@ export function PropertyDetailScreen() {
   // Statistique anonyme de consultation de fiche (soumise au consentement)
   React.useEffect(() => {
     if (propertyId) trackEvent('property_view', { propertyId });
+    trackPropertyView(propertyId); // statistiques du professionnel
   }, [propertyId]);
 
   React.useEffect(() => {

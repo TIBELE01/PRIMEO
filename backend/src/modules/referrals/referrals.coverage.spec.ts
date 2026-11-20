@@ -101,6 +101,23 @@ describe('applyCode', () => {
     expect(mockPrisma.referral.create).toHaveBeenCalled();
     expect(res.message).toContain('succès');
   });
+  it('code court saisi en minuscules avec espaces → recherché au format canonique', async () => {
+    mockPrisma.referral.findUnique.mockResolvedValue(null);
+    mockPrisma.user.findFirst.mockResolvedValue({ id: 'parrain', referralCode: 'KOF81A' });
+    mockPrisma.referral.findFirst.mockResolvedValue(null);
+    await referralsService.applyCode('u1', ' kof 81a ');
+    expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+      where: { referralCode: { equals: 'KOF81A', mode: 'insensitive' } },
+    });
+    expect(mockPrisma.referral.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ referralCode: 'KOF81A', referrerId: 'parrain', refereeId: 'u1' }),
+    }));
+  });
+  it('ancien code long (avant migration) → refusé sans requête en base', async () => {
+    mockPrisma.referral.findUnique.mockResolvedValue(null);
+    await expect(referralsService.applyCode('u1', 'cmw42rgan0001jfiasbg8i6jh')).rejects.toMatchObject({ statusCode: 404 });
+    expect(mockPrisma.user.findFirst).not.toHaveBeenCalled();
+  });
 });
 
 describe('triggerReward', () => {

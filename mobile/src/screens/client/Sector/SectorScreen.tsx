@@ -12,6 +12,7 @@ import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../Home/PropertyCard';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
+import { trackPropertyClick } from '../../../utils/propertyStats';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -101,8 +102,10 @@ export function SectorScreen() {
 
   const handleSearch = () => load(1, sortBy, search);
 
-  const goProperty = (id: string) =>
+  const goProperty = (id: string) => {
+    trackPropertyClick(id, 'sector');
     navigation.navigate('PropertyDetail', { propertyId: id });
+  };
 
   const goAdvancedSearch = () =>
     navigation.navigate('Search', { type: sectorType });

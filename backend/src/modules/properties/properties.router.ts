@@ -1,12 +1,14 @@
 // Properties routes — search, CRUD, media, geo autocomplete, admin moderation
 // IMPORTANT: specific paths must be registered BEFORE /:id to avoid shadowing
 import { Router, type RequestHandler } from 'express';
+import { z } from 'zod';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { restaurantRouter } from '../restaurant/restaurant.router';
 import multer from 'multer';
 import {
   listProperties,
   getProperty,
+  recordPropertyEvent,
   createProperty,
   updateProperty,
   deleteProperty,
@@ -52,7 +54,7 @@ const uploadScene360: RequestHandler = (req, res, next) => {
     return next(err as Error | undefined);
   });
 };
-import { authenticate } from '../../common/middleware/jwt-auth.middleware';
+import { authenticate, optionalAuthenticate } from '../../common/middleware/jwt-auth.middleware';
 import { authorize } from '../../common/middleware/roles.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { validate } from '../../common/validators/validation.middleware';
@@ -115,6 +117,14 @@ propertiesRouter.post(
 
 // Public detail
 propertiesRouter.get('/:id', parseId, getProperty);
+// Statistiques d'annonce : vue de la fiche ou clic depuis une liste (public, auth facultative)
+propertiesRouter.post(
+  '/:id/events',
+  parseId,
+  optionalAuthenticate,
+  validate(z.object({ type: z.enum(['view', 'click']), source: z.string().max(30).optional() })),
+  recordPropertyEvent,
+);
 
 // Statistiques d'une annonce (propriétaire uniquement)
 propertiesRouter.get('/:id/stats', authenticate, authorize(...PROFESSIONAL_ROLES), requireKycApproved, parseId, getPropertyStats);

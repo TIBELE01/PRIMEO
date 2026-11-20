@@ -29,6 +29,7 @@ import {
   isSessionVerified,
 } from '../../common/utils/two-factor';
 import { getFailedAttempts, recordFailedAttempt, clearFailedAttempts } from '../../common/utils/attempt-limiter';
+import { normalizeReferralCode } from '../referrals/referral-code';
 import { TOTP_MAX_ATTEMPTS, TOTP_ATTEMPT_WINDOW_SECONDS } from './two-factor.service';
 
 // ─── Redis key helpers ────────────────────────────────────────────────────────
@@ -256,7 +257,7 @@ async function createUserAndSession(input: RegisterInput): Promise<{ message: st
 
   if (input.referralCode) {
     try {
-      const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: input.referralCode, mode: 'insensitive' } } });
+      const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: normalizeReferralCode(input.referralCode), mode: 'insensitive' } } });
       if (referrer && referrer.id !== user.id) {
         await prisma.referral.create({
           data: {
@@ -494,7 +495,7 @@ export const authService = {
     // Parrainage — ne bloque pas la création si erreur
     if (pending.referralCode) {
       try {
-        const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: pending.referralCode, mode: 'insensitive' } } });
+        const referrer = await prisma.user.findFirst({ where: { referralCode: { equals: normalizeReferralCode(pending.referralCode), mode: 'insensitive' } } });
         if (referrer && referrer.id !== user.id) {
           await prisma.referral.create({
             data: {

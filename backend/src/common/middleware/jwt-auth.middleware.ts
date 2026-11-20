@@ -111,3 +111,16 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     next(new HttpError(401, 'Invalid or expired access token'));
   }
 }
+
+/**
+ * Authentification facultative : si un jeton valide est fourni, `req.user` est renseigné ;
+ * sinon (absent, expiré, invalide) la requête continue en anonyme. Utilisé par les routes
+ * publiques qui adaptent leur comportement à l'utilisateur (ex. statistiques d'annonce).
+ */
+export async function optionalAuthenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!req.headers.authorization?.startsWith('Bearer ')) return next();
+  await authenticate(req, res, (err?: unknown) => {
+    if (err) req.user = undefined;
+    next();
+  });
+}

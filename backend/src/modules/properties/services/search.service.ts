@@ -34,6 +34,15 @@ async function buildHiddenTypesFilter(): Promise<Prisma.PropertyWhereInput> {
   return { AND: [{ propertyType: { notIn: hidden as PropertyType[] } }] };
 }
 
+// Boost réellement en cours : drapeau actif ET date d'expiration future. Entre deux
+// passages du cron d'expiration, une annonce dont le boost vient d'expirer ne doit
+// plus être remontée en tête.
+export function isBoostActive(p: { isBoosted?: boolean | null; boostExpiresAt?: Date | string | null }, now = Date.now()): boolean {
+  if (!p.isBoosted) return false;
+  if (!p.boostExpiresAt) return false;
+  return new Date(p.boostExpiresAt).getTime() > now;
+}
+
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {
     if (params.lat !== undefined && params.lon !== undefined && params.radiusKm !== undefined) {
@@ -131,10 +140,13 @@ export const searchService = {
     // = visibilityBoostPct (0/30/100) + rating × 5 (max ~25)
     // Garantit qu'Entreprise (100) est prioritaire, Business (+30) bénéficie d'un
     // vrai avantage, et une note très élevée peut compenser une formule inférieure.
+    const now = Date.now();
     const sorted = [...data].sort((a, b) => {
       const aAny = a as any;
       const bAny = b as any;
-      if (aAny.isBoosted !== bAny.isBoosted) return aAny.isBoosted ? -1 : 1;
+      const boostA = isBoostActive(aAny, now);
+      const boostB = isBoostActive(bAny, now);
+      if (boostA !== boostB) return boostA ? -1 : 1;
       const scoreA = planVisibility(aAny.owner?.subscription?.planType ?? '') + Number(aAny.rating ?? 0) * 5;
       const scoreB = planVisibility(bAny.owner?.subscription?.planType ?? '') + Number(bAny.rating ?? 0) * 5;
       if (scoreA !== scoreB) return scoreB - scoreA;
@@ -160,9 +172,9 @@ export const searchService = {
       WITH geo AS (
         SELECT
           id,
-          is_boosted,
+          ("isBoosted" AND "boostExpiresAt" > NOW()) AS boosted,
           rating,
-          bookings_count,
+          "bookingsCount" AS bookings_count,
           (6371 * acos(
             LEAST(1.0,
               cos(radians(${lat!})) * cos(radians(latitude)) *
@@ -178,7 +190,7 @@ export const searchService = {
       SELECT id, distance_km
       FROM geo
       WHERE distance_km <= ${radiusKm!}
-      ORDER BY is_boosted DESC, distance_km ASC, rating DESC, bookings_count DESC
+      ORDER BY boosted DESC, distance_km ASC, rating DESC NULLS LAST, bookings_count DESC
     `);
 
     if (geoRows.length === 0) return { data: [], total: 0, page, limit, pages: 0 };
@@ -225,10 +237,13 @@ export const searchService = {
     });
 
     // Tri géo : boost → score visibilité (visibilityBoostPct) → distance → rating
+    const now = Date.now();
     filtered.sort((a, b) => {
       const aAny = a as any;
       const bAny = b as any;
-      if (aAny.isBoosted !== bAny.isBoosted) return aAny.isBoosted ? -1 : 1;
+      const boostA = isBoostActive(aAny, now);
+      const boostB = isBoostActive(bAny, now);
+      if (boostA !== boostB) return boostA ? -1 : 1;
       const visA = planVisibility(aAny.owner?.subscription?.planType ?? '');
       const visB = planVisibility(bAny.owner?.subscription?.planType ?? '');
       if (visA !== visB) return visB - visA;

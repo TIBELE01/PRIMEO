@@ -17,12 +17,12 @@ jest.mock('../notifications/notifications.service', () => ({
 
 const mockPrisma: Record<string, any> = {
   property:     { findUnique: jest.fn(), update: jest.fn(async () => ({})) },
-  subscription: { findUnique: jest.fn(), update: jest.fn(async () => ({})) },
+  subscription: { findUnique: jest.fn(), update: jest.fn(async () => ({})), updateMany: jest.fn(async () => ({ count: 1 })) },
   boost:        { create: jest.fn(async () => ({ id: 'boost-1' })) },
   transaction:  { create: jest.fn(async () => ({ id: 'tx-1' })), update: jest.fn(async () => ({})) },
   user:         { findUnique: jest.fn() },
 };
-mockPrisma.$transaction = jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops));
+mockPrisma.$transaction = jest.fn(async (ops: any) => (typeof ops === 'function' ? ops(mockPrisma) : Promise.all(ops)));
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 
 import { boostsService } from './boosts.service';
@@ -57,9 +57,11 @@ describe('boostsService.create — boost gratuit (gating par formule)', () => {
     expect(mockPrisma.property.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: PROP }, data: expect.objectContaining({ isBoosted: true }),
     }));
-    expect(mockPrisma.subscription.update).toHaveBeenCalledWith(expect.objectContaining({
+    // Décompte atomique : l'incrément n'a lieu que si le quota n'est pas atteint
+    expect(mockPrisma.subscription.updateMany).toHaveBeenCalledWith({
+      where: { userId: OWNER, boostsFreeUsedThisMonth: { lt: 2 } },
       data: { boostsFreeUsedThisMonth: { increment: 1 } },
-    }));
+    });
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'boost_activated', recipientId: OWNER }));
   });
 
@@ -75,8 +77,22 @@ describe('boostsService.create — boost gratuit (gating par formule)', () => {
     expect(res).toMatchObject({ type: 'free', durationDays: 3 });
   });
 
+  it('demandes simultanées : le quota ne peut pas être dépassé', async () => {
+    mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business', boostsFreeMonthly: 2, boostsFreeUsedThisMonth: 1 });
+    mockPrisma.subscription.updateMany.mockResolvedValueOnce({ count: 0 }); // l'autre demande a pris le dernier boost
+    await expect(boostsService.create(OWNER, { propertyId: PROP, type: 'free' } as never))
+      .rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('épuisé') });
+    expect(mockPrisma.boost.create).not.toHaveBeenCalled();
+  });
+
+  it('boost expiré mais pas encore nettoyé par le cron : un nouveau boost est accepté', async () => {
+    mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business', boostsFreeMonthly: 2, boostsFreeUsedThisMonth: 0 });
+    mockPrisma.property.findUnique.mockResolvedValue({ ...activeProp, isBoosted: true, boostExpiresAt: new Date(Date.now() - 60_000) });
+    await expect(boostsService.create(OWNER, { propertyId: PROP, type: 'free' } as never)).resolves.toMatchObject({ type: 'free' });
+  });
+
   it('refuse si l\'annonce est déjà boostée (409)', async () => {
-    mockPrisma.property.findUnique.mockResolvedValue({ ...activeProp, isBoosted: true });
+    mockPrisma.property.findUnique.mockResolvedValue({ ...activeProp, isBoosted: true, boostExpiresAt: new Date(Date.now() + 3600_000) });
     await expect(boostsService.create(OWNER, { propertyId: PROP, type: 'free' } as never))
       .rejects.toMatchObject({ statusCode: 409 });
   });

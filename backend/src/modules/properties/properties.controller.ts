@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { propertiesService } from './properties.service';
 import { autocompleteAddress } from '../../common/utils/maps';
+import { propertyEventsService } from '../analytics/property-events.service';
 
 export async function listProperties(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -300,6 +301,23 @@ export async function expressPropertyInterest(req: Request, res: Response, next:
   try {
     const result = await propertiesService.expressInterest(req.params.id, req.user!.sub, req.body?.message);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Statistiques : vue de la fiche / clic depuis une liste de résultats (public, auth facultative)
+export async function recordPropertyEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { type, source } = req.body as { type: 'view' | 'click'; source?: string };
+    const result = await propertyEventsService.record({
+      propertyId: req.params.id,
+      type,
+      source,
+      userId: req.user?.sub,
+      role: req.user?.role,
+    });
+    res.status(202).json(result);
   } catch (err) {
     next(err);
   }

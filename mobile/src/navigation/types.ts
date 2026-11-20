@@ -7,8 +7,8 @@ import type { Panorama } from '../types/property';
 export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
-  Register: { role?: string };
-  ProRegister: undefined;
+  Register: { role?: string; ref?: string };
+  ProRegister: { ref?: string } | undefined;
   ForgotPassword: undefined;
   OtpVerification: {
     phone: string;

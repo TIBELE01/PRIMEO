@@ -4,9 +4,10 @@ import { boostsService } from '../modules/boosts/boosts.service';
 import { logger } from '../common/utils/logger';
 
 export function startBoostExpirationJob(): void {
-  // Run every hour
-  cron.schedule('0 * * * *', async () => {
-    logger.info('Running boost expiration job...');
+  // Toutes les 5 minutes : l'annonce retrouve son classement normal dès l'échéance
+  // (la recherche ignore déjà un boost expiré, ce passage remet le drapeau à jour).
+  cron.schedule('*/5 * * * *', async () => {
+    logger.debug('Running boost expiration job...');
     try {
       const count = await boostsService.expireBoosts();
       if (count > 0) {
@@ -17,5 +18,5 @@ export function startBoostExpirationJob(): void {
     }
   });
 
-  logger.info('Boost expiration job scheduled (every hour)');
+  logger.info('Boost expiration job scheduled (every 5 minutes)');
 }

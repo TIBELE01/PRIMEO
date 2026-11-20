@@ -290,7 +290,7 @@ model User {
   // la table `wallets` (modèle Wallet). Toute mutation passe par walletService, qui
   // met à jour les deux dans la même transaction afin d'éviter toute divergence.
   walletBalance Int    @default(0) // FCFA — crédits clients
-  referralCode  String @unique @default(cuid())
+  referralCode  String @unique @default(dbgenerated("generate_referral_code()")) // 6 caractères A-Z/0-9, unique (fonction SQL)
 
   // Notifications push et préférences (§11.2–11.4)
   onesignalPlayerId       String?
@@ -618,6 +618,7 @@ model Property {
   favorites         Favorite[]
   favoriteListItems FavoriteListItem[]
   boosts            Boost[]
+  events            PropertyEvent[]
   menuItems         RestaurantMenuItem[]
   timeSlots         RestaurantTimeSlot[]
   tables            RestaurantTable[]
@@ -1058,6 +1059,28 @@ model AuditLogArchive {
   @@index([createdAt])
   @@index([action])
   @@map("audit_logs_archive")
+}
+
+// Statistiques professionnelles : événements par annonce (vue de la fiche, clic depuis
+// une liste de résultats, tentative de réservation). Alimente l'onglet « Statistiques ».
+enum PropertyEventType {
+  view
+  click
+  booking_attempt
+}
+
+model PropertyEvent {
+  id         String            @id @default(cuid())
+  propertyId String
+  property   Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type       PropertyEventType
+  visitorKey String? // empreinte anonyme du visiteur connecté (anti-doublon), jamais son identifiant
+  source     String? // search, home, category, sector…
+  createdAt  DateTime          @default(now())
+
+  @@index([propertyId, type, createdAt])
+  @@index([visitorKey, propertyId, type, createdAt])
+  @@map("property_events")
 }
 
 // Événements analytics anonymisés (mobile + vitrine) — aucune donnée personnelle :

@@ -6,17 +6,19 @@ import { getPaidBoostCost, getPaidBoostDuration, getPlanDetails } from '../../co
 import { env } from '../../config/env.config';
 import { CreateBoostInput } from './dto/boost.dto';
 import { notificationsService } from '../notifications/notifications.service';
+import { isBoostActive } from '../properties/services/search.service';
 
 export const boostsService = {
   async create(ownerId: string, input: CreateBoostInput) {
     const property = await prisma.property.findUnique({
       where: { id: input.propertyId },
-      select: { id: true, ownerId: true, status: true, isBoosted: true, title: true },
+      select: { id: true, ownerId: true, status: true, isBoosted: true, boostExpiresAt: true, title: true },
     });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
     if (property.ownerId !== ownerId) throw new HttpError(403, 'Vous n\'êtes pas propriétaire de cette annonce');
     if (property.status !== 'active') throw new HttpError(400, 'Seules les annonces actives peuvent être boostées');
-    if (property.isBoosted) throw new HttpError(409, 'Cette annonce est déjà boostée');
+    // Boost en cours = drapeau actif ET expiration future (le cron peut ne pas être encore passé)
+    if (isBoostActive(property)) throw new HttpError(409, 'Cette annonce est déjà boostée');
 
     if (input.type === 'free') {
       return boostsService._activateFreeBoost(ownerId, input.propertyId);
@@ -45,26 +47,23 @@ export const boostsService = {
     const startDate = new Date();
     const endDate = new Date(startDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
-    const [boost] = await prisma.$transaction([
-      prisma.boost.create({
-        data: {
-          userId: ownerId,
-          propertyId,
-          type: 'free',
-          amount: 0,
-          startDate,
-          endDate,
-        },
-      }),
-      prisma.property.update({
+    // Décompte atomique du quota : deux demandes simultanées ne peuvent pas dépasser
+    // le nombre de boosts gratuits de la formule.
+    const boost = await prisma.$transaction(async (tx) => {
+      const consumed = await tx.subscription.updateMany({
+        where: { userId: ownerId, boostsFreeUsedThisMonth: { lt: sub.boostsFreeMonthly } },
+        data: { boostsFreeUsedThisMonth: { increment: 1 } },
+      });
+      if (consumed.count === 0) throw new HttpError(400, 'Quota de boosts gratuits mensuel épuisé');
+      const created = await tx.boost.create({
+        data: { userId: ownerId, propertyId, type: 'free', amount: 0, startDate, endDate },
+      });
+      await tx.property.update({
         where: { id: propertyId },
         data: { isBoosted: true, boostExpiresAt: endDate },
-      }),
-      prisma.subscription.update({
-        where: { userId: ownerId },
-        data: { boostsFreeUsedThisMonth: { increment: 1 } },
-      }),
-    ]);
+      });
+      return created;
+    });
 
     void notificationsService.notify({
       type: 'boost_activated',
@@ -121,14 +120,18 @@ export const boostsService = {
     const propertyId = tx.notes;
     if (!propertyId) return;
 
+    // Idempotence : assurée en amont par le webhook (une transaction déjà « success »
+    // n'est jamais rejouée), l'activation n'est donc appelée qu'une fois par paiement.
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
-      select: { isBoosted: true },
+      select: { isBoosted: true, boostExpiresAt: true },
     });
-    if (!property || property.isBoosted) return; // already activated or gone
+    if (!property) return;
 
     const durationDays = getPaidBoostDuration();
-    const startDate = new Date();
+    // Boost déjà en cours (ex. boost gratuit activé pendant le paiement) : le boost payé
+    // prolonge le boost existant au lieu d'être perdu.
+    const startDate = isBoostActive(property) ? new Date(property.boostExpiresAt!) : new Date();
     const endDate = new Date(startDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
     await prisma.$transaction([
@@ -192,21 +195,18 @@ export const boostsService = {
     };
   },
 
+  // Désactive les annonces dont le boost est arrivé à échéance. Se base sur la date
+  // d'expiration portée par l'annonce : un ancien boost expiré ne peut plus couper un
+  // nouveau boost activé ensuite sur la même annonce.
   async expireBoosts() {
     const now = new Date();
-    const expired = await prisma.boost.findMany({
-      where: { endDate: { lte: now }, property: { isBoosted: true } },
-      select: { propertyId: true },
-    });
-
-    if (expired.length === 0) return 0;
-
-    const propertyIds = [...new Set(expired.map((b) => b.propertyId))];
-    await prisma.property.updateMany({
-      where: { id: { in: propertyIds } },
+    const result = await prisma.property.updateMany({
+      where: {
+        isBoosted: true,
+        OR: [{ boostExpiresAt: { lte: now } }, { boostExpiresAt: null }],
+      },
       data: { isBoosted: false, boostExpiresAt: null },
     });
-
-    return propertyIds.length;
+    return result.count;
   },
 };

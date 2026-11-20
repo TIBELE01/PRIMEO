@@ -1,4 +1,5 @@
 // Analytics service — professional stats and market intelligence reports
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { geniusPayService } from '../payments/services/genius-pay.service';
@@ -176,16 +177,28 @@ export const analyticsService = {
     };
   },
 
-  // ── Detailed stats (Prestige + Premium only) ───────────────────────────────
+  // ── Statistiques détaillées (Business / Entreprise) ───────────────────────
+  //
+  // Sources (temps réel, aucune mise en cache) :
+  //   • vues, clics, tentatives de réservation → table property_events
+  //   • réservations confirmées + revenus       → table bookings (confirmées/terminées)
+  // Taux de conversion = réservations confirmées / vues de la période.
 
   async getDetailedStats(ownerId: string, query: { period?: string }) {
     await requireAdvancedPlan(ownerId);
 
-    const days = query.period === '7d' ? 7 : query.period === '90d' ? 90 : 30;
-    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const days = query.period === '7d' ? 7
+      : query.period === '90d' ? 90
+      : (query.period === '1y' || query.period === '365d') ? 365
+      : 30;
+    const label = days === 365 ? '1y' : `${days}d`;
+    // Fenêtre alignée sur le début de journée (UTC = heure d'Abidjan)
+    const from = new Date();
+    from.setUTCHours(0, 0, 0, 0);
+    from.setUTCDate(from.getUTCDate() - (days - 1));
 
     const properties = await prisma.property.findMany({
-      where: { ownerId },
+      where: { ownerId, status: { not: 'archived' as never } },
       select: {
         id: true,
         title: true,
@@ -195,48 +208,113 @@ export const analyticsService = {
         rating: true,
         reviewCount: true,
         isBoosted: true,
+        boostExpiresAt: true,
+        pricePerNight: true,
+        pricePerMonth: true,
+        priceSale: true,
         bookings: {
           where: {
             createdAt: { gte: from },
             status: { in: ['confirmed', 'completed'] as never[] },
           },
-          select: { id: true, totalAmount: true, commissionAmount: true, startDate: true, endDate: true },
+          select: { id: true, totalAmount: true, commissionAmount: true, createdAt: true },
         },
       },
+      orderBy: { createdAt: 'asc' },
+    });
+    const ids = properties.map((p) => p.id);
+
+    const [eventCounts, dailyEvents] = ids.length === 0 ? [[], []] : await Promise.all([
+      prisma.propertyEvent.groupBy({
+        by: ['propertyId', 'type'],
+        where: { propertyId: { in: ids }, createdAt: { gte: from } },
+        _count: { _all: true },
+      }),
+      prisma.$queryRaw<Array<{ day: Date; type: string; count: bigint }>>`
+        SELECT date_trunc('day', "createdAt") AS day, type::text AS type, count(*) AS count
+        FROM property_events
+        WHERE "propertyId" IN (${Prisma.join(ids)}) AND "createdAt" >= ${from}
+        GROUP BY 1, 2`,
+    ]);
+
+    const countFor = (propertyId: string, type: string) =>
+      eventCounts.find((e) => e.propertyId === propertyId && e.type === type)?._count._all ?? 0;
+    const pct = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 1000) / 10 : 0);
+
+    // Série quotidienne complète (jours sans activité = 0)
+    const daily = Array.from({ length: days }, (_, i) => {
+      const d = new Date(from.getTime() + i * 86_400_000);
+      return { date: d.toISOString().slice(0, 10), views: 0, clicks: 0, bookingAttempts: 0, bookings: 0, revenue: 0 };
+    });
+    const byDate = new Map(daily.map((d) => [d.date, d]));
+    for (const row of dailyEvents) {
+      const d = byDate.get(new Date(row.day).toISOString().slice(0, 10));
+      if (!d) continue;
+      if (row.type === 'view') d.views += Number(row.count);
+      else if (row.type === 'click') d.clicks += Number(row.count);
+      else if (row.type === 'booking_attempt') d.bookingAttempts += Number(row.count);
+    }
+
+    const perProperty = properties.map((p) => {
+      const views = countFor(p.id, 'view');
+      const clicks = countFor(p.id, 'click');
+      const bookingAttempts = countFor(p.id, 'booking_attempt');
+      const revenue = p.bookings.reduce((s, b) => s + b.totalAmount, 0);
+      for (const b of p.bookings) {
+        const d = byDate.get(b.createdAt.toISOString().slice(0, 10));
+        if (d) { d.bookings += 1; d.revenue += b.totalAmount; }
+      }
+      const conversion = pct(p.bookings.length, views);
+      return {
+        id: p.id,
+        title: p.title,
+        name: p.title,
+        propertyType: p.propertyType,
+        views,
+        clicks,
+        bookingAttempts,
+        bookings: p.bookings.length,
+        revenue,
+        conversion,
+        currentPrice: p.pricePerNight ?? p.pricePerMonth ?? p.priceSale ?? 0,
+        viewsCount: p.viewsCount, // cumul depuis la publication
+        bookingsCount: p.bookingsCount,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+        isBoosted: p.isBoosted && !!p.boostExpiresAt && p.boostExpiresAt.getTime() > Date.now(),
+        // Champs historiques (export CSV)
+        periodBookings: p.bookings.length,
+        periodRevenue: revenue,
+        conversionRate: `${conversion.toFixed(1)}%`,
+        commissions: p.bookings.reduce((s, b) => s + b.commissionAmount, 0),
+      };
     });
 
-    const totals = properties.reduce(
-      (acc, p) => ({
-        totalRevenue: acc.totalRevenue + p.bookings.reduce((s, b) => s + b.totalAmount, 0),
-        totalCommissions: acc.totalCommissions + p.bookings.reduce((s, b) => s + b.commissionAmount, 0),
-        totalBookings: acc.totalBookings + p.bookings.length,
-      }),
-      { totalRevenue: 0, totalCommissions: 0, totalBookings: 0 },
-    );
+    const sum = (k: 'views' | 'clicks' | 'bookingAttempts' | 'bookings' | 'revenue' | 'commissions') =>
+      perProperty.reduce((s, p) => s + p[k], 0);
+    const views = sum('views');
+    const bookings = sum('bookings');
+    const totalRevenue = sum('revenue');
+    const totalCommissions = sum('commissions');
 
     return {
-      period: `${days}d`,
-      ...totals,
-      netRevenue: totals.totalRevenue - totals.totalCommissions,
-      properties: properties.map((p) => {
-        const periodRevenue = p.bookings.reduce((s, b) => s + b.totalAmount, 0);
-        const convRate = p.viewsCount > 0
-          ? ((p.bookings.length / p.viewsCount) * 100).toFixed(2)
-          : '0';
-        return {
-          id: p.id,
-          title: p.title,
-          propertyType: p.propertyType,
-          viewsCount: p.viewsCount,
-          bookingsCount: p.bookingsCount,
-          rating: p.rating,
-          reviewCount: p.reviewCount,
-          isBoosted: p.isBoosted,
-          periodBookings: p.bookings.length,
-          periodRevenue,
-          conversionRate: `${convRate}%`,
-        };
-      }),
+      period: label,
+      days,
+      from: from.toISOString(),
+      generatedAt: new Date().toISOString(),
+      views,
+      clicks: sum('clicks'),
+      bookingAttempts: sum('bookingAttempts'),
+      bookings,
+      conversionRate: pct(bookings, views),
+      revenue: totalRevenue,
+      totalRevenue,
+      totalCommissions,
+      netRevenue: totalRevenue - totalCommissions,
+      totalBookings: bookings,
+      daily,
+      revenueByDay: daily.map((d) => ({ date: d.date, revenue: d.revenue })),
+      properties: perProperty,
     };
   },
 

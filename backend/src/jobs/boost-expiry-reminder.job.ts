@@ -1,7 +1,8 @@
-// Rappel 24h avant expiration d'un boost — cron quotidien 10:00 UTC.
-// Notifie (email + push + in-app) le propriétaire dont le boost expire
-// dans les prochaines 24h. Idempotent : vérifie la table notifications
-// avant d'envoyer.
+// Rappel 24h avant expiration d'un boost — cron horaire.
+// Notifie (email + push + in-app) le propriétaire dont le boost expire dans les
+// prochaines 24h. Idempotent : vérifie la table notifications avant d'envoyer.
+// (Auparavant : un passage quotidien à 10:00 sur une fenêtre de 24h–25h ne
+// rattrapait que les boosts expirant entre 10:00 et 11:00 le lendemain.)
 import cron from 'node-cron';
 import { prisma } from '../database/prisma.service';
 import { notificationsService } from '../modules/notifications/notifications.service';
@@ -10,12 +11,11 @@ import { logger } from '../common/utils/logger';
 export async function runBoostExpiryReminders(): Promise<{ sent: number; skipped: number }> {
   const now = new Date();
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const in25h = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
-  // Find boosts expiring in the 24h-25h window (so we only catch them once)
+  // Boosts en cours qui expirent dans les prochaines 24h (un seul rappel par boost)
   const boosts = await prisma.boost.findMany({
     where: {
-      endDate: { gte: in24h, lt: in25h },
+      endDate: { gt: now, lte: in24h },
       property: { isBoosted: true },
     },
     select: {
@@ -60,7 +60,7 @@ export async function runBoostExpiryReminders(): Promise<{ sent: number; skipped
 }
 
 export function startBoostExpiryReminderJob(): void {
-  cron.schedule('0 10 * * *', async () => {
+  cron.schedule('15 * * * *', async () => {
     logger.info('Running boost expiry reminder job (J-1)...');
     try {
       const { sent, skipped } = await runBoostExpiryReminders();
@@ -71,5 +71,5 @@ export function startBoostExpiryReminderJob(): void {
     }
   });
 
-  logger.info('Boost expiry reminder job scheduled (daily at 10:00)');
+  logger.info('Boost expiry reminder job scheduled (hourly)');
 }

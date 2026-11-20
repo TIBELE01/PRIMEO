@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ClientScreenProps, RestaurantDish } from '../../../navigation/types';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
+import { trackPropertyView } from '../../../utils/propertyStats';
 import { useCurrency } from '../../../hooks/useCurrency';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
@@ -48,6 +49,8 @@ export default function RestaurantMenuScreen({ navigation, route }: Props) {
   }, [propertyId]);
 
   useEffect(() => { load(); }, [load]);
+  // Statistiques du restaurateur : la carte du restaurant tient lieu de fiche
+  useEffect(() => { trackPropertyView(propertyId); }, [propertyId]);
 
   const categories = [ALL, ...Array.from(new Set(menus.map(m => m.section).filter(Boolean) as string[]))];
   const visible = activeCat === ALL ? menus : menus.filter(m => m.section === activeCat);

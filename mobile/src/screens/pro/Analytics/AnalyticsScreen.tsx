@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { boostsApi } from '../../../services/api/endpoints/boosts';
 import { analyticsApi } from '../../../services/api/endpoints/analyticsApi';
@@ -26,26 +26,36 @@ interface PropertyStat {
   name: string;
   views: number;
   clicks: number;
+  bookingAttempts: number;
   bookings: number;
-  currentPrice: number;
-  marketAvgPrice: number;
-  suggestedPrice: number;
+  revenue: number;
+  conversion: number;
 }
 
-interface DayRevenue {
+interface DayStat {
   date: string;
+  views: number;
+  clicks: number;
+  bookingAttempts: number;
+  bookings: number;
   revenue: number;
 }
 
 interface DetailedStats {
   views: number;
   clicks: number;
+  bookingAttempts: number;
   bookings: number;
-  ctr: number;
   conversionRate: number;
+  revenue: number;
+  netRevenue: number;
+  generatedAt?: string;
+  daily: DayStat[];
   properties: PropertyStat[];
-  revenueByDay?: DayRevenue[];
 }
+
+// Actualisation automatique tant que l'écran est affiché
+const AUTO_REFRESH_MS = 60_000;
 
 type Period = '7d' | '30d' | '90d' | '1y';
 
@@ -202,44 +212,6 @@ function FunnelStep({ label, value, total, color }: {
   );
 }
 
-function PriceBar({ current, market }: { current: number; market: number }) {
-  const maxVal = Math.max(current, market, 1);
-  return (
-    <View style={priceBarStyles.wrap}>
-      <View style={priceBarStyles.row}>
-        <Text style={priceBarStyles.barLabel}>Actuel</Text>
-        <View style={priceBarStyles.track}>
-          <View
-            style={[
-              priceBarStyles.fill,
-              { width: `${Math.round((current / maxVal) * 100)}%`, backgroundColor: '#1056E0' },
-            ]}
-          />
-        </View>
-      </View>
-      <View style={priceBarStyles.row}>
-        <Text style={priceBarStyles.barLabel}>Marché</Text>
-        <View style={priceBarStyles.track}>
-          <View
-            style={[
-              priceBarStyles.fill,
-              { width: `${Math.round((market / maxVal) * 100)}%`, backgroundColor: '#6366F1' },
-            ]}
-          />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const priceBarStyles = StyleSheet.create({
-  wrap: { marginTop: 8, gap: 5 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  barLabel: { width: 40, fontSize: 10, color: '#9CA3AF' },
-  track: { flex: 1, height: 6, backgroundColor: '#E5E7EB', borderRadius: 3, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: 3 },
-});
-
 // ─── Locked screen ────────────────────────────────────────────────────────────
 
 function LockedScreen({ onUpgrade }: { onUpgrade: () => void }) {
@@ -250,13 +222,13 @@ function LockedScreen({ onUpgrade }: { onUpgrade: () => void }) {
           <Text style={styles.lockEmoji}>🔒</Text>
         </View>
         <Text style={styles.lockedTitle}>Statistiques avancées</Text>
-        <Text style={styles.lockedSubtitle}>Disponible à partir du plan Prestige</Text>
+        <Text style={styles.lockedSubtitle}>Disponible avec les formules Business et Entreprise</Text>
         <Text style={styles.lockedDesc}>
-          Vues détaillées, taux de clics, conversion, comparaison marché et suggestions de prix
+          Vues, clics, tentatives de réservation, réservations confirmées, taux de conversion et revenus, actualisés en temps réel
         </Text>
-        <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Passer à l'offre Prestige">
+        <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Voir les formules">
           <Ionicons name="arrow-up-circle" size={18} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.upgradeBtnText}>Passer à Prestige</Text>
+          <Text style={styles.upgradeBtnText}>Voir les formules</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -268,41 +240,43 @@ function LockedScreen({ onUpgrade }: { onUpgrade: () => void }) {
 export default function AnalyticsScreen() {
   const navigation = useNavigation<any>();
   const theme = useProTheme();
+  const isFocused = useIsFocused();
 
   const [plan, setPlan] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [stats, setStats] = useState<DetailedStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('30d');
 
-  // Fetch plan
+  // Formule du professionnel (les statistiques détaillées sont réservées à Business/Entreprise)
   useEffect(() => {
     (async () => {
       try {
         const res = await boostsApi.getBalance();
         const d = res.data?.data ?? res.data;
-        setPlan(d?.plan ?? 'Essentiel');
+        setPlan(d?.planType ?? d?.plan ?? 'starter');
       } catch {
-        setPlan('Essentiel');
+        setPlan('starter');
       } finally {
         setIsLoadingPlan(false);
       }
     })();
   }, []);
 
-  const isLocked =
-    plan !== null && (plan.toLowerCase() === 'essential' || plan.toLowerCase() === 'essentiel');
+  const isLocked = plan !== null && !['business', 'entreprise'].includes(plan.toLowerCase());
 
-  const fetchStats = useCallback(async (p: Period, silent = false) => {
-    if (!silent) setIsLoadingStats(true);
-    else setIsRefreshing(true);
+  const fetchStats = useCallback(async (p: Period, mode: 'initial' | 'pull' | 'silent' = 'initial') => {
+    if (mode === 'initial') setIsLoadingStats(true);
+    if (mode === 'pull') setIsRefreshing(true);
     try {
       const res = await analyticsApi.getDetailedStats({ period: p });
       const d = res.data?.data ?? res.data;
       setStats(d as DetailedStats);
-    } catch {
-      // silently ignore
+      setError(null);
+    } catch (e: any) {
+      if (mode !== 'silent') setError(e?.response?.data?.message ?? 'Impossible de charger les statistiques');
     } finally {
       setIsLoadingStats(false);
       setIsRefreshing(false);
@@ -310,10 +284,16 @@ export default function AnalyticsScreen() {
   }, []);
 
   useEffect(() => {
-    if (!isLocked && !isLoadingPlan) {
-      fetchStats(period);
-    }
+    if (!isLocked && !isLoadingPlan) fetchStats(period);
   }, [isLocked, isLoadingPlan, period, fetchStats]);
+
+  // Temps réel : rafraîchit au retour sur l'écran puis toutes les 60 s tant qu'il est affiché
+  useEffect(() => {
+    if (isLocked || isLoadingPlan || !isFocused) return;
+    fetchStats(period, 'silent');
+    const timer = setInterval(() => fetchStats(period, 'silent'), AUTO_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [isFocused, isLocked, isLoadingPlan, period, fetchStats]);
 
   if (isLoadingPlan) {
     return (
@@ -329,37 +309,21 @@ export default function AnalyticsScreen() {
     return <LockedScreen onUpgrade={() => navigation.navigate('Subscriptions')} />;
   }
 
-  // ── Charts data ────────────────────────────────────────────────────────────
-  const revenueByDay = stats?.revenueByDay ?? [];
-  const chartData = revenueByDay.length > 0
-    ? revenueByDay.slice(-7).map(d => d.revenue)
-    : (stats?.properties ?? []).reduce((acc: number[], p) => { acc.push(p.views); return acc; }, []).slice(0, 7);
-  const chartLabels = revenueByDay.length > 0
-    ? revenueByDay.slice(-7).map(d => shortDate(d.date))
-    : (stats?.properties ?? []).slice(0, 7).map((_, i) => `P${i + 1}`);
-  const hasChartData = chartData.length > 0 && chartData.some(v => v > 0);
+  // ── Données des graphiques ─────────────────────────────────────────────────
+  const daily = stats?.daily ?? [];
+  const last7 = daily.slice(-7);
+  const viewsLast7 = last7.map(d => d.views);
+  const revenueLast7 = last7.map(d => d.revenue);
+  const labels7 = last7.map(d => shortDate(d.date));
+  const viewsTrend = daily.map(d => d.views);
 
-  // Revenue trend (all days → line chart)
-  const revTrend = revenueByDay.length > 0 ? revenueByDay.map(d => d.revenue) : [];
-
-  // Conversion funnel
   const totalViews = stats?.views ?? 0;
-  const totalClicks = stats?.clicks ?? 0;
+  const totalAttempts = stats?.bookingAttempts ?? 0;
   const totalBookings = stats?.bookings ?? 0;
-
-  // ── Market intelligence ────────────────────────────────────────────────────
   const properties = stats?.properties ?? [];
-  const propertiesWithPrices = properties.filter(p => p.marketAvgPrice > 0 && p.currentPrice > 0);
-  const avgCurrentPrice =
-    propertiesWithPrices.length > 0
-      ? propertiesWithPrices.reduce((s, p) => s + p.currentPrice, 0) / propertiesWithPrices.length
-      : 0;
-  const avgMarketPrice =
-    propertiesWithPrices.length > 0
-      ? propertiesWithPrices.reduce((s, p) => s + p.marketAvgPrice, 0) / propertiesWithPrices.length
-      : 0;
-  const priceDeltaPct =
-    avgMarketPrice > 0 ? ((avgCurrentPrice - avgMarketPrice) / avgMarketPrice) * 100 : 0;
+  const updatedAt = stats?.generatedAt
+    ? new Date(stats.generatedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   const PERIOD_LABELS: Record<Period, string> = {
     '7d': '7 jours',
@@ -377,13 +341,13 @@ export default function AnalyticsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={() => fetchStats(period, true)}
+            onRefresh={() => fetchStats(period, 'pull')}
             tintColor={theme.primary}
           />
         }
       >
 
-        {/* ── Period selector ───────────────────────────────────────────── */}
+        {/* ── Sélecteur de période ─────────────────────────────────────── */}
         <View style={styles.periodRow}>
           {(['7d', '30d', '90d', '1y'] as Period[]).map(p => (
             <TouchableOpacity
@@ -402,78 +366,79 @@ export default function AnalyticsScreen() {
           ))}
         </View>
 
+        {updatedAt && (
+          <View style={styles.liveRow}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>Mis à jour à {updatedAt} · actualisation automatique</Text>
+          </View>
+        )}
+
         {isLoadingStats ? (
           <View style={styles.centeredBlock}>
             <ActivityIndicator size="large" color="#1056E0" />
           </View>
+        ) : error && !stats ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>{error}</Text>
+          </View>
         ) : (
           <>
-            {/* ── KPI grid 2x2 ─────────────────────────────────────────── */}
+            {/* ── Indicateurs clés ─────────────────────────────────────── */}
             <View style={styles.kpiGrid}>
               <View style={styles.kpiRow}>
-                <KPICard
-                  label="Vues totales"
-                  value={formatNumber(stats?.views ?? 0)}
-                  iconName="eye-outline"
-                  iconColor={theme.primary}
-                />
-                <KPICard
-                  label="Taux de clics"
-                  value={formatPercent(stats?.ctr ?? 0)}
-                  iconName="stats-chart-outline"
-                  iconColor="#6366F1"
-                />
+                <KPICard label="Vues" value={formatNumber(totalViews)} iconName="eye-outline" iconColor={theme.primary} />
+                <KPICard label="Clics" value={formatNumber(stats?.clicks ?? 0)} iconName="hand-right-outline" iconColor="#6366F1" />
               </View>
               <View style={styles.kpiRow}>
-                <KPICard
-                  label="Taux de conversion"
-                  value={formatPercent(stats?.conversionRate ?? 0)}
-                  iconName="trending-up-outline"
-                  iconColor="#F59E0B"
-                />
-                <KPICard
-                  label="Réservations"
-                  value={formatNumber(stats?.bookings ?? 0)}
-                  iconName="calendar-outline"
-                  iconColor="#0284C7"
-                />
+                <KPICard label="Tentatives de réservation" value={formatNumber(totalAttempts)} iconName="cart-outline" iconColor="#F59E0B" />
+                <KPICard label="Réservations confirmées" value={formatNumber(totalBookings)} iconName="calendar-outline" iconColor="#0284C7" />
+              </View>
+              <View style={styles.kpiRow}>
+                <KPICard label="Taux de conversion" value={formatPercent(stats?.conversionRate ?? 0)} iconName="trending-up-outline" iconColor="#10B981" />
+                <KPICard label="Revenus (FCFA)" value={formatNumber(stats?.revenue ?? 0)} iconName="cash-outline" iconColor="#16A34A" />
               </View>
             </View>
 
-            {/* ── Bar chart — revenus par jour / vues ───────────────────── */}
+            {/* ── Vues par jour ─────────────────────────────────────────── */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>
-                {revenueByDay.length > 0 ? 'Revenus par jour (FCFA)' : 'Vues par annonce'}
-              </Text>
-              {hasChartData ? (
-                <BarChart data={chartData} labels={chartLabels} color={theme.primary} height={110} />
+              <Text style={styles.cardTitle}>Vues par jour (7 derniers jours)</Text>
+              {viewsLast7.some(v => v > 0) ? (
+                <BarChart data={viewsLast7} labels={labels7} color={theme.primary} height={110} />
               ) : (
                 <View style={styles.placeholderChart}>
                   <Ionicons name="bar-chart-outline" size={36} color="#D1D5DB" />
-                  <Text style={styles.placeholderText}>Pas encore de données pour cette période</Text>
+                  <Text style={styles.placeholderText}>Pas encore de vues sur cette période</Text>
                 </View>
               )}
             </View>
 
-            {/* ── Line chart — tendance revenus ─────────────────────────── */}
-            {revTrend.length >= 2 && (
+            {/* ── Tendance des vues sur la période ─────────────────────── */}
+            {viewsTrend.length >= 2 && viewsTrend.some(v => v > 0) && (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>Tendance des revenus</Text>
-                <LineChart data={revTrend} color={theme.primary} height={90} />
+                <Text style={styles.cardTitle}>Tendance des vues — {PERIOD_LABELS[period]}</Text>
+                <LineChart data={viewsTrend} color={theme.primary} height={90} />
               </View>
             )}
 
-            {/* ── Conversion funnel ─────────────────────────────────────── */}
+            {/* ── Revenus par jour ──────────────────────────────────────── */}
+            {revenueLast7.some(v => v > 0) && (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Revenus par jour (FCFA)</Text>
+                <BarChart data={revenueLast7} labels={labels7} color="#16A34A" height={110} />
+              </View>
+            )}
+
+            {/* ── Entonnoir de conversion ───────────────────────────────── */}
             {totalViews > 0 && (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Entonnoir de conversion</Text>
-                <FunnelStep label="Vues"         value={totalViews}   total={totalViews}   color={theme.primary} />
-                <FunnelStep label="Clics"        value={totalClicks}  total={totalViews}   color="#6366F1" />
-                <FunnelStep label="Réservations" value={totalBookings} total={totalViews}  color="#10B981" />
+                <FunnelStep label="Vues"                     value={totalViews}    total={totalViews} color={theme.primary} />
+                <FunnelStep label="Tentatives de réservation" value={totalAttempts} total={totalViews} color="#F59E0B" />
+                <FunnelStep label="Réservations confirmées"  value={totalBookings} total={totalViews} color="#10B981" />
               </View>
             )}
 
-            {/* ── Per-property analysis ──────────────────────────────────── */}
+            {/* ── Détail par annonce ───────────────────────────────────── */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Analyse par annonce</Text>
 
@@ -482,121 +447,41 @@ export default function AnalyticsScreen() {
                   <Text style={styles.emptyText}>Aucune donnée par annonce</Text>
                 </View>
               ) : (
-                properties.map(prop => {
-                  const ratio = prop.marketAvgPrice > 0 ? prop.currentPrice / prop.marketAvgPrice : 1;
-                  const isUnder = ratio < 0.8;
-                  const isOver = ratio > 1.2;
-                  const hasSuggestion =
-                    prop.suggestedPrice > 0 && prop.suggestedPrice !== prop.currentPrice;
-
-                  return (
-                    <View key={prop.id} style={styles.propCard}>
-                      <Text style={styles.propName} numberOfLines={1}>{prop.name}</Text>
-
-                      {/* Views + clicks */}
-                      <View style={styles.propStatsRow}>
-                        <View style={styles.propStat}>
-                          <Ionicons name="eye-outline" size={13} color="#6B7280" />
-                          <Text style={styles.propStatText}>{formatNumber(prop.views)} vues</Text>
-                        </View>
-                        <View style={styles.propStat}>
-                          <Ionicons name="hand-right-outline" size={13} color="#6B7280" />
-                          <Text style={styles.propStatText}>{formatNumber(prop.clicks)} clics</Text>
-                        </View>
-                        <View style={styles.propStat}>
-                          <Ionicons name="calendar-outline" size={13} color="#6B7280" />
-                          <Text style={styles.propStatText}>{prop.bookings} rés.</Text>
-                        </View>
+                properties.map(prop => (
+                  <View key={prop.id} style={styles.propCard}>
+                    <Text style={styles.propName} numberOfLines={1}>{prop.name}</Text>
+                    <View style={styles.propStatsRow}>
+                      <View style={styles.propStat}>
+                        <Ionicons name="eye-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatNumber(prop.views)} vues</Text>
                       </View>
-
-                      {/* Price comparison */}
-                      {prop.currentPrice > 0 && (
-                        <>
-                          <View style={styles.priceRow}>
-                            <View style={styles.priceItem}>
-                              <Text style={styles.priceItemLabel}>Prix actuel</Text>
-                              <Text style={styles.priceItemValue}>
-                                {formatNumber(prop.currentPrice)} FCFA
-                              </Text>
-                            </View>
-                            <View style={styles.priceItemDivider} />
-                            <View style={styles.priceItem}>
-                              <Text style={styles.priceItemLabel}>Prix marché</Text>
-                              <Text style={[styles.priceItemValue, { color: '#6366F1' }]}>
-                                {formatNumber(prop.marketAvgPrice)} FCFA
-                              </Text>
-                            </View>
-                          </View>
-
-                          {/* Valuation signal */}
-                          {isUnder && (
-                            <View style={styles.signalRow}>
-                              <Text style={styles.signalEmoji}>📉</Text>
-                              <Text style={[styles.signalText, { color: '#DC2626' }]}>
-                                Sous-évalué — votre prix est nettement en dessous du marché
-                              </Text>
-                            </View>
-                          )}
-                          {isOver && (
-                            <View style={styles.signalRow}>
-                              <Text style={styles.signalEmoji}>📈</Text>
-                              <Text style={[styles.signalText, { color: '#F59E0B' }]}>
-                                Sur-évalué — votre prix dépasse significativement le marché
-                              </Text>
-                            </View>
-                          )}
-
-                          {/* Suggested price */}
-                          {hasSuggestion && (
-                            <Text style={styles.suggestedPrice}>
-                              Prix suggéré : {formatNumber(prop.suggestedPrice)} FCFA
-                            </Text>
-                          )}
-
-                          {/* Mini price bars */}
-                          <PriceBar current={prop.currentPrice} market={prop.marketAvgPrice} />
-                        </>
-                      )}
+                      <View style={styles.propStat}>
+                        <Ionicons name="hand-right-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatNumber(prop.clicks)} clics</Text>
+                      </View>
+                      <View style={styles.propStat}>
+                        <Ionicons name="cart-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatNumber(prop.bookingAttempts)} tent.</Text>
+                      </View>
                     </View>
-                  );
-                })
+                    <View style={styles.propStatsRow}>
+                      <View style={styles.propStat}>
+                        <Ionicons name="calendar-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatNumber(prop.bookings)} rés. confirmées</Text>
+                      </View>
+                      <View style={styles.propStat}>
+                        <Ionicons name="trending-up-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatPercent(prop.conversion ?? 0)}</Text>
+                      </View>
+                      <View style={styles.propStat}>
+                        <Ionicons name="cash-outline" size={13} color="#6B7280" />
+                        <Text style={styles.propStatText}>{formatNumber(prop.revenue)} FCFA</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
               )}
             </View>
-
-            {/* ── Market intelligence ────────────────────────────────────── */}
-            {avgMarketPrice > 0 && (
-              <View style={styles.marketCard}>
-                <View style={styles.marketHeader}>
-                  <Ionicons name="globe-outline" size={18} color="#6366F1" />
-                  <Text style={styles.marketTitle}>Marché</Text>
-                </View>
-                <View style={styles.marketStatsRow}>
-                  <View style={styles.marketStat}>
-                    <Text style={styles.marketStatLabel}>Prix moyen du marché</Text>
-                    <Text style={styles.marketStatValue}>{formatNumber(Math.round(avgMarketPrice))} FCFA</Text>
-                  </View>
-                  <View style={styles.marketStat}>
-                    <Text style={styles.marketStatLabel}>Votre prix moyen</Text>
-                    <Text style={styles.marketStatValue}>{formatNumber(Math.round(avgCurrentPrice))} FCFA</Text>
-                  </View>
-                </View>
-                <View style={styles.insightRow}>
-                  <Ionicons
-                    name={priceDeltaPct >= 0 ? 'trending-up-outline' : 'trending-down-outline'}
-                    size={14}
-                    color={priceDeltaPct >= 0 ? '#F59E0B' : '#1056E0'}
-                  />
-                  <Text style={styles.insightText}>
-                    Votre prix moyen est{' '}
-                    <Text style={{ fontWeight: '700', color: priceDeltaPct >= 0 ? '#F59E0B' : '#6366F1' }}>
-                      {Math.abs(priceDeltaPct).toFixed(1)}%{' '}
-                      {priceDeltaPct >= 0 ? 'au-dessus' : 'en dessous'}
-                    </Text>{' '}
-                    du marché
-                  </Text>
-                </View>
-              </View>
-            )}
           </>
         )}
       </ScrollView>
@@ -705,6 +590,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   placeholderText: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
+
+  // Indicateur temps réel
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -8, marginBottom: 14 },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#10B981' },
+  liveText: { fontSize: 11, color: '#6B7280' },
 
   // Section
   section: { marginBottom: 16 },

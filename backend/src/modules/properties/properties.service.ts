@@ -143,10 +143,8 @@ export const propertiesService = {
     // (503 « Service temporairement indisponible »).
     await sectorsService.assertPropertyTypeEnabled(property.propertyType);
 
-    // Fire-and-forget view count increment
-    prisma.property
-      .update({ where: { id }, data: { viewsCount: { increment: 1 } } })
-      .catch(() => {});
+    // Les vues sont comptées par POST /properties/:id/events (fiche réellement affichée
+    // à un visiteur), et non à chaque chargement technique de l'annonce (édition, réservation…).
 
     const planType = (property as any).owner?.subscription?.planType ?? '';
     const badgeType = planType === 'entreprise' ? 'premium' : planType === 'business' ? 'verified' : null;

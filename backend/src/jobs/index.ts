@@ -23,7 +23,7 @@ export function startAllJobs(): void {
   startWebhookRecoveryJob();        // every hour :00 — poll Genius Pay stuck transactions
   startPendingPaymentExpiryJob();   // every hour :30 — expire unpaid bookings after 2h grace
   startSubscriptionJob();           // daily 00:00 — renewals, invoices, grace period
-  startBoostExpirationJob();        // every hour — deactivate expired boosts
+  startBoostExpirationJob();        // every 5 min — deactivate expired boosts
   startBoostResetJob();             // 1st of month 04:00 — reset free boost counters
   startAdminReportJob();            // every Sunday 03:00 — weekly activity report
   startDailyReportJob();            // daily 07:00 — résumé business de la veille (admins)
@@ -33,7 +33,7 @@ export function startAllJobs(): void {
   startPayoutsJob();                // daily 05:00 — reversements auto aux pros (net après frais GP)
   startBookingCompletionJob();      // daily 03:30 — réservations confirmées dont le départ est passé → terminées (avis possibles)
   startStayReminderJob();           // daily 09:00 — rappel J-1 au client (push + in-app)
-  startBoostExpiryReminderJob();    // daily 10:00 — rappel 24h avant expiration du boost
+  startBoostExpiryReminderJob();    // hourly — rappel 24h avant expiration du boost
   startIcalSyncJob();               // every 6h — sync calendriers iCal externes (Airbnb/Booking)
   logger.info('All cron jobs started');
 }

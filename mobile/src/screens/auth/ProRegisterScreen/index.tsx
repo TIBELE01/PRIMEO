@@ -66,10 +66,13 @@ type Props = AuthScreenProps<'ProRegister'>;
 
 // ── Composant principal ────────────────────────────────────────────────────────
 
-export function ProRegisterScreen({ navigation }: Props) {
+export function ProRegisterScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<FormData>(INITIAL);
+  const [data, setData] = useState<FormData>({
+    ...INITIAL,
+    referralCode: (route?.params?.ref ?? '').trim().toUpperCase(),
+  });
   const TOTAL_STEPS = 3;
 
   const update = (patch: Partial<FormData>) => setData(p => ({ ...p, ...patch }));

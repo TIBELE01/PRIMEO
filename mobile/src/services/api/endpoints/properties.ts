@@ -42,6 +42,10 @@ export const propertiesApi = {
   }) => apiClient.patch(`/properties/${id}/3d-scenes/${sceneId}`, data),
   getStats: (id: string) => apiClient.get(`/properties/${id}/stats`),
 
+  // Statistiques du professionnel : vue de la fiche / clic depuis une liste de résultats
+  recordEvent: (id: string, type: 'view' | 'click', source?: string) =>
+    apiClient.post(`/properties/${id}/events`, source ? { type, source } : { type }),
+
   // Immobilier : exprimer son intérêt pour un bien (notifie le responsable)
   expressInterest: (id: string, message?: string) =>
     apiClient.post(`/properties/${id}/interest`, message ? { message } : {}),

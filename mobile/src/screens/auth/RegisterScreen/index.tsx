@@ -52,6 +52,8 @@ export function RegisterScreen({ navigation, route }: Props) {
   const [data, setData] = useState<RegistrationData>({
     ...initialData,
     accountType: isPresetClient ? 'client' : null,
+    // Lien de parrainage partagé (…/register?ref=CODE) : code prérempli
+    referralCode: (route?.params?.ref ?? '').trim().toUpperCase(),
   });
 
   const isPro = data.accountType !== null && data.accountType !== 'client';
