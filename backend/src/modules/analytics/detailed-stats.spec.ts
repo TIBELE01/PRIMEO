@@ -60,6 +60,19 @@ describe('analyticsService.getDetailedStats', () => {
     expect(s.properties[1]).toMatchObject({ id: 'p2', views: 2, clicks: 0, bookings: 0, conversion: 0 });
   });
 
+  it('conversion plafonnée à 100 % (réservations issues de visites non suivies)', async () => {
+    mockPrisma.propertyEvent.groupBy.mockResolvedValue([{ propertyId: 'p1', type: 'view', _count: { _all: 0 } }]);
+    mockPrisma.$queryRaw.mockResolvedValue([]);
+    const s = await analyticsService.getDetailedStats('pro-1', { period: '7d' });
+    expect(s.conversionRate).toBe(0); // aucune vue → 0 et non l'infini
+    mockPrisma.propertyEvent.groupBy.mockResolvedValue([{ propertyId: 'p2', type: 'view', _count: { _all: 1 } }]);
+    mockPrisma.property.findMany.mockResolvedValue([{ ...(await mockPrisma.property.findMany.getMockImplementation?.()), id: 'p2', title: 'S', propertyType: 'studio', viewsCount: 1, bookingsCount: 0, rating: null, reviewCount: 0, isBoosted: false, boostExpiresAt: null, pricePerNight: 1, pricePerMonth: null, priceSale: null,
+      bookings: [{ id: 'x', totalAmount: 1, commissionAmount: 0, createdAt: new Date() }, { id: 'y', totalAmount: 1, commissionAmount: 0, createdAt: new Date() }] }]);
+    const s2 = await analyticsService.getDetailedStats('pro-1', { period: '7d' });
+    expect(s2.conversionRate).toBe(100);
+    expect(s2.properties[0].conversion).toBe(100);
+  });
+
   it('période « 1 an » = 365 jours', async () => {
     const s = await analyticsService.getDetailedStats('pro-1', { period: '1y' });
     expect(s.daily).toHaveLength(365);

@@ -240,6 +240,9 @@ export const analyticsService = {
     const countFor = (propertyId: string, type: string) =>
       eventCounts.find((e) => e.propertyId === propertyId && e.type === type)?._count._all ?? 0;
     const pct = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 1000) / 10 : 0);
+    // Taux de conversion plafonné à 100 % : une réservation peut provenir d'une visite non
+    // comptée (antérieure au suivi des vues, ancienne version de l'app, lien direct…).
+    const conversionPct = (bookingsCount: number, viewsCount: number) => Math.min(100, pct(bookingsCount, viewsCount));
 
     // Série quotidienne complète (jours sans activité = 0)
     const daily = Array.from({ length: days }, (_, i) => {
@@ -264,7 +267,7 @@ export const analyticsService = {
         const d = byDate.get(b.createdAt.toISOString().slice(0, 10));
         if (d) { d.bookings += 1; d.revenue += b.totalAmount; }
       }
-      const conversion = pct(p.bookings.length, views);
+      const conversion = conversionPct(p.bookings.length, views);
       return {
         id: p.id,
         title: p.title,
@@ -306,7 +309,7 @@ export const analyticsService = {
       clicks: sum('clicks'),
       bookingAttempts: sum('bookingAttempts'),
       bookings,
-      conversionRate: pct(bookings, views),
+      conversionRate: conversionPct(bookings, views),
       revenue: totalRevenue,
       totalRevenue,
       totalCommissions,
