@@ -431,7 +431,7 @@
   "section": "primeopay",
   "tag": "li",
   "type": "text",
-  "default": "Mobile Money — Orange, MTN, Wave"
+  "default": "Mobile Money — Orange, MTN, Wave, Moov"
  },
  {
   "key": "produits.primeopay.li3",

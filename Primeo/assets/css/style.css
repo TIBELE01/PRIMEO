@@ -14,3 +14,6 @@ main{overflow-x:clip}
 .cookie-accept{background:var(--color-primary);color:#fff;border:1px solid var(--color-primary)}
 .cookie-decline{background:transparent;color:#cbd5e1;border:1px solid #475569}
 .nav-primary{justify-content:flex-end}
+
+/* Texte réservé aux lecteurs d'écran et aux moteurs (ex. h1 de l'accueil) */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}

@@ -34,7 +34,7 @@ const DEFAULT_SOLUTIONS = [
 
 const DEFAULT_PRODUCTS = [
   { id: 'default-1', title: 'Shooting Photo', description: 'Photos haute définition et panoramiques 360° pour sublimer vos biens et attirer plus de réservations.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg', badge: null, link: '/produits/#shooting-photo', sortOrder: 0 },
-  { id: 'default-2', title: 'PrimeoPay', description: 'Paiement en ligne sécurisé : Mobile Money (Orange, MTN, Wave) et carte bancaire, avec reversements automatiques.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433599/primeo/Website/products/primeopay.jpg', badge: 'Sécurisé', link: '/produits/#primeopay', sortOrder: 1 },
+  { id: 'default-2', title: 'PrimeoPay', description: 'Paiement en ligne sécurisé : Mobile Money (Orange, MTN, Wave, Moov) et carte bancaire, avec reversements automatiques.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433599/primeo/Website/products/primeopay.jpg', badge: 'Sécurisé', link: '/produits/#primeopay', sortOrder: 1 },
   { id: 'default-3', title: 'Formation', description: 'Formations en ligne pour optimiser vos annonces, gérer vos réservations et développer votre activité.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433604/primeo/Website/products/formation.jpg', badge: null, link: '/produits/#formation', sortOrder: 2 },
 ];
 
@@ -182,6 +182,14 @@ const STATS_CACHE_KEY = 'website:stats';
 const STATS_TTL = 60; // 60 s — stats quasi temps réel (rafraîchies à chaque ouverture)
 
 // ── Public read methods ───────────────────────────────────────────────────────
+
+// Échappe les champs saisis par les visiteurs avant insertion dans un email HTML
+// (formulaires publics : contact, partenariat, candidature).
+function escapeHtml(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 export const websiteService = {
 
@@ -783,15 +791,25 @@ export const websiteService = {
       subject: `Nouvelle candidature spontanée — ${data.firstName} ${data.lastName}`,
       htmlContent: `
         <h2>Nouvelle candidature spontanée</h2>
-        <p><strong>Nom :</strong> ${data.firstName} ${data.lastName}</p>
-        <p><strong>Email :</strong> ${data.email}</p>
-        <p><strong>Téléphone :</strong> ${data.phone ?? 'Non renseigné'}</p>
+        <p><strong>Nom :</strong> ${escapeHtml(data.firstName)} ${escapeHtml(data.lastName)}</p>
+        <p><strong>Email :</strong> ${escapeHtml(data.email)}</p>
+        <p><strong>Téléphone :</strong> ${escapeHtml(data.phone ?? 'Non renseigné')}</p>
         <p><strong>Message :</strong></p>
-        <p>${data.message ? data.message.replace(/\n/g, '<br>') : 'Aucun message'}</p>
+        <p>${data.message ? escapeHtml(data.message).replace(/\n/g, '<br>') : 'Aucun message'}</p>
         ${cvUrl ? `<p><strong>CV :</strong> <a href="${websiteService.cvDownloadUrl(app.id)}">Télécharger le CV</a></p>` : cvError ? '<p><strong>CV :</strong> envoyé par le candidat mais non enregistré (erreur technique) — le contacter à l\'adresse ci-dessus.</p>' : ''}
         <hr>
         <p style="color:#888;font-size:12px">Candidature soumise le ${new Date().toLocaleString('fr-FR')}</p>
       `,
+    }).catch(() => { /* non-bloquant */ });
+    // Accusé de réception au candidat (comme pour les formulaires contact et partenariat)
+    await sendEmail({
+      to: [{ email: data.email, name: `${data.firstName} ${data.lastName}` }],
+      subject: 'Primeo — Votre candidature a bien été reçue',
+      htmlContent: `<div style="font-family:sans-serif;max-width:560px;color:#1a2340">
+        <h2 style="color:#1056E0">Bonjour ${escapeHtml(data.firstName)},</h2>
+        <p>Merci pour votre candidature spontanée. Notre équipe l'étudiera avec attention et reviendra vers vous si votre profil correspond à nos besoins.</p>
+        <p>À bientôt,<br>L'équipe Primeo</p>
+      </div>`,
     }).catch(() => { /* non-bloquant */ });
     return app;
   },
@@ -1138,10 +1156,10 @@ export const websiteService = {
       to: [{ email: data.email, name: data.name }],
       subject: 'Primeo — Votre message a bien été reçu',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px">
-        <h2 style="color:#4f6af5">Bonjour ${data.name},</h2>
+        <h2 style="color:#4f6af5">Bonjour ${escapeHtml(data.name)},</h2>
         <p>Nous avons bien reçu votre message. Notre équipe vous répondra sous <strong>24 heures ouvrées</strong>.</p>
         <table style="border-collapse:collapse;width:100%;margin:16px 0">
-          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600;width:120px">Sujet</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${data.subject}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600;width:120px">Sujet</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${escapeHtml(data.subject)}</td></tr>
           <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
         </table>
         <p style="color:#6b7280;font-size:13px">Cordialement,<br>L'équipe Primeo</p>
@@ -1157,10 +1175,10 @@ export const websiteService = {
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#4f6af5">Nouveau message de contact</h3>
           <table style="border-collapse:collapse;width:100%;margin:12px 0">
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600;width:120px">Nom</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.name}</td></tr>
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.email}</td></tr>
-            ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.phone}</td></tr>` : ''}
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Sujet</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.subject}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600;width:120px">Nom</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.name)}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.email)}</td></tr>
+            ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.phone)}</td></tr>` : ''}
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Sujet</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.subject)}</td></tr>
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
           </table>
         </div>`,
@@ -1531,8 +1549,8 @@ export const websiteService = {
       to: [{ email: data.email, name: data.contactName }],
       subject: 'Primeo — Votre demande de partenariat a bien été reçue',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px;color:#1a2340">
-        <h2 style="color:#0066cc">Bonjour ${data.contactName},</h2>
-        <p>Nous avons bien reçu votre demande de partenariat de type <strong>${data.partnershipType}</strong> au nom de <strong>${data.companyName}</strong>.</p>
+        <h2 style="color:#0066cc">Bonjour ${escapeHtml(data.contactName)},</h2>
+        <p>Nous avons bien reçu votre demande de partenariat de type <strong>${escapeHtml(data.partnershipType)}</strong> au nom de <strong>${escapeHtml(data.companyName)}</strong>.</p>
         <p>Notre équipe partenariats va étudier votre dossier et vous recontactera dans les <strong>48 heures ouvrées</strong>.</p>
         <p>En attendant, n'hésitez pas à consulter notre <a href="https://primeo.ci/tarification/" style="color:#0066cc">page Tarification</a> ou à répondre directement à cet email.</p>
         <p style="color:#6b7280;font-size:.85rem;margin-top:2rem">— L'équipe Primeo</p>
@@ -1548,11 +1566,11 @@ export const websiteService = {
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#0066cc">Nouvelle demande de partenariat</h3>
           <table style="border-collapse:collapse;width:100%;margin:12px 0">
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600;width:130px">Entreprise</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.companyName}</td></tr>
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Contact</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.contactName}</td></tr>
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.email}</td></tr>
-            ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.phone}</td></tr>` : ''}
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Type</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.partnershipType}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600;width:130px">Entreprise</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.companyName)}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Contact</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.contactName)}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.email)}</td></tr>
+            ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.phone)}</td></tr>` : ''}
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Type</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.partnershipType)}</td></tr>
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
           </table>
         </div>`,
