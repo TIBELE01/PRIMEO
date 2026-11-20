@@ -44,6 +44,14 @@ export function MenuSection({ property, color = '#DC2626' }: Props) {
     return Array.from(map.entries());
   }, [items]);
 
+  if (items.length === 0) {
+    return (
+      <View style={styles.wrap}>
+        <Text style={{ fontSize: 13, color: '#6B7280' }}>La carte de ce restaurant sera bientôt disponible.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.wrap}>
       {groups.map(([cat, list]) => (

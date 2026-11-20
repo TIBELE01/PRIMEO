@@ -7,49 +7,11 @@ import type { Property, PropertyAmenity, MenuItem, RealEstateDocument, NearbyPla
 export type DetailKind = 'hebergement' | 'hotel' | 'restaurant' | 'real_estate';
 
 // Équipements par défaut quand la propriété n'en a pas encore
-const DEFAULT_AMENITIES: Record<DetailKind, PropertyAmenity[]> = {
-  hebergement: [
-    { id: 'da-0', name: 'Wi-Fi',              icon: '📶' },
-    { id: 'da-1', name: 'Climatisation',      icon: '❄️' },
-    { id: 'da-2', name: 'Parking',            icon: '🅿️' },
-    { id: 'da-3', name: 'Cuisine équipée',    icon: '🍳' },
-    { id: 'da-4', name: 'Télévision',         icon: '📺' },
-    { id: 'da-5', name: 'Eau chaude',         icon: '🚿' },
-    { id: 'da-6', name: 'Gardiennage',        icon: '🔒' },
-    { id: 'da-7', name: 'Groupe électrogène', icon: '⚡' },
-  ],
-  hotel: [
-    { id: 'da-0', name: 'Wi-Fi',              icon: '📶' },
-    { id: 'da-1', name: 'Climatisation',      icon: '❄️' },
-    { id: 'da-2', name: 'Piscine',            icon: '🏊' },
-    { id: 'da-3', name: 'Salle de sport',     icon: '💪' },
-    { id: 'da-4', name: 'Parking',            icon: '🅿️' },
-    { id: 'da-5', name: 'Télévision',         icon: '📺' },
-    { id: 'da-6', name: 'Gardiennage 24h/24', icon: '🔒' },
-    { id: 'da-7', name: 'Groupe électrogène', icon: '⚡' },
-    { id: 'da-8', name: 'Conciergerie',       icon: '🛎️' },
-  ],
-  restaurant: [
-    { id: 'da-0', name: 'Wi-Fi',              icon: '📶' },
-    { id: 'da-1', name: 'Climatisation',      icon: '❄️' },
-    { id: 'da-2', name: 'Parking',            icon: '🅿️' },
-    { id: 'da-3', name: 'Terrasse extérieure',icon: '☀️' },
-    { id: 'da-4', name: 'Livraison à domicile',icon: '🛵' },
-    { id: 'da-5', name: 'À emporter',         icon: '🥡' },
-  ],
-  real_estate: [
-    { id: 'da-0', name: 'Climatisation',      icon: '❄️' },
-    { id: 'da-1', name: 'Parking',            icon: '🅿️' },
-    { id: 'da-2', name: 'Gardiennage',        icon: '🔒' },
-    { id: 'da-3', name: 'Groupe électrogène', icon: '⚡' },
-    { id: 'da-4', name: 'Jardin',             icon: '🌿' },
-  ],
-};
 
-/** Retourne les équipements de la propriété, ou des valeurs par défaut selon le type. */
+/** Équipements RÉELS de l'annonce (aucune valeur inventée : sans équipement renseigné,
+ *  la section affiche « Informations sur les équipements à venir »). */
 export function defaultAmenitiesFor(p: Property): PropertyAmenity[] {
-  if (p.amenities?.length) return p.amenities;
-  return DEFAULT_AMENITIES[kindOf(p.type)] ?? [];
+  return p.amenities?.length ? p.amenities : [];
 }
 
 export function kindOf(type: string): DetailKind {
@@ -112,16 +74,8 @@ export function priceDisplay(p: Property): { price: number | null; unit: string;
 
 // ── Restaurant: default menu ─────────────────────────────────────────────
 export function menuFor(p: Property): MenuItem[] {
-  if (p.menu?.length) return p.menu;
-  const base = p.pricePerNight ?? 10000;
-  return [
-    { id: 'm1', category: 'Entrées',   name: 'Salade d\'avocat & crevettes', description: 'Avocat frais, crevettes grillées, vinaigrette maison', price: Math.round(base * 0.4), imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80' },
-    { id: 'm2', category: 'Entrées',   name: 'Attiéké poisson braisé', description: 'Spécialité ivoirienne, poisson du jour', price: Math.round(base * 0.6), imageUrl: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=400&q=80' },
-    { id: 'm3', category: 'Plats',     name: 'Poulet kedjenou', description: 'Mijoté traditionnel aux épices, légumes du marché', price: base, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80' },
-    { id: 'm4', category: 'Plats',     name: 'Garba premium', description: 'Thon frais, attiéké, piment', price: Math.round(base * 0.8), imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=80' },
-    { id: 'm5', category: 'Desserts',  name: 'Dégué maison', description: 'Mil, yaourt, lait concentré', price: Math.round(base * 0.3), imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&q=80' },
-    { id: 'm6', category: 'Boissons',  name: 'Bissap / Gingembre', description: 'Jus naturels pressés du jour', price: Math.round(base * 0.2), imageUrl: 'https://images.unsplash.com/photo-1437418747212-8d9709afab22?auto=format&fit=crop&w=400&q=80' },
-  ];
+  // Carte réelle uniquement (plus de plats fictifs quand le restaurant n'a rien publié)
+  return p.menu?.length ? p.menu : [];
 }
 
 // ── Real estate: protected documents ─────────────────────────────────────
@@ -153,56 +107,40 @@ export function documentsFor(p: Property): RealEstateDocument[] {
       }));
   }
 
-  // Valeurs par défaut
-  const isLand = (p.propertyType ?? p.type ?? '').includes('terrain');
-  const docs: RealEstateDocument[] = [
-    { id: 'd1', label: 'Titre foncier',              icon: '📜', verified: true  },
-    { id: 'd2', label: 'ACD (Arrêté de concession)', icon: '🗂️', verified: true  },
-  ];
-  if (!isLand) docs.push({ id: 'd3', label: 'Permis de construire', icon: '🏗️', verified: true });
-  docs.push({ id: 'd4', label: 'Certificat de propriété', icon: '✅', verified: false });
-  return docs;
+  // Aucun document déclaré : rien n'est affiché comme « vérifié » sans contrôle réel
+  return [];
 }
 
 // ── Nearby places ─────────────────────────────────────────────────────────
 export function nearbyFor(p: Property): NearbyPlace[] {
-  if (p.nearby?.length) return p.nearby;
-  return [
-    { id: 'n1', name: 'Supermarché Prosuma', category: 'commerce',   distance: '350 m',  icon: '🛒' },
-    { id: 'n2', name: 'Pharmacie de la Paix', category: 'health',     distance: '500 m',  icon: '💊' },
-    { id: 'n3', name: 'Arrêt de bus SOTRA',   category: 'transport',  distance: '200 m',  icon: '🚌' },
-    { id: 'n4', name: 'Station Total',        category: 'transport',  distance: '800 m',  icon: '⛽' },
-    { id: 'n5', name: 'Plage / Front de mer', category: 'attraction', distance: '1,2 km', icon: '🏖️' },
-    { id: 'n6', name: 'Centre commercial',     category: 'commerce',   distance: '1,5 km', icon: '🏬' },
-  ];
+  // Lieux réels uniquement (plus de commerces/distances inventés)
+  return p.nearby?.length ? p.nearby : [];
 }
 
 // ── FAQ — adapted per type ──────────────────────────────────────────────
 export function faqFor(p: Property): FaqItem[] {
   if (p.faq?.length) return p.faq;
+  // Réponses génériques, valables pour toute annonce (aucune caractéristique supposée du bien)
   const k = kindOf(p.type);
   if (k === 'restaurant') {
     return [
-      { id: 'f1', question: 'Faut-il réserver à l\'avance ?', answer: 'La réservation est recommandée, surtout le week-end. Vous pouvez réserver une table directement depuis cette page.' },
-      { id: 'f2', question: 'Le restaurant est-il accessible aux personnes à mobilité réduite ?', answer: 'Oui, l\'établissement dispose d\'un accès de plain-pied et de sanitaires adaptés.' },
-      { id: 'f3', question: 'Acceptez-vous les groupes ?', answer: 'Oui, jusqu\'à la capacité indiquée. Pour les grands groupes, contactez le restaurant via la messagerie.' },
-      { id: 'f4', question: 'Quels moyens de paiement sont acceptés ?', answer: 'Espèces, Mobile Money (Orange, MTN, Moov) et cartes bancaires.' },
+      { id: 'f1', question: 'Faut-il réserver à l\'avance ?', answer: 'C\'est conseillé, surtout le week-end. Si le restaurant propose la réservation de table, vous pouvez réserver directement depuis l\'application.' },
+      { id: 'f2', question: 'Comment poser une question au restaurant ?', answer: 'Utilisez la messagerie Primeo : le restaurant reçoit votre message et vous répond dans l\'application.' },
+      { id: 'f3', question: 'Quels moyens de paiement sont acceptés ?', answer: 'Les options de paiement disponibles sont indiquées lors de la commande ou de la réservation.' },
     ];
   }
   if (k === 'real_estate') {
     return [
-      { id: 'f1', question: 'Les documents sont-ils vérifiés ?', answer: 'Les documents marqués « vérifié » ont été contrôlés par nos équipes. Les originaux sont consultables après prise de contact.' },
-      { id: 'f2', question: 'Puis-je visiter le bien ?', answer: 'Oui, cliquez sur « Exprimer mon intérêt » pour planifier une visite avec le responsable.' },
-      { id: 'f3', question: 'Le prix est-il négociable ?', answer: 'Les conditions sont à discuter directement avec le propriétaire via la messagerie.' },
-      { id: 'f4', question: 'Des frais d\'agence s\'appliquent-ils ?', answer: 'Les éventuels frais sont précisés par le responsable lors de la prise de contact.' },
+      { id: 'f1', question: 'Comment obtenir les documents du bien ?', answer: 'Les documents sont communiqués par le responsable du bien après prise de contact. Vérifiez toujours les originaux avant tout engagement.' },
+      { id: 'f2', question: 'Puis-je visiter le bien ?', answer: 'Oui, cliquez sur « Exprimer mon intérêt » pour être mis en relation avec le responsable et planifier une visite.' },
+      { id: 'f3', question: 'Le prix est-il négociable ?', answer: 'Les conditions se discutent directement avec le responsable via la messagerie.' },
     ];
   }
   // hébergement / hôtel
   return [
-    { id: 'f1', question: 'À quelle heure puis-je arriver ?', answer: 'Le check-in se fait à partir de 14h00 et le check-out avant 12h00. Des arrangements sont possibles selon disponibilité.' },
-    { id: 'f2', question: 'L\'annulation est-elle gratuite ?', answer: 'Cela dépend de la politique d\'annulation indiquée plus haut. Vérifiez la section dédiée avant de réserver.' },
-    { id: 'f3', question: 'Le Wi-Fi est-il inclus ?', answer: 'Oui, le Wi-Fi est disponible gratuitement dans tout le logement.' },
-    { id: 'f4', question: 'Y a-t-il un groupe électrogène ?', answer: 'En cas de coupure, un groupe électrogène prend le relais (selon le logement).' },
+    { id: 'f1', question: 'Quand ma réservation est-elle confirmée ?', answer: 'Selon l\'option de paiement choisie : dès le paiement en ligne validé, ou immédiatement pour un règlement sur place. Vous recevez une confirmation par e-mail.' },
+    { id: 'f2', question: 'L\'annulation est-elle gratuite ?', answer: 'Cela dépend de la politique d\'annulation indiquée sur cette page. Vérifiez-la avant de réserver.' },
+    { id: 'f3', question: 'Comment contacter l\'hôte ?', answer: 'Une conversation s\'ouvre automatiquement avec l\'hôte après votre réservation ; vous pouvez aussi lui écrire depuis la messagerie.' },
   ];
 }
 

@@ -453,7 +453,7 @@ export function PropertyDetailScreen() {
 
         {/* ── 5. Immobilier : documents protégés ── */}
         {kind === 'real_estate' && (
-          <Accordion title="Documents légaux" icon="📄" color={theme.color} subtitle="Titre foncier, ACD…">
+          <Accordion title="Documents légaux" icon="📄" color={theme.color} subtitle="Titre foncier, ACD… (sur demande)">
             <RealEstateDocsSection property={property} color={theme.color} />
           </Accordion>
         )}
@@ -494,10 +494,12 @@ export function PropertyDetailScreen() {
           />
         </Accordion>
 
-        {/* ── 9. À proximité ── */}
-        <Accordion title="À proximité" icon="🧭" color={theme.color} subtitle="Commerces, transports, attractions">
-          <NearbySection property={property} color={theme.color} />
-        </Accordion>
+        {/* ── 9. À proximité (uniquement si l'annonce renseigne des lieux réels) ── */}
+        {!!property.nearby?.length && (
+          <Accordion title="À proximité" icon="🧭" color={theme.color} subtitle="Commerces, transports, attractions">
+            <NearbySection property={property} color={theme.color} />
+          </Accordion>
+        )}
 
         {/* ── 10. Profil de l'hôte / responsable ── */}
         <Accordion title={hostTitle} icon="👤" color={theme.color}>

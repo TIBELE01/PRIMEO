@@ -17,6 +17,9 @@ export function RealEstateDocsSection({ property, color = '#059669' }: Props) {
           🔒 Documents protégés — les originaux sont consultables après prise de contact avec le responsable.
         </Text>
       </View>
+      {docs.length === 0 && (
+        <Text style={styles.noticeText}>Aucun document n'a encore été déclaré pour ce bien. Demandez-les au responsable avant tout engagement.</Text>
+      )}
       {docs.map(d => (
         <View key={d.id} style={styles.row}>
           <Text style={styles.icon}>{d.icon}</Text>

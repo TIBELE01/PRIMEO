@@ -148,36 +148,6 @@ function buildApiParams(
 
 // ── Filtre côté client (données démo) ────────────────────────────────────────
 
-function filterDemo(demo: Property[], state: FilterState, config: CategoryConfig, city: string): Property[] {
-  return demo.filter(p => {
-    // Filtre ville
-    if (city.trim() && !p.city.toLowerCase().includes(city.trim().toLowerCase())) return false;
-    for (const f of config.filters) {
-      const v = state[f.id];
-      if (v == null) continue;
-      const price = p.pricePerNight ?? p.priceForSale ?? 0;
-      if (f.id === 'price' && f.type === 'range') {
-        if (v.min && price < Number(v.min)) return false;
-        if (v.max && price > Number(v.max)) return false;
-      } else if (f.id === 'area' && f.type === 'range') {
-        const a = (p as any).area ?? 0;
-        if (v.min && a < Number(v.min)) return false;
-        if (v.max && a > Number(v.max)) return false;
-      } else if (f.id === 'minRating') {
-        if (p.rating < Number(v)) return false;
-      } else if (f.id === 'bedrooms') {
-        const b = (p as any).bedrooms ?? 0;
-        if (v === '4' ? b < 4 : b !== Number(v)) return false;
-      } else if (f.id === 'badges' && Array.isArray(v)) {
-        if (v.includes('virtual_tour') && !p.virtualTour?.available) return false;
-        if (v.includes('super_host') && !p.isSuperHost) return false;
-      } else if (f.id === 'promo' && Array.isArray(v) && v.length) {
-        if (!p.isBoosted) return false;
-      }
-    }
-    return true;
-  });
-}
 
 function sortProps(list: Property[], sortBy: string): Property[] {
   const a = [...list];
@@ -506,24 +476,23 @@ export function CategoryScreen() {
       const res = await propertiesApi.search(params);
       const data = (res.data as any)?.data;
       const items = normalizeProperties(data?.properties ?? data ?? []);
+      // Aucune annonce : état vide réel (plus d'annonces fictives « démo » montrées aux utilisateurs)
       if (items.length === 0 && p === 1) {
-        const demo = sortProps(filterDemo(config.demo, filters, config, searchCity), sortBy);
-        setUsingDemo(true);
-        setResults(demo);
-        setTotal(demo.length);
+        setUsingDemo(false);
+        setResults([]);
+        setTotal(0);
         setPage(1);
       } else {
         setUsingDemo(false);
         setResults(prev => p === 1 ? items : [...prev, ...items]);
-        setTotal(data?.total ?? items.length);
+        // Total à la racine de la réponse API ({ data: [...], total })
+        setTotal(typeof res?.data?.total === 'number' ? res.data.total : (data?.total ?? items.length));
         setPage(p);
       }
     } catch {
-      const demo = sortProps(filterDemo(config.demo, filters, config, searchCity), sortBy);
-      setUsingDemo(true);
-      setResults(demo);
-      setTotal(demo.length);
-      setPage(1);
+      // Erreur réseau : on conserve les résultats déjà affichés (pas d'annonces fictives)
+      setUsingDemo(false);
+      if (p === 1) { setResults([]); setTotal(0); setPage(1); }
     } finally {
       setLoading(false);
     }
@@ -549,7 +518,7 @@ export function CategoryScreen() {
   const goProperty = (id: string) => {
     trackPropertyClick(id, 'category');
     if (categoryKey === 'restaurant') {
-      const it = results.find(r => r.id === id) ?? config.demo.find(d => d.id === id);
+      const it = results.find(r => r.id === id);
       navigation.navigate('RestaurantMenu', {
         propertyId: id,
         restaurantName: it?.name ?? (it as any)?.title ?? 'Restaurant',
@@ -563,14 +532,12 @@ export function CategoryScreen() {
 
   // Carousels
   const pourVous = useMemo(() => {
-    const base = usingDemo || results.length === 0 ? config.demo : results;
-    return [...base].sort((a, b) => b.rating - a.rating).slice(0, 10);
-  }, [results, usingDemo, config.demo]);
+    return [...results].sort((a, b) => b.rating - a.rating).slice(0, 10);
+  }, [results]);
 
   const nouveautes = useMemo(() => {
-    const base = usingDemo || results.length === 0 ? config.demo : results;
-    return [...base].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 10);
-  }, [results, usingDemo, config.demo]);
+    return [...results].sort((a, b) => new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()).slice(0, 10);
+  }, [results]);
 
   // ── ListHeader ─────────────────────────────────────────────────────────────
 

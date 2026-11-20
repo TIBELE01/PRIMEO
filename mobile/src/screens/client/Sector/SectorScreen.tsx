@@ -77,13 +77,15 @@ export function SectorScreen() {
         ...(q && { city: q }),
       });
       const data = res.data?.data;
+      // Total à la racine de la réponse API ({ data: [...], total })
+      const apiTotal: number | undefined = typeof res.data?.total === 'number' ? res.data.total : data?.total;
       const items: Property[] = normalizeProperties(data?.properties ?? data ?? []);
       if (p === 1) {
         setResults(items);
-        setTotal(data?.total ?? items.length);
+        setTotal(apiTotal ?? items.length);
       } else {
         setResults(prev => [...prev, ...items]);
-        setTotal(data?.total ?? items.length);
+        setTotal(apiTotal ?? items.length);
       }
       setPage(p);
     } catch {

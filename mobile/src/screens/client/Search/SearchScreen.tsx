@@ -214,16 +214,19 @@ export function SearchScreen() {
       const res = await propertiesApi.search(params);
       // Statistique anonyme de recherche (uniquement la première page)
       if (p === 1) trackEvent('search');
-      const data = (res.data as any)?.data;
+      // Réponse API : { data: [...], total, page, pages } (le total est à la racine)
+      const body = res.data as any;
+      const data = body?.data;
+      const apiTotal: number | undefined = typeof body?.total === 'number' ? body.total : data?.total;
       const items: Property[] = normalizeProperties(data?.properties ?? data ?? []);
       if (p === 1) {
         setResults(items);
-        const t = data?.total ?? items.length;
+        const t = apiTotal ?? items.length;
         setTotal(t);
         AsyncStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify({ items, total: t })).catch(() => null);
       } else {
         setResults(prev => [...prev, ...items]);
-        setTotal(data?.total ?? items.length);
+        setTotal(apiTotal ?? items.length);
       }
       setPage(p);
     } catch {
