@@ -19,6 +19,7 @@ import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../client/Home/PropertyCard';
 import { HomeHeader } from '../client/Home/HomeHeader';
 import { HomeFooter } from '../client/Home/HomeFooter';
+import { OwnerBenefits } from '../../components/home/OwnerBenefits';
 import { useSectorFlags } from '../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../utils/sectors';
 
@@ -223,6 +224,12 @@ export function PublicHomeScreen() {
               </View>
             ))}
           </View>
+        </View>
+
+        {/* ── Vous êtes propriétaire ? (cartes statiques, sans action) ── */}
+        <View style={s.section}>
+          <SectionTitle text="Vous êtes propriétaire ?" />
+          <OwnerBenefits />
         </View>
 
         {/* ── Nouveautés ── */}

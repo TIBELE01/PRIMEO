@@ -21,6 +21,7 @@ import { useOffline } from '@hooks/useOffline';
 import { PropertyCard } from './PropertyCard';
 import { HomeHeader } from './HomeHeader';
 import { HomeFooter } from './HomeFooter';
+import { OwnerBenefits } from '../../../components/home/OwnerBenefits';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../../utils/sectors';
 import { trackPropertyClick } from '../../../utils/propertyStats';
@@ -346,6 +347,12 @@ export function HomeScreen() {
           </View>
         </View>
 
+        {/* ── Vous êtes propriétaire ? (cartes statiques, sans action) ── */}
+        <View style={s.section}>
+          <SectionTitle text="Vous êtes propriétaire ?" />
+          <OwnerBenefits />
+        </View>
+
         {/* ── Nouveautés ── */}
         <View style={s.section}>
           <SectionTitle text="Nouveautés" onSeeAll={() => goSearch()} />
@@ -551,6 +558,7 @@ const s = StyleSheet.create({
   innovIcon:  { fontSize: 28 },
   innovTitle: { fontSize: 13, fontWeight: '800', color: '#111827' },
   innovDesc:  { fontSize: 11.5, color: '#6B7280', lineHeight: 17 },
+
 
   /* ── Témoignages (carte étroite et haute) ── */
   testimonialCard: {

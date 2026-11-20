@@ -3,3 +3,12 @@
 .hero-slide-msg{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:calc(var(--header-h) + .5rem) 1.5rem 2.5rem}.hero-slide-msg p{font-size:clamp(1.9rem,5vw,3.4rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;color:#fff;max-width:900px;text-shadow:0 3px 20px rgba(0,0,0,.45)}.hero-slide-msg strong{color:#ffd9a0;font-weight:800}
 
 .hero-bg-1{background-image:linear-gradient(to bottom,rgba(6,16,50,.42) 0,rgba(6,16,50,.66) 100%),url('https://res.cloudinary.com/dlnnxvepd/image/upload/primeo/properties/Residences/5f937477-1ea4-4f3a-a1b8-eda1854f96c2/images/kutow5geubsqies2zcdo.jpg')}.hero-bg-2{background-image:linear-gradient(to bottom,rgba(6,16,50,.42) 0,rgba(6,16,50,.66) 100%),url('https://res.cloudinary.com/dlnnxvepd/image/upload/primeo/properties/Hotels/21a4fd9b-2577-488c-8014-f158ce46a554/images/p5qqclypkchvvwzvu6s7.jpg')}.hero-bg-3{background-image:linear-gradient(to bottom,rgba(6,16,50,.42) 0,rgba(6,16,50,.66) 100%),url('https://res.cloudinary.com/dlnnxvepd/image/upload/primeo/properties/RealEstates/0c46465f-fdf1-4a08-8d4f-1f4b1c9ca732/images/z5mchawxuyfz3vaoji8d.jpg')}.hero-bg-4{background-image:linear-gradient(to bottom,rgba(6,16,50,.42) 0,rgba(6,16,50,.66) 100%),url('https://res.cloudinary.com/dlnnxvepd/image/upload/primeo/properties/Restaurants/0f3cb52b-5c95-4cbb-831f-7d2f08468a1e/images/efvtvyojt5hd0ttycmei.jpg')}
+
+/* Section « Vous êtes propriétaire ? » — cartes identiques à .why-card (ombre, rayon, padding) */
+.owner-section__sub{margin:.6rem auto 0;max-width:560px;color:var(--color-text-muted);font-size:1rem;line-height:1.6}
+.owner-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.75rem}
+.owner-card{display:flex;flex-direction:column;align-items:center}
+.owner-card__icon{width:52px;height:52px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--color-primary);background:rgba(var(--color-primary-rgb),.1);transition:transform var(--transition),background var(--transition)}
+.owner-card:hover .owner-card__icon{transform:scale(1.06);background:rgba(var(--color-primary-rgb),.16)}
+@media (max-width:960px){.owner-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem}}
+@media (max-width:500px){.owner-grid{gap:.8rem}.owner-card{padding:1.4rem .9rem}.owner-card h3{font-size:.85rem}.owner-card>p{font-size:.8rem}.owner-card__icon{width:44px;height:44px;margin-bottom:.75rem}}
