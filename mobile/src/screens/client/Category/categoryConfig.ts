@@ -61,7 +61,7 @@ export const CATEGORY_CONFIGS: Record<CategoryKey, CategoryConfig> = {
     showDates: true, dateLabel: 'Disponibilité',
     sortOptions: [
       { key: 'rating', label: 'Pertinence' }, { key: 'price_asc', label: 'Prix ↑' },
-      { key: 'price_desc', label: 'Prix ↓' }, { key: 'newest', label: 'Popularité' }, { key: 'distance', label: 'Distance' },
+      { key: 'price_desc', label: 'Prix ↓' }, { key: 'popular', label: 'Popularité' }, { key: 'distance', label: 'Distance' },
     ],
     filters: [
       { id: 'price', label: 'Prix / nuit (FCFA)', type: 'range', icon: '💰', unit: 'F', minPlaceholder: '0', maxPlaceholder: 'Max', chipPrefix: 'Prix' },
@@ -101,7 +101,7 @@ export const CATEGORY_CONFIGS: Record<CategoryKey, CategoryConfig> = {
     showDates: true, dateLabel: 'Disponibilité',
     sortOptions: [
       { key: 'rating', label: 'Pertinence' }, { key: 'price_asc', label: 'Prix ↑' },
-      { key: 'price_desc', label: 'Prix ↓' }, { key: 'newest', label: 'Popularité' }, { key: 'distance', label: 'Distance' },
+      { key: 'price_desc', label: 'Prix ↓' }, { key: 'popular', label: 'Popularité' }, { key: 'distance', label: 'Distance' },
     ],
     filters: [
       { id: 'price', label: 'Prix / nuit (FCFA)', type: 'range', icon: '💰', unit: 'F', minPlaceholder: '0', maxPlaceholder: 'Max', chipPrefix: 'Prix' },

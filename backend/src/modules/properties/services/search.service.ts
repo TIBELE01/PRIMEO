@@ -43,6 +43,57 @@ export function isBoostActive(p: { isBoosted?: boolean | null; boostExpiresAt?: 
   return new Date(p.boostExpiresAt).getTime() > now;
 }
 
+type SortKey = NonNullable<SearchPropertiesInput['sortBy']>;
+type SortableProperty = {
+  id?: string; rating?: unknown; bookingsCount?: number | null; createdAt?: Date | string | null;
+  pricePerNight?: number | null; pricePerMonth?: number | null; priceSale?: number | null;
+};
+
+/** Prix de référence d'une annonce (nuitée, sinon loyer mensuel, sinon prix de vente). */
+function refPrice(p: SortableProperty): number | null {
+  return p.pricePerNight ?? p.pricePerMonth ?? p.priceSale ?? null;
+}
+
+/** Comparateur du tri explicite (hors boost, appliqué ensuite). null = tri par défaut. */
+function explicitComparator(sort: SortKey | undefined): ((a: SortableProperty, b: SortableProperty) => number) | null {
+  switch (sort) {
+    case 'price_asc':
+    case 'price_desc': {
+      const dir = sort === 'price_asc' ? 1 : -1;
+      return (a, b) => {
+        const pa = refPrice(a); const pb = refPrice(b);
+        if (pa === null && pb === null) return 0;
+        if (pa === null) return 1;   // sans prix : en fin de liste
+        if (pb === null) return -1;
+        return (pa - pb) * dir;
+      };
+    }
+    case 'rating':
+      return (a, b) => (Number(b.rating ?? 0) - Number(a.rating ?? 0)) || ((b.bookingsCount ?? 0) - (a.bookingsCount ?? 0));
+    case 'newest':
+      return (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+    case 'popular':
+      return (a, b) => ((b.bookingsCount ?? 0) - (a.bookingsCount ?? 0)) || (Number(b.rating ?? 0) - Number(a.rating ?? 0));
+    default:
+      return null;
+  }
+}
+
+/** Ordre Prisma correspondant (pagination cohérente avec le tri affiché). */
+function prismaOrder(sort: SortKey | undefined): Prisma.PropertyOrderByWithRelationInput[] {
+  const boost: Prisma.PropertyOrderByWithRelationInput = { isBoosted: 'desc' };
+  switch (sort) {
+    case 'price_asc':
+    case 'price_desc': {
+      const d = sort === 'price_asc' ? 'asc' : 'desc';
+      return [boost, { pricePerNight: { sort: d, nulls: 'last' } }, { pricePerMonth: { sort: d, nulls: 'last' } }, { priceSale: { sort: d, nulls: 'last' } }];
+    }
+    case 'newest':  return [boost, { createdAt: 'desc' }];
+    case 'popular': return [boost, { bookingsCount: 'desc' }, { rating: 'desc' }];
+    default:        return [boost, { rating: 'desc' }, { bookingsCount: 'desc' }];
+  }
+}
+
 export const searchService = {
   async search(params: SearchPropertiesInput): Promise<SearchResult> {
     if (params.lat !== undefined && params.lon !== undefined && params.radiusKm !== undefined) {
@@ -121,11 +172,7 @@ export const searchService = {
         where,
         skip:    (page - 1) * limit,
         take:    limit,
-        orderBy: [
-          { isBoosted:     'desc' },   // boost payant/gratuit actif en premier
-          { rating:        'desc' },
-          { bookingsCount: 'desc' },
-        ],
+        orderBy: prismaOrder(params.sortBy), // boost actif en premier, puis le tri demandé
         include: {
           media:  { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 }, // photo principale, sinon vidéo (poster)
           // Biens « visite 3D » sans photo : 1re scène servant de couverture (URL seule)
@@ -147,6 +194,8 @@ export const searchService = {
       const boostA = isBoostActive(aAny, now);
       const boostB = isBoostActive(bAny, now);
       if (boostA !== boostB) return boostA ? -1 : 1;
+      const cmp = explicitComparator(params.sortBy);
+      if (cmp) return cmp(aAny, bAny);
       const scoreA = planVisibility(aAny.owner?.subscription?.planType ?? '') + Number(aAny.rating ?? 0) * 5;
       const scoreB = planVisibility(bAny.owner?.subscription?.planType ?? '') + Number(bAny.rating ?? 0) * 5;
       if (scoreA !== scoreB) return scoreB - scoreA;
@@ -244,9 +293,15 @@ export const searchService = {
       const boostA = isBoostActive(aAny, now);
       const boostB = isBoostActive(bAny, now);
       if (boostA !== boostB) return boostA ? -1 : 1;
-      const visA = planVisibility(aAny.owner?.subscription?.planType ?? '');
-      const visB = planVisibility(bAny.owner?.subscription?.planType ?? '');
-      if (visA !== visB) return visB - visA;
+      // Recherche autour d'une position : distance par défaut, sinon le tri demandé
+      const cmp = params.sortBy && params.sortBy !== 'distance' && params.sortBy !== 'relevance' ? explicitComparator(params.sortBy) : null;
+      if (cmp) return cmp(aAny, bAny);
+      // Tri « distance » explicite : la plus proche d'abord (après les annonces boostées)
+      if (params.sortBy !== 'distance') {
+        const visA = planVisibility(aAny.owner?.subscription?.planType ?? '');
+        const visB = planVisibility(bAny.owner?.subscription?.planType ?? '');
+        if (visA !== visB) return visB - visA;
+      }
       const dA = geoDistanceMap.get(aAny.id) ?? Infinity;
       const dB = geoDistanceMap.get(bAny.id) ?? Infinity;
       if (Math.abs(dA - dB) > 0.01) return dA - dB;

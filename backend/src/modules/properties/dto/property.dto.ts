@@ -135,6 +135,8 @@ export const SearchPropertiesDto = z
     amenities: z.string().max(500).optional(), // comma-separated
     paymentOption: z.enum(PAYMENT_OPTIONS).optional(),
     minCapacity: z.coerce.number().int().positive().optional(),
+    // Tri demandé par l'app (les annonces boostées restent en tête, comme une mise en avant)
+    sortBy: z.enum(['relevance', 'rating', 'price_asc', 'price_desc', 'newest', 'popular', 'distance']).optional().catch(undefined),
     // Geo-radius search
     lat: z.coerce.number().min(-90).max(90).optional(),
     lon: z.coerce.number().min(-180).max(180).optional(),

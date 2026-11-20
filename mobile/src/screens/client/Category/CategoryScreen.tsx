@@ -185,7 +185,8 @@ function sortProps(list: Property[], sortBy: string): Property[] {
   if (sortBy === 'price_asc')  a.sort((x, y) => price(x) - price(y));
   else if (sortBy === 'price_desc') a.sort((x, y) => price(y) - price(x));
   else if (sortBy === 'rating')     a.sort((x, y) => y.rating - x.rating);
-  else if (sortBy === 'newest')     a.sort((x, y) => y.reviewCount - x.reviewCount);
+  else if (sortBy === 'popular')    a.sort((x, y) => ((y as any).bookingsCount ?? y.reviewCount) - ((x as any).bookingsCount ?? x.reviewCount));
+  else if (sortBy === 'newest')     a.sort((x, y) => new Date((y as any).createdAt ?? 0).getTime() - new Date((x as any).createdAt ?? 0).getTime());
   return a;
 }
 

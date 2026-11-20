@@ -70,3 +70,33 @@ describe('searchService.geoSearch — requête SQL', () => {
     expect(sql).not.toMatch(/\bis_boosted\b/);
   });
 });
+
+describe('searchService.filterSearch — tris demandés par l\'app', () => {
+  const list = () => [
+    prop('CHER',  { pricePerNight: 90000, rating: 3, bookingsCount: 1, createdAt: new Date('2026-01-01') }),
+    prop('PASCHER', { pricePerNight: 20000, rating: 4, bookingsCount: 9, createdAt: new Date('2026-03-01') }),
+    prop('MOYEN', { pricePerNight: 50000, rating: 5, bookingsCount: 4, createdAt: new Date('2026-11-01') }),
+    prop('VENTE', { pricePerNight: null, priceSale: 30000000, rating: 2 }),
+  ];
+  const ids = async (sortBy: string) => {
+    mockPrisma.property.findMany.mockResolvedValue(list()); mockPrisma.property.count.mockResolvedValue(4);
+    return ((await searchService.filterSearch({ page: 1, limit: 20, sortBy } as never)).data as any[]).map((p) => p.id);
+  };
+  it('prix croissant', async () => expect(await ids('price_asc')).toEqual(['PASCHER', 'MOYEN', 'CHER', 'VENTE']));
+  it('prix décroissant', async () => expect(await ids('price_desc')).toEqual(['VENTE', 'CHER', 'MOYEN', 'PASCHER']));
+  it('mieux notés', async () => expect(await ids('rating')).toEqual(['MOYEN', 'PASCHER', 'CHER', 'VENTE']));
+  it('popularité (réservations)', async () => expect((await ids('popular'))[0]).toBe('PASCHER'));
+  it('nouveautés', async () => expect((await ids('newest'))[0]).toBe('MOYEN'));
+  it('l\'ordre en base suit le tri (pagination cohérente)', async () => {
+    await ids('price_asc');
+    const ob = mockPrisma.property.findMany.mock.calls.at(-1)[0].orderBy;
+    expect(ob[0]).toEqual({ isBoosted: 'desc' });
+    expect(ob[1]).toEqual({ pricePerNight: { sort: 'asc', nulls: 'last' } });
+  });
+  it('une annonce boostée reste en tête même en tri par prix', async () => {
+    mockPrisma.property.findMany.mockResolvedValue([...list(), prop('BOOST', { pricePerNight: 99999, isBoosted: true, boostExpiresAt: new Date(Date.now() + H) })]);
+    mockPrisma.property.count.mockResolvedValue(5);
+    const r = await searchService.filterSearch({ page: 1, limit: 20, sortBy: 'price_asc' } as never);
+    expect((r.data as any[])[0].id).toBe('BOOST');
+  });
+});

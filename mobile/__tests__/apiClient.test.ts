@@ -36,3 +36,33 @@ describe('apiClient — intercepteur de requête', () => {
     expect(apiClient.defaults.timeout).toBeGreaterThan(0);
   });
 });
+
+// Intercepteur de réponse : une 401 sur une route d'authentification (identifiants erronés)
+// ne doit PAS déclencher de rafraîchissement de jeton ni masquer le message de l'API.
+const responseRejected = (apiClient.interceptors.response as unknown as {
+  handlers: Array<{ rejected: (e: any) => Promise<any> }>;
+}).handlers[0].rejected;
+
+function axios401(url: string) {
+  return {
+    isAxiosError: true,
+    config: { url, headers: {} },
+    response: { status: 401, data: { error: 'Email ou mot de passe incorrect' } },
+  };
+}
+
+describe('apiClient — intercepteur de réponse (401)', () => {
+  it('login refusé : erreur d\'origine renvoyée, aucun rafraîchissement', async () => {
+    const spy = jest.spyOn(SecureStore, 'getItemAsync');
+    const err = axios401('/auth/login');
+    await expect(responseRejected(err)).rejects.toBe(err);
+    expect(spy).not.toHaveBeenCalledWith(STORAGE_KEYS.REFRESH_TOKEN);
+    spy.mockRestore();
+  });
+
+  it('visiteur sans jeton de rafraîchissement : erreur d\'origine renvoyée', async () => {
+    (SecureStore.getItemAsync as jest.Mock | any).mockResolvedValueOnce?.(null);
+    const err = axios401('/favorites');
+    await expect(responseRejected(err)).rejects.toBe(err);
+  });
+});

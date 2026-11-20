@@ -63,6 +63,12 @@ apiClient.interceptors.response.use(
     if (!original || error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }
+    // 401 d'une route d'authentification (identifiants erronés, code expiré…) : ce n'est pas
+    // un jeton expiré. On renvoie l'erreur telle quelle (« Email ou mot de passe incorrect »)
+    // au lieu de tenter un rafraîchissement qui masquait le message et déconnectait.
+    if (/^(?:https?:\/\/[^/]+)?(?:\/api)?\/(?:auth|admin\/auth)\//.test(original.url ?? '')) {
+      return Promise.reject(error);
+    }
 
     // A refresh is already in-flight — queue this request and wait
     if (isRefreshing) {
@@ -79,6 +85,11 @@ apiClient.interceptors.response.use(
 
     try {
       const storedRefresh = await SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+      // Aucun jeton de rafraîchissement (visiteur non connecté) : rien à renouveler
+      if (!storedRefresh) {
+        processQueue(error, null);
+        return Promise.reject(error);
+      }
       const { data } = await axios.post<{ accessToken: string; refreshToken: string }>(
         `${API_URL}/api/auth/refresh`,
         { refreshToken: storedRefresh },
