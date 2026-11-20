@@ -42,6 +42,27 @@ export function handleHttpError(
     return;
   }
 
+  // Erreurs du client levées par body-parser / multer (JSON malformé, corps trop volumineux,
+  // fichier refusé) : réponse 4xx explicite plutôt qu'une 500.
+  const e = err as Error & { type?: string; status?: number; statusCode?: number; code?: string };
+  const clientStatus = e.status ?? e.statusCode;
+  if (e.type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'Corps de requête JSON invalide' });
+    return;
+  }
+  if (e.type === 'entity.too.large' || e.code === 'LIMIT_FILE_SIZE') {
+    res.status(413).json({ error: 'Contenu trop volumineux' });
+    return;
+  }
+  if (e.name === 'MulterError') {
+    res.status(400).json({ error: e.message || 'Fichier invalide' });
+    return;
+  }
+  if (typeof clientStatus === 'number' && clientStatus >= 400 && clientStatus < 500) {
+    res.status(clientStatus).json({ error: e.message || 'Requête invalide' });
+    return;
+  }
+
   logger.error('Unhandled error', { error: err.message, path: req.path, stack: err.stack });
 
   if (wantsHtml(req)) {

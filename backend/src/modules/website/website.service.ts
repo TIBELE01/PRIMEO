@@ -246,8 +246,10 @@ export const websiteService = {
         select: { city: true },
         distinct: ['city'],
       }).then(rows => rows.length),
-      prisma.booking.count({ where: { status: 'confirmed' } }),
-      prisma.user.count({ where: { accountType: 'client' } }),
+      // Réservations confirmées = confirmées + séjours terminés (une réservation terminée a été confirmée)
+      prisma.booking.count({ where: { status: { in: ['confirmed', 'completed'] } } }),
+      // Clients actifs (hors comptes supprimés/désactivés)
+      prisma.user.count({ where: { accountType: 'client', status: 'active' } }),
     ]);
 
     const stats = { properties, cities, reservations, clients };
