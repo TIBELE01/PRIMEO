@@ -1,0 +1,294 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sections hero (fond bleu foncé) — carte centrale unifiée, commune à toutes les pages.
+   Chargé APRÈS la feuille de chaque page : seules les sections hero sont concernées
+   (tous les sélecteurs sont préfixés par .hc-card).
+   Structure : .hc-card > [fil d'Ariane] > .hc-eyebrow > h1.hc-title > .hc-sub > .hc-desc
+               > .hc-actions (boutons) > .hc-tiles (statistiques / tags en petites cartes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.hc-card {
+  --hc-pad: 40px;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--hc-pad);
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.045));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(2, 8, 23, 0.45), 0 2px 0 rgba(255, 255, 255, 0.06) inset;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.hc-card--wide { max-width: 900px; }
+/* Carte dans une colonne (pages avec visuel à droite) */
+.hc-card--col { max-width: 640px; }
+
+/* ── Étiquette au-dessus du titre ─────────────────────────────────────────── */
+.hc-card .hc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 16px;
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  box-shadow: none;
+}
+.hc-card .hc-eyebrow svg { width: 14px; height: 14px; flex-shrink: 0; }
+.hc-card .hc-eyebrow .badge { all: unset; display: inline-flex; align-items: center; gap: 8px; }
+
+/* ── Titre principal ──────────────────────────────────────────────────────── */
+.hc-card .hc-title {
+  margin: 0;
+  font-size: clamp(1.7rem, 1.15rem + 2.1vw, 2.55rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-align: center;
+  text-wrap: balance;
+}
+.hc-card .hc-title em { font-style: normal; }
+/* 2e ligne du titre (<br><span>…</span>) affichée comme sous-titre atténué */
+.hc-card .hc-title:has(> br + span) > br { display: none; }
+.hc-card .hc-title > br + span {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.6em;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.74);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* ── Sous-titre ───────────────────────────────────────────────────────────── */
+.hc-card .hc-sub {
+  max-width: 600px;
+  margin: 12px auto 0;
+  font-size: 1.04rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.76);
+  text-align: center;
+}
+
+/* ── Texte descriptif : bloc distinct ─────────────────────────────────────── */
+.hc-card .hc-desc {
+  max-width: 640px;
+  margin: 22px auto 0;
+  padding: 16px 20px;
+  font-size: 0.97rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.84);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+/* ── Boutons : taille identique, côte à côte, centrés ─────────────────────── */
+.hc-card .hc-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+  margin: 26px 0 0;
+}
+.hc-card .hc-actions > a,
+.hc-card .hc-actions > button {
+  box-sizing: border-box;
+  flex: 0 0 240px;
+  width: 240px;
+  height: 52px;
+  margin: 0;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 0.97rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  transform: none;
+}
+/* Bouton secondaire (contour) lisible sur fond sombre */
+.hc-card .hc-actions > a:not(.btn-primary) {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+}
+.hc-card .hc-actions > a:not(.btn-primary):hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+/* Badges des stores : même cadre pour les deux */
+.hc-card .hc-actions--stores > a {
+  padding: 0;
+  background: transparent !important;
+  border: 0 !important;
+  overflow: hidden;
+  width: 180px;
+  flex-basis: 180px;
+  height: 56px;
+}
+.hc-card .hc-actions--stores > a img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Petites cartes d'information (statistiques, tags, ancres, méta) ──────── */
+.hc-card .hc-tiles {
+  --hc-cols: 4;
+  display: grid;
+  grid-template-columns: repeat(var(--hc-cols), minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.hc-card .hc-tiles--3 { --hc-cols: 3; }
+.hc-card .hc-tiles--5 { --hc-cols: 5; }
+.hc-card .hc-tiles--2 { --hc-cols: 2; }
+.hc-card .hc-tiles > [aria-hidden="true"] { display: none !important; }
+.hc-card .hc-tiles > *:not([aria-hidden="true"]) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 52px;
+  margin: 0;
+  padding: 14px 12px;
+  text-align: center;
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(2, 8, 23, 0.28);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.hc-card .hc-tiles > a:hover { background: rgba(255, 255, 255, 0.16); transform: translateY(-1px); }
+.hc-card .hc-tiles > * svg { width: 16px; height: 16px; }
+.hc-card .hc-tiles [class*="stat-num"],
+.hc-card .hc-tiles [class*="stat__num"] {
+  display: block;
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+.hc-card .hc-tiles [class*="stat-label"],
+.hc-card .hc-tiles [class*="stat__label"] {
+  display: block;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* Fil d'Ariane (guides) et zones de recherche dans la carte */
+.hc-card .guide-hero__breadcrumb { justify-content: center; margin-bottom: 14px; }
+.hc-card .aide-search-wrap,
+.hc-card .doc-search { margin: 24px auto 0; max-width: 560px; }
+.hc-card .dl-hero__rating { justify-content: center; margin-top: 18px; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .hc-card .hc-tiles--5 { --hc-cols: 3; }
+}
+@media (max-width: 640px) {
+  .hc-card { --hc-pad: 28px 20px; border-radius: 20px; }
+  .hc-card .hc-tiles,
+  .hc-card .hc-tiles--3,
+  .hc-card .hc-tiles--5 { --hc-cols: 2; }
+  /* Dernière petite carte seule sur sa ligne : pleine largeur */
+  .hc-card .hc-tiles > :not([aria-hidden="true"]):nth-child(odd of :not([aria-hidden="true"])):last-child { grid-column: 1 / -1; }
+  .hc-card .hc-sub { font-size: 0.98rem; }
+  .hc-card .hc-desc { padding: 14px 16px; font-size: 0.93rem; }
+  /* Boutons empilés, même taille */
+  .hc-card .hc-actions > a,
+  .hc-card .hc-actions > button { flex: 0 0 100%; width: 100%; max-width: 320px; }
+  .hc-card .hc-actions--stores > a { flex: 0 0 170px; width: 170px; height: 54px; }
+}
+@media (max-width: 380px) {
+  .hc-card .hc-actions--stores > a { flex: 0 0 100%; width: 100%; max-width: 220px; }
+}
+
+/* ── Accueil : message de chaque diapositive dans la même carte ─────────────── */
+.hero-home .hero-slide-msg { padding-left: 16px; padding-right: 16px; }
+.hero-home .hero-slide-msg p {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 34px 40px;
+  font-size: clamp(1.55rem, 1.05rem + 2.2vw, 2.55rem);
+  line-height: 1.18;
+  text-shadow: none;
+  background: linear-gradient(180deg, rgba(8, 18, 48, 0.62), rgba(8, 18, 48, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(2, 8, 23, 0.45);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.hero-home .hero-slide-msg strong { display: block; margin-top: 6px; }
+@media (max-width: 640px) {
+  .hero-home .hero-slide-msg p { padding: 24px 20px; border-radius: 20px; }
+}
+
+/* Carte en colonne (visuel à droite) : les deux boutons partagent la ligne à parts égales */
+@media (min-width: 641px) {
+  .hc-card--col .hc-actions:not(.hc-actions--stores) {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 240px);
+    justify-content: center;
+  }
+  .hc-card--col .hc-actions:not(.hc-actions--stores) > a,
+  .hc-card--col .hc-actions:not(.hc-actions--stores) > button {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+}
+/* Mobile : les deux badges des stores restent côte à côte, même taille */
+@media (max-width: 640px) {
+  .hc-card .hc-actions--stores { flex-wrap: nowrap; }
+  .hc-card .hc-actions--stores > a { flex: 1 1 0; width: auto; min-width: 0; max-width: 170px; height: 52px; }
+}

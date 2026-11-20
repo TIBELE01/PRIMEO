@@ -13,6 +13,7 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/aide.css?v=5">
+<link rel="stylesheet" href="../assets/css/hero-card.css">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -43,8 +44,9 @@
     <!-- Hero -->
     <section class="aide-hero">
       <div class="container">
-        <h1 data-cms="aide.aide-hero.h11" data-cms-type="text">Centre d'aide</h1>
-        <p data-cms="aide.aide-hero.p1" data-cms-type="text">Comment pouvons-nous vous aider ?</p>
+      <div class="hc-card">
+        <h1 class="hc-title" data-cms="aide.aide-hero.h11" data-cms-type="text">Centre d'aide</h1>
+        <p class="hc-sub" data-cms="aide.aide-hero.p1" data-cms-type="text">Comment pouvons-nous vous aider ?</p>
 
         <!-- Search -->
         <div class="aide-search-wrap" role="search">
@@ -68,7 +70,8 @@
 
         <!-- Results count -->
         <p class="aide-results-count" id="results-count" aria-live="polite" aria-atomic="true" hidden></p>
-      </div>
+            </div>
+    </div>
     </section>
 
     <!-- Category quick-nav -->

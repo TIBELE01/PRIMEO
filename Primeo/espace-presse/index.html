@@ -28,6 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/espace-presse.css">
+<link rel="stylesheet" href="../assets/css/hero-card.css">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
 </head>
 <body data-cms-page="espace-presse">
@@ -39,19 +40,20 @@
     <section class="ep-hero">
       <div class="ep-hero__bg" aria-hidden="true"></div>
       <div class="container ep-hero__inner">
+      <div class="hc-card hc-card--wide">
 
-        <p class="ep-hero__label" data-cms="espace-presse.ep-hero.p1" data-cms-type="text">
+        <p class="ep-hero__label hc-eyebrow" data-cms="espace-presse.ep-hero.p1" data-cms-type="text">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4 22V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v18l-4-2-4 2-4-2-4 2z"/></svg>
           Espace presse
         </p>
 
-        <h1 data-cms="espace-presse.ep-hero.h11" data-cms-type="html">Toute l'actualité<br>de <em>Primeo</em></h1>
+        <h1 class="hc-title" data-cms="espace-presse.ep-hero.h11" data-cms-type="html">Toute l'actualité<br>de <em>Primeo</em></h1>
 
-        <p class="ep-hero__sub" data-cms="espace-presse.ep-hero.p2" data-cms-type="text">
+        <p class="ep-hero__sub hc-desc" data-cms="espace-presse.ep-hero.p2" data-cms-type="text">
           Consultez nos communiqués et contactez notre attachée de presse. Primeo vous fournit les informations nécessaires pour couvrir notre actualité.
         </p>
 
-        <nav class="ep-hero__nav" aria-label="Navigation rapide">
+        <nav class="ep-hero__nav hc-tiles hc-tiles--2" aria-label="Navigation rapide">
           <a href="#communiques" class="ep-nav-pill" data-cms="espace-presse.ep-hero-nav.a1" data-cms-type="text">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
             Communiqués
@@ -62,7 +64,7 @@
           </a>
         </nav>
 
-        <div class="ep-hero__stats">
+        <div class="ep-hero__stats hc-tiles">
           <div class="ep-hero__stat">
             <div class="ep-hero__stat-num" data-cms="espace-presse.ep-hero.div1" data-cms-type="text">1</div>
             <div class="ep-hero__stat-label" data-cms="espace-presse.ep-hero.div2" data-cms-type="text">Communiqué publié</div>
@@ -84,7 +86,8 @@
           </div>
         </div>
 
-      </div>
+            </div>
+    </div>
     </section>
 
 

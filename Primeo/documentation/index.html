@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../assets/css/documentation.css?v=5">
+<link rel="stylesheet" href="../assets/css/hero-card.css">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
 </head>
 <body data-cms-page="documentation">
@@ -26,14 +27,16 @@
 
     <section class="doc-hero">
       <div class="container">
-        <h1 data-cms="documentation.doc-hero.h11" data-cms-type="text">Documentation — Utiliser Primeo</h1>
-        <p data-cms="documentation.doc-hero.p1" data-cms-type="text">Des guides détaillés, étape par étape, pour chaque type d’utilisateur de la plateforme.</p>
+      <div class="hc-card">
+        <h1 class="hc-title" data-cms="documentation.doc-hero.h11" data-cms-type="text">Documentation — Utiliser Primeo</h1>
+        <p class="hc-sub" data-cms="documentation.doc-hero.p1" data-cms-type="text">Des guides détaillés, étape par étape, pour chaque type d’utilisateur de la plateforme.</p>
         <form class="doc-search" role="search" onsubmit="return false">
           <label for="doc-search-input" class="sr-only">Rechercher dans la documentation</label>
           <input id="doc-search-input" type="search" placeholder="Rechercher : annulation, paiement, visite 3D, avis…" autocomplete="off">
         </form>
         <div class="doc-search-results" id="doc-results" hidden role="region" aria-live="polite"></div>
-      </div>
+            </div>
+    </div>
     </section>
 
     <section class="doc-index-section">
