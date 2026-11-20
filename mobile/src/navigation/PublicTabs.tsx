@@ -8,6 +8,7 @@ import type { AuthStackParamList } from './types';
 import { PublicHomeScreen } from '../screens/public/PublicHomeScreen';
 import { SearchScreen }     from '../screens/client/Search/SearchScreen';
 import { PropertyDetailScreen } from '../screens/client/PropertyDetail/PropertyDetailScreen';
+import { VirtualTourScreen }    from '../screens/client/VirtualTour/VirtualTourScreen';
 
 import { WelcomeScreen }         from '../screens/auth/WelcomeScreen';
 import { LoginScreen }           from '../screens/auth/LoginScreen';
@@ -27,6 +28,8 @@ function SearchStack() {
     <SearchNav.Navigator screenOptions={{ headerShown: false }}>
       <SearchNav.Screen name="Search"         component={SearchScreen} />
       <SearchNav.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+      {/* Visite 3D accessible sans compte (consultation uniquement) */}
+      <SearchNav.Screen name="VirtualTour"    component={VirtualTourScreen as React.ComponentType<any>} />
     </SearchNav.Navigator>
   );
 }
