@@ -335,6 +335,10 @@ export default function RestaurantDashboardScreen({ navigation }: any) {
                 <Ionicons name="cash-outline" size={24} color={PRIMARY} />
                 <Text style={styles.quickLabel}>Reversements</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Referral')} accessibilityRole="button" accessibilityLabel="Parrainage : mon code et mes filleuls">
+                <Ionicons name="gift-outline" size={24} color={PRIMARY} />
+                <Text style={styles.quickLabel}>Parrainage</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('ExtraSlots')}>
                 <Ionicons name="add-circle-outline" size={24} color={PRIMARY} />
                 <Text style={styles.quickLabel}>Menus +</Text>

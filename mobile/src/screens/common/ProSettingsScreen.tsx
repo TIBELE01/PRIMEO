@@ -209,6 +209,21 @@ export default function ProSettingsScreen() {
           <ProfileActionRow icon="download-outline" label="Exporter mes données" color={accent} last onPress={() => safeNavigate('DataExports', 'L\'export de données sera bientôt disponible.')} />
         </ProfileAccordion>
 
+        {/* ── 2ter. Parrainage : code personnel, partage, filleuls et récompenses ── */}
+        <ProfileAccordion
+          title="Parrainage" icon="gift-outline" color={accent}
+          open={openKey === 'parrainage'} onToggle={() => toggle('parrainage')}
+        >
+          <ProfileActionRow
+            icon="gift-outline" label="Mon code de parrainage" color={accent}
+            onPress={() => safeNavigate('Referral', 'Le parrainage sera bientôt disponible.')}
+          />
+          <ProfileActionRow
+            icon="share-social-outline" label="Inviter un professionnel ou un client" color={accent} last
+            onPress={() => safeNavigate('Referral', 'Le parrainage sera bientôt disponible.')}
+          />
+        </ProfileAccordion>
+
         {/* ── 3. Avis et évaluations ── */}
         <ProfileAccordion
           title="Avis et évaluations" icon="star-outline" color={accent}

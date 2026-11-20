@@ -88,7 +88,7 @@ export function ReferralScreen({ navigation }: Props) {
   };
 
   const shareMessage = codeData
-    ? `Rejoins PRIMEO avec mon code ${codeData.code} et bénéficie d'une réduction sur ta première réservation !\n${codeData.referralUrl}`
+    ? `Rejoins PRIMEO avec mon code de parrainage ${codeData.code} : réserve hébergements, hôtels, restaurants et biens immobiliers en Côte d'Ivoire.\nInscris-toi ici : ${codeData.referralUrl}`
     : '';
 
   const handleShareNative = async () => {

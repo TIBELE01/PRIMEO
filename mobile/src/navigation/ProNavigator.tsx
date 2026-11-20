@@ -40,6 +40,7 @@ import SupportChatbotScreen      from '../screens/common/SupportScreen';
 import SupportTicketsScreen      from '../screens/common/SupportTicketsScreen';
 import SupportTicketDetailScreen from '../screens/common/SupportTicketDetailScreen';
 import ProSettingsScreen         from '../screens/common/ProSettingsScreen';
+import { ReferralScreen }         from '../screens/client/Referral/ReferralScreen';
 
 // ─── Écrans de gestion de profil (partagés avec le client) ───────────────────
 import EditProfileScreen          from '../screens/client/Profile/EditProfileScreen';
@@ -182,6 +183,8 @@ function lodgingScreens(labels: {
     { name: 'ExtraSlots',          component: ExtraSlotsScreen,          title: 'Publications suppl.', headerShown: false },
     { name: 'Boosts',              component: BoostsScreen,              title: 'Boosts' },
     { name: 'Payouts',             component: PayoutsScreen,             title: 'Reversements',     headerShown: false },
+  { name: 'Referral',            component: sc(ReferralScreen),        title: 'Parrainage',       headerShown: false },
+    { name: 'Referral',            component: sc(ReferralScreen),        title: 'Parrainage',       headerShown: false },
     { name: 'Analytics',           component: AnalyticsScreen,           title: 'Statistiques',     headerShown: false },
     { name: 'DataExports',         component: ExportsScreen,             title: 'Exporter mes données', headerShown: false },
     { name: 'ReceivedReviews',     component: ProReceivedReviewsScreen,  title: 'Avis reçus' },
