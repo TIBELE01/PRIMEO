@@ -1263,6 +1263,7 @@ model RestaurantTable {
   name      String // ex: "Table 1", "Terrasse 3"
   seats     Int // nombre de couverts
   location  String? // ex: "Intérieur", "Terrasse", "Étage", "Privé"
+  photoUrl  String? // photo de la table / de l'emplacement (Cloudinary), affichée au client
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
 

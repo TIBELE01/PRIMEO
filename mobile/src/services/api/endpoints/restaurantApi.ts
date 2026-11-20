@@ -35,6 +35,7 @@ export const restaurantApi = {
     seats: number;
     location?: string;
     sortOrder?: number;
+    photoUrl?: string;
   }) => apiClient.post(`/properties/${propertyId}/tables`, data),
   updateTable: (propertyId: string, tableId: string, data: Partial<{
     name: string;
@@ -42,6 +43,7 @@ export const restaurantApi = {
     location: string;
     isActive: boolean;
     sortOrder: number;
+    photoUrl: string | null;
   }>) => apiClient.patch(`/properties/${propertyId}/tables/${tableId}`, data),
   deleteTable: (propertyId: string, tableId: string) =>
     apiClient.delete(`/properties/${propertyId}/tables/${tableId}`),

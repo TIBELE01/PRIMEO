@@ -4,8 +4,9 @@
 // enregistrement + notification + conversation automatique (gérés par le backend).
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
+import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ClientScreenProps } from '../../../navigation/types';
@@ -59,6 +60,17 @@ export default function TableReservationScreen({ navigation, route }: Props) {
   const [allergies, setAllergies] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  // Tables du restaurant (photos, couverts, emplacement) — présentation, sans effet sur la réservation
+  const [tables, setTables] = useState<Array<{ id: string; name: string; seats: number; location?: string | null; photoUrl?: string | null; isActive?: boolean }>>([]);
+
+  useEffect(() => {
+    let alive = true;
+    restaurantApi.getTables(propertyId).then(res => {
+      const list = res?.data?.data ?? res?.data ?? [];
+      if (alive && Array.isArray(list)) setTables(list.filter((t: { isActive?: boolean }) => t.isActive !== false));
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [propertyId]);
 
   useEffect(() => {
     usersApi.getProfile().then(res => {
@@ -169,6 +181,26 @@ export default function TableReservationScreen({ navigation, route }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* 4.1 Date & heure */}
+          {step === 0 && tables.length > 0 && (
+            <View style={[styles.block, { marginBottom: 12 }]}>
+              <Text style={styles.label}>Nos tables</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tableRow}>
+                {tables.map(t => (
+                  <View key={t.id} style={styles.tableCard}>
+                    {t.photoUrl
+                      ? <Image source={{ uri: t.photoUrl }} style={styles.tableImg} resizeMode="cover" accessibilityLabel={`Photo de ${t.name}`} />
+                      : <View style={[styles.tableImg, styles.tableImgEmpty]}><Ionicons name="restaurant-outline" size={26} color="#D1D5DB" /></View>}
+                    <View style={styles.tableInfo}>
+                      <Text style={styles.tableName} numberOfLines={1}>{t.name}</Text>
+                      <Text style={styles.tableMeta} numberOfLines={1}>
+                        {t.seats} couvert{t.seats > 1 ? 's' : ''}{t.location ? ` · ${t.location}` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
           {step === 0 && (
             <View style={styles.block}>
               <Text style={styles.label}>Date</Text>
@@ -299,6 +331,13 @@ function Recap({ k, v }: { k: string; v: string }) {
 }
 
 const styles = StyleSheet.create({
+  tableRow: { gap: 12, paddingVertical: 4, paddingRight: 4 },
+  tableCard: { width: 168, backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#F0F0F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  tableImg: { width: '100%', height: 104, backgroundColor: '#F3F4F6' },
+  tableImgEmpty: { alignItems: 'center', justifyContent: 'center' },
+  tableInfo: { paddingHorizontal: 10, paddingVertical: 8 },
+  tableName: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  tableMeta: { fontSize: 12, color: '#6B7280', marginTop: 2 },
   safe: { flex: 1, backgroundColor: '#fff' },
   header: { ...HEADER_SHAPE, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12, },
   backBtn: { width: 32, height: 32, justifyContent: 'center' },

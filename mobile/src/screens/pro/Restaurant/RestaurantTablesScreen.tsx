@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, TextInput, Switch, Modal,
+  ActivityIndicator, Alert, TextInput, Switch, Modal, Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadToCloudinary } from '../../../services/cloudinary';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
@@ -16,6 +18,7 @@ interface RestaurantTable {
   name: string;
   seats: number;
   location: string | null;
+  photoUrl?: string | null;
   isActive: boolean;
 }
 
@@ -31,6 +34,8 @@ export default function RestaurantTablesScreen() {
   const [name, setName] = useState('');
   const [seats, setSeats] = useState('');
   const [location, setLocation] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -74,10 +79,10 @@ export default function RestaurantTablesScreen() {
   useEffect(() => { load(); }, [load]);
 
   const openCreate = () => {
-    setEditing(null); setName(''); setSeats(''); setLocation(''); setModalVisible(true);
+    setEditing(null); setName(''); setSeats(''); setLocation(''); setPhotoUrl(''); setModalVisible(true);
   };
   const openEdit = (t: RestaurantTable) => {
-    setEditing(t); setName(t.name); setSeats(String(t.seats)); setLocation(t.location ?? ''); setModalVisible(true);
+    setEditing(t); setName(t.name); setSeats(String(t.seats)); setLocation(t.location ?? ''); setPhotoUrl(t.photoUrl ?? ''); setModalVisible(true);
   };
 
   const handleSave = async () => {
@@ -88,9 +93,9 @@ export default function RestaurantTablesScreen() {
     setSaving(true);
     try {
       if (editing) {
-        await restaurantApi.updateTable(propertyId, editing.id, { name: name.trim(), seats: seatsNum, location: location.trim() });
+        await restaurantApi.updateTable(propertyId, editing.id, { name: name.trim(), seats: seatsNum, location: location.trim(), photoUrl: photoUrl.trim() || null });
       } else {
-        await restaurantApi.createTable(propertyId, { name: name.trim(), seats: seatsNum, location: location.trim() || undefined });
+        await restaurantApi.createTable(propertyId, { name: name.trim(), seats: seatsNum, location: location.trim() || undefined, photoUrl: photoUrl.trim() || undefined });
       }
       setModalVisible(false);
       await load();
@@ -124,6 +129,40 @@ export default function RestaurantTablesScreen() {
           catch { Alert.alert('Erreur', 'Suppression impossible.'); }
         },
       },
+    ]);
+  };
+
+  // Photo de la table (galerie ou appareil photo) → Cloudinary ; affichée au client à la réservation
+  const pickPhoto = async (source: 'library' | 'camera') => {
+    try {
+      const perm = source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Autorisation requise', source === 'camera'
+          ? "Autorisez l'accès à l'appareil photo dans les réglages."
+          : "Autorisez l'accès à vos photos dans les réglages.");
+        return;
+      }
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+      if (result.canceled || !result.assets?.[0]) return;
+      setUploadingPhoto(true);
+      const asset = result.assets[0] as { uri: string; file?: File };
+      const { url } = await uploadToCloudinary(asset.uri, `table-${Date.now()}.jpg`, 'properties', asset.file);
+      setPhotoUrl(url);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'envoyer la photo. Réessayez.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+  const choosePhoto = () => {
+    Alert.alert('Photo de la table', 'Choisissez la source', [
+      { text: 'Galerie', onPress: () => pickPhoto('library') },
+      { text: 'Appareil photo', onPress: () => pickPhoto('camera') },
+      { text: 'Annuler', style: 'cancel' },
     ]);
   };
 
@@ -183,6 +222,9 @@ export default function RestaurantTablesScreen() {
 
         {tables.map((t) => (
           <View key={t.id} style={[styles.card, !t.isActive && styles.cardInactive]}>
+            {t.photoUrl
+              ? <Image source={{ uri: t.photoUrl }} style={styles.thumb} resizeMode="cover" />
+              : <View style={[styles.thumb, styles.thumbEmpty]}><Ionicons name="image-outline" size={20} color="#9CA3AF" /></View>}
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>{t.name}</Text>
               <Text style={styles.cardSub}>
@@ -215,11 +257,31 @@ export default function RestaurantTablesScreen() {
             <TextInput style={styles.input} value={seats} onChangeText={setSeats} keyboardType="number-pad" placeholder="Ex : 4" />
             <Text style={styles.label}>Emplacement (optionnel)</Text>
             <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="Ex : Intérieur, Terrasse, Étage" />
+            <Text style={styles.label}>Photo de la table (optionnelle)</Text>
+            {photoUrl ? (
+              <View style={styles.photoRow}>
+                <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" />
+                <View style={{ gap: 8 }}>
+                  <TouchableOpacity onPress={choosePhoto} disabled={uploadingPhoto} accessibilityRole="button" accessibilityLabel="Changer la photo">
+                    <Text style={styles.photoLink}>Changer</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setPhotoUrl('')} disabled={uploadingPhoto} accessibilityRole="button" accessibilityLabel="Retirer la photo">
+                    <Text style={[styles.photoLink, { color: '#EF4444' }]}>Retirer</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.photoBtn} onPress={choosePhoto} disabled={uploadingPhoto} accessibilityRole="button" accessibilityLabel="Ajouter une photo de la table">
+                {uploadingPhoto
+                  ? <ActivityIndicator color={PRIMARY} />
+                  : <><Ionicons name="camera-outline" size={18} color={PRIMARY} /><Text style={styles.photoBtnText}>Ajouter une photo</Text></>}
+              </TouchableOpacity>
+            )}
             <View style={styles.modalRow}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)} disabled={saving}>
                 <Text style={styles.cancelText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSave} disabled={saving}>
+              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSave} disabled={saving || uploadingPhoto}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Enregistrer</Text>}
               </TouchableOpacity>
             </View>
@@ -245,6 +307,13 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   cardSub: { fontSize: 13, color: '#6B7280', marginTop: 2 },
   iconBtn: { padding: 6 },
+  thumb: { width: 52, height: 52, borderRadius: 10, backgroundColor: '#F3F4F6' },
+  thumbEmpty: { alignItems: 'center', justifyContent: 'center' },
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6 },
+  photoPreview: { width: 120, height: 80, borderRadius: 10, backgroundColor: '#F3F4F6' },
+  photoLink: { fontSize: 14, fontWeight: '700', color: PRIMARY },
+  photoBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 6, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderStyle: 'dashed', borderColor: PRIMARY },
+  photoBtnText: { color: PRIMARY, fontWeight: '700', fontSize: 14 },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: PRIMARY, paddingVertical: 14, borderRadius: 12, marginTop: 8 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

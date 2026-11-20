@@ -51,6 +51,9 @@ export async function uploadToCloudinary(
     // Web — expo-document-picker fournit un objet File directement
     const webFile = fileObj instanceof File ? fileObj : new File([fileObj], name, { type });
     form.append('file', webFile);
+  } else if (uri.startsWith('data:')) {
+    // Web — expo-image-picker renvoie une URI data:image/…;base64 : Cloudinary l'accepte telle quelle
+    form.append('file', uri);
   } else if (typeof document !== 'undefined' && uri.startsWith('blob:')) {
     // Web — URI blob: (fallback) : récupérer le Blob via fetch navigateur
     const blob = await fetch(uri).then((r) => r.blob());

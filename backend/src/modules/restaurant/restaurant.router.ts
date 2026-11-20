@@ -123,9 +123,9 @@ restaurantRouter.get('/tables', async (req: Request, res: Response, next: NextFu
 
 restaurantRouter.post('/tables', ...ownerOnly, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, seats, location, sortOrder } = req.body;
+    const { name, seats, location, sortOrder, photoUrl } = req.body;
     if (!name || seats === undefined) throw new HttpError(400, 'name et seats sont requis');
-    const data = await restaurantService.createTable(req.params.propertyId, req.user!.sub, { name, seats, location, sortOrder });
+    const data = await restaurantService.createTable(req.params.propertyId, req.user!.sub, { name, seats, location, sortOrder, photoUrl });
     res.status(201).json({ data });
   } catch (err) { next(err); }
 });

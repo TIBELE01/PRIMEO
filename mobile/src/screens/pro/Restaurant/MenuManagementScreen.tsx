@@ -357,7 +357,9 @@ export default function MenuManagementScreen() {
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
       if (result.canceled || !result.assets?.[0]?.uri) return;
       setUploadingPhoto(true);
-      const { url } = await uploadToCloudinary(result.assets[0].uri, `plat-${Date.now()}.jpg`, 'properties');
+      // Web : l'objet File de l'asset est envoyé tel quel (sinon l'URI data:/blob: est gérée par le service)
+      const asset = result.assets[0] as { uri: string; file?: File };
+      const { url } = await uploadToCloudinary(asset.uri, `plat-${Date.now()}.jpg`, 'properties', asset.file);
       setFormPhoto(url);
     } catch {
       Alert.alert('Erreur', "Impossible d'uploader la photo. Réessayez.");

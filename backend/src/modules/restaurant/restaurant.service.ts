@@ -67,7 +67,7 @@ export const restaurantService = {
   async createTable(
     propertyId: string,
     ownerId: string,
-    data: { name: string; seats: number; location?: string; sortOrder?: number },
+    data: { name: string; seats: number; location?: string; sortOrder?: number; photoUrl?: string },
   ) {
     await requireOwnership(propertyId, ownerId);
     if (!data.name?.trim()) throw new HttpError(400, 'Le nom de la table est requis');
@@ -79,6 +79,7 @@ export const restaurantService = {
         seats: data.seats,
         location: data.location?.trim() || null,
         sortOrder: data.sortOrder ?? 0,
+        photoUrl: data.photoUrl?.trim() || null,
       },
     });
   },
@@ -87,7 +88,7 @@ export const restaurantService = {
     propertyId: string,
     tableId: string,
     ownerId: string,
-    data: Partial<{ name: string; seats: number; location: string; isActive: boolean; sortOrder: number }>,
+    data: Partial<{ name: string; seats: number; location: string; isActive: boolean; sortOrder: number; photoUrl: string | null }>,
   ) {
     await requireOwnership(propertyId, ownerId);
     const table = await prisma.restaurantTable.findUnique({ where: { id: tableId } });
@@ -103,6 +104,7 @@ export const restaurantService = {
         ...(data.location !== undefined ? { location: data.location?.trim() || null } : {}),
         ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
         ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+        ...(data.photoUrl !== undefined ? { photoUrl: data.photoUrl?.trim() || null } : {}),
       },
     });
   },
