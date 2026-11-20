@@ -10,7 +10,7 @@ type Db = PrismaClient | Prisma.TransactionClient;
 export const availabilityService = {
   async checkDatesAvailable(propertyId: string, startDate: Date, endDate: Date, db: Db = prisma): Promise<void> {
     const overlapping = await bookingRepository.findOverlapping(propertyId, startDate, endDate, undefined, db);
-    if (overlapping.length > 0) throw new HttpError(409, 'Selected dates are not available');
+    if (overlapping.length > 0) throw new HttpError(409, 'Ces dates ne sont plus disponibles');
 
     // Verify each date is marked available in the calendar
     const current = new Date(startDate);

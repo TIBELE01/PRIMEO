@@ -23,7 +23,7 @@ export function handlePrismaError(
   }
 
   if (err instanceof Prisma.PrismaClientValidationError) {
-    return next(new HttpError(400, 'Invalid data format'));
+    return next(new HttpError(400, 'Format de données invalide'));
   }
 
   next(err);

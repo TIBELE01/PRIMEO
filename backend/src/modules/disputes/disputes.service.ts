@@ -19,10 +19,10 @@ export const disputesService = {
       where: { id: input.bookingId },
       include: { property: { select: { title: true, ownerId: true } } },
     });
-    if (!booking) throw new HttpError(404, 'Booking not found');
+    if (!booking) throw new HttpError(404, 'Réservation introuvable');
     // Either party — the client or the property owner (professional) — may open a dispute
     const isParty = booking.clientId === userId || booking.property?.ownerId === userId;
-    if (!isParty) throw new HttpError(403, 'Cannot dispute this booking');
+    if (!isParty) throw new HttpError(403, 'Impossible d\'ouvrir un litige pour cette réservation');
 
     const existing = await prisma.dispute.findUnique({ where: { bookingId: input.bookingId } });
     if (existing) throw new HttpError(409, 'Dispute already exists for this booking');

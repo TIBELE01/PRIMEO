@@ -27,7 +27,7 @@ export const favoritesService = {
     try {
       return await prisma.favorite.create({ data: { userId, propertyId } });
     } catch {
-      throw new HttpError(409, 'Property already in favorites');
+      throw new HttpError(409, 'Cette annonce est déjà dans vos favoris');
     }
   },
 
