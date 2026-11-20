@@ -4,7 +4,11 @@ import { z } from 'zod';
 export const UpdateProfileDto = z.object({
   firstName:   z.string().min(2).max(50).optional(),
   lastName:    z.string().min(2).max(50).optional(),
-  phone:       z.string().optional(),
+  // Numéro au format international (espaces, points et tirets tolérés), ex. +225 07 01 02 03 04
+  phone:       z.string().trim()
+    .transform((v) => v.replace(/[\s.-]/g, ''))
+    .refine((v) => /^\+?[0-9]{8,15}$/.test(v), 'Numéro de téléphone invalide')
+    .optional(),
   birthDate:   z.string().datetime().optional().nullable(),
   gender:      z.enum(['male', 'female', 'other']).optional().nullable(),
   avatarUrl:   z.string().url().optional().nullable(),
