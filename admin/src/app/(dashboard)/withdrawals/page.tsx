@@ -291,7 +291,7 @@ export default function WithdrawalsPage() {
                   <Badge variant={STATUS[detail.status]?.tone ?? 'default'}>{STATUS[detail.status]?.label ?? detail.status}</Badge>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatAmount(detail.amount, 'FCFA')}</p>
+              <p className="whitespace-nowrap text-2xl font-bold text-gray-900 dark:text-gray-100">{formatAmount(detail.amount, 'FCFA')}</p>
             </div>
             <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
               <p className="text-xs uppercase tracking-wide text-gray-500">Déposer sur</p>
