@@ -206,6 +206,16 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: '🎉 Récompense de parrainage',
         body: `Votre filleul ${String(data['refereeName'] ?? '')} ${data['refereeType'] === 'professional' ? 'a vu son dossier validé' : 'a terminé son premier séjour'}. ${(data['rewardAmount'] as number | undefined)?.toLocaleString('fr-CI') ?? '250'} FCFA ont été ajoutés à votre portefeuille.`,
       };
+    case 'withdrawal_paid':
+      return {
+        title: '💸 Retrait versé',
+        body: `Votre retrait de ${(data['amount'] as number | undefined)?.toLocaleString('fr-CI') ?? ''} FCFA a été versé sur votre compte ${String(data['methodLabel'] ?? '')}${data['reference'] ? ` (réf. ${String(data['reference'])})` : ''}.`,
+      };
+    case 'withdrawal_rejected':
+      return {
+        title: 'Retrait refusé',
+        body: `Votre demande de retrait de ${(data['amount'] as number | undefined)?.toLocaleString('fr-CI') ?? ''} FCFA a été refusée${data['reason'] ? ` : ${String(data['reason'])}` : ''}. Le montant a été recrédité sur votre portefeuille.`,
+      };
     case 'boost_expiry_reminder':
       return {
         title: '⚡ Votre boost expire demain',

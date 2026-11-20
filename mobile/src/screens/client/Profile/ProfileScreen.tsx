@@ -277,6 +277,7 @@ export function ProfileScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('TwoFactorSetup')}
           />
           <ProfileActionRow icon="gift-outline" label="Parrainage" color={ACCENT} onPress={() => navigation.navigate('Referral')} />
+          <ProfileActionRow icon="wallet-outline" label="Mon portefeuille et retraits" color={ACCENT} onPress={() => navigation.navigate('Wallet')} />
           <ProfileActionRow icon="pause-circle-outline" label="Désactiver mon compte" color={ACCENT} last danger onPress={handleDeactivate} />
         </ProfileAccordion>
 

@@ -14,6 +14,7 @@ import { ConversationsScreen } from '../screens/client/Messaging/ConversationsSc
 import { ChatScreen } from '../screens/client/Messaging/ChatScreen';
 import { FavoritesScreen } from '../screens/client/Favorites/FavoritesScreen';
 import { ReferralScreen } from '../screens/client/Referral/ReferralScreen';
+import { ClientWalletScreen } from '../screens/client/Wallet/ClientWalletScreen';
 import { WriteReviewScreen } from '../screens/client/Reviews/WriteReviewScreen';
 import { MyReviewsScreen } from '../screens/client/Reviews/MyReviewsScreen';
 import { ReceivedRatingsScreen } from '../screens/client/Reviews/ReceivedRatingsScreen';
@@ -62,6 +63,7 @@ export function ClientStack() {
       <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Wallet" component={ClientWalletScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ title: 'Laisser un avis' }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Modifier mon profil' }} />

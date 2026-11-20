@@ -1,5 +1,5 @@
-// Wallet router — portefeuille virtuel du professionnel
-import { Router } from 'express';
+// Wallet router — portefeuille virtuel (professionnels et clients)
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { authenticate } from '../../common/middleware/jwt-auth.middleware';
 import { requireKycApproved } from '../professional/middlewares/professional.middleware';
 import { getMyWallet } from './wallets.controller';
@@ -9,8 +9,14 @@ import {
 
 export const walletsRouter = Router();
 
+// Clients : accès direct (gains de parrainage, remboursements). Professionnels : KYC validé requis.
+function requireKycForProfessionals(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role === 'client') return next();
+  void requireKycApproved(req, res, next);
+}
+
 walletsRouter.use(authenticate);
-walletsRouter.use(requireKycApproved);
+walletsRouter.use(requireKycForProfessionals);
 walletsRouter.get('/me', getMyWallet);
 
 // Coordonnées de versement et demandes de versement du solde

@@ -29,7 +29,14 @@ const fmt = (n: number) => `${(n ?? 0).toLocaleString('fr-FR')} FCFA`;
 const errMsg = (e: any, fallback: string) => e?.response?.data?.error ?? e?.response?.data?.message ?? fallback;
 const MIN = 1000;
 
-export default function PayoutSection({ balance, onChanged }: { balance: number; onChanged: () => void }) {
+// Libellés selon le profil : « versement » pour les professionnels, « retrait » pour les clients.
+const WORDING = {
+  pro: { title: 'Recevoir mon dû', request: 'Demander un versement', list: 'Mes demandes de versement', sheet: 'Demander un versement' },
+  client: { title: 'Retirer mes gains', request: 'Demander un retrait', list: 'Mes demandes de retrait', sheet: 'Demander un retrait' },
+} as const;
+
+export default function PayoutSection({ balance, onChanged, variant = 'pro' }: { balance: number; onChanged: () => void; variant?: 'pro' | 'client' }) {
+  const words = WORDING[variant];
   const [account, setAccount] = useState<Account | null>(null);
   const [requests, setRequests] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +87,9 @@ export default function PayoutSection({ balance, onChanged }: { balance: number;
     try {
       await walletApi.requestWithdrawal(value);
       setReqOpen(false); setAmount('');
-      Alert.alert('Demande envoyée', 'Votre demande de versement est enregistrée. Primeo effectue le virement sur vos coordonnées et vous serez notifié.');
+      Alert.alert('Demande envoyée', variant === 'client'
+        ? 'Votre demande de retrait est enregistrée. Le montant est réservé sur votre portefeuille ; Primeo effectue le dépôt sur vos coordonnées et vous serez notifié dès qu’il est fait.'
+        : 'Votre demande de versement est enregistrée. Primeo effectue le virement sur vos coordonnées et vous serez notifié.');
       await load(); onChanged();
     } catch (e) { Alert.alert('Erreur', errMsg(e, 'Impossible d’envoyer la demande.')); }
     finally { setBusy(false); }
@@ -102,7 +111,7 @@ export default function PayoutSection({ balance, onChanged }: { balance: number;
   return (
     <View style={s.wrap}>
       <View style={s.card}>
-        <Text style={s.title}>Recevoir mon dû</Text>
+        <Text style={s.title}>{words.title}</Text>
         <Text style={s.note}>
           Le portefeuille Primeo est <Text style={s.bold}>virtuel</Text> : il ne détient pas d’argent. Indiquez où vous
           souhaitez être payé ; Primeo vous vire le montant demandé sur ces coordonnées.
@@ -124,7 +133,7 @@ export default function PayoutSection({ balance, onChanged }: { balance: number;
             style={[s.btn, !canRequest && s.btnDisabled]} disabled={!canRequest}
             onPress={() => { setAmount(''); setReqOpen(true); }} accessibilityRole="button"
           >
-            <Text style={s.btnText}>Demander un versement</Text>
+            <Text style={s.btnText}>{words.request}</Text>
           </TouchableOpacity>
         </View>
         {account && balance < MIN && <Text style={s.hint}>Minimum de versement : {MIN.toLocaleString('fr-FR')} FCFA.</Text>}
@@ -132,7 +141,7 @@ export default function PayoutSection({ balance, onChanged }: { balance: number;
 
       {requests.length > 0 && (
         <View style={{ marginTop: 12 }}>
-          <Text style={s.listHeader}>Mes demandes de versement</Text>
+          <Text style={s.listHeader}>{words.list}</Text>
           {requests.map((r) => {
             const st = STATUS[r.status] ?? STATUS['pending']!;
             return (
@@ -194,7 +203,7 @@ export default function PayoutSection({ balance, onChanged }: { balance: number;
       <Modal visible={reqOpen} animationType="slide" transparent onRequestClose={() => setReqOpen(false)}>
         <KeyboardAvoidingView style={s.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={s.sheet}>
-            <Text style={s.sheetTitle}>Demander un versement</Text>
+            <Text style={s.sheetTitle}>{words.sheet}</Text>
             <Text style={s.note}>Solde disponible : <Text style={s.bold}>{fmt(balance)}</Text></Text>
             <Text style={s.label}>Montant (FCFA) — laissez vide pour tout verser</Text>
             <TextInput style={s.input} value={amount} onChangeText={setAmount} keyboardType="number-pad" placeholder={String(balance)} placeholderTextColor="#9CA3AF" />

@@ -48,6 +48,7 @@ export type ClientStackParamList = {
   NewDispute: { bookingId: string };
   ReceivedRatings: undefined;
   Referral: undefined;
+  Wallet: undefined;
   Profile: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;

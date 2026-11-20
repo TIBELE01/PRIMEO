@@ -1,10 +1,18 @@
-// Versements aux professionnels. Le portefeuille Primeo est VIRTUEL : il ne détient pas de fonds.
-// Le professionnel renseigne ses coordonnées (Mobile Money ou banque) puis demande le versement
-// de son solde ; un administrateur effectue le virement et marque la demande comme payée.
+// Retraits du portefeuille (professionnels ET clients). Le portefeuille Primeo est VIRTUEL :
+// il ne détient pas de fonds. L'utilisateur renseigne ses coordonnées (Mobile Money ou banque)
+// puis demande un retrait ; le montant est aussitôt réservé (déduit du solde disponible) pour
+// ne pas pouvoir être dépensé deux fois. L'administrateur effectue le dépôt manuellement puis
+// valide la demande (« versé ») ; en cas de refus ou d'annulation, le montant est recrédité.
 import { z } from 'zod';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { walletService } from './wallets.service';
+import { notificationsService } from '../notifications/notifications.service';
+import { logger } from '../../common/utils/logger';
+
+const METHOD_LABELS: Record<string, string> = {
+  orange_money: 'Orange Money', mtn_money: 'MTN Money', wave: 'Wave', moov_money: 'Moov Money', bank: 'bancaire',
+};
 
 export const PAYOUT_METHODS = ['orange_money', 'mtn_money', 'wave', 'moov_money', 'bank'] as const;
 export const MIN_WITHDRAWAL_FCFA = 1000;
@@ -87,7 +95,7 @@ export const withdrawalsService = {
       where: status ? { status } : undefined,
       orderBy: [{ createdAt: 'desc' }],
       take: 200,
-      include: { user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } } },
+      include: { user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, accountType: true } } },
     });
   },
 
@@ -97,6 +105,14 @@ export const withdrawalsService = {
       data: { status: 'paid', reference: reference?.trim() || null, processedById: adminId, processedAt: new Date() },
     });
     if (upd.count !== 1) throw new HttpError(400, 'Seule une demande en attente peut être marquée comme payée');
+    const r = await prisma.withdrawalRequest.findUnique({ where: { id } });
+    if (r) {
+      notificationsService.notify({
+        type: 'withdrawal_paid',
+        recipientId: r.userId,
+        data: { withdrawalId: id, amount: r.amount, methodLabel: METHOD_LABELS[r.method] ?? r.method, reference: r.reference ?? undefined },
+      }).catch((err) => logger.warn(`Notification de retrait versé échouée (${id})`, err));
+    }
     return { id, status: 'paid' };
   },
 
@@ -111,7 +127,14 @@ export const withdrawalsService = {
       });
       if (upd.count !== 1) throw new HttpError(400, 'Seule une demande en attente peut être refusée');
       await walletService.credit(r.userId, r.amount, tx);
-      return { id, status: 'rejected' };
+      return { id, status: 'rejected', userId: r.userId, amount: r.amount };
+    }).then((res) => {
+      notificationsService.notify({
+        type: 'withdrawal_rejected',
+        recipientId: res.userId,
+        data: { withdrawalId: id, amount: res.amount, reason: reason.trim() },
+      }).catch((err) => logger.warn(`Notification de retrait refusé échouée (${id})`, err));
+      return { id, status: 'rejected' as const };
     });
   },
 };

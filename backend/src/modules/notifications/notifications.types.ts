@@ -35,6 +35,8 @@ export type NotificationType =
   | 'referral_reward'                   // referrer earns wallet credit when referee completes first booking
   | 'boost_activated'                   // property boost (free or paid) successfully activated
   | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
+  | 'withdrawal_paid'                  // retrait du portefeuille versé par l'administration
+  | 'withdrawal_rejected'              // retrait du portefeuille refusé (montant recrédité)
   | 'stay_reminder'                    // rappel J-1 au client avant le début du séjour / de la réservation
   | 'booking_dates_updated'            // client a modifié les dates d'une réservation confirmée
   | 'menu_approved'                    // admin moderation — plat validé
@@ -97,6 +99,8 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   referral_reward:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_activated:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_expiry_reminder:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  withdrawal_paid:                    { email: false, push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
+  withdrawal_rejected:                { email: false, push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   stay_reminder:                      { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   booking_dates_updated:              { email: false, push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   menu_approved:                      { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },

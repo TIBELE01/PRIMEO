@@ -33,6 +33,7 @@ import { BookingConfirmationScreen } from '../screens/client/Booking/BookingConf
 import { ChatScreen }           from '../screens/client/Messaging/ChatScreen';
 import { FavoritesScreen }      from '../screens/client/Favorites/FavoritesScreen';
 import { ReferralScreen }       from '../screens/client/Referral/ReferralScreen';
+import { ClientWalletScreen }   from '../screens/client/Wallet/ClientWalletScreen';
 import { VirtualTourScreen }    from '../screens/client/VirtualTour/VirtualTourScreen';
 import EditProfileScreen        from '../screens/client/Profile/EditProfileScreen';
 import ChangePasswordScreen     from '../screens/client/Profile/ChangePasswordScreen';
@@ -187,6 +188,7 @@ function ProfileTabStack() {
       <ProfileStack.Screen name="TwoFactorSetup"   component={TwoFactorSetupScreen} options={{ headerShown: true, title: 'Authentification 2FA' }} />
       <ProfileStack.Screen name="LegalLinks"       component={LegalLinksScreen} options={{ headerShown: true, title: 'Informations légales' }} />
       <ProfileStack.Screen name="Referral"          component={sc(ReferralScreen)} />
+      <ProfileStack.Screen name="Wallet"            component={sc(ClientWalletScreen)} />
       <ProfileStack.Screen name="MyReviews"         component={sc(MyReviewsScreen)} options={{ headerShown: true, title: 'Mes avis' }} />
       <ProfileStack.Screen name="ReceivedRatings"   component={sc(ReceivedRatingsScreen)} options={{ headerShown: true, title: 'Évaluations reçues', ...GREY_HEADER }} />
       <ProfileStack.Screen name="DisputeList"          component={sc(DisputeListScreen)} options={{ headerShown: false }} />

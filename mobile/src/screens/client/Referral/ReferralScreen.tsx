@@ -237,6 +237,21 @@ export function ReferralScreen({ navigation }: Props) {
           </View>
         )}
 
+        {/* Retrait des gains : portefeuille client (« Wallet ») ou reversements pro (« Payouts ») */}
+        {(stats?.totalRewardsFcfa ?? 0) > 0 && (
+          <TouchableOpacity
+            style={styles.withdrawBtn}
+            onPress={() => {
+              const routes = (navigation.getState?.()?.routeNames as string[] | undefined) ?? [];
+              navigation.navigate((routes.includes('Wallet') ? 'Wallet' : 'Payouts') as never);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Retirer mes gains"
+          >
+            <Text style={styles.withdrawBtnText}>💸  Retirer mes gains</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Share buttons */}
         <Text style={styles.sectionTitle}>Partager</Text>
         <View style={styles.shareGrid}>
@@ -362,6 +377,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', minWidth: 84,
   },
   applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  withdrawBtn: { backgroundColor: '#16A34A', borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 18 },
+  withdrawBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   codeCard: {
     marginHorizontal: 16, marginBottom: 16, backgroundColor: '#fff',
     borderRadius: 14, padding: 18, elevation: 2,

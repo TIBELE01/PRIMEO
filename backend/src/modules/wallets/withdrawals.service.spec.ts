@@ -5,12 +5,15 @@ const mockTx: Record<string, any> = {
 };
 const mockPrisma: Record<string, any> = {
   payoutAccount: { findUnique: jest.fn() },
-  withdrawalRequest: { updateMany: jest.fn() },
+  withdrawalRequest: { updateMany: jest.fn(), findUnique: jest.fn() },
   $transaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn(mockTx)),
 };
 jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 const mockWallet = { getBalance: jest.fn(), debit: jest.fn(), credit: jest.fn() };
 jest.mock('./wallets.service', () => ({ walletService: mockWallet }));
+const mockNotify = jest.fn(async () => undefined);
+jest.mock('../notifications/notifications.service', () => ({ notificationsService: { notify: mockNotify } }));
+jest.mock('../../common/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
 import { withdrawalsService, PayoutAccountDto } from './withdrawals.service';
 
@@ -72,5 +75,24 @@ describe('withdrawalsService.reject / cancel', () => {
     mockPrisma.withdrawalRequest.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
     await expect(withdrawalsService.markPaid('admin', 'w1', 'WAVE-123')).resolves.toMatchObject({ status: 'paid' });
     await expect(withdrawalsService.markPaid('admin', 'w1')).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
+describe('notifications au bénéficiaire (client ou professionnel)', () => {
+  it('versement validé par l\'admin → notification « retrait versé »', async () => {
+    mockPrisma.withdrawalRequest.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.withdrawalRequest.findUnique.mockResolvedValue({ id: 'w1', userId: 'client-1', amount: 1500, method: 'wave', reference: 'TX42' });
+    await withdrawalsService.markPaid('admin-1', 'w1', 'TX42');
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'withdrawal_paid', recipientId: 'client-1', data: expect.objectContaining({ amount: 1500, methodLabel: 'Wave', reference: 'TX42' }),
+    }));
+  });
+  it('refus → montant recrédité + notification « retrait refusé »', async () => {
+    mockTx.withdrawalRequest.findUnique.mockResolvedValue({ id: 'w1', userId: 'client-1', amount: 1500 });
+    mockTx.withdrawalRequest.updateMany.mockResolvedValue({ count: 1 });
+    const res = await withdrawalsService.reject('admin-1', 'w1', 'Numéro incorrect');
+    expect(res).toEqual({ id: 'w1', status: 'rejected' });
+    expect(mockWallet.credit).toHaveBeenCalledWith('client-1', 1500, mockTx);
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ type: 'withdrawal_rejected', recipientId: 'client-1' }));
   });
 });
