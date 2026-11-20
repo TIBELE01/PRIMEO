@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
+import { supportApi } from '../../../services/api/endpoints/support';
 
 interface Review {
   id: string;
@@ -110,11 +111,31 @@ export default function ProReceivedReviewsScreen() {
     }
   };
 
+  // Signalement d'un avis abusif : crée un ticket de support traité par l'administration
+  const sendReport = async (review: Review, reason: string) => {
+    try {
+      const excerpt = String((review as any).comment ?? '').slice(0, 400);
+      await supportApi.createTicket({
+        category: 'reclamation',
+        subject: `Signalement d'un avis abusif — ${reason}`,
+        description: `Avis signalé par le professionnel.\nIdentifiant de l'avis : ${review.id}\nMotif : ${reason}\nNote : ${(review as any).rating ?? '?'} / 5\nCommentaire : « ${excerpt || 'sans commentaire'} »`,
+      });
+      Alert.alert('Signalement envoyé', 'Notre équipe de modération va examiner cet avis. Vous serez informé de la décision dans votre espace Support.');
+    } catch {
+      Alert.alert('Erreur', 'Le signalement n\'a pas pu être envoyé. Réessayez dans un instant.');
+    }
+  };
+
   const handleReport = (review: Review) => {
     Alert.alert(
       'Signaler cet avis',
-      'Pour signaler un avis abusif, veuillez contacter notre support en mentionnant l\'identifiant de l\'avis.',
-      [{ text: 'OK' }],
+      'Pour quelle raison cet avis est-il abusif ?',
+      [
+        { text: 'Propos injurieux ou discriminatoires', onPress: () => { void sendReport(review, 'Propos injurieux ou discriminatoires'); } },
+        { text: 'Faux avis / client inconnu', onPress: () => { void sendReport(review, 'Faux avis ou client inconnu'); } },
+        { text: 'Hors sujet ou informations personnelles', onPress: () => { void sendReport(review, 'Hors sujet ou informations personnelles'); } },
+        { text: 'Annuler', style: 'cancel' },
+      ],
     );
   };
 
