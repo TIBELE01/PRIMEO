@@ -17,6 +17,8 @@ interface FavoriteProperty {
     name: string;
     city: string;
     pricePerNight: number;
+    pricePerMonth?: number | null;
+    priceSale?: number | null;
     coverImage?: string;
     type?: string;
   };
@@ -29,6 +31,15 @@ interface NamedList {
 }
 
 const LISTS_KEY = '@primeo_favorite_lists';
+
+/** Prix affiché selon le type de bien : par nuit, par mois (location) ou prix de vente. */
+function favoritePriceLabel(p: { pricePerNight?: number | null; pricePerMonth?: number | null; priceSale?: number | null }): string {
+  const f = (n: number) => n.toLocaleString('fr-FR');
+  if (p.pricePerNight) return `${f(p.pricePerNight)} FCFA/nuit`;
+  if (p.pricePerMonth) return `${f(p.pricePerMonth)} FCFA/mois`;
+  if (p.priceSale) return `${f(p.priceSale)} FCFA`;
+  return 'Prix sur demande';
+}
 
 type Props = ClientScreenProps<'Favorites'>;
 
@@ -274,7 +285,7 @@ export function FavoritesScreen({ navigation }: Props) {
             <View style={styles.cardBody}>
               <Text style={styles.cardName} numberOfLines={2}>{item.property.name}</Text>
               <Text style={styles.cardCity}>{item.property.city}</Text>
-              <Text style={styles.cardPrice}>{item.property.pricePerNight?.toLocaleString()} FCFA/nuit</Text>
+              <Text style={styles.cardPrice}>{favoritePriceLabel(item.property)}</Text>
             </View>
           </TouchableOpacity>
         )}
