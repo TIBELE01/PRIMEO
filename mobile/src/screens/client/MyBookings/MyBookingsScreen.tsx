@@ -12,6 +12,7 @@ import { safeJsonParse } from '../../../utils/safeJson';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { useOffline } from '../../../hooks/useOffline';
 import { NetworkStatus } from '../../../components/common/NetworkStatus';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -95,7 +96,7 @@ function getTab(b: BookingItem): TabKey {
 
 function BookingCard({ booking, onPress }: { booking: BookingItem; onPress: () => void }) {
   const nights = countNights(booking.startDate, booking.endDate);
-  const imageUrl = booking.property?.media?.[0]?.url;
+  const imageUrl = propertyCoverUrl(booking.property as never);
   const hasCashBalance = booking.remainingCashAmount > 0 && booking.status === 'confirmed';
   const isRestaurant = booking.property?.propertyType === 'restaurant';
 

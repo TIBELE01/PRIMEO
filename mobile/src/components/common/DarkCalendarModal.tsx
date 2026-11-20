@@ -33,6 +33,13 @@ function formatFR(dateStr: string) {
 
 interface BaseProps {
   visible: boolean;
+  /**
+   * 'modal' (défaut) : fenêtre native indépendante.
+   * 'overlay' : calque affiché DANS la fenêtre parente — à utiliser quand le
+   * calendrier s'ouvre depuis une autre Modal (une Modal posée sur une Modal
+   * fait planter l'app sur iOS / nouvelle architecture).
+   */
+  presentation?: 'modal' | 'overlay';
   unavailable?: string[];
   onClose: () => void;
 }
@@ -53,7 +60,7 @@ interface RangeModeProps extends BaseProps {
 export type DarkCalendarProps = SingleModeProps | RangeModeProps;
 
 export function DarkCalendarModal(props: DarkCalendarProps) {
-  const { visible, unavailable = [], onClose } = props;
+  const { visible, unavailable = [], onClose, presentation = 'modal' } = props;
 
   const today    = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -143,8 +150,8 @@ export function DarkCalendarModal(props: DarkCalendarProps) {
     ? (rangeCI != null && rangeCO != null)
     : selected != null;
 
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={doClose}>
+  const content = (
+    <>
       <TouchableWithoutFeedback onPress={doClose}>
         <View style={s.overlay} />
       </TouchableWithoutFeedback>
@@ -259,12 +266,23 @@ export function DarkCalendarModal(props: DarkCalendarProps) {
           </TouchableOpacity>
         </View>
       </View>
+    </>
+  );
+
+  if (presentation === 'overlay') {
+    if (!visible) return null;
+    return <View style={s.overlayRoot}>{content}</View>;
+  }
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={doClose}>
+      {content}
     </Modal>
   );
 }
 
 const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' },
+  overlayRoot: { ...StyleSheet.absoluteFillObject, zIndex: 1000, elevation: 1000 },
   sheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: BG, borderTopLeftRadius: 24, borderTopRightRadius: 24,

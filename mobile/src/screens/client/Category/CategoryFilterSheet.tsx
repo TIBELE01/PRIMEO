@@ -172,24 +172,27 @@ export function CategoryFilterSheet({ visible, config, values, onClose, onApply,
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      {/* Calendriers en calque DANS la fenêtre : jamais de Modal par-dessus une Modal (crash iOS) */}
+      <DarkCalendarModal
+        presentation="overlay"
+          visible={showCheckinCal}
+          mode="checkin"
+          onClose={() => setShowCheckinCal(false)}
+          onConfirm={(d) => {
+            setDate('checkIn', d);
+            if (draft.checkOut && d >= draft.checkOut) setDate('checkOut', '');
+          }}
+        />
+      <DarkCalendarModal
+        presentation="overlay"
+          visible={showCheckoutCal}
+          mode="checkout"
+          existingCheckIn={draft.checkIn ?? null}
+          onClose={() => setShowCheckoutCal(false)}
+          onConfirm={(d) => setDate('checkOut', d)}
+        />
     </Modal>
 
-    <DarkCalendarModal
-      visible={showCheckinCal}
-      mode="checkin"
-      onClose={() => setShowCheckinCal(false)}
-      onConfirm={(d) => {
-        setDate('checkIn', d);
-        if (draft.checkOut && d >= draft.checkOut) setDate('checkOut', '');
-      }}
-    />
-    <DarkCalendarModal
-      visible={showCheckoutCal}
-      mode="checkout"
-      existingCheckIn={draft.checkIn ?? null}
-      onClose={() => setShowCheckoutCal(false)}
-      onConfirm={(d) => setDate('checkOut', d)}
-    />
     </>
   );
 }

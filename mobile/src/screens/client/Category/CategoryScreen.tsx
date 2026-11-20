@@ -22,6 +22,7 @@ import { isSectorEnabled, sectorOfPropertyType, SECTOR_UNAVAILABLE_MESSAGE } fro
 import { GeoSearchInput } from '@components/search/GeoSearchInput';
 import { GuestPicker } from '@components/search/GuestPicker';
 import { CalendarPickerModal } from '../PropertyDetail/components/CalendarPickerModal';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 // Activer les animations LayoutAnimation sur Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -42,7 +43,7 @@ function CarouselCard({ item, color, onPress }: { item: Property; color: string;
   return (
     <TouchableOpacity style={[cst.card, { width: CAROUSEL_CARD_W }]} onPress={onPress} activeOpacity={0.88}>
       <ImageBackground
-        source={{ uri: item.images?.[0]?.url }}
+        source={{ uri: propertyCoverUrl(item as never) }}
         style={cst.cardImg}
         imageStyle={{ borderRadius: 14 }}
       >

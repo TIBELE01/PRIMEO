@@ -129,24 +129,27 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      {/* Calendriers en calque DANS la fenêtre : jamais de Modal par-dessus une Modal (crash iOS) */}
+      <DarkCalendarModal
+        presentation="overlay"
+          visible={showCheckinCal}
+          mode="checkin"
+          onClose={() => setShowCheckinCal(false)}
+          onConfirm={(d) => {
+            setCheckIn(d);
+            if (d >= checkOut) setCheckOut(addDays(d, 1));
+          }}
+        />
+      <DarkCalendarModal
+        presentation="overlay"
+          visible={showCheckoutCal}
+          mode="checkout"
+          existingCheckIn={checkIn}
+          onClose={() => setShowCheckoutCal(false)}
+          onConfirm={(d) => setCheckOut(d)}
+        />
     </Modal>
 
-    <DarkCalendarModal
-      visible={showCheckinCal}
-      mode="checkin"
-      onClose={() => setShowCheckinCal(false)}
-      onConfirm={(d) => {
-        setCheckIn(d);
-        if (d >= checkOut) setCheckOut(addDays(d, 1));
-      }}
-    />
-    <DarkCalendarModal
-      visible={showCheckoutCal}
-      mode="checkout"
-      existingCheckIn={checkIn}
-      onClose={() => setShowCheckoutCal(false)}
-      onConfirm={(d) => setCheckOut(d)}
-    />
     </>
   );
 }

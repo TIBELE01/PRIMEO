@@ -9,6 +9,7 @@ import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 import { statusStyle } from './propertyStatus';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 // ── Écran principal ──────────────────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ export default function PropertyManagementScreen({ navigation, route }: any) {
   }
 
   const status = statusStyle(property.status);
-  const imageUrl = property.mainImageUrl ?? property.images?.[0]?.url ?? property.media?.[0]?.url;
+  const imageUrl = propertyCoverUrl(property as never);
   const canPublish  = ['draft', 'rejected', 'suspended'].includes(property.status);
   const canSuspend  = property.status === 'active';
   const isPending   = property.status === 'pending';

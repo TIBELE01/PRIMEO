@@ -4,6 +4,7 @@ import { AppImage } from '../../../components/ui/AppImage';
 import type { Property } from '@/types/property';
 import { num } from '@/utils/normalizeProperty';
 import { useCurrency } from '../../../hooks/useCurrency';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 const DAYS_NEW = 30;
 const isNewProp = (createdAt: string) =>
@@ -19,8 +20,8 @@ interface Props {
 }
 
 export function PropertyCard({ property, onPress, style, onFavorite, isFavorite = false, testID }: Props) {
-  const images = property.images ?? [];
-  const mainImage = images.find(i => i.isPrimary)?.url ?? images[0]?.url;
+  // Couverture : photo, sinon image extraite de la vidéo, sinon 1re pièce 360°
+  const mainImage = propertyCoverUrl(property as never);
   const showNew = isNewProp(property.createdAt);
   const { formatPrice } = useCurrency();
   const scale = useRef(new Animated.Value(1)).current;

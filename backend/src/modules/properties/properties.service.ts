@@ -453,13 +453,17 @@ export const propertiesService = {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 } },
+        include: {
+          media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 },
+          scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
+        },
       }),
       prisma.property.count({ where }),
     ]);
     const data = rows.map(p => ({
       ...p,
-      mainImageUrl: p.media?.[0]?.url ?? null,
+      // photo → image extraite de la vidéo → 1re pièce 360° (jamais une URL .mp4)
+      mainImageUrl: (serializeProperty(p as never) as { mainImageUrl?: string | null }).mainImageUrl ?? null,
     }));
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   },

@@ -284,7 +284,9 @@ export const bookingsService = {
         property: {
           include: {
             owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
-            media: { where: { isPrimary: true }, take: 1 },
+            // couverture : photo principale, sinon vidéo (image extraite côté app), sinon 1re pièce 360°
+            media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 },
+            scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
           },
         },
         transactions: { orderBy: { initiatedAt: 'desc' }, take: 5 },
@@ -448,7 +450,8 @@ export const bookingsService = {
               title: true,
               city: true,
               propertyType: true,
-              media: { where: { isPrimary: true }, take: 1 },
+              media: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }], take: 1 },
+              scenes3d: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } },
             },
           },
           client: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },

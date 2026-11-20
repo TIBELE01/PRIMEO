@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { statusStyle } from './propertyStatus';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 function BoostTimer({ expiresAt }: { expiresAt: string }) {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -22,7 +23,7 @@ function BoostTimer({ expiresAt }: { expiresAt: string }) {
 
 function PropertyRow({ property, onPress, onCalendar, onDuplicate }: { property: any; onPress: () => void; onCalendar: () => void; onDuplicate: () => void }) {
   const status = statusStyle(property.status);
-  const imageUrl = property.mainImageUrl ?? property.media?.[0]?.url ?? property.images?.[0]?.url;
+  const imageUrl = propertyCoverUrl(property as never);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Voir l'annonce ${property.name ?? property.title}`}>

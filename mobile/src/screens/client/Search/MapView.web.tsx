@@ -7,6 +7,7 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import type { Property } from '@/types/property';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 const GEOAPIFY_KEY = process.env.EXPO_PUBLIC_GEOAPIFY_KEY ?? '45a2f3027d5c444c91b3dd6c1cdd38cd';
 const DEFAULT_LAT = 5.3484;
@@ -132,8 +133,8 @@ export function SearchMapView({ properties, onMarkerPress, color = '#1056E0' }: 
                 }}
                 activeOpacity={0.85}
               >
-                {p.images?.[0]?.url ? (
-                  <Image source={{ uri: p.images[0].url }} style={st.cardImg} resizeMode="cover" />
+                {propertyCoverUrl(p as never) ? (
+                  <Image source={{ uri: propertyCoverUrl(p as never) }} style={st.cardImg} resizeMode="cover" />
                 ) : (
                   <View style={[st.cardImg, st.cardImgPlaceholder]}>
                     <Text style={st.cardImgIcon}>🏠</Text>

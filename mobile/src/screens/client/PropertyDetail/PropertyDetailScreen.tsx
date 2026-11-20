@@ -15,6 +15,7 @@ import { useCurrency } from '../../../hooks/useCurrency';
 import { useAuthStore } from '../../../store/authStore';
 import { usePropertyDetail } from './hooks/usePropertyDetail';
 import { ImageGallery } from './components/ImageGallery';
+import { PropertyVideoPlayer } from './components/PropertyVideoPlayer';
 import { Accordion } from './components/Accordion';
 import { BookingModal } from './components/BookingModal';
 import { RestaurantReservationModal } from './components/RestaurantReservationModal';
@@ -39,7 +40,6 @@ import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 import { trackEvent } from '../../../services/analytics';
 import { panoramaPreviewUrl } from '../../../utils/panorama';
-import { VideoView, useVideoPlayer } from 'expo-video';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -93,90 +93,6 @@ const isNew = (d: string) => (Date.now() - new Date(d).getTime()) / 86_400_000 <
 
 // Lecteur vidéo de la carte média : démarre automatiquement (muet) quand la carte
 // est visible à l'écran, se met en pause dès qu'elle en sort. Bouton mute/unmute.
-/**
- * Lecteur vidéo de la fiche : version allégée Cloudinary (1280 px, H.264) avec
- * repli automatique sur le fichier d'origine si elle n'est pas (encore) prête,
- * poster pendant le chargement et message en cas d'échec — jamais d'écran noir figé.
- */
-function MediaVideoPlayer({ uri, fallbackUri, posterUri, isVisible }: { uri: string; fallbackUri?: string; posterUri?: string | null; isVisible: boolean }) {
-  const player = useVideoPlayer(uri, (p: { loop: boolean; muted: boolean }) => {
-    p.loop = true;     // boucle : la vidéo tourne tant que la carte reste visible
-    p.muted = true;    // son coupé par défaut (bonne pratique autoplay)
-  });
-  const [muted, setMuted] = React.useState(true);
-  const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
-  const usedFallback = React.useRef(false);
-
-  // Suivi de l'état du lecteur : prêt → on retire le poster ; erreur → repli puis message
-  React.useEffect(() => {
-    if (!player) return;
-    const sub = player.addListener('statusChange', ({ status: st }: { status: string }) => {
-      if (st === 'readyToPlay') setStatus('ready');
-      else if (st === 'error') {
-        if (fallbackUri && fallbackUri !== uri && !usedFallback.current) {
-          usedFallback.current = true;
-          try { player.replace(fallbackUri); setStatus('loading'); return; } catch { /* message ci-dessous */ }
-        }
-        setStatus('error');
-      }
-    });
-    return () => { try { sub.remove(); } catch { /* lecteur déjà libéré */ } };
-  }, [player, uri, fallbackUri]);
-
-  // Play/pause piloté par la visibilité de la carte (économie de ressources)
-  React.useEffect(() => {
-    if (!player) return;
-    try {
-      if (isVisible) player.play();
-      else player.pause();
-    } catch {
-      // player éventuellement libéré pendant une transition de navigation
-    }
-  }, [isVisible, player]);
-
-  const toggleMute = () => {
-    setMuted((prev) => {
-      const next = !prev;
-      try { player.muted = next; } catch { /* no-op */ }
-      return next;
-    });
-  };
-
-  return (
-    <View style={styles.mediaVideoWrap}>
-      <VideoView
-        player={player}
-        style={styles.mediaVideoView}
-        nativeControls={false}
-        contentFit="cover"
-        accessibilityLabel="Vidéo de présentation du bien"
-      />
-      {status !== 'ready' && (
-        <View style={styles.mediaVideoOverlay} pointerEvents="none">
-          {posterUri ? <ImageBackground source={{ uri: posterUri }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
-          {status === 'loading'
-            ? <ActivityIndicator size="large" color="#fff" />
-            : <Text style={styles.mediaVideoError}>Vidéo momentanément indisponible</Text>}
-        </View>
-      )}
-      {/* Badge « Vidéo » discret */}
-      <View style={styles.mediaVideoBadge}>
-        <Text style={styles.mediaVideoBadgeText}>▶ Vidéo</Text>
-      </View>
-      {/* Bouton mute/unmute */}
-      <TouchableOpacity
-        style={styles.mediaMuteBtn}
-        onPress={toggleMute}
-        accessibilityRole="button"
-        accessibilityLabel={muted ? 'Activer le son' : 'Couper le son'}
-        hitSlop={8}
-      >
-        <Text style={styles.mediaMuteIcon}>{muted ? '🔇' : '🔊'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 export function PropertyDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<any>();
@@ -408,11 +324,13 @@ export function PropertyDetailScreen() {
         <View style={styles.mediaCardOuter} onLayout={onMediaLayout}>
           <View style={styles.mediaCardInner}>
             {mediaKind === 'video' && videoMedia.length > 0 ? (
-              <MediaVideoPlayer
+              <PropertyVideoPlayer
                 uri={propertyVideo?.url ?? videoMedia[0].url}
                 fallbackUri={propertyVideo?.originalUrl ?? videoMedia[0].url}
                 posterUri={propertyVideo?.posterUrl}
                 isVisible={mediaVisible}
+                width={MEDIA_WIDTH}
+                height={MEDIA_HEIGHT}
               />
             ) : mediaKind === 'threed' && tourPanoramas.length > 0 ? (
               <TouchableOpacity
@@ -779,23 +697,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B1220',
   },
   // Vidéo
-  mediaVideoWrap: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, backgroundColor: '#000' },
-  mediaVideoView: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT },
-  mediaVideoOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
-  mediaVideoError: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center', paddingHorizontal: 24, textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 },
-  mediaVideoBadge: {
-    // en bas à gauche : le haut de la carte est occupé par les boutons retour / favori / partage
-    position: 'absolute', bottom: 12, left: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8,
-    paddingHorizontal: 9, paddingVertical: 4,
-  },
-  mediaVideoBadgeText: { color: '#fff', fontSize: 11.5, fontWeight: '700' },
-  mediaMuteBtn: {
-    position: 'absolute', bottom: 10, right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 18,
-    width: 36, height: 36, alignItems: 'center', justifyContent: 'center',
-  },
-  mediaMuteIcon: { fontSize: 16 },
   // Visite 3D — aperçu statique + CTA
   mediaTour: { width: MEDIA_WIDTH, height: MEDIA_HEIGHT, justifyContent: 'center' },
   mediaTourScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(11,18,32,0.35)' },

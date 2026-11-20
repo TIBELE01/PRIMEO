@@ -10,6 +10,7 @@ import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { BookingInvoiceDownload } from '../../../components/booking/BookingInvoiceDownload';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
+import { propertyCoverUrl } from '@/utils/propertyCover';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -262,7 +263,7 @@ export function BookingDetailScreen() {
   }
 
   const nights = countNights(booking.startDate, booking.endDate);
-  const imageUrl = booking.property?.media?.find(m => m.isPrimary)?.url ?? booking.property?.media?.[0]?.url;
+  const imageUrl = propertyCoverUrl(booking.property as never);
   const isConfirmedOrDone = booking.status === 'confirmed' || booking.status === 'completed';
   const isDone = booking.status === 'completed';
   const isCancelled = booking.status === 'cancelled_by_client' || booking.status === 'cancelled_by_professional';
