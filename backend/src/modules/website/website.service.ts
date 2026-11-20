@@ -766,6 +766,9 @@ export const websiteService = {
       if (!isAllowedDocument(data.cvFilename)) {
         throw createHttpError(400, 'Format de CV non accepté. Formats autorisés : PDF, DOC, DOCX, RTF, ODT.');
       }
+      if (data.cvBuffer.length === 0) {
+        throw createHttpError(400, 'Le fichier du CV est vide. Merci de joindre un document valide.');
+      }
       // Stockage privé (Supabase) : le CV est ensuite servi par un lien signé de l'API
       // (voir /api/downloads/cv). Une panne de stockage ne doit pas perdre la candidature.
       try {

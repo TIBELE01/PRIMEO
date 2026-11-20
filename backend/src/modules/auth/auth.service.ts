@@ -602,6 +602,21 @@ export const authService = {
     });
 
     if (signInError || !signInData.session || !signInData.user) {
+      // Compte suspendu/banni par un admin : Supabase refuse la session (« user_banned »), ce
+      // qu'il ne fait qu'APRÈS avoir validé le mot de passe. On affiche alors le vrai motif
+      // (« Votre compte est suspendu. Contactez le support. ») au lieu d'« identifiants erronés ».
+      const banned = (signInError as { code?: string } | null)?.code === 'user_banned'
+        || /banned/i.test(signInError?.message ?? '');
+      if (banned) {
+        const blocked = await prisma.user.findUnique({
+          where: { email: input.email },
+          select: { status: true, suspendedByAdmin: true },
+        });
+        const reason = blocked ? getAccountBlock(blocked) : null;
+        if (reason && reason.code !== 'ACCOUNT_DEACTIVATED') {
+          throw new HttpError(403, reason.message, { code: reason.code });
+        }
+      }
       throw new HttpError(401, 'Email ou mot de passe incorrect');
     }
 

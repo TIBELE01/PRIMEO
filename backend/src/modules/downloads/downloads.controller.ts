@@ -38,7 +38,9 @@ function reviveInvoiceData(raw: unknown): InvoiceData {
   };
 }
 
-const safe = (name: string): string => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+// Nom de fichier sûr : accents translittérés (Aïcha → Aicha), autres caractères remplacés
+const safe = (name: string): string =>
+  name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
 
 export async function downloadInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
