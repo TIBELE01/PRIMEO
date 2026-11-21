@@ -40,7 +40,10 @@ export interface BrevoEvent {
  */
 export function verifyBrevoSignature(token: string | undefined): boolean {
   const secret = env.BREVO_WEBHOOK_SECRET;
-  if (!secret) return true; // si aucun secret configuré, on accepte (dev/test)
+  // Sans secret : accepté en dev/test uniquement. En production, un appel non
+  // authentifié pourrait marquer n'importe quelle adresse comme invalide (faux rebond)
+  // et couper ses emails : on refuse tant que BREVO_WEBHOOK_SECRET n'est pas défini.
+  if (!secret) return env.NODE_ENV !== 'production';
   return token === secret;
 }
 

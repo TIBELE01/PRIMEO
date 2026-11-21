@@ -82,10 +82,12 @@ export const webhooksService = {
         logger.warn(`OneSignal webhook invalid signature — ip=${ip ?? 'unknown'}`);
         throw new HttpError(401, 'Invalid OneSignal webhook signature');
       }
+    } else if (env.NODE_ENV === 'production') {
+      // Production sans secret : on refuse (appel non authentifiable).
+      logger.warn(`OneSignal webhook refusé : ONESIGNAL_WEBHOOK_SECRET non défini — ip=${ip ?? 'unknown'}`);
+      throw new HttpError(401, 'OneSignal webhook signature not configured');
     } else {
-      // Secret not configured: log warning but continue (graceful degradation until
-      // ONESIGNAL_WEBHOOK_SECRET is set in the environment).
-      logger.warn('ONESIGNAL_WEBHOOK_SECRET not set — webhook signature check skipped');
+      logger.warn('ONESIGNAL_WEBHOOK_SECRET not set — webhook signature check skipped (dev/test)');
     }
 
     const payload = body as Record<string, unknown>;
