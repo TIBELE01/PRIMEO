@@ -207,6 +207,7 @@ export default function DishDetailScreen({ navigation, route }: Props) {
         <Accordion title="Avis clients" icon="⭐" color={theme.color}>
           <TestimonialsCarousel
             reviewsSummary={property?.reviewsSummary}
+            propertyId={property?.id}
             color={theme.color}
             onAddReview={() => Alert.alert('Ajouter un avis', 'Vous pourrez laisser un avis après votre visite au restaurant.')}
           />

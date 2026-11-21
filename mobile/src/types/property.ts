@@ -28,6 +28,8 @@ export interface Review {
   id: string; authorName: string; authorAvatarUrl?: string;
   rating: number; criteria?: ReviewCriteria; comment: string; createdAt: string;
   media?: ReviewMedia[];
+  /** Réponse publique du professionnel */
+  reply?: string | null;
 }
 export interface ReviewsSummary {
   average: number; total: number; criteria?: ReviewCriteria; items: Review[];

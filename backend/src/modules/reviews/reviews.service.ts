@@ -124,13 +124,17 @@ export const reviewsService = {
     await recalculatePropertyRating(propertyId);
   },
 
-  async getForProperty(propertyId: string, query: { page?: string; limit?: string }) {
-    const page = parseInt(query.page ?? '1');
-    const limit = Math.min(parseInt(query.limit ?? '20'), 50);
+  async getForProperty(propertyId: string, query: { page?: string; limit?: string; rating?: string }) {
+    const page = Math.max(1, parseInt(query.page ?? '1') || 1);
+    const limit = Math.min(Math.max(1, parseInt(query.limit ?? '20') || 20), 50);
+    // Filtre par note (1 à 5) ; ignoré si absent ou invalide
+    const ratingFilter = Number(query.rating);
+    const rating = Number.isInteger(ratingFilter) && ratingFilter >= 1 && ratingFilter <= 5 ? ratingFilter : undefined;
+    const where = { propertyId, status: 'published' as const, ...(rating ? { rating } : {}) };
 
-    const [reviews, total] = await Promise.all([
+    const [reviews, total, byRating] = await Promise.all([
       prisma.review.findMany({
-        where: { propertyId, status: 'published' },
+        where,
         include: {
           author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
           media: true,
@@ -139,8 +143,25 @@ export const reviewsService = {
         take: limit,
         orderBy: { publishedAt: 'desc' },
       }),
-      prisma.review.count({ where: { propertyId, status: 'published' } }),
+      prisma.review.count({ where }),
+      prisma.review.groupBy({
+        by: ['rating'],
+        where: { propertyId, status: 'published' },
+        _count: { _all: true },
+      }),
     ]);
+
+    // Répartition des notes (toutes notes confondues) pour les filtres de l'app
+    const distribution: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    let sum = 0;
+    let count = 0;
+    for (const g of byRating) {
+      const n = g._count._all;
+      const k = String(Math.round(Number(g.rating)));
+      if (k in distribution) distribution[k] += n;
+      sum += Number(g.rating) * n;
+      count += n;
+    }
 
     return {
       reviews: reviews.map((r) => ({
@@ -153,6 +174,10 @@ export const reviewsService = {
       page,
       limit,
       pages: Math.ceil(total / limit),
+      rating: rating ?? null,
+      distribution,
+      average: count ? Math.round((sum / count) * 10) / 10 : 0,
+      totalAll: count,
     };
   },
 

@@ -478,6 +478,7 @@ export function PropertyDetailScreen() {
         <Accordion title="Avis clients" icon="⭐" color={theme.color}>
           <TestimonialsCarousel
             reviewsSummary={property.reviewsSummary}
+            propertyId={property.id}
             color={theme.color}
             onAddReview={handleAddReview}
           />

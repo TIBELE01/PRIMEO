@@ -40,7 +40,7 @@ function ReviewCard({ review }: { review: Review }) {
           <Text style={styles.ratingBadgeText}>★ {num(review.rating).toFixed(1)}</Text>
         </View>
       </View>
-      <Text style={styles.reviewText}>{review.comment}</Text>
+      {!!review.comment && <Text style={styles.reviewText}>{review.comment}</Text>}
       {review.media && review.media.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaRow} contentContainerStyle={{ gap: 8 }}>
           {review.media.map((m: { id: string; url: string }) => (
@@ -52,8 +52,12 @@ function ReviewCard({ review }: { review: Review }) {
   );
 }
 
+const PAGE = 5;
+
 export function ReviewsSection({ reviewsSummary }: Props) {
-  const [showAll, setShowAll] = useState(false);
+  // Filtre par note (null = toutes) et affichage progressif par lots de 5
+  const [stars, setStars] = useState<number | null>(null);
+  const [shown, setShown] = useState(3);
 
   if (!reviewsSummary || reviewsSummary.total === 0) {
     return (
@@ -65,7 +69,11 @@ export function ReviewsSection({ reviewsSummary }: Props) {
   }
 
   const { average, total, criteria, items } = reviewsSummary;
-  const visible = showAll ? items : items.slice(0, 3);
+  const countFor = (n: number) => items.filter(r => Math.round(num(r.rating)) === n).length;
+  const filtered = stars == null ? items : items.filter(r => Math.round(num(r.rating)) === stars);
+  const visible = filtered.slice(0, shown);
+  const remaining = filtered.length - visible.length;
+  const pick = (n: number | null) => { setStars(n); setShown(3); };
 
   return (
     <View style={styles.wrap}>
@@ -94,18 +102,49 @@ export function ReviewsSection({ reviewsSummary }: Props) {
         </View>
       )}
 
+      {/* Filtre par note */}
+      {items.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow} accessibilityRole="tablist">
+          {[null, 5, 4, 3, 2, 1].map(n => {
+            const active = stars === n;
+            const count = n == null ? items.length : countFor(n);
+            return (
+              <TouchableOpacity
+                key={String(n)}
+                testID={`reviews-filter-${n ?? 'all'}`}
+                style={[styles.filterChip, active && styles.filterChipActive, count === 0 && styles.filterChipEmpty]}
+                onPress={() => pick(n)}
+                disabled={count === 0 && n != null}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active, disabled: count === 0 && n != null }}
+                accessibilityLabel={n == null ? `Tous les avis (${count})` : `Avis ${n} étoile${n > 1 ? 's' : ''} (${count})`}
+              >
+                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                  {n == null ? 'Tous' : `${n} ★`} ({count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {/* Reviews list */}
       <View style={styles.reviewsList}>
         {visible.map(r => <ReviewCard key={r.id} review={r} />)}
+        {filtered.length === 0 && <Text style={styles.noReviews}>Aucun avis avec cette note</Text>}
       </View>
 
-      {items.length > 3 && (
-        <TouchableOpacity style={styles.showMore} onPress={() => setShowAll(s => !s)}>
+      {remaining > 0 ? (
+        <TouchableOpacity style={styles.showMore} onPress={() => setShown(v => v + PAGE)} testID="reviews-more">
           <Text style={styles.showMoreText}>
-            {showAll ? 'Voir moins' : `Voir les ${items.length - 3} avis restants`}
+            Voir {Math.min(PAGE, remaining)} avis de plus ({remaining} restant{remaining > 1 ? 's' : ''})
           </Text>
         </TouchableOpacity>
-      )}
+      ) : filtered.length > 3 ? (
+        <TouchableOpacity style={styles.showMore} onPress={() => setShown(3)}>
+          <Text style={styles.showMoreText}>Voir moins</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -139,5 +178,11 @@ const styles = StyleSheet.create({
   showMore: { marginTop: 12, paddingVertical: 10, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 10, alignItems: 'center' },
   showMoreText: { color: '#374151', fontSize: 13, fontWeight: '600' },
   mediaRow: { marginTop: 10 },
+  filterRow: { gap: 8, paddingBottom: 14 },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },
+  filterChipActive: { backgroundColor: '#1056E0', borderColor: '#1056E0' },
+  filterChipEmpty: { opacity: 0.45 },
+  filterChipText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  filterChipTextActive: { color: '#fff' },
   mediaThumb: { width: 80, height: 80, borderRadius: 8 },
 });
