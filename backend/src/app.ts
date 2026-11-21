@@ -1,4 +1,5 @@
 // Express application factory — registers all middleware and routes
+import { readableZodMessage } from './common/validators/zod-fr';
 import express, { Application, Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
 import { applyHelmet } from './common/middleware/helmet.middleware';
@@ -154,7 +155,7 @@ export function createApp(): Application {
   // pour ne pas remonter de fausses erreurs 500.
   app.use((err: Error, _req: express.Request, _res: express.Response, next: express.NextFunction) => {
     if (err instanceof ZodError) {
-      return next(new HttpError(400, 'Validation error', err.flatten().fieldErrors));
+      return next(new HttpError(400, readableZodMessage(err), err.flatten().fieldErrors));
     }
     next(err);
   });

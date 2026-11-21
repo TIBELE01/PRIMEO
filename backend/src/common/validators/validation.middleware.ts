@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema } from 'zod';
 import { HttpError } from '../handlers/http-error.handler';
+import { readableZodMessage } from './zod-fr';
 
 type Target = 'body' | 'query' | 'params';
 
@@ -10,7 +11,7 @@ export function validate(schema: ZodSchema, target: Target = 'body') {
     const result = schema.safeParse(req[target]);
     if (!result.success) {
       const errors = result.error.flatten().fieldErrors;
-      return next(new HttpError(400, 'Validation error', errors));
+      return next(new HttpError(400, readableZodMessage(result.error), errors));
     }
     req[target] = result.data;
     next();

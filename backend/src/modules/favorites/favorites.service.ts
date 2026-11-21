@@ -33,7 +33,7 @@ export const favoritesService = {
 
   async remove(userId: string, propertyId: string) {
     const fav = await prisma.favorite.findUnique({ where: { userId_propertyId: { userId, propertyId } } });
-    if (!fav) throw new HttpError(404, 'Favorite not found');
+    if (!fav) throw new HttpError(404, 'Ce bien n’est pas dans vos favoris');
     await prisma.favorite.delete({ where: { userId_propertyId: { userId, propertyId } } });
   },
 
