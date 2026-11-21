@@ -8,6 +8,10 @@ export interface StayCheck {
   alternatives: { checkIn: string; checkOut: string }[];
 }
 
+/** Lien public d'abonnement iCal d'un bien (flux toujours à jour). */
+export const icalFeedUrl = (propertyId: string) =>
+  `${String(apiClient.defaults.baseURL ?? '').replace(/\/$/, '')}/availabilities/property/${propertyId}/ical`;
+
 export const availabilitiesApi = {
   /** Le séjour est-il libre ? Sinon l'API propose jusqu'à 3 séjours de même durée. */
   checkStay: (propertyId: string, checkIn: string, checkOut: string) =>

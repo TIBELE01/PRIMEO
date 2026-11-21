@@ -21,6 +21,11 @@ describe('pickAlternativeStays — dates alternatives', () => {
     expect(alts[0]).toEqual({ checkIn: '2027-03-13', checkOut: '2027-03-15' });
   });
 
+  it('date demandée passée : propose à partir d’aujourd’hui', () => {
+    const alts = pickAlternativeStays(new Set(), '2020-01-01', 2, '2027-03-01', 30);
+    expect(alts[0]).toEqual({ checkIn: '2027-03-01', checkOut: '2027-03-03' });
+  });
+
   it('renvoie une liste vide si tout est complet', () => {
     const all = new Set(Array.from({ length: 40 }, (_, i) => new Date(Date.UTC(2027, 2, 1 + i)).toISOString().slice(0, 10)));
     expect(pickAlternativeStays(all, '2027-03-10', 2, '2027-03-01', 5)).toEqual([]);

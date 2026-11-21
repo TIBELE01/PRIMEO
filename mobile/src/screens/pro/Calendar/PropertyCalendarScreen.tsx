@@ -1,9 +1,10 @@
 ﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
+  Platform,
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Modal, TextInput, Share, type DimensionValue,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { availabilitiesApi } from '../../../services/api/endpoints/availabilities';
+import { availabilitiesApi, icalFeedUrl } from '../../../services/api/endpoints/availabilities';
 import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
@@ -149,12 +150,22 @@ export default function PropertyCalendarScreen({ route, navigation }: any) {
     }
   };
 
+  // Export iCal : on partage le lien d'abonnement (Google Agenda, Outlook, Airbnb…),
+  // toujours à jour, plutôt qu'un instantané du fichier. Sur le web : téléchargement du .ics.
   const handleExportIcal = async () => {
+    const url = icalFeedUrl(propertyId);
     try {
-      const res = await availabilitiesApi.exportIcal(propertyId);
-      await Share.share({ message: res.data, title: 'Calendrier iCal' });
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener');
+        return;
+      }
+      await Share.share({
+        title: 'Calendrier iCal',
+        message: `Lien iCal de mon calendrier Primeo (à ajouter dans Google Agenda, Outlook, Airbnb ou Booking) :\n${url}`,
+        url,
+      });
     } catch {
-      Alert.alert('Export iCal', 'L\'export iCal n\'est pas disponible pour le moment.');
+      Alert.alert('Export iCal', `Copiez ce lien dans votre agenda :\n${url}`);
     }
   };
 

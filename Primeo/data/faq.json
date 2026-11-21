@@ -368,7 +368,7 @@
     "category": "Problèmes techniques",
     "order": 4,
     "question": "La synchronisation de mon calendrier iCal ne fonctionne pas.",
-    "answer": "<p>Vérifiez que l’adresse du flux commence par <strong>http://</strong> ou <strong>https://</strong> et est valide, puis touchez « Synchroniser ». La synchronisation importe les dates d’un calendrier externe dans Primeo ; l’export du calendrier Primeo en iCal n’est pas disponible pour le moment.</p>"
+    "answer": "<p>Vérifiez que l’adresse du flux commence par <strong>http://</strong> ou <strong>https://</strong> et est valide, puis touchez « Synchroniser ». La synchronisation importe les dates d’un calendrier externe dans Primeo. Dans l’autre sens, touchez « Export iCal » : vous obtenez le lien du calendrier Primeo de votre bien, à ajouter dans Google Agenda, Outlook, Airbnb ou Booking.com (toujours à jour).</p>"
   },
   {
     "id": 54,

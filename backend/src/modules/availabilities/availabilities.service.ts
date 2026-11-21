@@ -115,8 +115,9 @@ export function pickAlternativeStays(
   horizonDays: number,
   count = 3,
 ): { checkIn: string; checkOut: string }[] {
-  const start = parseDay(requestedCheckIn).getTime();
   const min = parseDay(today).getTime();
+  // Date demandée déjà passée : on cherche à partir d'aujourd'hui
+  const start = Math.max(parseDay(requestedCheckIn).getTime(), min - DAY_MS);
   const free = (t: number) => {
     for (let i = 0; i < nights; i++) if (unavailable.has(isoDay(new Date(t + i * DAY_MS)))) return false;
     return true;
@@ -147,8 +148,9 @@ export const availabilitiesService = {
     }
     const HORIZON = 120;
     const today = isoDay(new Date());
-    const from = new Date(Math.min(parseDay(checkIn).getTime(), parseDay(today).getTime()) - HORIZON * DAY_MS);
-    const to = new Date(parseDay(checkIn).getTime() + (HORIZON + nights) * DAY_MS);
+    const anchor = Math.max(parseDay(checkIn).getTime(), parseDay(today).getTime());
+    const from = new Date(anchor - HORIZON * DAY_MS);
+    const to = new Date(anchor + (HORIZON + nights) * DAY_MS);
     const [rows, bookings] = await Promise.all([
       prisma.availability.findMany({
         where: { propertyId, date: { gte: from, lte: to }, status: { not: 'available' } },
