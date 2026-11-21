@@ -566,9 +566,10 @@ export async function processFailedPayment(
     // Ne pas écraser une réservation déjà confirmée/annulée
     const booking = await prisma.booking.findUnique({
       where: { id: tx.bookingId },
-      select: { status: true },
+      select: { status: true, paymentOption: true },
     });
-    if (booking && booking.status === 'pending_payment') {
+    // Une réservation « 100 % sur place » n'est jamais annulée par un échec de paiement en ligne
+    if (booking && booking.status === 'pending_payment' && booking.paymentOption !== 'zero_online') {
       const bookingId = tx.bookingId;
       // Annulation + restitution du crédit portefeuille et du code promo prélevés
       // à la création, dans la même transaction.

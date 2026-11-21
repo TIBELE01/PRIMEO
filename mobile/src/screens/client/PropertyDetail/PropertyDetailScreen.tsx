@@ -591,7 +591,7 @@ export function PropertyDetailScreen() {
         visible={showBooking}
         property={property}
         onClose={() => setShowBooking(false)}
-        onConfirm={(checkIn, checkOut, guests) => {
+        onConfirm={(checkIn, checkOut, guests, paymentOption) => {
           setShowBooking(false);
           navigation.navigate('Booking', {
             propertyId: property.id,
@@ -601,6 +601,8 @@ export function PropertyDetailScreen() {
             propertyName: property.name,
             pricePerNight: property.pricePerNight ?? undefined,
             mode: 'stay',
+            // Option choisie dans la fenêtre « Réserver » : reprise telle quelle à l'étape paiement
+            paymentOption,
           });
         }}
       />

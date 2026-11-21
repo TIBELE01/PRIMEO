@@ -91,6 +91,7 @@ export function BookingScreen({ navigation, route }: Props) {
     pricePerNight: paramPricePerNight,
     mode = 'stay',
     reservationTime,
+    paymentOption: initialPaymentOption,
   } = route.params ?? ({} as Partial<ClientStackParamList['Booking']>);
 
   const isTable = mode === 'table';
@@ -106,8 +107,6 @@ export function BookingScreen({ navigation, route }: Props) {
   const [pricePerNight, setPricePerNight] = useState<number | null>(paramPricePerNight ?? null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [maxGuests, setMaxGuests] = useState<number>(10);
-  // Options de paiement réellement acceptées par la propriété (null = inconnu → toutes proposées)
-  const [allowedPayments, setAllowedPayments] = useState<PaymentChoice[] | null>(null);
   const [resolvedPropertyName, setResolvedPropertyName] = useState<string>(propertyName ?? '');
 
   // Saisies utilisateur
@@ -115,7 +114,14 @@ export function BookingScreen({ navigation, route }: Props) {
   const [promoCodeInput, setPromoCodeInput] = useState<string>('');
   const [promoCode, setPromoCode] = useState<string>('');
   const [promoApplied, setPromoApplied] = useState<boolean>(false);
-  const [paymentOption, setPaymentOption] = useState<PaymentChoice>('ten_percent_online');
+  // Reprend l'option choisie dans la fenêtre « Réserver » (ex. 100 % sur place) ;
+  // sans elle, l'écran repartait sur « 10 % en ligne » et une réservation que le client
+  // croyait payable sur place était créée en attente de paiement en ligne, puis annulée.
+  const [paymentOption, setPaymentOption] = useState<PaymentChoice>(
+    initialPaymentOption === 'full_online' || initialPaymentOption === 'zero_online' || initialPaymentOption === 'ten_percent_online'
+      ? initialPaymentOption
+      : 'ten_percent_online',
+  );
 
   // Coordonnées du client (pré-remplies depuis le profil, confirmées avant paiement)
   const [contactFirstName, setContactFirstName] = useState<string>('');
@@ -161,12 +167,9 @@ export function BookingScreen({ navigation, route }: Props) {
   const tenPercent = Math.ceil(totalAmount * 0.1);
   const ninetyPercent = totalAmount - tenPercent;
 
-  // Le mode choisi doit toujours faire partie des modes acceptés par la propriété
-  useEffect(() => {
-    if (allowedPayments && !allowedPayments.includes(paymentOption)) {
-      setPaymentOption(allowedPayments.includes('ten_percent_online') ? 'ten_percent_online' : allowedPayments[0]);
-    }
-  }, [allowedPayments, paymentOption]);
+  // Les 3 modes sont toujours proposés et acceptés par l'API pour un séjour : on ne change
+  // JAMAIS en silence le mode choisi par le client (un « 100 % sur place » basculé en
+  // « 10 % en ligne » créait une réservation en attente de paiement, ensuite annulée).
 
   const fetchData = useCallback(async () => {
     if (!propertyId) { setIsFetching(false); return; } // params invalides — écran d'erreur affiché

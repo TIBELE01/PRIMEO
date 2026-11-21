@@ -13,7 +13,7 @@ interface Props {
   visible: boolean;
   property: Property;
   onClose: () => void;
-  onConfirm: (checkIn: string, checkOut: string, guests: number) => void;
+  onConfirm: (checkIn: string, checkOut: string, guests: number, paymentOption: PaymentChoice) => void;
 }
 
 // Dates manipulées via les utilitaires sûrs (YYYY-MM-DD) : addDaysStr/countNights
@@ -169,7 +169,7 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
           <TouchableOpacity
             style={[styles.confirmBtn, (unavailable || checking) && styles.confirmBtnDisabled]}
             disabled={unavailable || checking}
-            onPress={() => onConfirm(checkIn, checkOut, guests)}
+            onPress={() => onConfirm(checkIn, checkOut, guests, paymentOption)}
             accessibilityState={{ disabled: unavailable || checking }}
           >
             <Text style={styles.confirmBtnText}>{unavailable ? 'Dates indisponibles' : 'Confirmer la réservation'}</Text>

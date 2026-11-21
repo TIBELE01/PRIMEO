@@ -18,13 +18,15 @@ const GP_SUCCESS = new Set(['success', 'successful', 'completed', 'paid', 'accep
 // Statuts Genius Pay indiquant un paiement définitivement échoué
 const GP_FAILED  = new Set(['failed', 'failure', 'cancelled', 'canceled', 'rejected', 'declined', 'expired']);
 
-async function expireUnpaidBookings(): Promise<void> {
+export async function expireUnpaidBookings(): Promise<void> {
   const graceCutoff = new Date(Date.now() - GRACE_PERIOD_MS);
 
   // Réservations en attente de paiement créées avant la fin de la période de grâce
   const expiredBookings = await prisma.booking.findMany({
     where: {
       status: 'pending_payment',
+      // « 100 % sur place » (zero_online) : rien à payer en ligne, jamais annulée pour non-paiement
+      paymentOption: { not: 'zero_online' },
       createdAt: { lt: graceCutoff },
     },
     include: {
@@ -74,9 +76,9 @@ async function processExpiredBooking(booking: {
   // Sécurité : ne pas annuler une réservation déjà traitée (race condition possible)
   const current = await prisma.booking.findUnique({
     where: { id: booking.id },
-    select: { status: true },
+    select: { status: true, paymentOption: true },
   });
-  if (!current || current.status !== 'pending_payment') {
+  if (!current || current.status !== 'pending_payment' || current.paymentOption === 'zero_online') {
     logger.debug(`Expiration paiements : booking=${booking.id} déjà traité (status=${current?.status}), ignoré`);
     return;
   }

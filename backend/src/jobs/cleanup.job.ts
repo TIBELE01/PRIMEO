@@ -23,6 +23,7 @@ export function startCleanupJob(): void {
       const cancelled = await prisma.booking.updateMany({
         where: {
           status: 'pending_payment',
+          paymentOption: { not: 'zero_online' }, // paiement 100 % sur place : jamais annulé ici
           createdAt: { lt: oneDayAgo },
         },
         data: {

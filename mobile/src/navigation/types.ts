@@ -33,7 +33,7 @@ export type ClientStackParamList = {
   RestaurantsCategory: { category: 'restaurant' };
   PropertyDetail: { propertyId: string };
   VirtualTour: { panoramas: Panorama[]; initialPanoramaIndex?: number; propertyName: string };
-  Booking: { propertyId: string; checkIn: string; checkOut: string; guests?: number; propertyName?: string; pricePerNight?: number; mode?: 'stay' | 'table' | 'interest'; reservationTime?: string; interestMessage?: string };
+  Booking: { propertyId: string; checkIn: string; checkOut: string; guests?: number; propertyName?: string; pricePerNight?: number; mode?: 'stay' | 'table' | 'interest'; reservationTime?: string; interestMessage?: string; paymentOption?: 'full_online' | 'ten_percent_online' | 'zero_online' };
   GeniusPayWebView: { checkoutUrl: string; bookingId: string; amountOnline: number; paymentOption: 'full_online' | 'ten_percent_online' };
   BookingConfirmation: { bookingId: string; checkoutUrl?: string };
   MyBookings: undefined;
