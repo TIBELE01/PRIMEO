@@ -2253,3 +2253,27 @@ model WithdrawalRequest {
   @@index([status])
   @@map("withdrawal_requests")
 }
+
+// Envois groupés depuis l'admin (push OneSignal/Expo + email Brevo) — section « Communication »
+model AdminBroadcast {
+  id              String    @id @default(cuid())
+  title           String
+  message         String
+  channels        String[] // "push" | "email"
+  audience        String // all | clients | professionals | professional_hebergement | professional_hotel | professional_immobilier | restaurateur | selection
+  recipientIds    String[]  @default([]) // pour audience = selection
+  status          String    @default("processing") // processing | completed | partial | failed
+  totalRecipients Int       @default(0)
+  pushSent        Int       @default(0)
+  pushSkipped     Int       @default(0) // aucun appareil enregistré ou push désactivé
+  emailSent       Int       @default(0)
+  emailFailed     Int       @default(0)
+  emailSkipped    Int       @default(0) // email désactivé dans les préférences
+  error           String?
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([createdAt])
+  @@map("admin_broadcasts")
+}

@@ -32,6 +32,7 @@ export type NotificationType =
   | 'ticket_comment_added'              // agent replied to ticket
   | 'collaborator_accepted'             // guest accepted co-manager invitation
   | 'otp_code'                          // always sent via SMS — bypasses prefs
+  | 'admin_announcement'                // annonce envoyée par l'équipe Primeo (envoi groupé admin)
   | 'referral_reward'                   // parrain crédité : 1er séjour TERMINÉ du filleul client, ou KYC validé du filleul pro
   | 'boost_activated'                   // property boost (free or paid) successfully activated
   | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
@@ -96,6 +97,7 @@ export const CHANNEL_CONFIG: Record<NotificationType, ChannelConfig> = {
   ticket_comment_added:               { email: true,  push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   collaborator_accepted:              { email: false, push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   otp_code:                           { email: false, push: false, pushPriority: 'normal', sms: true,  smsCritical: true  },
+  admin_announcement:                 { email: false, push: true,  pushPriority: 'normal', sms: false, smsCritical: false },
   referral_reward:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_activated:                    { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },
   boost_expiry_reminder:              { email: true,  push: true,  pushPriority: 'high',   sms: false, smsCritical: false },

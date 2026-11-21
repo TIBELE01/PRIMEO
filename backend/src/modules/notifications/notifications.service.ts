@@ -226,6 +226,8 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
         title: 'Dates de réservation modifiées',
         body: `Les dates de la réservation pour « ${data['propertyTitle'] ?? 'votre bien'} » ont été modifiées : du ${String(data['newStartDate'] ?? data['startDate'] ?? '?')} au ${String(data['newEndDate'] ?? data['endDate'] ?? '?')}.`,
       };
+    case 'admin_announcement':
+      return { title: String(data['title'] ?? 'Primeo'), body: String(data['body'] ?? '') };
     default:
       return { title: '', body: '' };
   }

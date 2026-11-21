@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { communicationsService, MAX_RECIPIENTS_PER_CAMPAIGN } from './communications.service';
+import { broadcastsService, BROADCAST_AUDIENCES } from './broadcasts.service';
 
 export const communicationsRouter = Router();
 
@@ -108,4 +109,38 @@ communicationsRouter.post('/opt-outs', handle(async (req, res) => {
 communicationsRouter.delete('/opt-outs/:id', handle(async (req, res) => {
   await communicationsService.removeOptOut(req.params.id);
   res.status(204).send();
+}));
+
+// ── Envois groupés push / email (OneSignal / Expo + Brevo) ──────────────────────
+const BroadcastBody = z
+  .object({
+    title: z.string().trim().min(3, 'Titre : 3 caractères minimum').max(80, 'Titre : 80 caractères maximum'),
+    message: z.string().trim().min(5, 'Message : 5 caractères minimum').max(2000, 'Message : 2 000 caractères maximum'),
+    channels: z.array(z.enum(['push', 'email'])).min(1, 'Choisissez au moins un canal'),
+    audience: z.enum(BROADCAST_AUDIENCES),
+    recipientIds: z.array(z.string().min(1).max(64)).max(500).optional(),
+    confirm: z.literal(true, { errorMap: () => ({ message: 'Confirmation requise' }) }),
+  })
+  .strict();
+
+communicationsRouter.get('/broadcasts/audiences', handle(async (_req, res) => {
+  res.json(await broadcastsService.getAudiences());
+}));
+
+communicationsRouter.post('/broadcasts', handle(async (req, res) => {
+  const body = parse(BroadcastBody, req.body);
+  const b = await broadcastsService.create(body, req.user!.sub);
+  res.status(b.status === 'processing' ? 202 : 201).json(b);
+}));
+
+communicationsRouter.get('/broadcasts', handle(async (req, res) => {
+  const q = parse(
+    z.object({ page: z.coerce.number().int().min(1).optional(), limit: z.coerce.number().int().min(1).max(100).optional() }),
+    req.query,
+  );
+  res.json(await broadcastsService.list(q));
+}));
+
+communicationsRouter.get('/broadcasts/:id', handle(async (req, res) => {
+  res.json(await broadcastsService.get(req.params.id));
 }));

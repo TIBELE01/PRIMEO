@@ -1,6 +1,6 @@
 'use client';
 // Communication — envois et diffusions WhatsApp / Telegram (via Norasend).
-// Onglets : Envoyer un message · Diffusion · Historique · Désinscriptions.
+// Onglets : Push & email (envoi groupé + historique) · WhatsApp / Telegram (envoi, diffusion, historique) · Désinscriptions.
 import { Fragment, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { communicationService, type Campaign, type CampaignPayload, type MessagingChannel } from '@/services/api';
@@ -10,13 +10,15 @@ import { Button } from '@/components/ui/Button';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { formatDateTime } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
-import { Send, Megaphone, History, BanIcon, AlertTriangle, Trash2 } from 'lucide-react';
+import { Send, Megaphone, History, BanIcon, AlertTriangle, Trash2, Bell } from 'lucide-react';
+import { BroadcastPanel } from './BroadcastPanel';
 
-type Tab = 'send' | 'broadcast' | 'history' | 'optouts';
+type Tab = 'notify' | 'send' | 'broadcast' | 'history' | 'optouts';
 const TABS: Array<{ id: Tab; label: string; icon: typeof Send }> = [
-  { id: 'send', label: 'Envoyer un message', icon: Send },
-  { id: 'broadcast', label: 'Diffusion', icon: Megaphone },
-  { id: 'history', label: 'Historique', icon: History },
+  { id: 'notify', label: 'Push & email', icon: Bell },
+  { id: 'send', label: 'WhatsApp / Telegram', icon: Send },
+  { id: 'broadcast', label: 'Diffusion WhatsApp / Telegram', icon: Megaphone },
+  { id: 'history', label: 'Historique WhatsApp / Telegram', icon: History },
   { id: 'optouts', label: 'Désinscriptions', icon: BanIcon },
 ];
 
@@ -356,23 +358,23 @@ function OptOuts() {
 
 export default function CommunicationPage() {
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>('send');
+  const [tab, setTab] = useState<Tab>('notify');
   const { data: status } = useQuery({ queryKey: ['messaging-status'], queryFn: () => communicationService.status() });
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Communication</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Messages et diffusions WhatsApp Business et Telegram, via Norasend</p>
+        <p className="text-xs text-gray-400 mt-0.5">Notifications push et emails aux utilisateurs Primeo · messages WhatsApp Business et Telegram via Norasend</p>
       </div>
 
-      {status && !status.configured && (
+      {tab !== 'notify' && status && !status.configured && (
         <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800" data-testid="not-configured">
           <AlertTriangle size={16} className="mt-0.5 shrink-0" />
           <span>Norasend n&apos;est pas configuré : ajoutez <code>NORASEND_API_KEY</code> sur le serveur. Les envois sont désactivés.</span>
         </div>
       )}
-      {status?.configured && (['whatsapp', 'telegram'] as const).map((ch) => !status[ch].ready && (
+      {tab !== 'notify' && status?.configured && (['whatsapp', 'telegram'] as const).map((ch) => !status[ch].ready && (
         <div key={ch} className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800" data-testid={`channel-down-${ch}`}>
           <AlertTriangle size={16} className="mt-0.5 shrink-0" />
           <span><strong>{ch === 'whatsapp' ? 'WhatsApp' : 'Telegram'}</strong> indisponible : {status[ch].error ?? 'canal non connecté'}.
@@ -389,6 +391,7 @@ export default function CommunicationPage() {
         ))}
       </div>
 
+      {tab === 'notify' && <BroadcastPanel />}
       {tab === 'send' && <ComposeForm mode="direct" onDone={() => qc.invalidateQueries({ queryKey: ['campaigns'] })} />}
       {tab === 'broadcast' && <ComposeForm mode="broadcast" onDone={() => qc.invalidateQueries({ queryKey: ['campaigns'] })} />}
       {tab === 'history' && <History_ />}

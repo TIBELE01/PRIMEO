@@ -486,6 +486,47 @@ export interface CampaignPayload {
 }
 export interface MessagingOptOut { id: string; channel: MessagingChannel; recipient: string; reason: string | null; createdAt: string }
 
+export type BroadcastChannel = 'push' | 'email';
+export type BroadcastAudience =
+  | 'all' | 'clients' | 'professionals'
+  | 'professional_hebergement' | 'professional_hotel' | 'professional_immobilier' | 'restaurateur'
+  | 'selection';
+export interface AdminBroadcast {
+  id: string;
+  title: string;
+  message: string;
+  channels: BroadcastChannel[];
+  audience: BroadcastAudience;
+  audienceLabel: string;
+  recipientIds: string[];
+  status: 'processing' | 'completed' | 'partial' | 'failed';
+  totalRecipients: number;
+  pushSent: number;
+  pushSkipped: number;
+  emailSent: number;
+  emailFailed: number;
+  emailSkipped: number;
+  error: string | null;
+  createdByName?: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+export interface BroadcastPayload {
+  title: string;
+  message: string;
+  channels: BroadcastChannel[];
+  audience: BroadcastAudience;
+  recipientIds?: string[];
+  confirm: true;
+}
+
+export const broadcastService = {
+  audiences: () => api.get<{ audiences: Array<{ audience: BroadcastAudience; label: string; users: number; withPush: number }>; maxRecipients: number }>('/admin/communications/broadcasts/audiences'),
+  send: (payload: BroadcastPayload) => api.post<AdminBroadcast>('/admin/communications/broadcasts', payload),
+  list: (page = 1) => api.get<{ data: AdminBroadcast[]; total: number; page: number; limit: number }>('/admin/communications/broadcasts', { page, limit: 15 }),
+  get: (id: string) => api.get<AdminBroadcast>(`/admin/communications/broadcasts/${id}`),
+};
+
 export const communicationService = {
   status: () => api.get<{ configured: boolean; whatsapp: { ready: boolean; quota: Record<string, unknown> | null; error: string | null }; telegram: { ready: boolean; quota: Record<string, unknown> | null; error: string | null }; limits: { maxRecipientsPerCampaign: number; maxBroadcastBatch: number; maxTextLength: number } }>('/admin/communications/status'),
   send: (payload: CampaignPayload) => api.post<Campaign>('/admin/communications/send', payload),

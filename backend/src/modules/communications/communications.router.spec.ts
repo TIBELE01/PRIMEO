@@ -1,6 +1,8 @@
 // Routes admin « Communication » : accès réservé au Super Admin, validation des corps.
 
 jest.mock('../../common/utils/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
+jest.mock('../../common/utils/mailer', () => ({ sendEmail: jest.fn() }));
+jest.mock('../notifications/providers/push.provider', () => ({ pushProvider: { sendToUser: jest.fn() } }));
 
 let adminRole: string | null = 'super_admin';
 let accountType = 'admin';
