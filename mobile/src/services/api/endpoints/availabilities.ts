@@ -1,6 +1,17 @@
 import { apiClient } from '../client';
 
+export interface StayCheck {
+  available: boolean;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  alternatives: { checkIn: string; checkOut: string }[];
+}
+
 export const availabilitiesApi = {
+  /** Le séjour est-il libre ? Sinon l'API propose jusqu'à 3 séjours de même durée. */
+  checkStay: (propertyId: string, checkIn: string, checkOut: string) =>
+    apiClient.get<StayCheck>(`/availabilities/property/${propertyId}/check`, { params: { checkIn, checkOut } }),
   getCalendar: (propertyId: string, year: number, month: number) =>
     apiClient.get(`/availabilities/property/${propertyId}`, { params: { year, month } }),
   blockDates: (propertyId: string, startDate: string, endDate: string, reason?: string) =>

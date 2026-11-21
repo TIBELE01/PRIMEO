@@ -67,7 +67,7 @@
     "category": "Réservations et paiements",
     "order": 1,
     "question": "Comment réserver un hébergement ?",
-    "answer": "<ol><li>Trouvez un bien avec la recherche et ses filtres.</li><li>Choisissez vos dates et le nombre de personnes (dans la limite de la capacité).</li><li>Choisissez l’option de paiement proposée par l’hôte.</li><li>Appliquez un éventuel code promo, vérifiez le récapitulatif et confirmez.</li></ol><p>Guide complet : <a href=\"/documentation/guide-client.html#reserver\">réserver un hébergement</a>.</p>"
+    "answer": "<ol><li>Trouvez un bien avec la recherche et ses filtres.</li><li>Choisissez vos dates et le nombre de personnes (dans la limite de la capacité). Si ces dates ne sont plus libres, l’application vous propose automatiquement des dates alternatives de même durée.</li><li>Choisissez l’option de paiement proposée par l’hôte.</li><li>Appliquez un éventuel code promo, vérifiez le récapitulatif et confirmez.</li></ol><p>Guide complet : <a href=\"/documentation/guide-client.html#reserver\">réserver un hébergement</a>.</p>"
   },
   {
     "id": 11,

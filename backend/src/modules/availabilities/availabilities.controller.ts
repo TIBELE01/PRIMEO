@@ -72,3 +72,14 @@ export async function syncIcalFeeds(req: Request, res: Response, next: NextFunct
     res.json({ data: result });
   } catch (err) { next(err); }
 }
+
+// Public : le séjour demandé est-il libre ? Sinon, dates alternatives proposées.
+export async function checkStay(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const checkIn = String(req.query['checkIn'] ?? '');
+    const checkOut = String(req.query['checkOut'] ?? '');
+    res.json(await availabilitiesService.checkStay(req.params.propertyId, checkIn, checkOut));
+  } catch (err) {
+    next(err);
+  }
+}

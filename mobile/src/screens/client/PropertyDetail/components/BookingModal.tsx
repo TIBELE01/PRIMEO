@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
@@ -7,6 +7,7 @@ import type { Property } from '@/types/property';
 import { PaymentOptionsSelector, type PaymentChoice } from '../../Booking/PaymentOptionsSelector';
 import { todayStr, addDaysStr, countNights, formatShortDateFR } from '../../../../utils/dates';
 import { DarkCalendarModal } from '../../../../components/common/DarkCalendarModal';
+import { availabilitiesApi, type StayCheck } from '../../../../services/api/endpoints/availabilities';
 
 interface Props {
   visible: boolean;
@@ -30,6 +31,24 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
   const [paymentOption, setPaymentOption] = useState<PaymentChoice>('ten_percent_online');
   const [showCheckinCal, setShowCheckinCal] = useState(false);
   const [showCheckoutCal, setShowCheckoutCal] = useState(false);
+
+  // Disponibilité du séjour choisi + alternatives proposées automatiquement
+  const [check, setCheck] = useState<StayCheck | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    if (!visible || !property.id || nightsBetween(checkIn, checkOut) < 1) return;
+    let alive = true;
+    setChecking(true);
+    const t = setTimeout(() => {
+      availabilitiesApi.checkStay(property.id, checkIn, checkOut)
+        .then((r) => { if (alive) setCheck(r.data); })
+        .catch(() => { if (alive) setCheck(null); }) // hors ligne : la réservation revérifie côté serveur
+        .finally(() => { if (alive) setChecking(false); });
+    }, 250);
+    return () => { alive = false; clearTimeout(t); };
+  }, [visible, property.id, checkIn, checkOut]);
+  const unavailable = !!check && !check.available && check.checkIn === checkIn && check.checkOut === checkOut;
+  const applyAlternative = (a: { checkIn: string; checkOut: string }) => { setCheckIn(a.checkIn); setCheckOut(a.checkOut); };
 
   const nights = nightsBetween(checkIn, checkOut);
   const totalAmount = (property.pricePerNight ?? 0) * Math.max(1, nights);
@@ -82,6 +101,32 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
               </TouchableOpacity>
             </View>
             <Text style={styles.nightCount}>{nights} nuit{nights > 1 ? 's' : ''}</Text>
+            {unavailable && (
+              <View style={styles.altBox} testID="dates-unavailable" accessibilityLiveRegion="polite">
+                <Text style={styles.altTitle}>Les dates sélectionnées ne sont pas disponibles.</Text>
+                {check!.alternatives.length > 0 ? (
+                  <>
+                    <Text style={styles.altText}>Voici des alternatives :</Text>
+                    <View style={styles.altRow}>
+                      {check!.alternatives.map((a) => (
+                        <TouchableOpacity
+                          key={a.checkIn}
+                          style={styles.altChip}
+                          onPress={() => applyAlternative(a)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Choisir du ${fmtDate(a.checkIn)} au ${fmtDate(a.checkOut)}`}
+                        >
+                          <Text style={styles.altChipText}>{fmtDate(a.checkIn)} → {fmtDate(a.checkOut)}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <Text style={styles.altHint}>Touchez une proposition ou modifiez les dates manuellement.</Text>
+                  </>
+                ) : (
+                  <Text style={styles.altText}>Aucune autre date libre pour cette durée dans les 4 prochains mois. Modifiez la durée du séjour.</Text>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Guests */}
@@ -122,10 +167,12 @@ export function BookingModal({ visible, property, onClose, onConfirm }: Props) {
             <Text style={styles.footerNights}>pour {nights} nuit{nights > 1 ? 's' : ''}</Text>
           </View>
           <TouchableOpacity
-            style={styles.confirmBtn}
+            style={[styles.confirmBtn, (unavailable || checking) && styles.confirmBtnDisabled]}
+            disabled={unavailable || checking}
             onPress={() => onConfirm(checkIn, checkOut, guests)}
+            accessibilityState={{ disabled: unavailable || checking }}
           >
-            <Text style={styles.confirmBtnText}>Confirmer la réservation</Text>
+            <Text style={styles.confirmBtnText}>{unavailable ? 'Dates indisponibles' : 'Confirmer la réservation'}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -193,5 +240,13 @@ const styles = StyleSheet.create({
   footerTotal: { fontSize: 17, fontWeight: '800', color: '#1056E0' },
   footerNights: { fontSize: 12, color: '#9CA3AF' },
   confirmBtn: { flex: 1, backgroundColor: '#1056E0', borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  confirmBtnDisabled: { backgroundColor: '#9CA3AF' },
+  altBox: { backgroundColor: '#FEF2F2', borderColor: '#FECACA', borderWidth: 1, borderRadius: 12, padding: 12, gap: 6 },
+  altTitle: { fontSize: 14, fontWeight: '700', color: '#B91C1C' },
+  altText: { fontSize: 13, color: '#7F1D1D' },
+  altRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  altChip: { backgroundColor: '#fff', borderColor: '#1056E0', borderWidth: 1.5, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 12 },
+  altChipText: { fontSize: 13, fontWeight: '700', color: '#1056E0' },
+  altHint: { fontSize: 12, color: '#6B7280' },
   confirmBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

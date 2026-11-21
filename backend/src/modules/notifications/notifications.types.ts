@@ -32,7 +32,7 @@ export type NotificationType =
   | 'ticket_comment_added'              // agent replied to ticket
   | 'collaborator_accepted'             // guest accepted co-manager invitation
   | 'otp_code'                          // always sent via SMS — bypasses prefs
-  | 'referral_reward'                   // referrer earns wallet credit when referee completes first booking
+  | 'referral_reward'                   // parrain crédité : 1er séjour TERMINÉ du filleul client, ou KYC validé du filleul pro
   | 'boost_activated'                   // property boost (free or paid) successfully activated
   | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
   | 'withdrawal_paid'                  // retrait du portefeuille versé par l'administration

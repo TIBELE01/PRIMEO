@@ -98,7 +98,87 @@ async function assertOwner(propertyId: string, ownerId: string) {
   return property;
 }
 
+const DAY_MS = 86_400_000;
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const parseDay = (s: string) => new Date(`${s}T00:00:00.000Z`);
+
+/**
+ * Cherche les séjours de `nights` nuits sans conflit, au plus près de la date
+ * d'arrivée demandée (d'abord après, puis avant), à partir d'aujourd'hui.
+ * `unavailable` contient les nuits indisponibles (YYYY-MM-DD). Fonction pure.
+ */
+export function pickAlternativeStays(
+  unavailable: Set<string>,
+  requestedCheckIn: string,
+  nights: number,
+  today: string,
+  horizonDays: number,
+  count = 3,
+): { checkIn: string; checkOut: string }[] {
+  const start = parseDay(requestedCheckIn).getTime();
+  const min = parseDay(today).getTime();
+  const free = (t: number) => {
+    for (let i = 0; i < nights; i++) if (unavailable.has(isoDay(new Date(t + i * DAY_MS)))) return false;
+    return true;
+  };
+  const picked: number[] = [];
+  const overlaps = (t: number) => picked.some((p) => Math.abs(p - t) < nights * DAY_MS);
+  for (let k = 1; k <= horizonDays && picked.length < count; k++) {
+    for (const t of [start + k * DAY_MS, start - k * DAY_MS]) {
+      if (picked.length >= count || t < min || overlaps(t) || !free(t)) continue;
+      picked.push(t);
+    }
+  }
+  return picked
+    .sort((a, b) => a - b)
+    .map((t) => ({ checkIn: isoDay(new Date(t)), checkOut: isoDay(new Date(t + nights * DAY_MS)) }));
+}
+
 export const availabilitiesService = {
+  /**
+   * Vérifie un séjour et, s'il n'est pas libre, propose jusqu'à 3 séjours de même
+   * durée. Mêmes règles que la création de réservation : nuits couvertes par une
+   * réservation confirmée/terminée, ou marquées bloquées dans le calendrier.
+   */
+  async checkStay(propertyId: string, checkIn: string, checkOut: string) {
+    const nights = Math.round((parseDay(checkOut).getTime() - parseDay(checkIn).getTime()) / DAY_MS);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut) || !(nights > 0) || nights > 90) {
+      throw new HttpError(400, 'Dates de séjour invalides');
+    }
+    const HORIZON = 120;
+    const today = isoDay(new Date());
+    const from = new Date(Math.min(parseDay(checkIn).getTime(), parseDay(today).getTime()) - HORIZON * DAY_MS);
+    const to = new Date(parseDay(checkIn).getTime() + (HORIZON + nights) * DAY_MS);
+    const [rows, bookings] = await Promise.all([
+      prisma.availability.findMany({
+        where: { propertyId, date: { gte: from, lte: to }, status: { not: 'available' } },
+        select: { date: true },
+      }),
+      prisma.booking.findMany({
+        where: { propertyId, status: { in: ['confirmed', 'completed'] }, startDate: { lt: to }, endDate: { gt: from } },
+        select: { startDate: true, endDate: true },
+      }),
+    ]);
+    const unavailable = new Set<string>(rows.map((r) => isoDay(r.date)));
+    for (const b of bookings) {
+      // Nuits occupées : de l'arrivée (incluse) au départ (exclu) — le jour du départ reste réservable
+      for (let t = parseDay(isoDay(b.startDate)).getTime(); t < parseDay(isoDay(b.endDate)).getTime(); t += DAY_MS) {
+        unavailable.add(isoDay(new Date(t)));
+      }
+    }
+    let available = parseDay(checkIn).getTime() >= parseDay(today).getTime();
+    for (let i = 0; available && i < nights; i++) {
+      if (unavailable.has(isoDay(new Date(parseDay(checkIn).getTime() + i * DAY_MS)))) available = false;
+    }
+    return {
+      available,
+      checkIn,
+      checkOut,
+      nights,
+      alternatives: available ? [] : pickAlternativeStays(unavailable, checkIn, nights, today, HORIZON),
+    };
+  },
+
   // Calendar map for a given month — merges manual availability rows with bookings
   async getCalendar(propertyId: string, year: number, month: number) {
     const start = new Date(Date.UTC(year, month - 1, 1));

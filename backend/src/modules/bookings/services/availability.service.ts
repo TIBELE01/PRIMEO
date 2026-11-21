@@ -19,7 +19,8 @@ export const availabilityService = {
         where: { propertyId_date: { propertyId, date: new Date(current) } },
       });
       if (avail && avail.status !== 'available') {
-        throw new HttpError(409, `Date ${current.toISOString().split('T')[0]} is blocked`);
+        const [y, m, d] = current.toISOString().slice(0, 10).split('-');
+        throw new HttpError(409, `La date du ${d}/${m}/${y} n'est pas disponible. Choisissez d'autres dates.`);
       }
       current.setDate(current.getDate() + 1);
     }
