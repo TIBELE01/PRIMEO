@@ -34,3 +34,35 @@ describe('formatBookingInvoiceRef', () => {
     expect(formatBookingInvoiceRef(new Date('2026-06-01T00:00:00Z'), '')).toBe('FAC-2026-06-0000');
   });
 });
+
+import { generateBookingInvoiceBuffer, generateSubscriptionInvoiceBuffer } from './invoice';
+
+// Nombre de pages d'un PDF PDFKit (objets /Type /Page, hors /Pages)
+const pageCount = (buf: Buffer) => (buf.toString('latin1').match(/\/Type \/Page\b(?!s)/g) ?? []).length;
+
+describe('facture PDF — une seule page', () => {
+  const base = {
+    invoiceNumber: 'CMWQTX12', invoiceRef: 'FAC-2026-11-2JSA', invoiceDate: new Date('2026-11-21'),
+    customerName: 'Yao Invité', customerEmail: 'client@exemple.ci', propertyTitle: 'Studio Design Marcory Zone 4',
+    startDate: new Date('2027-03-31'), endDate: new Date('2027-04-02'), nights: 2,
+  };
+
+  it.each([
+    ['100 % sur place', { totalAmount: 70000, onlinePaidAmount: 0, remainingCashAmount: 70000 }],
+    ['acompte 10 % + portefeuille', { totalAmount: 65000, onlinePaidAmount: 6500, remainingCashAmount: 58500, walletDeduction: 5000 }],
+    ['100 % en ligne', { totalAmount: 70000, onlinePaidAmount: 70000, remainingCashAmount: 0 }],
+    ['ancien lien signé (sans champs d’affichage) + titre très long', { totalAmount: 0, onlinePaidAmount: 0, remainingCashAmount: 0, propertyTitle: 'R'.repeat(300), sectionLabel: 'Réservation' }],
+  ])('%s', async (_n, extra) => {
+    const pdf = await generateBookingInvoiceBuffer({ ...base, ...extra });
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(pageCount(pdf)).toBe(1);
+  });
+
+  it('facture d’abonnement', async () => {
+    const pdf = await generateSubscriptionInvoiceBuffer({
+      invoiceNumber: 'SUB-1', invoiceDate: new Date(), periodStart: new Date(), periodEnd: new Date(),
+      customerName: 'Koffi', customerEmail: 'pro@exemple.ci', planName: 'Entreprise', amount: 25000, isPaid: true,
+    });
+    expect(pageCount(pdf)).toBe(1);
+  });
+});

@@ -20,6 +20,8 @@ function assertUnique(html: string) {
   expect(count(html, '<!DOCTYPE html>')).toBe(1);
   expect(count(html, 'Mon espace Primeo')).toBe(0); // lien d'en-tête supprimé (design compact)
   expect(count(html, 'Paiement sécurisé')).toBe(1); // section confiance, une seule fois
+  expect(count(html, 'Annonces vérifiées') + count(html, 'Support réactif')).toBe(2);
+  expect(html).not.toMatch(/Transactions chiffrées|Professionnels contrôlés|Une équipe à votre écoute/); // titres seuls
   expect(html).toContain('width="22" height="22"'); // petit logo discret
   expect(count(html, EMAIL_LOGO_URL)).toBe(1); // logo officiel, une seule fois
   expect(count(html, 'class="hero"')).toBe(1); // bandeau-titre

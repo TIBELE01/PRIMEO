@@ -79,18 +79,18 @@ function renderTopBar(): string {
 
 function renderTrust(): string {
   const items = [
-    { icon: '🔒', title: 'Paiement sécurisé', text: 'Transactions chiffrées et protégées' },
-    { icon: '✅', title: 'Annonces vérifiées', text: 'Professionnels contrôlés par Primeo' },
-    { icon: '💬', title: 'Support réactif', text: 'Une équipe à votre écoute' },
+    { icon: '🔒', title: 'Paiement sécurisé' },
+    { icon: '✅', title: 'Annonces vérifiées' },
+    { icon: '💬', title: 'Support réactif' },
   ];
+  // Icône + titre uniquement (sans texte descriptif), alignés au centre de chaque colonne
   const cols = items.map((i) => `
-          <td class="trust-col" width="33%" valign="top" style="width:33%;padding:0 3px;text-align:center;vertical-align:top;">
-            <p class="txt trust-title" style="margin:0;font-family:${FONT};font-size:10.5px;line-height:1.3;font-weight:700;color:${C.heading};"><span class="trust-icon" style="font-size:11px;">${i.icon}</span>&nbsp;${i.title}</p>
-            <p class="muted trust-text" style="margin:1px 0 0;font-family:${FONT};font-size:9.5px;line-height:1.35;color:${C.textMuted};">${i.text}</p>
+          <td class="trust-col" width="33%" valign="middle" style="width:33%;padding:0 3px;text-align:center;vertical-align:middle;">
+            <p class="txt trust-title" style="margin:0;font-family:${FONT};font-size:10.5px;line-height:1.3;font-weight:700;color:${C.heading};white-space:nowrap;"><span class="trust-icon" style="font-size:11px;">${i.icon}</span>&nbsp;${i.title}</p>
           </td>`).join('');
   return `
   <tr>
-    <td class="px panel-row trust-row" style="background-color:${C.panelBg};padding:9px 12px;border-top:1px solid ${C.border};">
+    <td class="px panel-row trust-row" style="background-color:${C.panelBg};padding:8px 12px;border-top:1px solid ${C.border};">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cols}</tr></table>
     </td>
   </tr>`;
@@ -223,8 +223,7 @@ export function renderEmail({ title, body, accent = 'primary', preheader, showAp
       .stack-col { display: block !important; width: 100% !important; max-width: 100% !important; text-align: center !important; }
       .trust-row { padding: 8px 6px !important; }
       .trust-col { padding: 0 2px !important; }
-      .trust-title { font-size: 9.5px !important; }
-      .trust-text { font-size: 8.5px !important; }
+      .trust-title { font-size: 9.5px !important; white-space: normal !important; }
       .info-label, .info-value { display: block !important; width: 100% !important; text-align: left !important; }
       .info-label { padding: 6px 0 0 !important; border-bottom: 0 !important; font-size: 11px !important; }
       .info-value { padding: 0 0 6px !important; font-size: 12.5px !important; }

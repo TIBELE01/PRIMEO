@@ -30,8 +30,13 @@ export async function ensureBookingInvoice(bookingId: string, force = false): Pr
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      client: { select: { firstName: true, lastName: true, email: true } },
-      property: { select: { title: true, propertyType: true } },
+      client: { select: { firstName: true, lastName: true, email: true, phone: true } },
+      property: {
+        select: {
+          title: true, propertyType: true, street: true, city: true,
+          owner: { select: { firstName: true, lastName: true, professionalProfile: { select: { businessName: true } } } },
+        },
+      },
     },
   });
   if (!booking) return null;
@@ -43,7 +48,7 @@ export async function ensureBookingInvoice(bookingId: string, force = false): Pr
   // Description de la ligne sur la facture selon le secteur
   const lineDescription = isRestaurant
     ? `${booking.property.title} — Réservation de table · ${booking.guests} couvert${booking.guests > 1 ? 's' : ''}`
-    : `${booking.property.title} — ${nights} nuit${nights > 1 ? 's' : ''}`;
+    : `Nuitée — ${booking.property.title}`;
 
   // Date d'émission stable (confirmedAt sinon createdAt) → numéro de facture déterministe.
   const issueDate = booking.confirmedAt ?? booking.createdAt ?? new Date();
@@ -63,6 +68,16 @@ export async function ensureBookingInvoice(bookingId: string, force = false): Pr
       remainingCashAmount: booking.remainingCashAmount,
       lineDescription,
       sectionLabel: isRestaurant ? 'Réservation' : 'Séjour',
+      // Affichage uniquement (aucun recalcul) : portefeuille déjà déduit du total
+      walletDeduction: booking.walletDeduction ?? 0,
+      customerPhone: booking.client.phone ?? undefined,
+      professionalName:
+        booking.property.owner?.professionalProfile?.businessName
+        || `${booking.property.owner?.firstName ?? ''} ${booking.property.owner?.lastName ?? ''}`.trim()
+        || undefined,
+      professionalAddress: [booking.property.street, booking.property.city].filter(Boolean).join(', ') || undefined,
+      quantity: isRestaurant ? booking.guests : nights,
+      unitLabel: isRestaurant ? 'couvert' : 'nuit',
     });
 
     await prisma.booking.update({ where: { id: bookingId }, data: { invoiceUrl: url } });
