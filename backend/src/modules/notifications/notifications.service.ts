@@ -47,6 +47,12 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
       };
     }
     case 'stay_reminder':
+      if (String(data['daysBefore'] ?? '') === '7') {
+        return {
+          title: '📅 Votre séjour approche',
+          body: `Votre réservation à ${data['propertyTitle'] ?? 'votre hébergement'} commence dans une semaine${data['startDate'] ? ` (${data['startDate']})` : ''}.`,
+        };
+      }
       return {
         title: '📅 Rappel — c\'est demain !',
         body: `Votre réservation à ${data['propertyTitle'] ?? 'votre hébergement'} commence demain${data['startDate'] ? ` (${data['startDate']})` : ''}. Bon séjour !`,

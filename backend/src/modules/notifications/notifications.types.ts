@@ -38,7 +38,7 @@ export type NotificationType =
   | 'boost_expiry_reminder'            // rappel 24h avant expiration du boost
   | 'withdrawal_paid'                  // retrait du portefeuille versé par l'administration
   | 'withdrawal_rejected'              // retrait du portefeuille refusé (montant recrédité)
-  | 'stay_reminder'                    // rappel J-1 au client avant le début du séjour / de la réservation
+  | 'stay_reminder'                    // rappels J-7 et J-1 au client avant le début du séjour / de la réservation
   | 'booking_dates_updated'            // client a modifié les dates d'une réservation confirmée
   | 'menu_approved'                    // admin moderation — plat validé
   | 'menu_rejected';                   // admin moderation — plat rejeté
