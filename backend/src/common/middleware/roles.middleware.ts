@@ -6,7 +6,7 @@ import { HttpError } from '../handlers/http-error.handler';
 export function authorize(...roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return next(new HttpError(401, 'Authentication required'));
+      return next(new HttpError(401, 'Connexion requise'));
     }
     if (!roles.includes(req.user.role as UserRole)) {
       return next(new HttpError(403, 'Insufficient permissions'));

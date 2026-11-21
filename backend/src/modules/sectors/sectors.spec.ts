@@ -43,7 +43,7 @@ function buildApp() {
   app.use('/api/config', sectorsConfigRouter);
   const fakeAuth = (req: Request, res: Response, next: NextFunction) => {
     const role = req.headers['x-test-role'] as string | undefined;
-    if (!role) { res.status(401).json({ error: 'Authentication required' }); return; }
+    if (!role) { res.status(401).json({ error: 'Connexion requise' }); return; }
     req.user = { sub: 'user-1', email: 'u@test.ci', role: role as never };
     next();
   };

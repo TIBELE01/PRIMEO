@@ -8,7 +8,7 @@ const VALID_ID = /^[a-z0-9][a-z0-9_-]{1,49}$/;
 export function parseId(req: Request, _res: Response, next: NextFunction): void {
   const { id } = req.params;
   if (!id || !VALID_ID.test(id)) {
-    return next(new HttpError(400, `Invalid ID: ${id}`));
+    return next(new HttpError(400, `Identifiant invalide : ${id}`));
   }
   next();
 }

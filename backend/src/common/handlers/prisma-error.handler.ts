@@ -12,9 +12,9 @@ export function handlePrismaError(
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2002':
-        return next(new HttpError(409, 'Resource already exists (unique constraint violation)'));
+        return next(new HttpError(409, 'Cet élément existe déjà'));
       case 'P2025':
-        return next(new HttpError(404, 'Resource not found'));
+        return next(new HttpError(404, 'Élément introuvable'));
       case 'P2003':
         return next(new HttpError(400, 'Foreign key constraint violation'));
       default:

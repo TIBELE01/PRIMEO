@@ -13,7 +13,7 @@ import { logger } from '../../../common/utils/logger';
  */
 export async function requireKycApproved(req: Request, _res: Response, next: NextFunction): Promise<void> {
   try {
-    if (!req.user) return next(new HttpError(401, 'Authentication required'));
+    if (!req.user) return next(new HttpError(401, 'Connexion requise'));
     if (req.user.role === 'admin') return next();
 
     const profile = await prisma.professionalProfile.findUnique({

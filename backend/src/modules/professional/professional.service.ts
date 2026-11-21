@@ -28,7 +28,7 @@ type UploadedFiles = Record<string, Express.Multer.File[]> | Express.Multer.File
 export const professionalService = {
   async getProfile(userId: string) {
     const profile = await prisma.professionalProfile.findUnique({ where: { userId } });
-    if (!profile) throw new HttpError(404, 'Professional profile not found');
+    if (!profile) throw new HttpError(404, 'Profil professionnel introuvable');
     return profile;
   },
 
@@ -155,7 +155,7 @@ export const professionalService = {
         },
       },
     });
-    if (!profile) throw new HttpError(404, 'Profile not found');
+    if (!profile) throw new HttpError(404, 'Profil introuvable');
     return profile;
   },
 

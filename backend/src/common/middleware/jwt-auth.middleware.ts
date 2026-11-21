@@ -30,7 +30,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return next(new HttpError(401, 'Missing or invalid Authorization header'));
+      return next(new HttpError(401, 'Connexion requise'));
     }
 
     const token = authHeader.split(' ')[1];
@@ -39,7 +39,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !user) {
-      return next(new HttpError(401, 'Invalid or expired access token'));
+      return next(new HttpError(401, 'Session expirée ou invalide. Veuillez vous reconnecter.'));
     }
 
     const supabaseRole = (user.app_metadata?.role as UserRole) ?? 'client';
@@ -108,7 +108,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     next();
   } catch (err) {
     if (err instanceof HttpError) return next(err);
-    next(new HttpError(401, 'Invalid or expired access token'));
+    next(new HttpError(401, 'Session expirée ou invalide. Veuillez vous reconnecter.'));
   }
 }
 
