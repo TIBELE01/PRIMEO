@@ -18,7 +18,9 @@ const params = {
 
 function assertUnique(html: string) {
   expect(count(html, '<!DOCTYPE html>')).toBe(1);
-  expect(count(html, 'Mon espace Primeo')).toBe(1); // en-tête
+  expect(count(html, 'Mon espace Primeo')).toBe(0); // lien d'en-tête supprimé (design compact)
+  expect(count(html, 'Paiement sécurisé')).toBe(1); // section confiance, une seule fois
+  expect(html).toContain('width="22" height="22"'); // petit logo discret
   expect(count(html, EMAIL_LOGO_URL)).toBe(1); // logo officiel, une seule fois
   expect(count(html, 'class="hero"')).toBe(1); // bandeau-titre
   expect(count(html, 'Primeo dans votre poche')).toBe(1);
@@ -27,7 +29,7 @@ function assertUnique(html: string) {
 }
 
 describe('emails : chaque élément de la charte une seule fois', () => {
-  for (let id = 1; id <= 20; id++) {
+  for (let id = 1; id <= 60; id++) {
     it(`template ${id} (rendu puis passage par sendEmail)`, () => {
       let html: string;
       try { html = renderLocalTemplate(id, params).html; } catch { return; } // identifiant inexistant

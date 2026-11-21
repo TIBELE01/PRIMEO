@@ -9,5 +9,5 @@ export const redisConfig = {
   authLimitWindow: 15 * 60, // 15 minutes in seconds
   authLimitMax: 5,
   globalLimitWindow: 60,    // 1 minute
-  globalLimitMax: 100,
+  globalLimitMax: env.RATE_LIMIT_GLOBAL_MAX, // 300 req/min par IP par défaut (RATE_LIMIT_GLOBAL_MAX)
 } as const;

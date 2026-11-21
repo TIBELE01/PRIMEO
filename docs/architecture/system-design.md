@@ -107,7 +107,9 @@ Client (mobile)          Backend (Socket.io)         DB
 - **bcrypt** (coût 12) pour les mots de passe
 - **JWT** : access token 1h, refresh token 7j (révocable en DB)
 - **TOTP 2FA** obligatoire pour les comptes professionnels
-- **Rate limiting** : 5 tentatives/15min sur les endpoints d'auth (via Upstash Redis)
+- **Rate limiting** (Upstash Redis, repli en mémoire) :
+  - global : **300 requêtes / minute / IP** (variable `RATE_LIMIT_GLOBAL_MAX`, défaut 300 ; `/api/health` exclu) — relevé de 100 à 300 car sur les réseaux mobiles ivoiriens de nombreux utilisateurs partagent la même IP publique ;
+  - authentification : 5 échecs / 15 min / IP (connexions réussies non comptées).
 - **Helmet** : en-têtes de sécurité (CSP, X-Frame-Options, HSTS)
 - **CORS** strict : origines whitelist uniquement
 - **HMAC SHA-256** + nonce anti-rejeu sur les webhooks Genius Pay

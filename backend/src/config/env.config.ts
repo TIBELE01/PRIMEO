@@ -113,6 +113,9 @@ const envSchema = z.object({
   // Upstash Redis (rate limiting, caching)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  // Limite globale de requêtes par minute et par IP (réseaux mobiles : beaucoup
+  // d'utilisateurs partagent la même IP publique). 300 par défaut.
+  RATE_LIMIT_GLOBAL_MAX: z.coerce.number().int().min(10).max(10_000).default(300),
   REDIS_URL: z.string().optional(),
   // Set to "true" on multi-instance deployments to enable Socket.io Redis adapter
   SOCKET_IO_REDIS_ENABLED: z.coerce.boolean().default(false),

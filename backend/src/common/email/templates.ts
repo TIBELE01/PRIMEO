@@ -462,7 +462,7 @@ export function renderLocalTemplate(
             ) +
             (params['rating']
               ? alertBox(
-                  `<span style="font-size:22px;letter-spacing:3px;color:#FF6600;">${stars(params['rating'])}</span> &nbsp;<strong>${Number(params['rating'])}/5</strong>`,
+                  `<span style="font-size:17px;letter-spacing:2px;color:#FF6600;">${stars(params['rating'])}</span> &nbsp;<strong>${Number(params['rating'])}/5</strong>`,
                   'secondary',
                 )
               : '') +

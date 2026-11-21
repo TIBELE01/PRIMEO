@@ -74,7 +74,7 @@ const ASSETS = `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/assets
 // Logo officiel Primeo (carré bleu, « P » blanc) — le même que sur le site vitrine et le site légal.
 export const EMAIL_LOGO_URL =
   process.env['EMAIL_LOGO_URL']?.trim() ||
-  'https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_160,h_160,f_png/v1782345787/Logo_Primeo_1_gzcjq2.png';
+  'https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_48,h_48,f_png/v1782345787/Logo_Primeo_1_gzcjq2.png';
 
 /** Badges des stores (PNG) — mènent à la page de téléchargement de l'application */
 export const EMAIL_STORE_BADGES: ReadonlyArray<{ name: string; image: string; url: string }> = [

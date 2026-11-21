@@ -4,7 +4,7 @@ jest.mock('../utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 jest.mock('../../config/redis.config', () => ({
-  redisConfig: { authLimitWindow: 900, authLimitMax: 5, globalLimitWindow: 60, globalLimitMax: 100 },
+  redisConfig: { authLimitWindow: 900, authLimitMax: 5, globalLimitWindow: 60, globalLimitMax: 300 },
 }));
 
 const mockGetRedisClient = jest.fn();
@@ -15,7 +15,7 @@ jest.mock('../utils/redis-client', () => ({
 import express from 'express';
 import request from 'supertest';
 import { rateLimit } from 'express-rate-limit';
-import { UpstashRedisStore, authRateLimit } from './rate-limit.middleware';
+import { UpstashRedisStore, authRateLimit, applyRateLimit } from './rate-limit.middleware';
 
 function buildLimitedApp(prefix: string, max = 3) {
   const app = express();
@@ -116,5 +116,31 @@ describe('authRateLimit — clé par IP', () => {
     }
     const other = await request(app).post('/login').set('X-Forwarded-For', '198.51.100.21');
     expect(other.status).toBe(401);
+  });
+});
+
+describe('limite globale — 300 requêtes / minute / IP', () => {
+  beforeEach(() => mockGetRedisClient.mockReturnValue(null));
+
+  it('accepte 300 requêtes de la même IP, refuse la 301e, sans toucher aux autres IP ni à /api/health', async () => {
+    const app = express();
+    app.set('trust proxy', 1);
+    applyRateLimit(app);
+    app.get('/api/x', (_req, res) => res.json({ ok: true }));
+    app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+    for (let i = 0; i < 300; i++) {
+      const r = await request(app).get('/api/x').set('X-Forwarded-For', '203.0.113.50');
+      expect(r.status).toBe(200);
+    }
+    const blocked = await request(app).get('/api/x').set('X-Forwarded-For', '203.0.113.50');
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error).toMatch(/Trop de requêtes/);
+    expect(blocked.headers['ratelimit-limit']).toBe('300');
+
+    const other = await request(app).get('/api/x').set('X-Forwarded-For', '203.0.113.51');
+    expect(other.status).toBe(200);
+    const health = await request(app).get('/api/health').set('X-Forwarded-For', '203.0.113.50');
+    expect(health.status).toBe(200);
   });
 });

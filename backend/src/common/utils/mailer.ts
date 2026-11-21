@@ -118,8 +118,8 @@ export function ensureBrandedEmail(html: string, subject: string): string {
     preheader: title,
     body:
       heading(title) +
-      `<div class="txt" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#333333;">${inner}</div>` +
-      (signed ? '' : `<p class="muted" style="margin:24px 0 24px;font-family:Arial,sans-serif;font-size:14px;color:#6B7280;">L’équipe Primeo</p>`),
+      `<div class="txt" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.55;color:#333333;">${inner}</div>` +
+      (signed ? '' : `<p class="muted" style="margin:12px 0 14px;font-family:Arial,sans-serif;font-size:12.5px;color:#6B7280;">L’équipe Primeo</p>`),
   });
 }
 
@@ -269,8 +269,8 @@ export async function sendOtpEmail(opts: {
       heading('🔐 Vérification de votre compte') +
       greeting(opts.firstName) +
       paragraph('Voici votre code de vérification pour activer votre compte professionnel Primeo :') +
-      `<div style="text-align:center;margin:24px 0;">
-         <span style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:10px;color:#0055FF;background:#EFF4FF;border:1px solid #D6E2FF;border-radius:12px;padding:16px 28px;">${opts.code}</span>
+      `<div style="text-align:center;margin:12px 0 14px;">
+         <span style="display:inline-block;font-size:26px;font-weight:800;letter-spacing:6px;color:#0055FF;background:#EFF4FF;border:1px solid #D6E2FF;border-radius:10px;padding:10px 18px;">${opts.code}</span>
        </div>` +
       muted(`⏱ Ce code est valable <strong>${opts.expiresInMinutes} minutes</strong>. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.`),
   });

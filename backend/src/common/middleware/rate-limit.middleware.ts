@@ -116,7 +116,7 @@ export class UpstashRedisStore implements Store {
   }
 }
 
-// ─── Rate limit global : 100 req/min par IP ───────────────────────────────────
+// ─── Rate limit global : 300 req/min par IP (RATE_LIMIT_GLOBAL_MAX) ───────────
 
 const GLOBAL_WINDOW_MS = redisConfig.globalLimitWindow * 1000; // 60 000 ms
 
