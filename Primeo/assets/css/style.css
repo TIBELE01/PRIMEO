@@ -19,15 +19,3 @@ main{overflow-x:clip}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 /* Logo officiel : sur fond sombre (menu mobile, footer), toujours dans un conteneur blanc */.mobile-nav .logo-img,.site-footer .logo-img{box-sizing:content-box;background:#fff;padding:8px 10px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.18)}.mobile-nav .logo-img{height:29px}.site-footer .logo-img{height:40px}@media (max-width:480px){.site-footer .logo-img{height:36px}}
-/* ── Cartes d'information : grille uniforme de 4 (2 par ligne sur tablette et mobile) et même style ── */
-body :is(.solutions-preview-grid,.products-preview-grid,.why-grid,.owner-grid,.stats-big-row,.ap-values__grid,.ap-stats__grid,.car-values__grid,.partner-types-grid,.eng-grid,.eng-stats-grid,.eng-certs-grid,.ep-media-grid,.ct-quick,.pro-grid--4,.pro-steps){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.25rem;max-width:none}
-body :is(.sol-card,.prod-card,.why-card,.stat-big-item,.ap-value-card,.ap-stat-card,.car-value-card,.partner-type-card,.eng-card,.eng-stat-card,.eng-cert-badge,.ep-media-logo,.ct-quick__card,.pro-type,.pro-benefit,.pro-step,.pro-price,.pro-testimonial){background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);color:var(--color-text)}
-body :is(.sol-card,.prod-card,.why-card,.stat-big-item,.ap-value-card,.ap-stat-card,.car-value-card,.partner-type-card,.eng-card,.eng-stat-card,.eng-cert-badge,.ep-media-logo,.ct-quick__card):hover{box-shadow:var(--shadow-md)}
-@media (max-width:1024px){body :is(.solutions-preview-grid,.products-preview-grid,.why-grid,.owner-grid,.stats-big-row,.ap-values__grid,.ap-stats__grid,.car-values__grid,.partner-types-grid,.eng-grid,.eng-stats-grid,.eng-certs-grid,.ep-media-grid,.ct-quick,.pro-grid--4,.pro-steps){grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}}
-@media (max-width:640px){body :is(.solutions-preview-grid,.products-preview-grid,.why-grid,.owner-grid,.stats-big-row,.ap-values__grid,.ap-stats__grid,.car-values__grid,.partner-types-grid,.eng-grid,.eng-stats-grid,.eng-certs-grid,.ep-media-grid,.ct-quick,.pro-grid--4,.pro-steps){gap:.75rem}}
-body .eng-stat-card .eng-stat-card__num{color:var(--color-primary)}
-body .eng-stat-card .eng-stat-card__label{color:var(--color-text-muted)}
-body .eng-stat-card:hover{background:#fff;border-color:var(--color-primary-100)}
-/* Petites cartes de chiffres (en-têtes) : 4 par ligne, nombres jamais coupés */
-body .hc-card .hc-tiles [class*="stat-num"],body .hc-card .hc-tiles [class*="stat__num"]{white-space:nowrap;font-size:clamp(1.25rem,2.2vw,1.85rem)}
-body .hc-card .hc-tiles [class*="stat-label"],body .hc-card .hc-tiles [class*="stat__label"]{font-size:.8rem;line-height:1.35}

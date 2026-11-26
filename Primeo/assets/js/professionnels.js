@@ -1,4 +1,4 @@
-/* Page Espace professionnel : témoignages réels (gérés depuis l'admin), 4 au plus — section masquée s'il n'y en a pas. */
+/* Page Espace professionnel : témoignages réels (gérés depuis l'admin) — section masquée s'il n'y en a pas. */
 (function () {
   'use strict';
   var meta = document.querySelector('meta[name="api-url"]');
@@ -33,7 +33,7 @@
       d = d && typeof d === 'object' && !Array.isArray(d) && d.data !== undefined ? d.data : d;
       var items = (Array.isArray(d) ? d : (d && (d.testimonials || d.items)) || [])
         .filter(function (t) { return t && t.text && t.active !== false; })
-        .slice(0, 4);
+        .slice(0, 3);
       if (!items.length) return;
       grid.innerHTML = items.map(card).join('');
       section.hidden = false;

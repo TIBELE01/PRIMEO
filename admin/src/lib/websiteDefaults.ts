@@ -14,8 +14,7 @@ export const HOME_DEFAULTS = {
   solutions_preview: [
     { title: 'Voyageurs', summary: "Trouvez et réservez facilement votre hébergement idéal en Côte d'Ivoire. Comparez les prix, lisez les avis, payez comme vous le souhaitez.", icon: '✈️', link: '/solutions/' },
     { title: "Professionnels de l'hébergement", summary: "Publiez vos annonces, gérez vos réservations et boostez votre visibilité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.", icon: '🏨', link: '/solutions/' },
-    { title: 'Restaurateurs', summary: "Gérez votre restaurant en ligne : acceptez des réservations de tables, mettez votre carte en valeur et fidélisez vos clients.", icon: '🍽️', link: '/solutions/' },
-    { title: "Professionnels de l'immobilier", summary: "Publiez vos biens à la vente ou en location longue durée, avec photos et visites 3D, et suivez vos demandes et prospects.", icon: '🏢', link: '/solutions/' },
+    { title: 'Restaurateurs & Immobilier', summary: "Gérez votre restaurant en ligne, acceptez des réservations de tables et publiez vos offres immobilières sur une seule et même plateforme.", icon: '🍽️', link: '/solutions/' },
   ],
   products_preview: [
     { title: "Formules d'abonnement", description: "Choisissez la formule adaptée à votre activité — Starter, Business ou Entreprise. Commencez gratuitement et évoluez selon vos besoins.", badge: null, link: '/produits/' },

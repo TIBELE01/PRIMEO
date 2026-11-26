@@ -1217,22 +1217,6 @@
   "default": "Carrières — Primeo"
  },
  {
-  "key": "carrieres.car-hero.num4",
-  "page": "carrieres",
-  "section": "car-hero",
-  "tag": "span",
-  "type": "number",
-  "default": "4"
- },
- {
-  "key": "carrieres.car-hero.span4",
-  "page": "carrieres",
-  "section": "car-hero",
-  "tag": "span",
-  "type": "text",
-  "default": "secteurs d'activité"
- },
- {
   "key": "communaute.cm-hero.p1",
   "page": "communaute",
   "section": "cm-hero",
@@ -2401,22 +2385,6 @@
   "default": "Devenir partenaire — Primeo"
  },
  {
-  "key": "devenir-partenaire.partner-hero.stat4",
-  "page": "devenir-partenaire",
-  "section": "partner-hero",
-  "tag": "div",
-  "type": "text",
-  "default": "4"
- },
- {
-  "key": "devenir-partenaire.partner-hero.stat4-label",
-  "page": "devenir-partenaire",
-  "section": "partner-hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Types de partenariat"
- },
- {
   "key": "engagement.eng-hero.p1",
   "page": "engagement",
   "section": "eng-hero",
@@ -2867,6 +2835,40 @@
   "tag": "div",
   "type": "html",
   "default": "Donnée personnelle<br>revendue à des tiers"
+ },
+ {
+  "key": "engagement.chiffres-rse.num5",
+  "page": "engagement",
+  "section": "chiffres-rse",
+  "tag": "span",
+  "type": "number",
+  "default": "18",
+  "suffix": ""
+ },
+ {
+  "key": "engagement.chiffres-rse.div5",
+  "page": "engagement",
+  "section": "chiffres-rse",
+  "tag": "div",
+  "type": "html",
+  "default": "Villes couvertes<br>en Côte d'Ivoire"
+ },
+ {
+  "key": "engagement.chiffres-rse.num6",
+  "page": "engagement",
+  "section": "chiffres-rse",
+  "tag": "span",
+  "type": "number",
+  "default": "1200",
+  "suffix": "+"
+ },
+ {
+  "key": "engagement.chiffres-rse.div6",
+  "page": "engagement",
+  "section": "chiffres-rse",
+  "tag": "div",
+  "type": "html",
+  "default": "Professionnels<br>accompagnés"
  },
  {
   "key": "engagement.eng-certs-section.h21",
@@ -3413,12 +3415,28 @@
   "default": "<span>Abidjan.net</span>"
  },
  {
+  "key": "espace-presse.partenaires-medias.div4",
+  "page": "espace-presse",
+  "section": "partenaires-medias",
+  "tag": "div",
+  "type": "html",
+  "default": "<span>Africa<br>Business+</span>"
+ },
+ {
   "key": "espace-presse.partenaires-medias.div5",
   "page": "espace-presse",
   "section": "partenaires-medias",
   "tag": "div",
   "type": "html",
   "default": "<span>Jeune<br>Afrique</span>"
+ },
+ {
+  "key": "espace-presse.partenaires-medias.div6",
+  "page": "espace-presse",
+  "section": "partenaires-medias",
+  "tag": "div",
+  "type": "html",
+  "default": "<span>Tech<br>Cabal</span>"
  },
  {
   "key": "espace-presse.blog-recent.span1",
@@ -4027,30 +4045,6 @@
   "tag": "a",
   "type": "link",
   "default": "https://primeo.ci/telechargement/"
- },
- {
-  "key": "professionnels.hero.div8",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "span",
-  "type": "text",
-  "default": "modes de paiement pour vos clients"
- },
- {
-  "key": "professionnels.tarifs.h34",
-  "page": "professionnels",
-  "section": "tarifs",
-  "tag": "h3",
-  "type": "text",
-  "default": "Un accompagnement dédié"
- },
- {
-  "key": "professionnels.tarifs.p5",
-  "page": "professionnels",
-  "section": "tarifs",
-  "tag": "p",
-  "type": "text",
-  "default": "Notre équipe vous aide à choisir la formule adaptée et répond à vos questions avant et après votre inscription."
  },
  {
   "key": "telechargement.dl-hero.p1",
