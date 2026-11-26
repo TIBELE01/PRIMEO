@@ -600,7 +600,7 @@ PARTIE 11 – INTÉGRATIONS TIERS
 Intégration via API REST. Endpoints utilisés : création d'un paiement, vérification de statut, webhook de notification. Clés API stockées dans les variables d'environnement. Signature HMAC des webhooks vérifiée, nonce anti-rejeu. Transactions enregistrées en base de données. Cron job de rattrapage en cas de notifications manquées.
 
 11.2 Brevo (emails transactionnels)
-Brevo est utilisé pour tous les emails transactionnels : confirmation de réservation, réinitialisation de mot de passe, rappels, factures, notifications de litige. Les templates sont créés dans l’interface Brevo. L’email expéditeur est notifications@primeo.ci. Les préférences de notification des utilisateurs sont respectées.
+Brevo est utilisé pour tous les emails transactionnels : confirmation de réservation, réinitialisation de mot de passe, rappels, factures, notifications de litige. Les templates sont créés dans l’interface Brevo. L’email expéditeur est noreply@primeo.ci (réponses vers contact@primeo.ci). Les préférences de notification des utilisateurs sont respectées.
 
 11.3 OneSignal (notifications push)
 OneSignal est configuré pour iOS et Android. Le serveur envoie des notifications via l’API REST OneSignal avec les identifiants de joueurs (player IDs). Notifications classées par importance (haute priorité pour les confirmations et messages). L’application mobile enregistre et met à jour le player ID OneSignal à chaque lancement.
@@ -760,7 +760,7 @@ Liste exhaustive des variables d'environnement nécessaires au backend :
 •	GENIUS_PAY_SECRET_KEY (obligatoire) : clé secrète Genius Pay.
 •	GENIUS_PAY_WEBHOOK_SECRET (obligatoire) : secret pour la vérification HMAC des webhooks.
 •	BREVO_API_KEY (obligatoire) : clé API Brevo pour les emails transactionnels.
-•	BREVO_SENDER_EMAIL : notifications@primeo.ci (adresse expéditeur validée dans Brevo).
+•	EMAIL_FROM : noreply@primeo.ci (expéditeur validé dans Brevo, domaine primeo.ci authentifié) ; réponses vers EMAIL_REPLY_TO (contact@primeo.ci).
 •	JWT_SECRET (obligatoire) : clé secrète pour la signature des JWT (minimum 64 caractères aléatoires).
 •	ONESIGNAL_APP_ID (obligatoire) : identifiant de l’application OneSignal pour les notifications push.
 •	ONESIGNAL_API_KEY (obligatoire) : clé REST API OneSignal.

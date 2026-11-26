@@ -1,5 +1,5 @@
 jest.mock('./env.config', () => ({ env: {} }));
-import { EMAILS, contactRecipientFor } from './emails.config';
+import { EMAILS, contactRecipientFor, mailboxLabel } from './emails.config';
 
 describe('adresses email professionnelles', () => {
   it('valeurs par défaut : vraies adresses primeo.ci, aucune adresse de substitution', () => {
@@ -22,5 +22,20 @@ describe('adresses email professionnelles', () => {
     expect(contactRecipientFor('Partenariat')).toBe('partenariat@primeo.ci');
     expect(contactRecipientFor('Devenir professionnel')).toBe('professionnel@primeo.ci');
     expect(contactRecipientFor(undefined)).toBe('contact@primeo.ci');
+  });
+
+  it('formulaire du site légal : sujets juridiques, données et paiements', () => {
+    expect(contactRecipientFor('Question juridique — CGU')).toBe('legal@primeo.ci');
+    expect(contactRecipientFor('Protection des données personnelles')).toBe('dpo@primeo.ci');
+    expect(contactRecipientFor('Suppression de compte et des données')).toBe('dpo@primeo.ci');
+    expect(contactRecipientFor('Litige de paiement')).toBe('reclamation@primeo.ci');
+    expect(contactRecipientFor('Partenariat professionnel')).toBe('partenariat@primeo.ci');
+    expect(contactRecipientFor('Signalement de contenu')).toBe('contact@primeo.ci');
+  });
+
+  it('libellés des boîtes internes', () => {
+    expect(mailboxLabel('recrutement@primeo.ci')).toBe('Primeo Recrutement');
+    expect(mailboxLabel('dpo@primeo.ci')).toBe('Primeo Protection des données');
+    expect(mailboxLabel('inconnue@primeo.ci')).toBe('Primeo');
   });
 });

@@ -36,9 +36,8 @@
     <div class="contact-grid">
       <div>
         <h2 class="section-title">Formulaire de contact</h2>
-        <form name="contact-legal" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="contact-form">
-          <input type="hidden" name="form-name" value="contact-legal" />
-          <p style="display:none;"><input name="bot-field" /></p>
+        <form name="contact-legal" id="contact-form" novalidate>
+          <p style="display:none;" aria-hidden="true"><input name="bot-field" tabindex="-1" autocomplete="off" /></p>
 
           <div class="form-group">
             <label for="name">Nom complet *</label>
@@ -97,7 +96,7 @@
             <strong>E-mail et téléphone</strong><br>
             <a href="mailto:contact@primeo.ci">contact@primeo.ci</a><br>
             <a href="tel:+2250707161684">+225 07 07 16 16 84</a><br>
-            <em>Demandes relatives aux données personnelles, aux litiges et aux comptes professionnels : même adresse.</em>
+            <em>Données personnelles : <a href="mailto:dpo@primeo.ci">dpo@primeo.ci</a> · Litiges et réclamations : <a href="mailto:reclamation@primeo.ci">reclamation@primeo.ci</a> · Questions juridiques : <a href="mailto:legal@primeo.ci">legal@primeo.ci</a> · Comptes professionnels : <a href="mailto:professionnel@primeo.ci">professionnel@primeo.ci</a></em>
           </div>
         </div>
         <div class="contact-info-item">
@@ -182,6 +181,6 @@
     </div>
   </div>
   <script src="../assets/js/cookies.js?v=3"></script>
-  <script src="../assets/js/contact.js?v=3"></script>
+  <script src="../assets/js/contact.js?v=4"></script>
 </body>
 </html>

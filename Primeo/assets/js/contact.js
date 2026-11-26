@@ -9,7 +9,7 @@
   var GMAPS = 'https://www.google.com/maps/dir/?api=1&destination=' + LAT + ',' + LON;
 
   function request(url, opts) {
-    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, 8000);
+    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, 20000);
     return fetch(url, Object.assign({ signal: ctrl.signal }, opts)).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (body) {
         if (!res.ok) { var e = new Error(body.message || body.error || res.statusText); e.status = res.status; e.body = body; throw e; }
@@ -91,18 +91,20 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var valid = true;
-      form.querySelectorAll('.ct-input').forEach(function (el) { if (el.name !== 'email_confirm' && !check(el)) valid = false; });
+      form.querySelectorAll('.ct-input').forEach(function (el) { if (!check(el)) valid = false; });
       if (!valid) return;
-      var trap = form.querySelector('[name="email_confirm"]');
-      if (trap && trap.value) return;
+      // Champ piège invisible : un robot le remplit, on simule le succès sans rien envoyer
+      var trap = form.querySelector('[name="pmo_hp"]');
+      if (trap && trap.value) { window.location.href = '/contact/merci.html'; return; }
       if (errBox) errBox.style.display = 'none';
       busy(true);
       var f = function (n) { return form.querySelector('[name="' + n + '"]').value.trim(); };
       request(API + '/api/website/contact', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: f('name'), email: f('email'), phone: f('phone') || undefined, subject: f('subject'), message: f('message'), email_confirm: trap ? trap.value : '' })
+        body: JSON.stringify({ name: f('name'), email: f('email'), phone: f('phone') || undefined, subject: f('subject'), message: f('message') })
       }).then(function () { window.location.href = '/contact/merci.html'; }).catch(function (err) {
         var text = 'Une erreur est survenue. Veuillez réessayer ou écrire à contact@primeo.ci.';
+        if (err.name === 'AbortError' || err instanceof TypeError) text = 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.';
         if (err.status === 429) text = 'Trop de messages envoyés. Merci de réessayer dans une heure.';
         else if (err.status === 400 && err.body) {
           var fields = err.body.errors || err.body.details;

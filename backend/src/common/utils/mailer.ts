@@ -2,6 +2,7 @@
 // N'utilise pas SMTP : la clé API (BREVO_API_KEY) suffit, aucun credential SMTP requis.
 import axios from 'axios';
 import { brevoConfig } from '../../config/brevo.config';
+import { EMAILS } from '../../config/emails.config';
 import { env } from '../../config/env.config';
 import { logger } from './logger';
 import { prisma } from '../../database/prisma.service';
@@ -42,6 +43,8 @@ interface SendEmailOptions {
   attachment?: EmailAttachment[];
   /** Expéditeur spécifique (ex. support@primeo.ci pour les réponses du support). Défaut : noreply@. */
   from?: EmailRecipient;
+  /** Adresse de réponse (bouton « Répondre »). Défaut : EMAIL_REPLY_TO (contact@). */
+  replyTo?: EmailRecipient;
 }
 
 
@@ -53,11 +56,12 @@ async function sendViaBrevoApi(
   htmlContent: string,
   attachment?: EmailAttachment[],
   from?: EmailRecipient,
-): Promise<void> {
+  replyTo?: EmailRecipient,
+): Promise<string | null> {
   const apiKey = brevoConfig.apiKey;
   if (!apiKey) {
     logger.warn('BREVO_API_KEY absent — email ignoré');
-    return;
+    return null;
   }
 
   // Brevo refuse (400) une pièce jointe par URL dont le chemin n'a pas d'extension
@@ -77,13 +81,15 @@ async function sendViaBrevoApi(
       }))).filter((a): a is EmailAttachment => a !== null)
     : undefined;
 
-  await axios.post(
+  const res = await axios.post<{ messageId?: string }>(
     `${brevoConfig.baseUrl}/smtp/email`,
     {
       sender: from?.email
         ? { email: from.email, name: from.name ?? brevoConfig.senderName }
         : { email: brevoConfig.senderEmail, name: brevoConfig.senderName },
-      replyTo: { email: brevoConfig.replyTo, name: 'Primeo' },
+      replyTo: replyTo?.email
+        ? { email: replyTo.email, name: replyTo.name ?? replyTo.email }
+        : { email: brevoConfig.replyTo, name: 'Primeo' },
       to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
       subject,
       htmlContent,
@@ -94,6 +100,8 @@ async function sendViaBrevoApi(
       timeout: 15_000,
     },
   );
+  // Identifiant Brevo : relie les événements du webhook (délivré, ouvert, bounce) au journal
+  return res.data?.messageId ?? null;
 }
 
 // ─── Habillage systématique aux couleurs de Primeo ─────────────────────────────
@@ -184,8 +192,12 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     }
 
     try {
-      await sendViaBrevoApi([recipient], finalSubject, htmlContent, options.attachment, options.from);
+      const messageId = await sendViaBrevoApi([recipient], finalSubject, htmlContent, options.attachment, options.from, options.replyTo);
       logger.debug(`Email Brevo envoyé à ${recipient.email}`);
+      if (logId && messageId) {
+        await prisma.emailLog.update({ where: { id: logId }, data: { messageId } })
+          .catch((updateErr) => logger.warn('emailLog : échec enregistrement messageId', updateErr));
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error(`Échec envoi email Brevo à ${recipient.email}`, err);
@@ -205,9 +217,10 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 export async function sendTemplateEmail(
   to: EmailRecipient[],
   templateId: number,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  opts: Pick<SendEmailOptions, 'from' | 'replyTo'> = {},
 ): Promise<void> {
-  return sendEmail({ to, templateId, params, subject: '' });
+  return sendEmail({ to, templateId, params, subject: '', ...opts });
 }
 
 // ─── Validation au démarrage ──────────────────────────────────────────────────
@@ -375,6 +388,7 @@ export async function sendBookingInvoiceEmail(opts: {
     to: opts.to,
     subject: `Facture ${opts.invoiceRef} — Primeo`,
     htmlContent: html,
+    replyTo: { email: EMAILS.billing, name: 'Primeo Facturation' },
     attachment: [{ url: opts.invoiceUrl, name: `Facture-${opts.invoiceRef}.pdf` }],
   });
 }

@@ -16,6 +16,8 @@ export type BrevoEventType =
   | 'clicked'
   | 'unsubscribed'
   | 'invalid_email'
+  | 'spam'
+  | 'unique_opened'
   | 'blocked'
   | string;
 
@@ -60,6 +62,7 @@ export async function handleBrevoEvent(event: BrevoEvent): Promise<void> {
       break;
 
     case 'opened':
+    case 'unique_opened':
       await updateEmailLog(messageId, email, 'opened');
       break;
 
@@ -75,6 +78,7 @@ export async function handleBrevoEvent(event: BrevoEvent): Promise<void> {
       break;
 
     case 'complaint':
+    case 'spam':
       // Plainte SPAM — on bloque l'adresse immédiatement
       await handleBounce(messageId, email, 'complaint', 'Plainte SPAM reçue', true);
       break;

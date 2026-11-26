@@ -275,7 +275,7 @@ export default function AdminAccountsPage() {
               className={`input w-full ${formErrors.email ? 'border-red-400' : ''}`}
               value={form.email}
               onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setFormErrors(fe => ({ ...fe, email: undefined })); }}
-              placeholder="admin@primeo.com"
+              placeholder="admin@primeo.ci"
             />
             {formErrors.email && <p className="text-xs text-red-500 mt-0.5">{formErrors.email}</p>}
           </div>

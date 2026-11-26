@@ -663,7 +663,9 @@ const contactSchema = z.object({
   phone:         z.string().optional(),
   subject:       z.string().min(1, 'Sujet requis'),
   message:       z.string().min(10, 'Message trop court (min 10 caractères)').max(2000, 'Message trop long (max 2000 caractères)'),
-  email_confirm: z.string().max(0, 'Bot détecté').optional(),
+  // Champs pièges (invisibles pour un humain) : ancien et nouveau nom
+  email_confirm: z.string().optional(),
+  pmo_hp:        z.string().optional(),
 });
 
 export async function submitContact(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -673,7 +675,9 @@ export async function submitContact(req: Request, res: Response, next: NextFunct
       const errors = parsed.error.flatten().fieldErrors;
       res.status(400).json({ message: 'Données invalides', errors }); return;
     }
-    const { email_confirm: _hp, ...data } = parsed.data;
+    const { email_confirm: hp1, pmo_hp: hp2, ...data } = parsed.data;
+    // Robot : réponse de succès simulée, rien n'est enregistré ni envoyé
+    if (hp1 || hp2) { res.status(201).json({ message: 'Message envoyé avec succès' }); return; }
     const msg = await websiteService.submitContact(data);
     res.status(201).json({ message: 'Message envoyé avec succès', id: msg.id });
   } catch (e) { next(e); }

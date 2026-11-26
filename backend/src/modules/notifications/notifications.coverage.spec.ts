@@ -4,6 +4,10 @@ jest.mock('../../common/utils/logger', () => ({ logger: { info: jest.fn(), warn:
 jest.mock('../../common/utils/mailer', () => ({ sendTemplateEmail: jest.fn(async () => undefined) }));
 jest.mock('../../common/utils/push', () => ({ registerExpoTokenWithOneSignal: jest.fn(async () => null) }));
 jest.mock('../../common/utils/sms', () => ({ sendSms: jest.fn(async () => undefined) }));
+jest.mock('../../config/emails.config', () => ({
+  EMAILS: { reclamation: 'reclamation@primeo.ci', billing: 'facturation@primeo.ci', professional: 'professionnel@primeo.ci', legal: 'legal@primeo.ci' },
+  mailboxLabel: () => 'Primeo',
+}));
 jest.mock('../../config/brevo.config', () => ({ brevoConfig: { templates: {
   bookingConfirmation: 3, bookingCancellation: 4, paymentReceipt: 5, subscriptionRenewal: 8,
   kycApproved: 6, kycRejected: 7, referralReward: 11,

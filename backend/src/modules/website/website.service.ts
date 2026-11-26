@@ -2,7 +2,7 @@
 import { prisma } from '../../database/prisma.service';
 import { cacheGet, cacheSet } from '../../common/utils/redis-client';
 import { env } from '../../config/env.config';
-import { EMAILS, contactRecipientFor } from '../../config/emails.config';
+import { EMAILS, contactRecipientFor, mailboxLabel } from '../../config/emails.config';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
 import { CV_BUCKET, uploadPrivateFile, deletePrivateFile, parseStorageRef, isAllowedDocument } from '../../common/utils/private-storage';
 import { createDownloadToken } from '../../common/utils/download-token';
@@ -794,6 +794,7 @@ export const websiteService = {
     });
     await sendEmail({
       to: [{ email: EMAILS.careers, name: 'Primeo Recrutement' }],
+      replyTo: { email: data.email, name: `${data.firstName} ${data.lastName}` },
       subject: `Nouvelle candidature spontanée — ${data.firstName} ${data.lastName}`,
       htmlContent: `
         <h2>Nouvelle candidature spontanée</h2>
@@ -809,6 +810,8 @@ export const websiteService = {
     }).catch(() => { /* non-bloquant */ });
     // Accusé de réception au candidat (comme pour les formulaires contact et partenariat)
     await sendEmail({
+      from: { email: EMAILS.careers, name: 'Primeo Recrutement' },
+      replyTo: { email: EMAILS.careers, name: 'Primeo Recrutement' },
       to: [{ email: data.email, name: `${data.firstName} ${data.lastName}` }],
       subject: 'Primeo — Votre candidature a bien été reçue',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px;color:#1a2340">
@@ -1156,9 +1159,11 @@ export const websiteService = {
 
   async submitContact(data: { name: string; email: string; phone?: string; subject: string; message: string }) {
     const msg = await prisma.contactMessage.create({ data });
+    const inbox = contactRecipientFor(data.subject);
 
-    // Confirmation to sender
+    // Accusé de réception : « Répondre » mène à la boîte qui traite ce sujet
     await sendEmail({
+      replyTo: { email: inbox, name: mailboxLabel(inbox) },
       to: [{ email: data.email, name: data.name }],
       subject: 'Primeo — Votre message a bien été reçu',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px">
@@ -1166,7 +1171,7 @@ export const websiteService = {
         <p>Nous avons bien reçu votre message. Notre équipe vous répondra sous <strong>24 heures ouvrées</strong>.</p>
         <table style="border-collapse:collapse;width:100%;margin:16px 0">
           <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600;width:120px">Sujet</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${escapeHtml(data.subject)}</td></tr>
-          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
+          <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${escapeHtml(data.message).replace(/\n/g, '<br>')}</td></tr>
         </table>
         <p style="color:#6b7280;font-size:13px">Cordialement,<br>L'équipe Primeo</p>
       </div>`,
@@ -1176,7 +1181,8 @@ export const websiteService = {
 
     {
       await sendEmail({
-        to: [{ email: contactRecipientFor(data.subject) }],
+        to: [{ email: inbox, name: mailboxLabel(inbox) }],
+        replyTo: { email: data.email, name: data.name },
         subject: `[Contact] ${data.subject} — ${data.name}`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#4f6af5">Nouveau message de contact</h3>
@@ -1185,7 +1191,7 @@ export const websiteService = {
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.email)}</td></tr>
             ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.phone)}</td></tr>` : ''}
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Sujet</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.subject)}</td></tr>
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.message).replace(/\n/g, '<br>')}</td></tr>
           </table>
         </div>`,
       }).catch(() => {});
@@ -1216,14 +1222,15 @@ export const websiteService = {
     if (!row) throw createHttpError(404, 'Message introuvable');
     await sendEmail({
       from: { email: EMAILS.supportFrom, name: 'Primeo Support' },
+      replyTo: { email: contactRecipientFor(row.subject), name: mailboxLabel(contactRecipientFor(row.subject)) },
       to: [{ email: row.email, name: row.name }],
       subject: `Re: ${row.subject} — Primeo`,
       htmlContent: `<div style="font-family:sans-serif;max-width:560px">
-        <p>Bonjour ${row.name},</p>
-        <p>${replyText.replace(/\n/g, '<br>')}</p>
+        <p>Bonjour ${escapeHtml(row.name)},</p>
+        <p>${escapeHtml(replyText).replace(/\n/g, '<br>')}</p>
         <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb">
         <p style="color:#9ca3af;font-size:12px"><em>En réponse à votre message du ${new Date(row.createdAt).toLocaleDateString('fr-FR')} :</em><br>
-        ${row.message.replace(/\n/g, '<br>')}</p>
+        ${escapeHtml(row.message).replace(/\n/g, '<br>')}</p>
         <p style="color:#6b7280;font-size:13px">Cordialement,<br>L'équipe Primeo</p>
       </div>`,
     });
@@ -1553,13 +1560,15 @@ export const websiteService = {
 
     // Confirmation email to sender
     await sendEmail({
+      from: { email: EMAILS.professional, name: 'Primeo Partenariats' },
+      replyTo: { email: EMAILS.partnership, name: 'Primeo Partenariats' },
       to: [{ email: data.email, name: data.contactName }],
       subject: 'Primeo — Votre demande de partenariat a bien été reçue',
       htmlContent: `<div style="font-family:sans-serif;max-width:560px;color:#1a2340">
         <h2 style="color:#0066cc">Bonjour ${escapeHtml(data.contactName)},</h2>
         <p>Nous avons bien reçu votre demande de partenariat de type <strong>${escapeHtml(data.partnershipType)}</strong> au nom de <strong>${escapeHtml(data.companyName)}</strong>.</p>
         <p>Notre équipe partenariats va étudier votre dossier et vous recontactera dans les <strong>48 heures ouvrées</strong>.</p>
-        <p>En attendant, n'hésitez pas à consulter notre <a href="https://primeo.ci/tarification/" style="color:#0066cc">page Tarification</a> ou à répondre directement à cet email.</p>
+        <p>En attendant, n'hésitez pas à consulter notre <a href="https://primeo.ci/professionnels/" style="color:#0066cc">page Professionnels</a> ou à répondre directement à cet email.</p>
         <p style="color:#6b7280;font-size:.85rem;margin-top:2rem">— L'équipe Primeo</p>
       </div>`,
     }).catch(() => {});
@@ -1569,6 +1578,7 @@ export const websiteService = {
     {
       await sendEmail({
         to: [{ email: EMAILS.partnership, name: 'Primeo Partenariats' }],
+        replyTo: { email: data.email, name: data.contactName },
         subject: `[Partenariat] ${data.partnershipType} — ${data.companyName}`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#0066cc">Nouvelle demande de partenariat</h3>
@@ -1578,7 +1588,7 @@ export const websiteService = {
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Email</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.email)}</td></tr>
             ${data.phone ? `<tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Téléphone</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.phone)}</td></tr>` : ''}
             <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Type</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.partnershipType)}</td></tr>
-            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${data.message.replace(/\n/g, '<br>')}</td></tr>
+            <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Message</td><td style="padding:6px 10px;border:1px solid #e5e7eb">${escapeHtml(data.message).replace(/\n/g, '<br>')}</td></tr>
           </table>
         </div>`,
       }).catch(() => {});

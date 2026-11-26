@@ -40,9 +40,27 @@ export const EMAILS = {
 export function contactRecipientFor(subject: string | undefined): string {
   const s = (subject ?? '').toLowerCase();
   if (s.includes('support') || s.includes('technique')) return EMAILS.support;
-  if (s.includes('litige') || s.includes('réclamation') || s.includes('reclamation')) return EMAILS.reclamation;
+  if (s.includes('litige') || s.includes('réclamation') || s.includes('reclamation') || s.includes('paiement') || s.includes('remboursement')) return EMAILS.reclamation;
+  if (s.includes('données') || s.includes('donnees') || s.includes('confidentialité') || s.includes('suppression')) return EMAILS.dpo;
+  if (s.includes('cgu') || s.includes('juridique') || s.includes('conditions')) return EMAILS.legal;
   if (s.includes('partenariat')) return EMAILS.partnership;
   if (s.includes('professionnel')) return EMAILS.professional;
   if (s.includes('presse')) return EMAILS.press;
   return EMAILS.contact;
+}
+
+/** Libellé affiché pour une boîte interne (nom de l'expéditeur / du destinataire de réponse). */
+export function mailboxLabel(email: string): string {
+  const names: Record<string, string> = {
+    [EMAILS.support]: 'Primeo Support',
+    [EMAILS.reclamation]: 'Primeo Réclamations',
+    [EMAILS.partnership]: 'Primeo Partenariats',
+    [EMAILS.professional]: 'Primeo Professionnels',
+    [EMAILS.press]: 'Primeo Presse',
+    [EMAILS.dpo]: 'Primeo Protection des données',
+    [EMAILS.legal]: 'Primeo Juridique',
+    [EMAILS.careers]: 'Primeo Recrutement',
+    [EMAILS.billing]: 'Primeo Facturation',
+  };
+  return names[email] ?? 'Primeo';
 }

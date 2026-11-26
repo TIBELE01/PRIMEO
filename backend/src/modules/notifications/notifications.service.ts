@@ -5,6 +5,7 @@ import { sendTemplateEmail } from '../../common/utils/mailer';
 import { registerExpoTokenWithOneSignal } from '../../common/utils/push';
 import { sendSms } from '../../common/utils/sms';
 import { brevoConfig } from '../../config/brevo.config';
+import { EMAILS, mailboxLabel } from '../../config/emails.config';
 import { pushProvider } from './providers/push.provider';
 import {
   NotificationType,
@@ -301,7 +302,28 @@ async function dispatchEmail(
   const templateId = templateMap[type];
   if (!templateId) return;
 
-  await sendTemplateEmail([{ email, name: firstName }], templateId, { firstName, ...data });
+  // « Répondre » mène à la boîte qui traite le sujet (litiges, facturation, dossier pro)
+  const replyBox: Partial<Record<NotificationType, string>> = {
+    dispute_opened: EMAILS.reclamation,
+    dispute_resolved: EMAILS.reclamation,
+    payment_failed: EMAILS.billing,
+    payment_success: EMAILS.billing,
+    subscription_renewal: EMAILS.billing,
+    subscription_suspended: EMAILS.billing,
+    subscription_upgraded: EMAILS.billing,
+    subscription_downgraded: EMAILS.billing,
+    subscription_reactivated: EMAILS.billing,
+    subscription_grace_warning: EMAILS.billing,
+    kyc_approved: EMAILS.professional,
+    kyc_rejected: EMAILS.professional,
+  };
+  const box = replyBox[type];
+  await sendTemplateEmail(
+    [{ email, name: firstName }],
+    templateId,
+    { firstName, ...data },
+    box ? { replyTo: { email: box, name: mailboxLabel(box) } } : {},
+  );
 }
 
 // ── Main orchestrator ─────────────────────────────────────────────────────────
