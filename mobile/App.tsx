@@ -144,10 +144,29 @@ const linking = {
     // le navigateur courant — React Navigation plantait (« reading 'routes' »). On retombe
     // alors proprement sur l'accueil du contexte actuel.
     const root = useAuthStore.getState().user ? 'MainTabs' : 'PublicTabs';
-    if (!parsed || !parsed.routes?.length || parsed.routes[0].name !== root) {
-      return { routes: [{ name: root }] };
+    if (parsed && parsed.routes?.length && parsed.routes[0].name === root && parsed.routes[0].state) {
+      return parsed;
     }
-    return parsed;
+    // Les écrans de l'application ne sont pas décrits dans `config` : on relit
+    // l'adresse générée par React Navigation (/MainTabs/<onglet>/<écran>?params)
+    // pour rouvrir le bon onglet et le bon écran après un rechargement ou un
+    // lien direct. Les noms inconnus sont ignorés par React Navigation, qui
+    // retombe alors sur l'écran initial de l'onglet.
+    const segs = pathPart.split('/').filter(Boolean).map((s) => { try { return decodeURIComponent(s); } catch { return s; } });
+    if (segs[0] === root && segs.length > 1) {
+      const query = new URLSearchParams(fragmentOrQuery ?? '');
+      const leafParams: Record<string, string> = {};
+      query.forEach((v, k) => { leafParams[k] = v; });
+      const names = segs.slice(1, 3); // onglet, puis écran de la pile de l'onglet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let child: any;
+      for (let i = names.length - 1; i >= 0; i--) {
+        const isLeaf = i === names.length - 1;
+        child = { name: names[i], ...(isLeaf && Object.keys(leafParams).length ? { params: leafParams } : {}), ...(child ? { state: { routes: [child] } } : {}) };
+      }
+      return { routes: [{ name: root, state: { routes: [child] } }] };
+    }
+    return { routes: [{ name: root }] };
   },
 };
 
