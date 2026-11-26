@@ -65,12 +65,28 @@ async function generateSitemap() {
   await require('./scripts/generate-sitemap.js').build();
 }
 
+/* ── Dossier publié ──────────────────────────────────────────────────────────
+ * Seuls les fichiers publics sont copiés dans dist/ (dossier publié par Render) :
+ * le code source, les scripts internes, node_modules et package.json ne doivent
+ * pas être téléchargeables depuis le site. */
+const PRIVATE = new Set(['node_modules', 'scripts', 'dist', 'build.js', 'package.json', 'pnpm-lock.yaml', 'package-lock.json']);
+function copyPublic() {
+  const out = path.join(__dirname, 'dist');
+  fs.rmSync(out, { recursive: true, force: true });
+  for (const entry of fs.readdirSync(__dirname)) {
+    if (PRIVATE.has(entry) || entry.startsWith('.') || /^readme/i.test(entry)) continue;
+    fs.cpSync(path.join(__dirname, entry), path.join(out, entry), { recursive: true });
+  }
+  console.log('Publié dans dist/ :', fs.readdirSync(out).length, 'entrées');
+}
+
 (async () => {
   console.log('Building Primeo Vitrine…\n');
   try {
     await generateSitemap();
     minifyCSS();
     await minifyJS();
+    copyPublic();
     console.log(`\nDone. Total saved: ${(totalSaved / 1024).toFixed(1)} KB`);
   } catch (err) {
     console.error('Build failed:', err);
