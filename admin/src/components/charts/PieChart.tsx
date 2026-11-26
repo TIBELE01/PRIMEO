@@ -4,7 +4,7 @@ import { PieChart as RechartsPie, Pie, Cell, Tooltip, Legend, ResponsiveContaine
 interface PieData { name: string; value: number }
 interface Props { data: PieData[]; colors?: string[]; height?: number }
 
-const DEFAULT_COLORS = ['#1B5E20', '#2E7D32', '#388E3C', '#F9A825', '#F57F17'];
+const DEFAULT_COLORS = ['#1056E0', '#D67309', '#5BBD15', '#7C3AED', '#0891B2'];
 
 export function PieChartWidget({ data, colors = DEFAULT_COLORS, height = 220 }: Props) {
   return (

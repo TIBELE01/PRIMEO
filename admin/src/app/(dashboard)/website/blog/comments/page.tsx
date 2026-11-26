@@ -30,11 +30,13 @@ export default function BlogCommentsPage() {
   });
 
   const approveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.approveComment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['blog-comments'] }),
   });
 
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteComment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['blog-comments'] }),
   });

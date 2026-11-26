@@ -30,6 +30,7 @@ function ChallengeForm({ existing, onClose }: {
   });
 
   const save = useMutation({
+    meta: { feedback: true },
     mutationFn: () => existing
       ? websiteService.updateChallenge(existing.id, { ...form, startDate: new Date(form.startDate), endDate: new Date(form.endDate) })
       : websiteService.createChallenge({ ...form, startDate: new Date(form.startDate), endDate: new Date(form.endDate) }),
@@ -128,30 +129,37 @@ export default function CommunityPage() {
 
   /* ── Mutations ── */
   const hidePost = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.hideCommunityPost(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts'] }),
   });
   const showPost = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.showCommunityPost(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts'] }),
   });
   const deletePost = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteCommunityPost(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts'] }),
   });
   const hideComment = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.hideCommunityComment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-comments'] }),
   });
   const deleteComment = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteCommunityComment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-comments'] }),
   });
   const resolveReport = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.resolveCommunityReport(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-reports'] }),
   });
   const deleteChallenge = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteChallenge(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['community-challenges'] }),
   });

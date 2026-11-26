@@ -50,11 +50,16 @@ export default function SolutionsPreviewPage() {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const createMut = useMutation({ mutationFn: (d: SolFormValues) => websiteService.createSolution(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions'] }); setAdding(false); }});
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSolution(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions'] }); setEditId(null); }});
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteSolution(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateSolution(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderSolutions(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: SolFormValues) => websiteService.createSolution(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions'] }); setAdding(false); }});
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSolution(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions'] }); setEditId(null); }});
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteSolution(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateSolution(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderSolutions(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions'] })});
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

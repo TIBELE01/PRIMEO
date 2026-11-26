@@ -9,7 +9,7 @@ interface Props {
   height?: number;
 }
 
-export function BarChartWidget({ data, xKey, yKey, color = '#1B5E20', height = 220 }: Props) {
+export function BarChartWidget({ data, xKey, yKey, color = '#1056E0', height = 220 }: Props) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBar data={data}>

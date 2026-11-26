@@ -104,22 +104,27 @@ export default function SolutionsBlocsPage() {
   const [editId, setEditId] = useState<string | null>(null);
 
   const createMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: BlocDraft) => websiteService.createSolutionsBloc(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions-blocs'] }); setAdding(false); },
   });
   const updateMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, d }: { id: string; d: Partial<BlocDraft> }) => websiteService.updateSolutionsBloc(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-solutions-blocs'] }); setEditId(null); },
   });
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteSolutionsBloc(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions-blocs'] }),
   });
   const toggleMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateSolutionsBloc(id, { active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions-blocs'] }),
   });
   const reorderMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (ids: string[]) => websiteService.reorderSolutionsBlocs(ids),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-solutions-blocs'] }),
   });

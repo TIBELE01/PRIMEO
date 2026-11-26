@@ -23,6 +23,7 @@ export default function BlogCategoriesPage() {
   });
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (cat: Category | null) =>
       cat
         ? websiteService.updateBlogCategory(cat.id, { name: form.name, slug: form.slug })
@@ -34,6 +35,7 @@ export default function BlogCategoriesPage() {
   });
 
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteBlogCategory(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['blog-categories'] }),
   });

@@ -35,11 +35,16 @@ export default function CareersFaqPage() {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const createMut = useMutation({ mutationFn: (d: FaqDraft) => websiteService.createCareersFaq(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-faq'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: Partial<FaqDraft> }) => websiteService.updateCareersFaq(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-faq'] }); setEditId(null); } });
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateCareersFaq(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteCareersFaq(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderCareersFaq(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: FaqDraft) => websiteService.createCareersFaq(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-faq'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: Partial<FaqDraft> }) => websiteService.updateCareersFaq(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-faq'] }); setEditId(null); } });
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateCareersFaq(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteCareersFaq(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderCareersFaq(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-faq'] }) });
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

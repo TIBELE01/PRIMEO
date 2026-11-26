@@ -32,11 +32,13 @@ export default function HeroPage() {
   }, [hero, reset]);
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (form: HeroForm) => websiteService.updateHero(form),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-hero'] }); setSaved(true); setTimeout(() => setSaved(false), 3000); },
   });
 
   const imgMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (file: File) => websiteService.uploadHeroImage(file),
     onSuccess: (data: any) => { setImgPreview(data.imageUrl); qc.invalidateQueries({ queryKey: ['website-hero'] }); },
   });

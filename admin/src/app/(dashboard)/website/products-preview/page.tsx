@@ -51,12 +51,18 @@ export default function ProductsPreviewPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const createMut = useMutation({ mutationFn: (d: ProdFormValues) => websiteService.createProduct(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-products'] }); setAdding(false); }});
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateProduct(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-products'] }); setEditId(null); }});
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteProduct(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
-  const imgMut   = useMutation({ mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadProductImage(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateProduct(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderProducts(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: ProdFormValues) => websiteService.createProduct(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-products'] }); setAdding(false); }});
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateProduct(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-products'] }); setEditId(null); }});
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteProduct(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
+  const imgMut   = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadProductImage(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateProduct(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderProducts(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-products'] })});
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

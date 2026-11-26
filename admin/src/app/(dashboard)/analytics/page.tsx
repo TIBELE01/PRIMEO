@@ -19,7 +19,7 @@ import { formatAmount, formatPercent, downloadCsv, exportChartAsPng } from '@/li
 import { useRouter } from 'next/navigation';
 
 // ── Colours ──────────────────────────────────────────────────────────────────
-const PALETTE  = ['#1B5E20', '#2E7D32', '#43A047', '#F9A825', '#E65100', '#6A1B9A', '#0277BD'];
+const PALETTE  = ['#1056E0', '#D67309', '#5BBD15', '#7C3AED', '#0891B2', '#DC2626', '#64748B'];
 const PALETTE2 = ['#0277BD', '#00838F', '#2E7D32', '#F57F17', '#6A1B9A', '#C62828', '#37474F'];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -69,9 +69,10 @@ function KpiCard({ label, value, icon: Icon, color, bg, sub }: {
         <div className={`p-3 rounded-lg shrink-0 ${bg}`}>
           <Icon size={22} className={color} />
         </div>
-        <div className="min-w-0">
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 truncate">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+          {/* Montant jamais tronqué : taille adaptée à la largeur de carte (1366 → 1920 px) */}
+          <p className="text-xl 2xl:text-2xl font-bold text-gray-900 dark:text-white tabular-nums leading-tight break-words" title={String(value)}>{value}</p>
           {sub && <div className="mt-1">{sub}</div>}
         </div>
       </div>
@@ -305,7 +306,7 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Réservations" fill="#1B5E20" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Réservations" fill="#1056E0" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -382,7 +383,7 @@ export default function AnalyticsPage() {
                     <Tooltip formatter={(v: number, name: string) =>
                       name === 'Revenus (FCFA)' ? formatAmount(v) : v} />
                     <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Bar yAxisId="left" dataKey="bookings" name="Réservations" fill="#1B5E20" radius={[4, 4, 0, 0]} />
+                    <Bar yAxisId="left" dataKey="bookings" name="Réservations" fill="#1056E0" radius={[4, 4, 0, 0]} />
                     <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#F9A825"
                       strokeWidth={2} dot={{ r: 3 }} name="Revenus (FCFA)" />
                   </ComposedChart>
@@ -466,7 +467,7 @@ export default function AnalyticsPage() {
                     <XAxis type="number" tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
                     <Tooltip />
-                    <Bar dataKey="value" name="Propriétés" fill="#43A047" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="value" name="Propriétés" fill="#D67309" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -494,7 +495,7 @@ export default function AnalyticsPage() {
                     <YAxis type="category" dataKey="city" tick={{ fontSize: 11 }} width={90} />
                     <Tooltip formatter={(v: number, name: string) => name === 'Revenus (FCFA)' ? formatAmount(v) : v} />
                     <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="count" name="Réservations" fill="#2E7D32" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" name="Réservations" fill="#1056E0" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -582,7 +583,7 @@ export default function AnalyticsPage() {
                       tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(v: number, name: string) => name === 'Revenus (FCFA)' ? formatAmount(v) : v} />
                     <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Bar yAxisId="left" dataKey="count" name="Réservations" fill="#1B5E20" radius={[4, 4, 0, 0]} />
+                    <Bar yAxisId="left" dataKey="count" name="Réservations" fill="#1056E0" radius={[4, 4, 0, 0]} />
                     <Bar yAxisId="right" dataKey="revenue" name="Revenus (FCFA)" fill="#F9A825" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

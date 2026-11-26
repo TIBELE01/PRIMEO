@@ -21,6 +21,7 @@ export default function AboutHistoryPage() {
   }, [data, reset]);
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (form: HistoryForm) => websiteService.upsertAboutHistory(form),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['about-history'] }),
   });

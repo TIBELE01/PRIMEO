@@ -21,6 +21,7 @@ export default function AboutMissionPage() {
   }, [data, reset]);
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (form: MissionForm) => websiteService.upsertAboutMission(form),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['about-mission'] }),
   });

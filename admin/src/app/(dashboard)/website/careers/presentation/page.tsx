@@ -28,11 +28,13 @@ export default function CareersPresentation() {
   }, [team]);
 
   const savePresMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: PresForm) => websiteService.upsertCareersPresentation(d),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-pres'] }),
   });
 
   const saveTeamMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: { text: string; photo?: File }) => websiteService.upsertCareersTeam(d.text, d.photo),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-team'] }),
   });

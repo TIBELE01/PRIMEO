@@ -46,11 +46,16 @@ export default function WhyPage() {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const createMut = useMutation({ mutationFn: (d: WhyFormValues) => websiteService.createWhy(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-why'] }); setAdding(false); }});
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateWhy(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-why'] }); setEditId(null); }});
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteWhy(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateWhy(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderWhy(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: WhyFormValues) => websiteService.createWhy(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-why'] }); setAdding(false); }});
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateWhy(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-why'] }); setEditId(null); }});
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteWhy(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateWhy(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderWhy(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['website-why'] })});
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

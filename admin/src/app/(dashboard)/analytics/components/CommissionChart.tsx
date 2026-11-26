@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 interface Props { data: { sector: string; amount: number }[] }
 
-const COLORS = ['#1B5E20', '#2E7D32', '#388E3C', '#F9A825'];
+const COLORS = ['#1056E0', '#D67309', '#5BBD15', '#7C3AED'];
 
 export function CommissionChart({ data }: Props) {
   return (

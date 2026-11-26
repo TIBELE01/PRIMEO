@@ -76,12 +76,18 @@ export default function AboutTeamPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const photoRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const createMut = useMutation({ mutationFn: async ({ d, photo }: { d: MemberDraft; photo?: File }) => { const created = await websiteService.createAboutTeam(d); if (photo && created?.id) await websiteService.uploadAboutTeamPhoto(created.id, photo); return created; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: async ({ id, d, photo }: { id: string; d: Partial<MemberDraft>; photo?: File }) => { const updated = await websiteService.updateAboutTeam(id, d); if (photo) await websiteService.uploadAboutTeamPhoto(id, photo); return updated; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setEditId(null); } });
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutTeam(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
-  const photoMut = useMutation({ mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadAboutTeamPhoto(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteAboutTeam(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderAboutTeam(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: async ({ d, photo }: { d: MemberDraft; photo?: File }) => { const created = await websiteService.createAboutTeam(d); if (photo && created?.id) await websiteService.uploadAboutTeamPhoto(created.id, photo); return created; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: async ({ id, d, photo }: { id: string; d: Partial<MemberDraft>; photo?: File }) => { const updated = await websiteService.updateAboutTeam(id, d); if (photo) await websiteService.uploadAboutTeamPhoto(id, photo); return updated; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-team'] }); setEditId(null); } });
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutTeam(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
+  const photoMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadAboutTeamPhoto(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteAboutTeam(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderAboutTeam(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-team'] }) });
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

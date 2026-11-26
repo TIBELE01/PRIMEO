@@ -35,6 +35,7 @@ export default function FaqPage() {
   }, [filtered]);
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: FaqFormValues) =>
       editing
         ? websiteService.updateFaq(editing.id, d)
@@ -43,11 +44,13 @@ export default function FaqPage() {
   });
 
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: number) => websiteService.deleteFaq(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['faq-admin'] }),
   });
 
   const moveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, order }: { id: number; order: number }) => websiteService.updateFaq(id, { order }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['faq-admin'] }),
   });

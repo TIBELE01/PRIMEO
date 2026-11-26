@@ -35,11 +35,16 @@ export default function AboutValuesPage() {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const createMut = useMutation({ mutationFn: (d: ValueDraft) => websiteService.createAboutValue(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-values'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: Partial<ValueDraft> }) => websiteService.updateAboutValue(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-values'] }); setEditId(null); } });
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutValue(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteAboutValue(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderAboutValues(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: ValueDraft) => websiteService.createAboutValue(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-values'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: Partial<ValueDraft> }) => websiteService.updateAboutValue(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-values'] }); setEditId(null); } });
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutValue(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteAboutValue(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderAboutValues(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-values'] }) });
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

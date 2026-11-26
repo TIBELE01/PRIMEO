@@ -31,6 +31,7 @@ function IntroTab() {
   const [form, setForm] = useState<{ title: string; paragraph: string } | null>(null);
 
   const mut = useMutation({
+    meta: { feedback: true },
     mutationFn: (payload: { title: string; paragraph: string }) => websiteService.updateProductsPageIntro(payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-intro'] }); setForm(null); },
   });
@@ -158,18 +159,22 @@ function SubscriptionsTab() {
   const [newRow, setNewRow] = useState({ feature: '', starter: '', business: '', entreprise: '', highlight: false });
 
   const updatePlan = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSubPlan(id, d),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-plans'] }),
   });
   const createRow = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: object) => websiteService.createSubRow(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-rows'] }); setAddingRow(false); setNewRow({ feature: '', starter: '', business: '', entreprise: '', highlight: false }); },
   });
   const updateRow = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateSubRow(id, d),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-rows'] }),
   });
   const deleteRow = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteSubRow(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-rows'] }),
   });
@@ -256,6 +261,7 @@ function BoostTab() {
   const [form, setForm] = useState<any>(null);
 
   const mut = useMutation({
+    meta: { feedback: true },
     mutationFn: (payload: any) => websiteService.updateProductsBoostSection(payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-boost'] }); setForm(null); },
   });
@@ -294,6 +300,7 @@ function AdsTab() {
   const [form, setForm] = useState<any>(null);
 
   const mut = useMutation({
+    meta: { feedback: true },
     mutationFn: (payload: any) => websiteService.updateProductsAdsSection(payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-ads'] }); setForm(null); },
   });
@@ -369,10 +376,14 @@ function DataPacksTab() {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const createMut = useMutation({ mutationFn: (d: any) => websiteService.createDataPack(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-data-packs'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: any) => websiteService.updateDataPack(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-data-packs'] }); setEditId(null); } });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteDataPack(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-data-packs'] }) });
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: any) => websiteService.updateDataPack(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-data-packs'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: any) => websiteService.createDataPack(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-data-packs'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: any) => websiteService.updateDataPack(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-data-packs'] }); setEditId(null); } });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteDataPack(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-data-packs'] }) });
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: any) => websiteService.updateDataPack(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-data-packs'] }) });
 
   return (
     <div className="space-y-3 max-w-2xl">
@@ -443,9 +454,12 @@ function UpcomingTab() {
   const [editId, setEditId] = useState<string | null>(null);
   const emptyDraft = { icon: '🚀', title: '', description: '' };
 
-  const createMut = useMutation({ mutationFn: (d: any) => websiteService.createUpcoming(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-upcoming'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: any) => websiteService.updateUpcoming(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-upcoming'] }); setEditId(null); } });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteUpcoming(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-upcoming'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: any) => websiteService.createUpcoming(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-upcoming'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: any) => websiteService.updateUpcoming(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['prod-upcoming'] }); setEditId(null); } });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteUpcoming(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['prod-upcoming'] }) });
 
   return (
     <div className="space-y-3 max-w-2xl">

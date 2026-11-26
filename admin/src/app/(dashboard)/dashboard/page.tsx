@@ -11,7 +11,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
-const PALETTE = ['#1B5E20', '#2E7D32', '#43A047', '#F9A825', '#E65100', '#6A1B9A', '#0277BD'];
+const PALETTE = ['#1056E0', '#D67309', '#5BBD15', '#7C3AED', '#0891B2', '#DC2626', '#64748B'];
 
 const BOOKING_STATUS_LABELS: Record<string, string> = {
   interest_expressed: 'Intérêt exprimé', confirmed: 'Confirmées', pending_payment: 'En attente', completed: 'Terminées',
@@ -78,7 +78,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="count" name="Réservations" fill="#1B5E20" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name="Réservations" fill="#1056E0" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

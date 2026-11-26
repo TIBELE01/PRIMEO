@@ -70,6 +70,7 @@ function CreateJobForm({ onSuccess, onCancel }: { onSuccess: () => void; onCance
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<JobFormValues>({ defaultValues: EMPTY });
   const mut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: JobFormValues) => websiteService.createCareersJob(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-jobs'] }); onSuccess(); },
   });
@@ -91,6 +92,7 @@ function EditJobForm({ job, onSuccess, onCancel }: { job: any; onSuccess: () => 
     defaultValues: { title: job.title, department: job.department, location: job.location, type: job.type, description: job.description, profile: job.profile, offer: job.offer || '', process: job.process || '', expiresAt: job.expiresAt ? job.expiresAt.split('T')[0] : '' },
   });
   const mut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: JobFormValues) => websiteService.updateCareersJob(job.id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['careers-jobs'] }); onSuccess(); },
   });
@@ -113,10 +115,12 @@ export default function CareersJobsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const toggleMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateCareersJob(id, { active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-jobs'] }),
   });
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteCareersJob(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-jobs'] }),
   });

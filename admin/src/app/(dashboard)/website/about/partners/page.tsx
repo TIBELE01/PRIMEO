@@ -37,12 +37,18 @@ export default function AboutPartnersPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const logoRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const createMut = useMutation({ mutationFn: (d: PartnerDraft) => websiteService.createAboutPartner(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-partners'] }); setAdding(false); } });
-  const updateMut = useMutation({ mutationFn: ({ id, d }: { id: string; d: Partial<PartnerDraft> }) => websiteService.updateAboutPartner(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-partners'] }); setEditId(null); } });
-  const toggleMut = useMutation({ mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutPartner(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
-  const logoMut = useMutation({ mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadAboutPartnerLogo(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
-  const deleteMut = useMutation({ mutationFn: (id: string) => websiteService.deleteAboutPartner(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
-  const reorderMut = useMutation({ mutationFn: (ids: string[]) => websiteService.reorderAboutPartners(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
+  const createMut = useMutation({
+    meta: { feedback: true }, mutationFn: (d: PartnerDraft) => websiteService.createAboutPartner(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-partners'] }); setAdding(false); } });
+  const updateMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, d }: { id: string; d: Partial<PartnerDraft> }) => websiteService.updateAboutPartner(id, d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['about-partners'] }); setEditId(null); } });
+  const toggleMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateAboutPartner(id, { active }), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
+  const logoMut = useMutation({
+    meta: { feedback: true }, mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadAboutPartnerLogo(id, file), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
+  const deleteMut = useMutation({
+    meta: { feedback: true }, mutationFn: (id: string) => websiteService.deleteAboutPartner(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
+  const reorderMut = useMutation({
+    meta: { feedback: true }, mutationFn: (ids: string[]) => websiteService.reorderAboutPartners(ids), onSuccess: () => qc.invalidateQueries({ queryKey: ['about-partners'] }) });
 
   if (isLoading) return <div className="p-6 text-gray-500">Chargement…</div>;
 

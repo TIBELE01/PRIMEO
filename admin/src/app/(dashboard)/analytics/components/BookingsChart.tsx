@@ -11,7 +11,7 @@ export function BookingsChart({ data }: Props) {
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} />
         <Tooltip />
-        <Bar dataKey="count" fill="#1B5E20" radius={[4, 4, 0, 0]} name="Réservations" />
+        <Bar dataKey="count" fill="#1056E0" radius={[4, 4, 0, 0]} name="Réservations" />
       </BarChart>
     </ResponsiveContainer>
   );

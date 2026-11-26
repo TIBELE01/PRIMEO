@@ -62,6 +62,7 @@ export default function BlogPostsPage() {
   const totalPages = Math.ceil(total / 20) || 1;
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (p: Post | null) => {
       const body = {
         ...form,
@@ -81,6 +82,7 @@ export default function BlogPostsPage() {
   });
 
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteBlogPost(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['blog-posts'] }),
   });

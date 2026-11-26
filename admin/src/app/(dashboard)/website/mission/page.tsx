@@ -17,6 +17,7 @@ export default function MissionPage() {
   useEffect(() => { if (data?.text) reset({ text: data.text }); }, [data, reset]);
 
   const saveMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (form: MissionForm) => websiteService.updateMission(form.text),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-mission'] }); setSaved(true); setTimeout(() => setSaved(false), 3000); },
   });

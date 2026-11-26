@@ -24,11 +24,13 @@ export default function ApplicationsPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const updateMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, status, note }: { id: string; status: string; note?: string }) =>
       websiteService.updateApplicationStatus(id, status, note),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-applications'] }),
   });
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteApplication(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['careers-applications'] }),
   });

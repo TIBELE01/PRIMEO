@@ -97,26 +97,32 @@ export default function TestimonialsPage() {
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const createMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (d: TestimonialFormValues) => websiteService.createTestimonial(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-testimonials'] }); setAdding(false); },
   });
   const updateMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, d }: { id: string; d: object }) => websiteService.updateTestimonial(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['website-testimonials'] }); setEditId(null); },
   });
   const deleteMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deleteTestimonial(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-testimonials'] }),
   });
   const photoMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, file }: { id: string; file: File }) => websiteService.uploadTestimonialPhoto(id, file),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-testimonials'] }),
   });
   const toggleMut = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, active }: { id: string; active: boolean }) => websiteService.updateTestimonial(id, { active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-testimonials'] }),
   });
   const reorderMut = useMutation({
+    meta: { feedback: true },
     mutationFn: (ids: string[]) => websiteService.reorderTestimonials(ids),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website-testimonials'] }),
   });

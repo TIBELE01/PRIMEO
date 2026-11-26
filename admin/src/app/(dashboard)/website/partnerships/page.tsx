@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { websiteService } from '@/services/api';
 import { PartnershipDossierCard } from '@/components/website/PartnershipDossierCard';
@@ -36,6 +36,18 @@ export default function PartnershipsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<Request | null>(null);
+  // Menu « Changer le statut » ouvert (id de la demande) — piloté au clic : l'ouverture au
+  // seul focus ne fonctionnait pas sur Safari (un bouton cliqué n'y prend pas le focus).
+  const [statusMenuFor, setStatusMenuFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!statusMenuFor) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !(e.target as HTMLElement).closest('[data-status-menu]')) setStatusMenuFor(null);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close); };
+  }, [statusMenuFor]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['partnerships', page, statusFilter],
@@ -43,12 +55,14 @@ export default function PartnershipsPage() {
   });
 
   const updateStatus = useMutation({
+    meta: { feedback: true },
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       websiteService.updatePartnershipStatus(id, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partnerships'] }),
   });
 
   const deleteReq = useMutation({
+    meta: { feedback: true },
     mutationFn: (id: string) => websiteService.deletePartnership(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['partnerships'] });
@@ -160,21 +174,32 @@ export default function PartnershipsPage() {
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${st.color}`}>
                             {st.label}
                           </span>
-                          <div className="relative group">
-                            <button className="p-1 hover:bg-gray-100 rounded" title="Changer le statut">
+                          <div className="relative" data-status-menu>
+                            <button
+                              type="button"
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                              title="Changer le statut"
+                              aria-haspopup="menu"
+                              aria-expanded={statusMenuFor === r.id}
+                              onClick={() => setStatusMenuFor((cur) => (cur === r.id ? null : r.id))}
+                            >
                               <ChevronDown size={13} className="text-gray-400 dark:text-gray-500" />
                             </button>
-                            <div className="absolute right-0 top-6 z-10 bg-white border border-gray-200 rounded-lg shadow-lg hidden group-focus-within:block min-w-[140px]">
+                            {statusMenuFor === r.id && (
+                            <div role="menu" className="absolute right-0 top-6 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-[160px] py-1">
                               {Object.entries(STATUS_LABELS).map(([val, { label }]) => (
                                 <button
                                   key={val}
-                                  onClick={() => updateStatus.mutate({ id: r.id, status: val })}
-                                  className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => { updateStatus.mutate({ id: r.id, status: val }); setStatusMenuFor(null); }}
+                                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${r.status === val ? 'font-semibold text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}
                                 >
                                   {label}
                                 </button>
                               ))}
                             </div>
+                            )}
                           </div>
                         </div>
                       </td>
