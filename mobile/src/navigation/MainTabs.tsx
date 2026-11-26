@@ -47,6 +47,7 @@ import { DisputeDetailScreen }      from '../screens/client/Disputes/DisputeDeta
 import { NewDisputeScreen }         from '../screens/client/Disputes/NewDisputeScreen';
 import { SectorScreen }             from '../screens/client/Sector/SectorScreen';
 import { CategoryScreen }           from '../screens/client/Category/CategoryScreen';
+import NotificationsScreen        from '../screens/pro/Notifications/NotificationsScreen';
 import SupportChatbotScreen         from '../screens/common/SupportScreen';
 import SupportTicketsScreen         from '../screens/common/SupportTicketsScreen';
 import SupportTicketDetailScreen    from '../screens/common/SupportTicketDetailScreen';
@@ -88,6 +89,7 @@ function HomeTabStack() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home"                  component={HomeScreen} />
+      <HomeStack.Screen name="Notifications"         component={sc(NotificationsScreen)} options={{ headerShown: false }} />
       {/* 4 category pages — one per sector card on the home screen */}
       <HomeStack.Screen name="ResidencesCategory"    component={CategoryScreen} initialParams={{ category: 'residence' }} />
       <HomeStack.Screen name="HotelsCategory"        component={CategoryScreen} initialParams={{ category: 'hotel' }} />

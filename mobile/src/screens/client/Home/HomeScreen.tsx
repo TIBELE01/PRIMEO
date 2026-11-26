@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '@navigation/types';
 import { propertiesApi } from '@services/api/endpoints/properties';
 import { favoritesApi } from '@services/api/endpoints/favorites';
+import { notificationsApi } from '@services/api/endpoints/notificationsApi';
 import { websiteApi } from '@services/api/endpoints/websiteApi';
 import type { PlatformStats } from '@services/api/endpoints/websiteApi';
 import type { Property } from '@/types/property';
@@ -180,6 +181,18 @@ export function HomeScreen() {
   }, [isAuthenticated, isOffline]);
 
   useEffect(() => { load(); loadFavorites(); }, [load, loadFavorites]);
+
+  // Compteur de notifications non lues (cloche de l'en-tête), rafraîchi à chaque retour sur l'accueil
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    const refresh = () => {
+      notificationsApi.list({ page: 1, limit: 1 })
+        .then((res) => { const d = res.data?.data ?? res.data ?? {}; setUnreadCount(Number(d.unread) || 0); })
+        .catch(() => {});
+    };
+    refresh();
+    return navigation.addListener('focus', refresh);
+  }, [navigation]);
   const { sectors, refresh: refreshSectors } = useSectorFlags();
   const onRefresh = useCallback(() => { setRefreshing(true); void refreshSectors(); load(true); loadFavorites(); }, [load, loadFavorites, refreshSectors]);
 
@@ -204,7 +217,8 @@ export function HomeScreen() {
     }
   }, [favoriteIds, isAuthenticated]);
 
-  const goSearch   = (p?: any) => navigation.navigate('Search', p ?? {});
+  // « Search » vit dans l'onglet Rechercher (pile distincte de celle de l'accueil)
+  const goSearch   = (p?: any) => (navigation as any).navigate('Rechercher', { screen: 'Search', params: p ?? {} });
   const goProperty = (id: string) => { trackPropertyClick(id, 'home'); navigation.navigate('PropertyDetail', { propertyId: id }); };
 
   /* Données réelles uniquement — aucune propriété de démonstration */
@@ -234,6 +248,8 @@ export function HomeScreen() {
         <HomeHeader
           sectors={sectors}
           userName={user?.firstName}
+          unreadCount={unreadCount}
+          onNotificationsPress={() => (navigation as any).navigate('Notifications')}
           onPressResidence={() => navigation.navigate('ResidencesCategory', { category: 'residence' })}
           onPressHotel={() => navigation.navigate('HotelsCategory', { category: 'hotel' })}
           onPressImmobilier={() => navigation.navigate('ImmobilierCategory', { category: 'immobilier' })}

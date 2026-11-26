@@ -110,7 +110,7 @@ export function SectorScreen() {
   };
 
   const goAdvancedSearch = () =>
-    navigation.navigate('Search', { type: sectorType });
+    (navigation as any).navigate('Rechercher', { screen: 'Search', params: { type: sectorType } });
 
   return (
     <SafeAreaView style={styles.safe}>
