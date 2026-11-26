@@ -17,9 +17,8 @@ import { signInWithGoogle } from '../../services/googleAuth';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import type { AuthScreenProps } from '../../navigation/types';
 import { trackEvent } from '../../services/analytics';
-const AUTH_LOGO_URL =
-  'https://res.cloudinary.com/dlnnxvepd/image/upload/v1782345787/Logo_Primeo_1_gzcjq2.png';
 import { BLUE, BLUE_LIGHT, ORANGE, RED, AuthBackground, Neu, useAuthPalette, type AuthPalette } from './authDesign';
+import { LogoTile } from '../../components/common/Logo';
 
 type Props = AuthScreenProps<'Login'>;
 
@@ -107,7 +106,7 @@ export function LoginScreen({ navigation }: Props) {
 
             {/* Logo en carte de verre flottante */}
             <Neu radius={46} depth={1.4} style={s.logoWrap} innerStyle={s.logoInner}>
-              <Image source={{ uri: AUTH_LOGO_URL }} resizeMode="contain" style={s.logo} accessibilityLabel="Logo Primeo" />
+              <LogoTile size={Math.round(Number(s.logoInner.width) * 0.77)} shadow />
             </Neu>
 
             <Text style={s.title} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>Bienvenue sur Primeo</Text>
@@ -276,7 +275,6 @@ function makeStyles(P: AuthPalette, sc: number) {
 
     logoWrap: { alignSelf: 'center', marginBottom: z(16) },
     logoInner: { width: z(104), height: z(104), alignItems: 'center', justifyContent: 'center' },
-    logo: { width: z(68), height: z(68) },
 
     title: { fontSize: z(27), fontWeight: '900', color: P.text, textAlign: 'center', letterSpacing: -0.5 },
     subtitle: { fontSize: z(13), color: P.muted, textAlign: 'center', letterSpacing: 2.5, marginTop: z(6), marginBottom: z(18) },

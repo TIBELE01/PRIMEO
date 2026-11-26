@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'PRIMEO Admin',
   description: 'Dashboard d\'administration PRIMEO',
   robots: 'noindex, nofollow',
+  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

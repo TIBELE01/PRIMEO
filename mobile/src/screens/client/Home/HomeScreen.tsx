@@ -25,6 +25,7 @@ import { OwnerBenefits } from '../../../components/home/OwnerBenefits';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../../utils/sectors';
 import { trackPropertyClick } from '../../../utils/propertyStats';
+import { LogoTile } from '../../../components/common/Logo';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -108,7 +109,7 @@ function AppTopBar() {
 
       {/* Logo fixe */}
       <View style={s.appBarLogo}>
-        <Text style={s.appBarLogoText}>P</Text>
+        <LogoTile size={36} radius={9} />
       </View>
 
       {/* Séparateur vertical */}
@@ -469,13 +470,6 @@ const s = StyleSheet.create({
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1056E0',
-  },
-  appBarLogoText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
   },
   appBarSep: {
     width: 1,

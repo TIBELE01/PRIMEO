@@ -3,7 +3,7 @@
 // site vitrine : toute mise à jour d'URL se fait ici, jamais en double.
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { PRIMEO_LOGO_URL } from '../../../components/common/Logo';
+import { LogoTile } from '../../../components/common/Logo';
 import { VITRINE_URL as VITRINE, LEGAL_URL as LEGAL, SOCIAL_URLS, openExternal } from '../../../constants/externalLinks';
 
 
@@ -78,7 +78,7 @@ export function HomeFooter({ onBecomePro }: { onBecomePro?: () => void } = {}) {
       </TouchableOpacity>
 
       <View style={s.footerBrand}>
-        <Image source={{ uri: PRIMEO_LOGO_URL }} resizeMode="contain" style={s.footerLogoImg} />
+        <LogoTile size={48} radius={12} />
         <Text style={s.footerBrandSub}>Hébergement · Côte d'Ivoire</Text>
       </View>
       <Text style={s.footerDesc}>
@@ -130,7 +130,6 @@ const s = StyleSheet.create({
   proCtaDesc:    { fontSize: 12, color: 'rgba(255,255,255,0.62)' },
   proCtaArrow:   { fontSize: 20, color: 'rgba(255,255,255,0.50)', fontWeight: '700' },
   footerBrand:    { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  footerLogoImg:  { width: 48, height: 48 },
   footerBrandSub: { fontSize: 11, color: 'rgba(255,255,255,0.55)' },
   footerDesc:       { fontSize: 12.5, color: 'rgba(255,255,255,0.65)', lineHeight: 19, marginBottom: 4 },
   footerSep:        { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: 18 },

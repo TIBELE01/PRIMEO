@@ -29,7 +29,7 @@ module.exports = ({ config }) => ({
   splash: {
     image: './assets/splash.png',
     resizeMode: 'contain',
-    backgroundColor: '#1B5E20',
+    backgroundColor: '#FFFFFF',
   },
   assetBundlePatterns: ['**/*'],
   ios: {
@@ -44,7 +44,7 @@ module.exports = ({ config }) => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#1B5E20',
+      backgroundColor: '#FFFFFF',
     },
     package: 'ci.primeo.app',
     permissions: [
@@ -73,7 +73,7 @@ module.exports = ({ config }) => ({
   },
   plugins: [
     'expo-font',
-    ['expo-notifications', { icon: './assets/notification-icon.png', color: '#1B5E20' }],
+    ['expo-notifications', { icon: './assets/notification-icon.png', color: '#0055FF' }],
     ['expo-secure-store'],
     ['expo-image-picker', { photosPermission: 'Primeo accède à vos photos pour ajouter des images à vos annonces et avis.' }],
     [

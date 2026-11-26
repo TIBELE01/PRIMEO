@@ -10,10 +10,9 @@ const LottieView = require('lottie-react-native').default as React.ComponentType
   source: unknown; autoPlay?: boolean; loop?: boolean; style?: unknown; accessibilityLabel?: string;
 }>;
 import type { AuthScreenProps } from '../../navigation/types';
-const AUTH_LOGO_URL =
-  'https://res.cloudinary.com/dlnnxvepd/image/upload/v1782345787/Logo_Primeo_1_gzcjq2.png';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthBackground, AuthButtonGradient, Neu, useAuthPalette, BLUE, ORANGE, type AuthPalette } from './authDesign';
+import { LogoTile } from '../../components/common/Logo';
 
 const { width } = Dimensions.get('window');
 type Props = AuthScreenProps<'Welcome'>;
@@ -48,7 +47,7 @@ export function WelcomeScreen({ navigation }: Props) {
         {/* Logo en carte flottante */}
         <View style={s.brandArea}>
           <Neu radius={46} depth={1.4} innerStyle={s.logoInner}>
-            <Image source={{ uri: AUTH_LOGO_URL }} resizeMode="contain" style={s.logoImg} accessibilityLabel="Logo Primeo" />
+            <LogoTile size={Math.round(Number(s.logoInner.width) * 0.76)} shadow />
           </Neu>
           <Text style={s.tagline}>RÉSERVEZ · ACHETEZ · VIVEZ</Text>
         </View>
@@ -137,7 +136,6 @@ function makeStyles(P: AuthPalette, sc: number) {
 
     brandArea: { alignItems: 'center', paddingTop: z(8), gap: z(12) },
     logoInner: { width: z(110), height: z(110), alignItems: 'center', justifyContent: 'center' },
-    logoImg: { width: z(74), height: z(74) },
     tagline: { fontSize: 12, fontWeight: '700', color: P.muted, letterSpacing: 2.2 },
 
     animArea: { alignItems: 'center', justifyContent: 'center' },

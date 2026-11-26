@@ -59,12 +59,12 @@ function renderHero(text: string, accent: Accent): string {
 }
 
 // ─── En-tête : petit logo discret ────────────────────────────────────────────
-// Logo volontairement petit (22 px) ; l'image source est aussi demandée en petite
+// Logo volontairement petit (24 px de haut, proportions conservées) ; l'image source est aussi demandée en petite
 // taille, pour rester discrète même dans un client email qui ignorerait width/height.
 
 function renderTopBar(): string {
   const logo = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="center-table"><tr>
-      <td style="padding-right:6px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="22" height="22" style="display:block;border:0;outline:none;width:22px;height:22px;max-width:22px;" /></td>
+      <td style="padding-right:6px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="29" height="24" style="display:block;border:0;outline:none;width:29px;height:24px;max-width:29px;" /></td>
       <td style="vertical-align:middle;font-family:${FONT};font-size:14px;font-weight:800;color:${C.primary};letter-spacing:-0.2px;">Primeo</td>
     </tr></table>`;
   return `

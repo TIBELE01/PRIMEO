@@ -85,8 +85,11 @@ export function Sidebar() {
       <div className="flex items-center justify-between px-4 py-5 border-b border-primary-800">
         {!sidebarCollapsed && (
           <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/c_pad,b_transparent,w_240,h_240/v1782345787/Logo_Primeo_1_gzcjq2.png" alt="Primeo" className="h-8 w-auto" />
+            {/* Logo officiel : conteneur blanc (la barre latérale est sombre) */}
+            <span className="inline-flex items-center justify-center rounded-lg bg-white px-2 py-1.5 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png" alt="Primeo" className="h-7 w-auto" />
+            </span>
             <p className="text-xs text-primary-400">Administration</p>
           </div>
         )}

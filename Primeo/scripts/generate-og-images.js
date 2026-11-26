@@ -21,6 +21,8 @@ try {
 }
 
 const OUT_DIR = path.join(__dirname, '..', 'assets', 'img', 'og');
+// Logo officiel (PNG transparent) intégré dans une tuile blanche : jamais posé directement sur le fond sombre
+const LOGO_DATA = 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, '..', 'assets', 'img', 'logo-primeo.png')).toString('base64');
 const W = 1200;
 const H = 630;
 
@@ -99,6 +101,10 @@ function svg({ title, subtitle, accent = C.cta }) {
 
   <!-- accent bar -->
   <rect x="80" y="120" width="64" height="8" rx="4" fill="url(#bar)"/>
+
+  <!-- logo officiel dans une tuile blanche -->
+  <rect x="${W - 236}" y="64" width="156" height="156" rx="34" fill="#ffffff"/>
+  <image x="${W - 214}" y="92" width="112" height="100" preserveAspectRatio="xMidYMid meet" href="${LOGO_DATA}"/>
 
   <!-- wordmark -->
   <text x="80" y="205" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif"

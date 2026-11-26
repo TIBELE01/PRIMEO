@@ -2,9 +2,23 @@
 // La livraison se fait par un lien de téléchargement signé (route /api/downloads)
 // qui régénère le PDF à la volée : aucun fichier n'est stocké sur un CDN, ce qui
 // contourne le blocage de livraison des PDF par défaut côté Cloudinary.
+import fs from 'fs';
+import path from 'path';
 import PDFDocument from 'pdfkit';
 import { env } from '../../config/env.config';
 import { createDownloadToken } from './download-token';
+
+// Logo officiel (PNG transparent, public/brand) lu une seule fois ; null si absent (repli sur un « P »).
+let logoCache: Buffer | null | undefined;
+function invoiceLogo(): Buffer | null {
+  if (logoCache !== undefined) return logoCache;
+  try {
+    logoCache = fs.readFileSync(path.resolve(process.cwd(), 'public', 'brand', 'logo-primeo.png'));
+  } catch {
+    logoCache = null;
+  }
+  return logoCache;
+}
 
 // Validité des liens de facture : couvre le clic différé depuis l'email.
 const INVOICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -152,12 +166,17 @@ function renderInvoicePdf(m: InvoiceModel): Promise<Buffer> {
     // ── En-tête : bandeau bleu ────────────────────────────────────────────────
     doc.rect(0, 0, W, 128).fill(PDF.blue);
     doc.rect(0, 128, W, 4).fill(PDF.blueDark);
-    // Petit logo (carré blanc arrondi + « P »)
-    doc.roundedRect(L, 30, 26, 26, 6).fill('#FFFFFF');
-    doc.fillColor(PDF.blue).font('Helvetica-Bold').fontSize(16);
-    t('P', L, 35, { width: 26, align: 'center' });
+    // Logo officiel dans une tuile blanche arrondie (jamais directement sur le bandeau bleu)
+    doc.roundedRect(L, 22, 46, 42, 8).fill('#FFFFFF');
+    const logo = invoiceLogo();
+    if (logo) {
+      doc.image(logo, L + 5, 26, { fit: [36, 34], align: 'center', valign: 'center' });
+    } else {
+      doc.fillColor(PDF.blue).font('Helvetica-Bold').fontSize(20);
+      t('P', L, 33, { width: 46, align: 'center' });
+    }
     doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(17);
-    t('Primeo', L + 34, 35);
+    t('Primeo', L + 56, 34);
     doc.font('Helvetica').fontSize(8.5).fillColor('#DCE7FF');
     t(COMPANY_INFO.address, L, 68);
     t(COMPANY_INFO.email, L, 81);

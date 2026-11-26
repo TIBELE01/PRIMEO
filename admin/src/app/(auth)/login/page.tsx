@@ -28,11 +28,13 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://res.cloudinary.com/dlnnxvepd/image/upload/c_pad,b_transparent,w_240,h_240/v1782345787/Logo_Primeo_1_gzcjq2.png"
-            alt="Primeo"
-            className="h-12 w-auto mx-auto mb-3"
-          />
+          <span className="inline-flex items-center justify-center rounded-2xl bg-white p-3 shadow-sm border border-gray-100 mb-3">
+            <img
+              src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png"
+              alt="Primeo"
+              className="h-12 w-auto"
+            />
+          </span>
           <p className="text-gray-500 mt-1">Administration</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
