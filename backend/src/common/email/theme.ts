@@ -71,11 +71,11 @@ export const EMAIL_SOCIALS: ReadonlyArray<{ name: string; url: string; icon: str
 
 // Logo officiel (PNG, compatible tous clients email) — hébergé sur le site vitrine, surchargeable par variable d'environnement.
 const ASSETS = `${process.env['VITRINE_URL']?.trim() || VITRINE_FALLBACK}/assets/img`;
-// Logo officiel Primeo (« P » bleu et orange, PNG transparent posé sur l'en-tête blanc des emails).
-// Rogné (e_trim) et redimensionné sans déformation (c_fit) ; 96 px pour les écrans haute densité.
+// Logo officiel Primeo dans une tuile blanche arrondie intégrée à l'image (fond blanc garanti,
+// y compris en mode sombre) ; rogné puis centré sans déformation, 144 px pour les écrans haute densité.
 export const EMAIL_LOGO_URL =
   process.env['EMAIL_LOGO_URL']?.trim() ||
-  'https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_96,h_96,f_png/v1795644228/primeo_logo_z7suoi.png';
+  'https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_pad,w_100,h_100,b_white/bo_22px_solid_white/r_28/f_png/v1795644228/primeo_logo_z7suoi.png';
 
 /** Badges des stores (PNG) — mènent à la page de téléchargement de l'application */
 export const EMAIL_STORE_BADGES: ReadonlyArray<{ name: string; image: string; url: string }> = [

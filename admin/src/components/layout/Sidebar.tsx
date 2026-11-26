@@ -88,7 +88,7 @@ export function Sidebar() {
             {/* Logo officiel : conteneur blanc (la barre latérale est sombre) */}
             <span className="inline-flex items-center justify-center rounded-lg bg-white px-2 py-1.5 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png" alt="Primeo" className="h-7 w-auto" />
+              <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png" alt="Primeo" className="h-6 w-auto" />
             </span>
             <p className="text-xs text-primary-400">Administration</p>
           </div>

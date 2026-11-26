@@ -22,7 +22,8 @@ function assertUnique(html: string) {
   expect(count(html, 'Paiement sécurisé')).toBe(1); // section confiance, une seule fois
   expect(count(html, 'Annonces vérifiées') + count(html, 'Support réactif')).toBe(2);
   expect(html).not.toMatch(/Transactions chiffrées|Professionnels contrôlés|Une équipe à votre écoute/); // titres seuls
-  expect(html).toContain('width="29" height="24"'); // petit logo discret, proportions conservées
+  expect(html).toContain('width="40" height="40"'); // logo seul, tuile blanche
+  expect(html).not.toMatch(/alt="Primeo"[^>]*\/><\/td>\s*<td[^>]*>Primeo<\/td>/); // aucun texte à côté du logo
   expect(count(html, EMAIL_LOGO_URL)).toBe(1); // logo officiel, une seule fois
   expect(count(html, 'class="hero"')).toBe(1); // bandeau-titre
   expect(count(html, 'Primeo dans votre poche')).toBe(1);

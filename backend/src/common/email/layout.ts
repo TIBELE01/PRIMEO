@@ -58,18 +58,17 @@ function renderHero(text: string, accent: Accent): string {
   <tr><td style="height:3px;line-height:3px;font-size:0;background-color:${accentColor(accent)};">&nbsp;</td></tr>`;
 }
 
-// ─── En-tête : petit logo discret ────────────────────────────────────────────
-// Logo volontairement petit (24 px de haut, proportions conservées) ; l'image source est aussi demandée en petite
-// taille, pour rester discrète même dans un client email qui ignorerait width/height.
+// ─── En-tête : logo officiel seul, sur fond blanc ─────────────────────────────
+// Le logo est servi avec un fond blanc arrondi intégré à l'image (même en mode sombre
+// des messageries) ; la cellule est aussi blanche. Aucun texte ajouté à côté du logo.
 
 function renderTopBar(): string {
   const logo = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="center-table"><tr>
-      <td style="padding-right:6px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="29" height="24" style="display:block;border:0;outline:none;width:29px;height:24px;max-width:29px;" /></td>
-      <td style="vertical-align:middle;font-family:${FONT};font-size:14px;font-weight:800;color:${C.primary};letter-spacing:-0.2px;">Primeo</td>
+      <td bgcolor="#FFFFFF" style="background-color:#FFFFFF;border-radius:10px;vertical-align:middle;"><img src="${EMAIL_LOGO_URL}" alt="Primeo" width="40" height="40" style="display:block;border:0;outline:none;width:40px;height:40px;max-width:40px;border-radius:10px;" /></td>
     </tr></table>`;
   return `
   <tr>
-    <td class="px topbar" style="background-color:#ffffff;padding:10px 22px;">
+    <td class="px topbar" bgcolor="#FFFFFF" style="background-color:#ffffff;padding:10px 22px;">
       <a href="${EMAIL_LINKS.vitrine}" target="_blank" style="text-decoration:none;display:inline-block;">${logo}</a>
     </td>
   </tr>`;

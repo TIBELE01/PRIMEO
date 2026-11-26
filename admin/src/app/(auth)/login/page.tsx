@@ -32,7 +32,7 @@ export default function LoginPage() {
             <img
               src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png"
               alt="Primeo"
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </span>
           <p className="text-gray-500 mt-1">Administration</p>

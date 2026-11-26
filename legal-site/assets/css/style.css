@@ -114,8 +114,8 @@ p { margin-bottom: .75rem; }
 /* Official logo image — nav sits on blue, so use a white rounded chip
    so the brand-blue icon stays crisp and legible. */
 .brand-logo-img {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   display: block;
   flex-shrink: 0;
@@ -123,7 +123,7 @@ p { margin-bottom: .75rem; }
   box-sizing: border-box;
   /* Logo officiel : toujours sur fond blanc (le menu est bleu, le pied de page sombre) */
   background: #fff;
-  padding: 5px;
+  padding: 4px;
 }
 .nav-logo .brand-logo-img {
   box-shadow: 0 1px 4px rgba(0,0,0,.15);
@@ -478,7 +478,7 @@ footer {
   font-size: .95rem;
   color: #fff;
 }
-.footer-brand-logo .brand-logo-img { width: 48px; height: 48px; padding: 6px; }
+.footer-brand-logo .brand-logo-img { width: 42px; height: 42px; padding: 5px; }
 .footer-brand-logo .logo-text { font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -.5px; }
 /* legacy compat for HTML using .footer-brand */
 .footer-brand { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: .5rem; letter-spacing: -.5px; }

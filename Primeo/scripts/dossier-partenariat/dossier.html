@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Primeo — Dossier de partenariat</title>
+<!-- Source du PDF assets/docs/primeo-dossier-partenariat.pdf — régénérer avec : node scripts/dossier-partenariat/render.js -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --blue: #1056E0; --orange: #D67309; --ink: #0B1530; --text: #2B3550; --muted: #6B7591; --line: #E4E9F3; --card: #F8FAFE; }
+  body { font-family: 'Inter', Arial, sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; padding: 18mm 18mm 0; }
+  .page:last-child { page-break-after: auto; }
+
+  /* Couverture */
+  .cover { background: radial-gradient(120% 80% at 85% 5%, #1A3F9A 0%, rgba(26,63,154,0) 55%), linear-gradient(160deg, #060B1C 0%, #081433 55%, #0C2C80 100%); color: #fff; padding: 16mm 12mm 0; }
+  .cover .tile { width: 26mm; height: 26mm; background: #fff; border-radius: 6mm; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  .cover .tile img { width: 18.5mm; height: auto; display: block; }
+  .cover .body { position: absolute; left: 12mm; right: 12mm; top: 104mm; }
+  .pill { display: inline-block; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 2.2mm 4.5mm; font-size: 7.5pt; letter-spacing: .25em; text-transform: uppercase; color: #DCE6FF; }
+  .cover h1 { font-size: 34pt; font-weight: 800; line-height: 1.08; margin-top: 7mm; letter-spacing: -.5px; }
+  .cover h1 span { color: #8CB2FF; }
+  .cover p.lead { font-size: 10.5pt; line-height: 1.7; color: #D8E1F7; margin-top: 7mm; max-width: 125mm; }
+  .cover .foot { position: absolute; left: 12mm; right: 12mm; bottom: 12mm; border-top: 1px solid rgba(255,255,255,.18); padding-top: 4mm; display: flex; justify-content: space-between; font-size: 7.5pt; color: #AFC0E6; }
+
+  /* Pages intérieures */
+  .head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 3.5mm; border-bottom: 1.3px solid var(--blue); }
+  .head img { height: 8.5mm; width: auto; display: block; }
+  .head span { font-size: 7.5pt; letter-spacing: .22em; color: var(--muted); }
+  .num { color: var(--orange); font-weight: 800; font-size: 10pt; margin-top: 8mm; letter-spacing: .08em; }
+  h2 { font-size: 17pt; font-weight: 800; color: var(--ink); margin-top: 2mm; letter-spacing: -.3px; }
+  p { font-size: 9pt; line-height: 1.75; }
+  p.strong { font-size: 10pt; color: var(--ink); font-weight: 500; margin-top: 4mm; }
+  .page p + p { margin-top: 2mm; }
+  h3.sub { color: var(--blue); font-size: 10.5pt; font-weight: 700; margin-top: 5mm; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4.5mm; margin-top: 4mm; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin-top: 5mm; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 3.5mm; padding: 5mm; }
+  .card h4 { font-size: 9.5pt; font-weight: 700; color: var(--ink); margin-bottom: 2.4mm; }
+  .card p { font-size: 8pt; line-height: 1.7; }
+  .tag { display: inline-block; background: #E3ECFF; color: var(--blue); font-weight: 700; font-size: 6.8pt; letter-spacing: .18em; border-radius: 999px; padding: 1.3mm 3.5mm; margin-bottom: 3mm; }
+  ul { list-style: none; margin-top: 2.5mm; }
+  li { position: relative; padding-left: 5mm; font-size: 8pt; line-height: 1.55; margin-top: 1.6mm; color: var(--ink); }
+  li::before { content: ''; position: absolute; left: 0; top: 1.7mm; width: 1.9mm; height: 1.9mm; border-radius: 50%; background: var(--blue); }
+  .steps { margin-top: 5mm; display: grid; gap: 3mm; }
+  .step { display: flex; gap: 6mm; align-items: center; border: 1px solid var(--line); border-radius: 3.5mm; padding: 4mm 5mm; }
+  .step .n { flex: 0 0 9mm; height: 9mm; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 10pt; display: flex; align-items: center; justify-content: center; }
+  .step h4 { font-size: 9.5pt; font-weight: 700; color: var(--ink); }
+  .step p { font-size: 8.3pt; line-height: 1.65; margin-top: .8mm; }
+  .contact { margin-top: 5mm; border-radius: 4mm; padding: 6mm 7mm; color: #fff; background: linear-gradient(120deg, #0A1B4E 0%, #12329A 100%); }
+  .contact h4 { font-size: 10.5pt; font-weight: 700; }
+  .contact li { color: #fff; font-size: 8.6pt; margin-top: 2.4mm; }
+  .contact li::before { background: #8CB2FF; }
+  .contact a { color: #fff; text-decoration: none; }
+  .contact p { font-size: 8.6pt; margin-top: 3.5mm; }
+  .note { font-size: 7pt; color: #4B5A7E; margin-top: 3mm; line-height: 1.6; }
+  .pfoot { position: absolute; left: 18mm; right: 18mm; bottom: 9mm; border-top: 1px solid var(--line); padding-top: 3mm; display: flex; justify-content: space-between; font-size: 7pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- 1. Couverture -->
+<section class="page cover">
+  <div class="tile"><img src="../../assets/img/logo-primeo.png" alt="Primeo"></div>
+  <div class="body">
+    <span class="pill">Programme partenaires</span>
+    <h1>Dossier de<br><span>partenariat</span></h1>
+    <p class="lead">Rejoignez l'écosystème Primeo : la plateforme ivoirienne qui réunit hébergement, restauration et immobilier sur une seule application.</p>
+  </div>
+  <div class="foot"><span>Primeo — Abidjan, Côte d'Ivoire</span><span>Édition 2026</span></div>
+</section>
+
+<!-- 2. Présentation & mission -->
+<section class="page">
+  <div class="head"><img src="../../assets/img/logo-primeo.png" alt="Primeo"><span>DOSSIER DE PARTENARIAT</span></div>
+  <div class="num">01</div>
+  <h2>Présentation de Primeo</h2>
+  <p class="strong">Primeo est une plateforme numérique ivoirienne fondée en 2025 à Abidjan et officiellement lancée en février 2025. Elle met en relation voyageurs, hôteliers, restaurateurs et professionnels de l'immobilier autour d'un parcours simple, transparent et sécurisé.</p>
+  <p>Disponible sur mobile, Primeo rassemble en un seul endroit la recherche et la réservation d'hébergements, de tables de restaurant et de biens immobiliers. Chaque professionnel est vérifié par l'équipe Primeo avant de publier ses offres, afin de garantir aux utilisateurs des informations fiables et conformes à la réalité.</p>
+  <h3 class="sub">Nos services</h3>
+  <div class="grid2">
+    <div class="card"><h4>Voyageurs</h4><p>Recherche par quartier, prix et type de bien, avis authentiques, visites virtuelles 3D, paiement intégral, acompte ou sur place.</p></div>
+    <div class="card"><h4>Hôteliers et propriétaires</h4><p>Publication d'annonces, calendrier de disponibilités en temps réel, gestion des réservations, statistiques et messagerie intégrée.</p></div>
+    <div class="card"><h4>Restaurateurs</h4><p>Réservations de tables en ligne, gestion de la carte et suivi des avis clients.</p></div>
+    <div class="card"><h4>Immobilier</h4><p>Annonces de vente et de location avec photos et visites 3D, suivi des demandes et des prospects.</p></div>
+  </div>
+  <div class="num">02</div>
+  <h2>Notre mission</h2>
+  <p style="margin-top:4mm">Rendre l'hébergement, la restauration et l'immobilier plus accessibles, plus fiables et plus transparents en Côte d'Ivoire, avant de poursuivre notre développement en Afrique de l'Ouest. La confiance est au centre de notre approche : vérification des partenaires, paiements encadrés et support dédié.</p>
+  <div class="pfoot"><span>Primeo — Dossier de partenariat</span><span>Page 2 / 4</span></div>
+</section>
+
+<!-- 3. Formes de partenariat -->
+<section class="page">
+  <div class="head"><img src="../../assets/img/logo-primeo.png" alt="Primeo"><span>DOSSIER DE PARTENARIAT</span></div>
+  <div class="num">03</div>
+  <h2>Quatre formes de partenariat</h2>
+  <p style="margin-top:3mm">Des formes de collaboration adaptées à votre structure et à vos objectifs.</p>
+  <div class="grid2">
+    <div class="card"><span class="tag">TECHNOLOGIQUE</span><h4>Partenariat technologique</h4>
+      <p>Intégrez vos services ou votre API à Primeo pour enrichir l'expérience des professionnels et des voyageurs. Pour les éditeurs de logiciels, prestataires de paiement et fournisseurs de solutions SaaS.</p>
+      <ul><li>Intégration API documentée (REST / webhooks)</li><li>Accès bac à sable de test dès la validation</li><li>Co-promotion dans nos annonces produits</li><li>Support technique dédié à l'intégration</li></ul></div>
+    <div class="card"><span class="tag">COMMERCIAL</span><h4>Partenariat commercial</h4>
+      <p>Construisons ensemble des offres groupées et des actions de promotion croisée pour toucher une clientèle plus large. Pour les agences, opérateurs touristiques et prestataires de services locaux.</p>
+      <ul><li>Offres groupées co-brandées</li><li>Actions de promotion croisée</li><li>Mise en avant dans nos e-mails clients</li></ul></div>
+    <div class="card"><span class="tag">MÉDIA</span><h4>Partenariat média</h4>
+      <p>Publiez du contenu sponsorisé sur le blog Primeo, apparaissez dans notre newsletter ou sponsorisez des sections ciblées. Pour les médias, agences de communication et marques.</p>
+      <ul><li>Articles sponsorisés sur le blog</li><li>Encarts dans la newsletter</li><li>Bannières dans l'application, ciblées géographiquement</li><li>Rapport d'impact détaillé</li></ul></div>
+    <div class="card"><span class="tag">INSTITUTIONNEL</span><h4>Partenariat institutionnel</h4>
+      <p>Collaborons à des initiatives d'impact : promotion du tourisme régional, numérisation des acteurs locaux, formations. Pour les collectivités, offices de tourisme, ONG et institutions publiques.</p>
+      <ul><li>Mise en avant des destinations régionales</li><li>Programmes de formation numérique</li><li>Intégration aux portails publics</li><li>Rapport RSE partagé</li></ul></div>
+  </div>
+  <div class="pfoot"><span>Primeo — Dossier de partenariat</span><span>Page 3 / 4</span></div>
+</section>
+
+<!-- 4. Avantages, étapes, contact -->
+<section class="page">
+  <div class="head"><img src="../../assets/img/logo-primeo.png" alt="Primeo"><span>DOSSIER DE PARTENARIAT</span></div>
+  <div class="num">04</div>
+  <h2>Pourquoi devenir partenaire ?</h2>
+  <div class="grid3">
+    <div class="card"><h4>Visibilité</h4><p>Une exposition auprès de voyageurs et de professionnels actifs en Côte d'Ivoire.</p></div>
+    <div class="card"><h4>Rapidité</h4><p>Lancement dans les 30 jours suivant la signature du contrat.</p></div>
+    <div class="card"><h4>Accompagnement</h4><p>Un interlocuteur dédié tout au long du partenariat.</p></div>
+  </div>
+  <div class="num">05</div>
+  <h2>Comment devenir partenaire ?</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h4>Demande et réponse sous 48 h</h4><p>Soumettez votre demande depuis la page « Devenir partenaire » du site Primeo. Un responsable partenariat vous recontacte sous 48 heures ouvrées.</p></div></div>
+    <div class="step"><div class="n">2</div><div><h4>Entretien de qualification</h4><p>Nous évaluons ensemble l'alignement et le potentiel de la collaboration.</p></div></div>
+    <div class="step"><div class="n">3</div><div><h4>Contrat de partenariat</h4><p>Formalisation claire des modalités, des droits et des obligations de chaque partie.</p></div></div>
+    <div class="step"><div class="n">4</div><div><h4>Lancement</h4><p>Intégration et co-promotion dans les 30 jours suivant la signature.</p></div></div>
+  </div>
+  <div class="contact">
+    <h4>Contact partenariats</h4>
+    <ul>
+      <li>E-mail : <a href="mailto:partenariat@primeo.ci">partenariat@primeo.ci</a></li>
+      <li>Téléphone : +225 07 07 16 16 84</li>
+      <li>Adresse : Cocody – Saint Viateur, Abidjan, Côte d'Ivoire</li>
+    </ul>
+    <p>Notre équipe partenariats vous répond sous 48 heures ouvrées.</p>
+  </div>
+  <p class="note">Document d'information à caractère non contractuel. Les modalités précises de chaque partenariat sont définies dans le contrat signé entre les parties.</p>
+  <div class="pfoot"><span>Primeo — Dossier de partenariat</span><span>Page 4 / 4</span></div>
+</section>
+
+</body>
+</html>
