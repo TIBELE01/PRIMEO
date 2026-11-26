@@ -1,6 +1,6 @@
 ﻿import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Platform,
+  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -156,13 +156,23 @@ export function SearchScreen() {
       if (Platform.OS === 'web') {
         if (!navigator?.geolocation) return;
         navigator.geolocation.getCurrentPosition(async pos => {
-          const { latitude: lat, longitude: lon } = pos.coords;
-          const r = await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_KEY}&lang=fr`);
-          const json = await r.json();
-          const city = json.features?.[0]?.properties?.city ?? '';
-          if (city) { setDestination(city); setShowSuggestions(false); }
+          try {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            const r = await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_KEY}&lang=fr`);
+            const json = await r.json();
+            const city = json.features?.[0]?.properties?.city ?? '';
+            if (city) { setDestination(city); setShowSuggestions(false); }
+            else Alert.alert('Position', 'Ville introuvable pour votre position. Saisissez-la manuellement.');
+          } catch {
+            Alert.alert('Position', 'Impossible de déterminer votre ville pour le moment. Saisissez-la manuellement.');
+          } finally {
+            setGeoLoading(false);
+          }
+        }, () => {
           setGeoLoading(false);
-        }, () => setGeoLoading(false));
+          Alert.alert('Position', 'Autorisez l’accès à votre position dans le navigateur, ou saisissez votre ville.');
+        });
+        return;
       } else {
         const Location = require('expo-location');
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -499,8 +509,9 @@ const s = StyleSheet.create({
   cBtnText: { fontSize: 16, color: '#1056E0', fontWeight: '600', lineHeight: 18 },
   guestsCount: { fontSize: 15, fontWeight: '700', color: '#111827', minWidth: 18, textAlign: 'center' },
   clearDates: { fontSize: 11, color: '#6B7280', marginTop: 8 },
-  typeBar: { maxHeight: 44 },
-  typeBarContent: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
+  // flexGrow/flexShrink à 0 : sinon, sur le web, la barre est écrasée par la liste
+  typeBar: { flexGrow: 0, flexShrink: 0, minHeight: 44, maxHeight: 44 },
+  typeBarContent: { paddingHorizontal: 16, gap: 8, paddingVertical: 4, alignItems: 'center' },
   typeChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB' },
   typeChipActive: { backgroundColor: '#1056E0', borderColor: '#1056E0' },
   typeChipText: { fontSize: 13, color: '#374151', fontWeight: '500' },
