@@ -2,7 +2,7 @@
 import 'react-native-gesture-handler';
 import './src/utils/webAlertPolyfill'; // Alert.alert → modale stylée (web + natif)
 import * as Sentry from '@sentry/react-native';
-import React, { useEffect, useRef, Component, ReactNode } from 'react';
+import React, { useEffect, useRef, useState, Component, ReactNode } from 'react';
 
 Sentry.init({
   dsn: process.env['EXPO_PUBLIC_SENTRY_DSN'],
@@ -19,7 +19,7 @@ Sentry.init({
     return event;
   },
 });
-import { Platform, View, Text, Alert, TouchableOpacity } from 'react-native';
+import { Platform, View, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -243,8 +243,16 @@ function InnerApp() {
   // Push notification registration + listeners
   usePushNotifications();
 
+  // La navigation n'est montée qu'une fois la session restaurée : sinon, au
+  // rechargement d'une page (web), l'adresse est lue alors que l'utilisateur
+  // paraît déconnecté, réécrite, et l'écran demandé est perdu (retour à
+  // l'accueil / au tableau de bord). Sécurité : 5 s au plus.
+  const [sessionReady, setSessionReady] = useState(false);
   useEffect(() => {
+    const guard = setTimeout(() => setSessionReady(true), 5000);
     hydrate().finally(() => {
+      clearTimeout(guard);
+      setSessionReady(true);
       if (Platform.OS !== 'web') {
         SplashScreen.hideAsync().catch(() => null);
       }
@@ -319,6 +327,14 @@ function InnerApp() {
   // Mode maintenance : remplace toute l'application par l'écran dédié
   if (maintenanceActive) {
     return <MaintenanceScreen />;
+  }
+
+  if (!sessionReady) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.background as string }}>
+        <ActivityIndicator size="large" color="#1056E0" />
+      </View>
+    );
   }
 
   return (
