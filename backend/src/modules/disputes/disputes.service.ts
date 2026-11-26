@@ -1,4 +1,5 @@
 // Disputes service — conflict resolution workflow
+import { EMAILS } from '../../config/emails.config';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { notificationsService } from '../notifications/notifications.service';
@@ -45,6 +46,13 @@ export const disputesService = {
         },
       }).catch((err) => logger.warn('Notify dispute_opened admin failed', err));
     }
+    // Copie au service juridique (legal@primeo.ci)
+    void notificationsService.emailStaffCopy('dispute_opened', EMAILS.legal, {
+      disputeId: dispute.id,
+      bookingId: input.bookingId,
+      reason: REASON_LABELS[input.reason] ?? input.reason,
+      propertyTitle: booking.property?.title ?? '',
+    });
 
     return dispute;
   },

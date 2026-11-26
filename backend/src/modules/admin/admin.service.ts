@@ -1,4 +1,5 @@
 // Admin service — platform oversight and moderation
+import { EMAILS } from '../../config/emails.config';
 import { panoramaCoverUrl, videoPosterUrl, videoPlaybackUrl } from '../properties/media-urls';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
@@ -1416,6 +1417,9 @@ export const adminService = {
       recipientId: professionalId,
       data: { disputeId: id, resolution: input.resolution },
     }).catch((err) => logger.warn('notify dispute resolved (professional) failed', err));
+
+    // Copie au service juridique (legal@primeo.ci)
+    void notificationsService.emailStaffCopy('dispute_resolved', EMAILS.legal, { disputeId: id, resolution: input.resolution });
   },
 
   async refundDispute(id: string, adminId: string, input: { amount: number; notes: string }) {
@@ -1515,6 +1519,9 @@ export const adminService = {
       recipientId: professionalId,
       data: { disputeId: id, resolution, refundAmount: input.amount },
     }).catch((err) => logger.warn('notify refund professional failed', err));
+
+    // Copie au service juridique (legal@primeo.ci)
+    void notificationsService.emailStaffCopy('dispute_resolved', EMAILS.legal, { disputeId: id, resolution, refundAmount: input.amount });
   },
 
   // ── Gestion manuelle des abonnements ──────────────────────────────────────

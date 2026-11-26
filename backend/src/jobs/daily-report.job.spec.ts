@@ -75,12 +75,12 @@ describe('daily-report.job', () => {
 
   describe('getAdminRecipients', () => {
     it('parse ADMIN_EMAILS séparés par des virgules', () => {
-      mockEnv.ADMIN_EMAILS = 'a@primeo.ci, b@primeo.ci ,c@primeo.ci';
-      expect(getAdminRecipients()).toEqual(['a@primeo.ci', 'b@primeo.ci', 'c@primeo.ci']);
+      mockEnv.ADMIN_EMAILS = 'a@example.com, b@example.com ,c@example.com';
+      expect(getAdminRecipients()).toEqual(['a@example.com', 'b@example.com', 'c@example.com']);
     });
     it('retombe sur ADMIN_EMAIL si ADMIN_EMAILS absent', () => {
-      mockEnv.ADMIN_EMAIL = 'solo@primeo.ci';
-      expect(getAdminRecipients()).toEqual(['solo@primeo.ci']);
+      mockEnv.ADMIN_EMAIL = 'solo@example.com';
+      expect(getAdminRecipients()).toEqual(['solo@example.com']);
     });
     it('retourne [] si aucun configuré', () => {
       expect(getAdminRecipients()).toEqual([]);
@@ -115,14 +115,14 @@ describe('daily-report.job', () => {
       expect(mockSendEmail).not.toHaveBeenCalled();
     });
     it('envoie l\'email aux destinataires configurés', async () => {
-      mockEnv.ADMIN_EMAILS = 'a@primeo.ci,b@primeo.ci';
+      mockEnv.ADMIN_EMAILS = 'a@example.com,b@example.com';
       const ok = await sendDailyReport();
       expect(ok).toBe(true);
       expect(mockSendEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: [
-            { email: 'a@primeo.ci', name: 'Équipe Primeo' },
-            { email: 'b@primeo.ci', name: 'Équipe Primeo' },
+            { email: 'a@example.com', name: 'Équipe Primeo' },
+            { email: 'b@example.com', name: 'Équipe Primeo' },
           ],
         }),
       );

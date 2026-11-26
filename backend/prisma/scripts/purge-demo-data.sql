@@ -5,7 +5,7 @@
 -- NON destructif tant qu'il n'est pas lancé manuellement.
 --
 -- CONSERVE :
---   • le compte admin (support.primeo@gmail.com)
+--   • le ou les comptes administrateur (accountType = 'admin')
 --   • le contenu vitrine  : website_*, about_*, careers_*, blog_*, faqs
 --   • la configuration    : platform_config, feature_flags, currency_rates, products_*
 --
@@ -55,8 +55,8 @@ DELETE FROM professional_documents;
 DELETE FROM professional_guests;
 DELETE FROM professional_profiles;
 DELETE FROM referrals;
-DELETE FROM subscriptions WHERE "userId" <> (SELECT id FROM users WHERE email = 'support.primeo@gmail.com');
-DELETE FROM wallets       WHERE "userId" <> (SELECT id FROM users WHERE email = 'support.primeo@gmail.com');
+DELETE FROM subscriptions WHERE "userId" NOT IN (SELECT id FROM users WHERE "accountType" = 'admin');
+DELETE FROM wallets       WHERE "userId" NOT IN (SELECT id FROM users WHERE "accountType" = 'admin');
 DELETE FROM push_tokens;
 DELETE FROM data_exports;
 
@@ -67,10 +67,10 @@ DELETE FROM data_exports;
 -- DELETE FROM audit_logs;
 
 -- 5) Comptes de test — profil applicatif (tout sauf l'admin)
-DELETE FROM users WHERE email <> 'support.primeo@gmail.com';
+DELETE FROM users WHERE "accountType" <> 'admin';
 
 -- 6) Comptes de test — Supabase Auth (sinon les comptes resteraient connectables)
-DELETE FROM auth.users WHERE email <> 'support.primeo@gmail.com';
+DELETE FROM auth.users WHERE email NOT IN (SELECT email FROM users WHERE "accountType" = 'admin');
 
 SET session_replication_role = DEFAULT;
 

@@ -1,10 +1,13 @@
 // Brevo (formerly Sendinblue) email service configuration
 import { env } from './env.config';
+import { EMAILS } from './emails.config';
 
 export const brevoConfig = {
   apiKey: env.BREVO_API_KEY,
-  senderEmail: 'support.primeo@gmail.com',
-  senderName: 'PRIMEO',
+  // Expéditeur transactionnel : noreply@primeo.ci (EMAIL_FROM) — réponses vers contact@ (EMAIL_REPLY_TO)
+  senderEmail: EMAILS.from,
+  senderName: EMAILS.fromName,
+  replyTo: EMAILS.replyTo,
   baseUrl: 'https://api.brevo.com/v3',
   // Template IDs — identifiants internes utilisés pour sélectionner le bon HTML local.
   // Les templates sont rendus côté serveur (renderLocalTemplate) et envoyés via l'API

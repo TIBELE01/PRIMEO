@@ -132,10 +132,10 @@ async function main() {
 
   // Koffi Assi — client, cadre dynamique, 35 ans (§1.4)
   const koffi = await prisma.user.upsert({
-    where: { email: 'koffi.assi@gmail.com' },
+    where: { email: 'koffi.assi@example.com' },
     update: {},
     create: {
-      email: 'koffi.assi@gmail.com',
+      email: 'koffi.assi@example.com',
       phone: '+2250707100001',
       firstName: 'Koffi',
       lastName: 'Assi',
@@ -145,8 +145,8 @@ async function main() {
     },
   });
   {
-    const sid = await ensureSupabaseUser('koffi.assi@gmail.com', 'Client1234!', '+2250707100001', AccountType.client);
-    if (sid) await syncUserId('koffi.assi@gmail.com', sid);
+    const sid = await ensureSupabaseUser('koffi.assi@example.com', 'Client1234!', '+2250707100001', AccountType.client);
+    if (sid) await syncUserId('koffi.assi@example.com', sid);
   }
   console.log(`  ✓ Client : ${koffi.email}`);
 
@@ -1224,7 +1224,7 @@ async function main() {
   console.log('\n✅ Seed terminé !');
   console.log('─────────────────────────────────────────────');
   console.log(`Admin       : ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
-  console.log('Client      : koffi.assi@gmail.com / Client1234!');
+  console.log('Client      : koffi.assi@example.com / Client1234!');
   console.log('Pro hébgt 1 : amina.coulibaly@residences.ci / Pro1234!');
   console.log('Pro hôtel   : dkone@hotel-plateau.ci / Pro1234!');
   console.log('Restaurateur: f.bamba@restaurant-saveur.ci / Pro1234!');

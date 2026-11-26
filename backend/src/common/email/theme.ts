@@ -86,7 +86,7 @@ export const COMPANY = {
   name: 'Primeo CI',
   tagline: 'Résidences · Hôtels · Restaurants · Immobilier en Côte d’Ivoire',
   address: 'Abidjan, Côte d’Ivoire',
-  email: 'support.primeo@gmail.com',
+  email: 'contact@primeo.ci',
   phone: '+225 07 07 16 16 84',
   phoneHref: 'tel:+2250707161684',
   year: new Date().getFullYear(),

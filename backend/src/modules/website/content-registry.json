@@ -1422,7 +1422,7 @@
   "section": "main",
   "tag": "span",
   "type": "html",
-  "default": "<strong>Écrire</strong><small>support.primeo@gmail.com</small>"
+  "default": "<strong>Écrire</strong><small>contact@primeo.ci</small>"
  },
  {
   "key": "contact.main.span3",
@@ -1526,7 +1526,7 @@
   "section": "ct-sidebar",
   "tag": "a",
   "type": "text",
-  "default": "support.primeo@gmail.com"
+  "default": "contact@primeo.ci"
  },
  {
   "key": "contact.ct-sidebar.h31",
@@ -3284,7 +3284,7 @@
   "section": "ep-pr-foot",
   "tag": "p",
   "type": "html",
-  "default": "<strong>Responsable communication — Primeo</strong><br> E-mail : <a href=\"mailto:support.primeo@gmail.com?subject=Presse%20%E2%80%94%20Primeo\">support.primeo@gmail.com</a><br> Téléphone : <a href=\"tel:+2250707161684\">+225 07 07 16 16 84</a><br> Cocody – Saint Viateur, Abidjan, Côte d'Ivoire"
+  "default": "<strong>Responsable communication — Primeo</strong><br> E-mail : <a href=\"mailto:presse@primeo.ci?subject=Presse%20%E2%80%94%20Primeo\">presse@primeo.ci</a><br> Téléphone : <a href=\"tel:+2250707161684\">+225 07 07 16 16 84</a><br> Cocody – Saint Viateur, Abidjan, Côte d'Ivoire"
  },
  {
   "key": "espace-presse.ep-pr-foot.a1",
@@ -3356,7 +3356,7 @@
   "section": "contact-presse",
   "tag": "a",
   "type": "text",
-  "default": "support.primeo@gmail.com"
+  "default": "presse@primeo.ci"
  },
  {
   "key": "espace-presse.contact-presse.a2",
@@ -4004,7 +4004,7 @@
   "section": "faq",
   "tag": "div",
   "type": "text",
-  "default": "Le type de compte (résidence, hôtel, immobilier, restaurateur) est défini à l'inscription. Si vous souhaitez en changer, contactez notre support à support.primeo@gmail.com."
+  "default": "Le type de compte (résidence, hôtel, immobilier, restaurateur) est défini à l'inscription. Si vous souhaitez en changer, contactez notre support à support@primeo.ci."
  },
  {
   "key": "professionnels.faq.summary4",

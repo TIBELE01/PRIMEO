@@ -102,7 +102,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: f('name'), email: f('email'), phone: f('phone') || undefined, subject: f('subject'), message: f('message'), email_confirm: trap ? trap.value : '' })
       }).then(function () { window.location.href = '/contact/merci.html'; }).catch(function (err) {
-        var text = 'Une erreur est survenue. Veuillez réessayer ou écrire à support.primeo@gmail.com.';
+        var text = 'Une erreur est survenue. Veuillez réessayer ou écrire à contact@primeo.ci.';
         if (err.status === 429) text = 'Trop de messages envoyés. Merci de réessayer dans une heure.';
         else if (err.status === 400 && err.body) {
           var fields = err.body.errors || err.body.details;

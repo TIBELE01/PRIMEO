@@ -135,13 +135,13 @@ async function main() {
   // ── 1. Créer les propriétaires pro ──────────────────────────────────────────
   console.log('1. Propriétaires professionnels...');
   const aminaId = await ensureProUser(
-    'amina.video.demo@primeo.ci', 'Amina', 'Coulibaly', AccountType.professional_hebergement,
+    'amina.video.demo@example.com', 'Amina', 'Coulibaly', AccountType.professional_hebergement,
   );
   const koneId = await ensureProUser(
-    'dkone.video.demo@primeo.ci', 'Djibril', 'Koné', AccountType.professional_hotel,
+    'dkone.video.demo@example.com', 'Djibril', 'Koné', AccountType.professional_hotel,
   );
   const dialloId = await ensureProUser(
-    'mdiallo.video.demo@primeo.ci', 'Mariama', 'Diallo', AccountType.professional_immobilier,
+    'mdiallo.video.demo@example.com', 'Mariama', 'Diallo', AccountType.professional_immobilier,
   );
 
   // ── 2. Créer les propriétés ──────────────────────────────────────────────────

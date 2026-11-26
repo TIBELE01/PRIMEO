@@ -307,6 +307,16 @@ async function dispatchEmail(
 // ── Main orchestrator ─────────────────────────────────────────────────────────
 
 export const notificationsService = {
+  /**
+   * Copie d'un email de notification à une boîte interne (ex. legal@ pour les litiges),
+   * sans notification in-app ni push. Best-effort : n'échoue jamais l'appelant.
+   */
+  async emailStaffCopy(type: NotificationType, to: string, data: NotificationData): Promise<void> {
+    await dispatchEmail(type, to, 'Équipe juridique', data).catch((err) =>
+      logger.warn(`Copie interne [${type}] vers ${to} échouée`, err),
+    );
+  },
+
   async notify({ type, recipientId, data }: NotifyParams): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { id: recipientId },

@@ -111,5 +111,5 @@ déclarer le login Google opérationnel (voir §5).
 Les 5 comptes démo ont désormais une identité Supabase avec mot de passe
 aléatoire inconnu. Pour s'y connecter : « Mot de passe oublié » avec l'email
 du compte (hotel.savane@, immo.abidjan@, resto.cocody@, ama.konan@,
-koffi.assi@gmail.com), ou réinitialisation directe par l'admin via
+koffi.assi@example.com), ou réinitialisation directe par l'admin via
 `supabaseAdmin.auth.admin.updateUserById`.

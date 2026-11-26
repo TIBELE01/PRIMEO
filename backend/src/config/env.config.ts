@@ -44,6 +44,24 @@ const envSchema = z.object({
 
   // Admin seed
   ADMIN_EMAIL: z.string().email().optional(),
+  // Adresses professionnelles (voir config/emails.config.ts — valeurs par défaut @primeo.ci)
+  EMAIL_FROM: z.string().email().optional(),
+  EMAIL_FROM_NAME: z.string().optional(),
+  EMAIL_REPLY_TO: z.string().email().optional(),
+  EMAIL_SUPPORT_FROM: z.string().email().optional(),
+  SUPPORT_EMAIL: z.string().email().optional(),
+  CONTACT_EMAIL: z.string().email().optional(),
+  RECLAMATION_EMAIL: z.string().email().optional(),
+  LEGAL_EMAIL: z.string().email().optional(),
+  DPO_EMAIL: z.string().email().optional(),
+  PRESS_EMAIL: z.string().email().optional(),
+  PARTNERSHIP_EMAIL: z.string().email().optional(),
+  CAREERS_EMAIL: z.string().email().optional(),
+  BILLING_EMAIL: z.string().email().optional(),
+  SECURITY_EMAIL: z.string().email().optional(),
+  DIRECTION_EMAIL: z.string().email().optional(),
+  PROFESSIONAL_EMAIL: z.string().email().optional(),
+  INVESTOR_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().optional(),
   ALLOW_DEV_ADMIN_SEED: z.string().transform(v => v === 'true').default('false'),
   // Destinataires des rapports admin (emails séparés par des virgules).

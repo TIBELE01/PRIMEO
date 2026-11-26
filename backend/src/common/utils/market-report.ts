@@ -47,7 +47,7 @@ function buildPdfBuffer(input: MarketReportInput): Promise<Buffer> {
     doc.fillColor('#ffffff').fontSize(28).font('Helvetica-Bold').text('PRIMEO', 50, 28);
     doc.fillColor('#B0C4DE').fontSize(10).font('Helvetica').text('La plateforme immobilière ivoirienne', 50, 58);
     doc.fillColor('#ffffff').fontSize(10)
-      .text('support.primeo@gmail.com', doc.page.width - 250, 42, { width: 200, align: 'right' });
+      .text('contact@primeo.ci', doc.page.width - 250, 42, { width: 200, align: 'right' });
 
     // ── Title ─────────────────────────────────────────────────────────────────
     doc.fillColor(primaryBlue).fontSize(20).font('Helvetica-Bold')

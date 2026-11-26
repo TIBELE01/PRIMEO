@@ -150,7 +150,7 @@ export const usersService = {
         'Mot de passe modifié',
         `<p>Bonjour <strong>${user.firstName}</strong>,</p>
          <p>Votre mot de passe Primeo a été modifié avec succès.</p>
-         <p>Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement à <a href="mailto:support.primeo@gmail.com">support.primeo@gmail.com</a>.</p>`,
+         <p>Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement à <a href="mailto:support@primeo.ci">support@primeo.ci</a>.</p>`,
       ),
     }).catch(() => null);
   },
@@ -267,7 +267,7 @@ export const usersService = {
         'Compte supprimé',
         `<p>Bonjour,</p>
          <p>Votre compte Primeo a été supprimé définitivement. Vos données personnelles ont été effacées conformément à notre politique de confidentialité.</p>
-         <p>Si vous avez des questions, écrivez-nous à <a href="mailto:support.primeo@gmail.com">support.primeo@gmail.com</a>.</p>`,
+         <p>Si vous avez des questions, écrivez-nous à <a href="mailto:support@primeo.ci">support@primeo.ci</a>.</p>`,
       ),
     }).catch(() => null);
   },

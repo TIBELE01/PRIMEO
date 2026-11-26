@@ -100,7 +100,7 @@ export function HomeFooter({ onBecomePro }: { onBecomePro?: () => void } = {}) {
 
       <View style={s.footerSep} />
 
-      <Text style={s.footerContact}>📧  support.primeo@gmail.com</Text>
+      <Text style={s.footerContact}>📧  contact@primeo.ci</Text>
       <Text style={s.footerContact}>📞  +225 07 07 16 16 84</Text>
       <Text style={s.footerContact}>📍  Cocody – Saint Viateur, Abidjan, Côte d'Ivoire</Text>
 

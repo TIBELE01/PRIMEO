@@ -778,7 +778,7 @@ const mockGetUser = jest.fn();
 
 const googleSbUser = {
   id: 'supa-google-001',
-  email: 'client.google@gmail.com',
+  email: 'client.google@example.com',
   app_metadata: { provider: 'google', providers: ['google'], role: 'client' },
   user_metadata: { full_name: 'Ama Google', avatar_url: 'https://lh3.example/p.jpg' },
 };

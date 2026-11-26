@@ -1,4 +1,5 @@
 // Support service — ticket lifecycle management + chatbot integration
+import { EMAILS } from '../../config/emails.config';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { notificationsService } from '../notifications/notifications.service';
@@ -195,6 +196,7 @@ export const supportService = {
 
     if (ticket.user?.email) {
       sendEmail({
+        from: { email: EMAILS.supportFrom, name: 'Primeo Support' },
         to: [{ email: ticket.user.email, name: `${ticket.user.firstName} ${ticket.user.lastName}` }],
         subject: `Mise à jour de votre ticket : ${ticket.subject}`,
         htmlContent: `
@@ -262,6 +264,7 @@ export const supportService = {
 
       if (ticket.user?.email) {
         sendEmail({
+          from: { email: EMAILS.supportFrom, name: 'Primeo Support' },
           to: [{ email: ticket.user.email, name: `${ticket.user.firstName} ${ticket.user.lastName}` }],
           subject: `Nouveau message sur votre ticket : ${ticket.subject}`,
           htmlContent: `

@@ -108,7 +108,7 @@ const PDF = {
 const COMPANY_INFO = {
   name: 'Primeo CI',
   address: 'Cocody – Saint Viateur, Abidjan, Côte d’Ivoire',
-  email: 'support.primeo@gmail.com',
+  email: 'contact@primeo.ci',
   phone: '+225 07 07 16 16 84',
 };
 
@@ -285,7 +285,7 @@ function renderInvoicePdf(m: InvoiceModel): Promise<Buffer> {
     doc.font('Helvetica-Bold').fontSize(12).fillColor(PDF.blue);
     t('Merci pour votre confiance !', L, fy - 38, { width: CW, align: 'center' });
     doc.font('Helvetica').fontSize(8).fillColor(PDF.muted);
-    t('Pour toute question sur cette facture : support.primeo@gmail.com · +225 07 07 16 16 84', L, fy - 21, { width: CW, align: 'center' });
+    t('Pour toute question sur cette facture : facturation@primeo.ci · +225 07 07 16 16 84', L, fy - 21, { width: CW, align: 'center' });
     doc.rect(0, fy, W, H - fy).fill('#F3F4F6');
     doc.rect(0, fy, W, 2).fill(PDF.blue);
     doc.font('Helvetica-Bold').fontSize(8).fillColor(PDF.text);

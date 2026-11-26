@@ -40,6 +40,8 @@ interface SendEmailOptions {
   templateId?: number;
   params?: Record<string, unknown>;
   attachment?: EmailAttachment[];
+  /** Expéditeur spécifique (ex. support@primeo.ci pour les réponses du support). Défaut : noreply@. */
+  from?: EmailRecipient;
 }
 
 
@@ -50,6 +52,7 @@ async function sendViaBrevoApi(
   subject: string,
   htmlContent: string,
   attachment?: EmailAttachment[],
+  from?: EmailRecipient,
 ): Promise<void> {
   const apiKey = brevoConfig.apiKey;
   if (!apiKey) {
@@ -77,7 +80,10 @@ async function sendViaBrevoApi(
   await axios.post(
     `${brevoConfig.baseUrl}/smtp/email`,
     {
-      sender: { email: brevoConfig.senderEmail, name: brevoConfig.senderName },
+      sender: from?.email
+        ? { email: from.email, name: from.name ?? brevoConfig.senderName }
+        : { email: brevoConfig.senderEmail, name: brevoConfig.senderName },
+      replyTo: { email: brevoConfig.replyTo, name: 'Primeo' },
       to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
       subject,
       htmlContent,
@@ -178,7 +184,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     }
 
     try {
-      await sendViaBrevoApi([recipient], finalSubject, htmlContent, options.attachment);
+      await sendViaBrevoApi([recipient], finalSubject, htmlContent, options.attachment, options.from);
       logger.debug(`Email Brevo envoyé à ${recipient.email}`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);

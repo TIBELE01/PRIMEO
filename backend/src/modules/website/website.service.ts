@@ -2,6 +2,7 @@
 import { prisma } from '../../database/prisma.service';
 import { cacheGet, cacheSet } from '../../common/utils/redis-client';
 import { env } from '../../config/env.config';
+import { EMAILS, contactRecipientFor } from '../../config/emails.config';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../common/utils/s3-client';
 import { CV_BUCKET, uploadPrivateFile, deletePrivateFile, parseStorageRef, isAllowedDocument } from '../../common/utils/private-storage';
 import { createDownloadToken } from '../../common/utils/download-token';
@@ -792,7 +793,7 @@ export const websiteService = {
       },
     });
     await sendEmail({
-      to: [{ email: env.ADMIN_EMAIL ?? 'support.primeo@gmail.com', name: 'Primeo RH' }],
+      to: [{ email: EMAILS.careers, name: 'Primeo Recrutement' }],
       subject: `Nouvelle candidature spontanée — ${data.firstName} ${data.lastName}`,
       htmlContent: `
         <h2>Nouvelle candidature spontanée</h2>
@@ -1173,9 +1174,9 @@ export const websiteService = {
 
     // Notification to admin
 
-    if (env.ADMIN_EMAIL) {
+    {
       await sendEmail({
-        to: [{ email: env.ADMIN_EMAIL }],
+        to: [{ email: contactRecipientFor(data.subject) }],
         subject: `[Contact] ${data.subject} — ${data.name}`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#4f6af5">Nouveau message de contact</h3>
@@ -1214,6 +1215,7 @@ export const websiteService = {
     const row = await prisma.contactMessage.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Message introuvable');
     await sendEmail({
+      from: { email: EMAILS.supportFrom, name: 'Primeo Support' },
       to: [{ email: row.email, name: row.name }],
       subject: `Re: ${row.subject} — Primeo`,
       htmlContent: `<div style="font-family:sans-serif;max-width:560px">
@@ -1564,9 +1566,9 @@ export const websiteService = {
 
     // Notification to admin
 
-    if (env.ADMIN_EMAIL) {
+    {
       await sendEmail({
-        to: [{ email: env.ADMIN_EMAIL }],
+        to: [{ email: EMAILS.partnership, name: 'Primeo Partenariats' }],
         subject: `[Partenariat] ${data.partnershipType} — ${data.companyName}`,
         htmlContent: `<div style="font-family:sans-serif;max-width:560px">
           <h3 style="color:#0066cc">Nouvelle demande de partenariat</h3>
