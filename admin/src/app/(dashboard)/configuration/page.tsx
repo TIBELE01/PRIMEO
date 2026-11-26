@@ -54,6 +54,7 @@ export default function ConfigurationPage() {
     { href: '/configuration/emails', icon: Mail, label: 'Templates emails', desc: 'Modifier les emails transactionnels' },
     { href: '/configuration/appearance', icon: Palette, label: 'Apparence', desc: 'Couleurs et logo de la plateforme' },
     { href: '/configuration/admins', icon: ShieldCheck, label: 'Comptes admin', desc: 'Créer et gérer les comptes administrateurs' },
+    { href: '/configuration/security', icon: ShieldCheck, label: 'Sécurité du compte', desc: 'Activer la double authentification (2FA)' },
     { href: '/configuration/flags', icon: Flag, label: 'Feature Flags', desc: 'Activer / désactiver des fonctionnalités en temps réel' },
   ];
 
