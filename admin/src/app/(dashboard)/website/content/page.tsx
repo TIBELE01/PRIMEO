@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { useToast } from '@/hooks/useToast';
 
-const VITRINE = (process.env.NEXT_PUBLIC_VITRINE_URL ?? 'https://primeo-vitrine-152o.onrender.com').replace(/\/+$/, '');
+const VITRINE = (process.env.NEXT_PUBLIC_VITRINE_URL ?? 'https://primeo.ci').replace(/\/+$/, '');
 const PAGE_PATHS: Record<string, string> = {
   home: '/', solutions: '/solutions/', produits: '/produits/', 'a-propos': '/a-propos/', aide: '/aide/', blog: '/blog/',
   carrieres: '/carrieres/', communaute: '/communaute/', contact: '/contact/', 'contact-merci': '/contact/merci.html',

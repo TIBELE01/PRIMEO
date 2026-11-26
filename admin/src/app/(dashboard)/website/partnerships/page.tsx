@@ -72,7 +72,7 @@ export default function PartnershipsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Demandes de partenariat</h1>
           <p className="mt-1 text-gray-500 text-sm">{total} demande{total !== 1 ? 's' : ''} au total</p>
         </div>
-        <a href={`${process.env.NEXT_PUBLIC_VITRINE_URL ?? 'https://primeo-vitrine-152o.onrender.com'}/devenir-partenaire/`} target="_blank" rel="noopener noreferrer"
+        <a href={`${process.env.NEXT_PUBLIC_VITRINE_URL ?? 'https://primeo.ci'}/devenir-partenaire/`} target="_blank" rel="noopener noreferrer"
            className="text-sm text-blue-600 hover:underline flex items-center gap-1">
           Voir la page →
         </a>

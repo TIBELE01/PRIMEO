@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 import { STORAGE_KEYS } from './cookies';
 
 // Base API normalisée : se termine TOUJOURS par /api, que NEXT_PUBLIC_API_URL
-// inclue déjà le suffixe ou non (ex. https://api-primeo.onrender.com → .../api).
+// inclue déjà le suffixe ou non (ex. https://api.primeo.ci → .../api).
 // Corrige le 404 « Cannot POST /admin/auth/login » quand l'URL Render omet /api.
 export function normalizeApiBase(raw?: string | null): string {
   return (raw ?? 'http://localhost:4000')
