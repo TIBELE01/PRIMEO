@@ -632,7 +632,7 @@
   "section": "ap-hero",
   "tag": "div",
   "type": "html",
-  "default": "<a href=\"#histoire\" class=\"ap-anchor\">Histoire</a> <a href=\"#mission\" class=\"ap-anchor\">Mission</a> <a href=\"#valeurs\" class=\"ap-anchor\">Valeurs</a> <a href=\"#equipe\" class=\"ap-anchor\">Équipe</a> <a href=\"#partenaires\" class=\"ap-anchor\">Partenaires</a>"
+  "default": "<a href=\"#histoire\" class=\"ap-anchor\">Histoire</a> <a href=\"#mission\" class=\"ap-anchor\">Mission &amp; valeurs</a> <a href=\"#equipe\" class=\"ap-anchor\">Équipe</a> <a href=\"#partenaires\" class=\"ap-anchor\">Partenaires</a>"
  },
  {
   "key": "a-propos.histoire.p1",
@@ -975,6 +975,22 @@
   "tag": "span",
   "type": "text",
   "default": "fondée à Abidjan"
+ },
+ {
+  "key": "carrieres.car-hero.num4",
+  "page": "carrieres",
+  "section": "car-hero",
+  "tag": "span",
+  "type": "number",
+  "default": "4"
+ },
+ {
+  "key": "carrieres.car-hero.span4",
+  "page": "carrieres",
+  "section": "car-hero",
+  "tag": "span",
+  "type": "text",
+  "default": "secteurs d'activité"
  },
  {
   "key": "carrieres.car-pres.p1",
@@ -1887,6 +1903,22 @@
   "tag": "div",
   "type": "text",
   "default": "P"
+ },
+ {
+  "key": "devenir-partenaire.partner-hero.stat4",
+  "page": "devenir-partenaire",
+  "section": "partner-hero",
+  "tag": "div",
+  "type": "text",
+  "default": "4"
+ },
+ {
+  "key": "devenir-partenaire.partner-hero.stat4-label",
+  "page": "devenir-partenaire",
+  "section": "partner-hero",
+  "tag": "div",
+  "type": "text",
+  "default": "Types de partenariat"
  },
  {
   "key": "devenir-partenaire.partner-benefits.div1",
@@ -3055,6 +3087,22 @@
   "default": "Contact"
  },
  {
+  "key": "espace-presse.ep-hero-nav.a3",
+  "page": "espace-presse",
+  "section": "ep-hero-nav",
+  "tag": "a",
+  "type": "text",
+  "default": "Médias"
+ },
+ {
+  "key": "espace-presse.ep-hero-nav.a4",
+  "page": "espace-presse",
+  "section": "ep-hero-nav",
+  "tag": "a",
+  "type": "text",
+  "default": "Actualités"
+ },
+ {
   "key": "espace-presse.ep-hero.div1",
   "page": "espace-presse",
   "section": "ep-hero",
@@ -3549,6 +3597,14 @@
   "tag": "span",
   "type": "text",
   "default": "inscription sans engagement"
+ },
+ {
+  "key": "professionnels.hero.div8",
+  "page": "professionnels",
+  "section": "hero",
+  "tag": "span",
+  "type": "text",
+  "default": "modes de paiement pour vos clients"
  },
  {
   "key": "professionnels.types.span1",
@@ -5010,7 +5066,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>12 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span>"
+  "default": "<span>12 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span> <span>Pour les clients</span>"
  },
  {
   "key": "guide-client.guide-toc.p1",
@@ -6338,7 +6394,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>8 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span>"
+  "default": "<span>8 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span> <span>Pour les hôteliers</span>"
  },
  {
   "key": "guide-hotel.guide-toc.p1",
@@ -6778,7 +6834,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>8 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau intermédiaire</span>"
+  "default": "<span>8 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau intermédiaire</span> <span>Pour les agents immobiliers</span>"
  },
  {
   "key": "guide-immobilier.guide-toc.p1",
@@ -7194,7 +7250,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>14 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span>"
+  "default": "<span>14 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span> <span>Pour les propriétaires de résidences</span>"
  },
  {
   "key": "guide-residence.guide-toc.p1",
@@ -8154,7 +8210,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>9 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span>"
+  "default": "<span>9 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau débutant</span> <span>Pour les restaurateurs</span>"
  },
  {
   "key": "guide-restaurant.guide-toc.p1",
@@ -8626,7 +8682,7 @@
   "section": "guide-hero",
   "tag": "div",
   "type": "html",
-  "default": "<span>6 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau intermédiaire</span>"
+  "default": "<span>6 min de lecture</span> <span>Mis à jour en novembre 2026</span> <span>Niveau intermédiaire</span> <span>Pour tous les professionnels</span>"
  },
  {
   "key": "guide-revenus.guide-toc.p1",

@@ -292,3 +292,7 @@
   .hc-card .hc-actions--stores { flex-wrap: nowrap; }
   .hc-card .hc-actions--stores > a { flex: 1 1 0; width: auto; min-width: 0; max-width: 170px; height: 52px; }
 }
+
+/* 4 petites cartes par ligne : les nombres ne se coupent jamais */
+.hc-card .hc-tiles [class*="stat-num"],
+.hc-card .hc-tiles [class*="stat__num"] { white-space: nowrap; font-size: clamp(1.15rem, 2vw, 1.55rem); }
