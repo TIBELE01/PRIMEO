@@ -10,7 +10,7 @@ import { propertiesApi } from '@services/api/endpoints/properties';
 import type { Property } from '@/types/property';
 import { normalizeProperties } from '@/utils/normalizeProperty';
 import { PropertyCard } from '../Home/PropertyCard';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 import { trackPropertyClick } from '../../../utils/propertyStats';
 

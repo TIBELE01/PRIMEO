@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView, Image, StatusBar, useWindowDimensions,
+  ActivityIndicator, ScrollView, StatusBar, useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';

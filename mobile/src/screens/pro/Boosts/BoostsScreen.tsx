@@ -15,11 +15,10 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { boostsApi } from '../../../services/api/endpoints/boosts';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -85,7 +84,6 @@ function planLabel(plan: string): string {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function BoostsScreen() {
-  const navigation = useNavigation();
 
   const [balance, setBalance] = useState<BoostBalance | null>(null);
   const [boosts, setBoosts] = useState<Boost[]>([]);

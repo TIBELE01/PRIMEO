@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { supportApi } from '../../services/api/endpoints/support';
 import type { TicketCategory } from '../../types/support';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../theme/header';
+import { HEADER_FG, HEADER_BUTTON_BG, HEADER_SHAPE } from '../../theme/header';
 import { HeaderBackdrop } from '../../components/layout/HeaderBackdrop';
 
 type ChatMsg = { id: string; from: 'bot' | 'user'; text: string };

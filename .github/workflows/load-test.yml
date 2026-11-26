@@ -57,7 +57,7 @@ jobs:
           k6 run \
             --env BASE_URL=${{ env.TARGET }} \
             --out json=k6-results.json \
-            k6/search-load.test.js
+            tests/load/k6/search-load.test.js
         # Le test peut échouer si les seuils ne sont pas atteints ;
         # continue-on-error: true garantit que la CI globale n'est pas bloquée.
 

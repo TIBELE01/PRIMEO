@@ -28,10 +28,6 @@ interface AuditLog {
   metadata?: { old?: Record<string, unknown>; new?: Record<string, unknown> } | null;
 }
 
-const levelVariant: Record<string, 'info' | 'warning' | 'danger' | 'default'> = {
-  info: 'info', warn: 'warning', error: 'danger', debug: 'default',
-};
-
 function deriveLevel(action: string): 'info' | 'warning' | 'danger' | 'default' {
   if (action.includes('ban') || action.includes('delete') || action.includes('error')) return 'danger';
   if (action.includes('suspend') || action.includes('reject') || action.includes('hide')) return 'warning';

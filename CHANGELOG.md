@@ -13,6 +13,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce pr
 - Listes de favoris synchronisées en base de données (migration depuis AsyncStorage)
 - Publications supplémentaires activées immédiatement après paiement (polling Genius Pay)
 
+### Modifié
+- Réorganisation du dépôt : documentation rangée par thème dans `docs/`, tests de charge regroupés dans `tests/load/`
+
+### Supprimé
+- Code jamais importé, fichiers vides, doublons, ressources de la vitrine non chargées, dépendances inutilisées, dossiers `infra/` et `packages/shared-types/` — détail fichier par fichier dans [docs/maintenance/nettoyage-2026-11.md](docs/maintenance/nettoyage-2026-11.md)
+
 ## [0.1.0] — 2026-06-01
 
 ### Ajouté

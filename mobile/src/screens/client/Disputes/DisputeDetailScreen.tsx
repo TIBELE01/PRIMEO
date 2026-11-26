@@ -7,7 +7,7 @@ import type { ClientScreenProps } from '../../../navigation/types';
 import { disputesApi } from '../../../services/api/endpoints/disputes';
 import { socketService } from '../../../services/socket/socketService';
 import { useAuth } from '../../../hooks/useAuth';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 type DisputeStatus =

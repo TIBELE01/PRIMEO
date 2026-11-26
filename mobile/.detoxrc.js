@@ -8,7 +8,7 @@
  *     npm run e2e:build:android   # detox build (gradle)
  *     npm run e2e:test:android    # detox test (émulateur Android)
  *
- * Voir docs/E2E-DETOX.md pour les pré-requis (SDK Android, AVD) et la CI.
+ * Voir docs/guides/E2E-DETOX.md pour les pré-requis (SDK Android, AVD) et la CI.
  * @type {Detox.DetoxConfig}
  */
 module.exports = {

@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { usersApi } from '../../../services/api/endpoints/users';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const PRIMARY = '#DC2626';

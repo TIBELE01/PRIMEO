@@ -2,11 +2,9 @@
 export { api, apiClient } from '../lib/api';
 
 import { api, apiClient, API_BASE } from '../lib/api';
-import type { PlatformUser, UserDetail } from '../types/user';
+import type { UserDetail } from '../types/user';
 import type { AdminProperty } from '../types/property';
-import type { AdminBooking } from '../types/booking';
 import { normalizeBooking, normalizeAuditLog, normalizeDispute } from '../lib/normalize';
-import type { AdminDispute } from '../types/dispute';
 
 /** Télécharge un fichier protégé : requête avec le jeton, puis enregistrement du contenu reçu. */
 export async function downloadAuthenticated(path: string, filename: string): Promise<void> {

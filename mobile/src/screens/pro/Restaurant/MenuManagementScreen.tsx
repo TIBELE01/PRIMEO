@@ -5,13 +5,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { uploadToCloudinary } from '../../../services/cloudinary';
 import { PageHeader } from '../../../components/layout/PageHeader';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // Couleur principale restaurant
@@ -145,7 +144,6 @@ function MenuItemCard({
 // ── Écran principal ────────────────────────────────────────────────────────────
 
 export default function MenuManagementScreen() {
-  const navigation = useNavigation<any>();
   const [propertyId,  setPropertyId]  = useState<string | null>(null);
   const [items,       setItems]       = useState<MenuItem[]>([]);
   const [loading,     setLoading]     = useState(true);

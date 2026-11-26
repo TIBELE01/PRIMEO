@@ -2,7 +2,7 @@
 // abstraites, logo en carte flottante, boutons pilule). Navigation inchangée.
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, Image, ScrollView, useWindowDimensions,
+  View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar, ScrollView, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-require-imports

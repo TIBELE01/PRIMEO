@@ -59,12 +59,6 @@ export default function PropertyDetailPage() {
     onError: () => toast.error('Erreur lors de la validation'),
   });
 
-  const suspend = useMutation({
-    mutationFn: () => propertiesService.suspend(id),
-    onSuccess: () => { toast.success('Annonce suspendue'); qc.invalidateQueries({ queryKey: ['property', id] }); },
-    onError: () => toast.error('Erreur'),
-  });
-
   const reactivate = useMutation({
     mutationFn: () => propertiesService.reactivateProperty(id),
     onSuccess: () => { toast.success('Annonce réactivée'); qc.invalidateQueries({ queryKey: ['property', id] }); },

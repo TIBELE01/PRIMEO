@@ -8,7 +8,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ClientStackParamList } from '../../../navigation/types';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { BookingInvoiceDownload } from '../../../components/booking/BookingInvoiceDownload';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 import { propertyCoverUrl } from '@/utils/propertyCover';
 

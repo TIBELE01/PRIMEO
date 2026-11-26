@@ -15,7 +15,6 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
@@ -321,7 +320,6 @@ function CreatePromoModal({ visible, onClose, onSubmit }: CreatePromoModalProps)
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function PromotionsScreen() {
-  const navigation = useNavigation<any>();
 
   const [propertyId, setPropertyId] = useState<string | null>(null);
   const [promos, setPromos] = useState<Promotion[]>([]);

@@ -3,7 +3,7 @@
 // sélecteur de voyageurs/convives, filtres complets par type et carte interactive.
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Modal, ImageBackground, Dimensions, Platform, Animated, LayoutAnimation, UIManager,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, ScrollView, Modal, ImageBackground, Dimensions, Platform, LayoutAnimation, UIManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -146,20 +146,6 @@ function buildApiParams(
   return p;
 }
 
-// ── Filtre côté client (données démo) ────────────────────────────────────────
-
-
-function sortProps(list: Property[], sortBy: string): Property[] {
-  const a = [...list];
-  const price = (p: Property) => p.pricePerNight ?? p.priceForSale ?? 0;
-  if (sortBy === 'price_asc')  a.sort((x, y) => price(x) - price(y));
-  else if (sortBy === 'price_desc') a.sort((x, y) => price(y) - price(x));
-  else if (sortBy === 'rating')     a.sort((x, y) => y.rating - x.rating);
-  else if (sortBy === 'popular')    a.sort((x, y) => ((y as any).bookingsCount ?? y.reviewCount) - ((x as any).bookingsCount ?? x.reviewCount));
-  else if (sortBy === 'newest')     a.sort((x, y) => new Date((y as any).createdAt ?? 0).getTime() - new Date((x as any).createdAt ?? 0).getTime());
-  return a;
-}
-
 // ── Chips filtres actifs ──────────────────────────────────────────────────────
 
 interface Chip { id: string; label: string; clear: () => void }
@@ -218,7 +204,7 @@ interface SearchPanelProps {
 function SearchPanel({
   config, city, onCityChange, checkIn, checkOut,
   onCheckInChange, onCheckOutChange, guests, onGuestsChange,
-  pricePerNight, onSearch,
+  onSearch,
 }: SearchPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [calMode, setCalMode] = useState<'checkin' | 'checkout' | null>(null);

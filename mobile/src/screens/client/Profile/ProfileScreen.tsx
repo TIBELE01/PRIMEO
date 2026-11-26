@@ -22,7 +22,7 @@ import {
   useSingleAccordion,
 } from '../../../components/ui/ProfileAccordion';
 import { PageHeader } from '../../../components/layout/PageHeader';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ── Constantes ──────────────────────────────────────────────────────────────

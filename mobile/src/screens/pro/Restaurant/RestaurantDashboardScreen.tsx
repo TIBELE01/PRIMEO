@@ -8,9 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
-import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const { width } = Dimensions.get('window');
@@ -72,7 +71,6 @@ const DAY_LABELS   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function RestaurantDashboardScreen({ navigation }: any) {
-  const theme = useProTheme();
   const user  = useAuthStore((s) => s.user);
 
   const [stats,        setStats]        = useState<any>(null);
@@ -358,7 +356,6 @@ const styles = StyleSheet.create({
   safe:        { flex: 1, paddingTop: 16, backgroundColor: '#F8FAFC' },
   centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
   loadingText: { fontSize: 14, fontWeight: '600' },
-
 
   // Header coloré
   header: { ...HEADER_SHAPE,

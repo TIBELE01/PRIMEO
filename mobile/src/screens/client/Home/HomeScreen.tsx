@@ -2,7 +2,7 @@
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   StatusBar, RefreshControl, ActivityIndicator,
-  TextInput, Dimensions, Animated, Easing,
+  TextInput, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,7 +25,6 @@ import { OwnerBenefits } from '../../../components/home/OwnerBenefits';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../../utils/sectors';
 import { trackPropertyClick } from '../../../utils/propertyStats';
-import { LogoTile } from '../../../components/common/Logo';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -68,65 +67,6 @@ const FAQ_ITEMS = [
   { q: 'Les avis sont-ils vérifiés ?',            a: 'Oui, seuls les clients ayant séjourné peuvent laisser un avis certifié.' },
   { q: 'Comment publier mon bien sur Primeo ?',   a: 'Créez un compte professionnel (« Inscription professionnelle »), puis publiez votre annonce : elle est validée par notre équipe avant d’être visible.' },
 ];
-
-/* ── Texte défilant dans la barre bleue supérieure ── */
-const TICKER_TEXT =
-  '🏠 500+ propriétés vérifiées   ✦   📍 15 villes en Côte d\'Ivoire   ✦   💳 Paiement flexible : 10% en ligne + cash   ✦   ✅ Hôtes & avis certifiés   ✦   🔭 Visite virtuelle 3D immersive   ✦   🕐 Assistance disponible 24h/7j   ✦   ';
-
-function AppTopBar() {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const [textWidth, setTextWidth] = useState(0);
-  const screenW = Dimensions.get('window').width;
-
-  useEffect(() => {
-    if (!textWidth) return;
-    translateX.setValue(screenW);
-    const anim = Animated.loop(
-      Animated.timing(translateX, {
-        toValue: -textWidth,
-        duration: (screenW + textWidth) * 22,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [textWidth, screenW, translateX]);
-
-  return (
-    <View style={s.appBar}>
-      {/* Mesureur invisible hors du conteneur overflow:hidden pour obtenir la largeur naturelle */}
-      <View style={{ position: 'absolute', top: -400, left: 0, opacity: 0 }}>
-        <Text
-          style={s.tickerText}
-          onLayout={e => {
-            if (!textWidth) setTextWidth(e.nativeEvent.layout.width);
-          }}
-        >
-          {TICKER_TEXT}
-        </Text>
-      </View>
-
-      {/* Logo fixe */}
-      <View style={s.appBarLogo}>
-        <LogoTile size={36} radius={9} />
-      </View>
-
-      {/* Séparateur vertical */}
-      <View style={s.appBarSep} />
-
-      {/* Zone de défilement */}
-      <View style={s.tickerZone}>
-        <Animated.Text
-          style={[s.tickerText, { transform: [{ translateX }] }]}
-          numberOfLines={1}
-        >
-          {TICKER_TEXT}
-        </Animated.Text>
-      </View>
-    </View>
-  );
-}
 
 /* ── Bannière de titre uniforme (pleine largeur, bleue, arrondie) ── */
 function SectionTitle({ text, onSeeAll }: { text: string; onSeeAll?: () => void }) {
@@ -458,38 +398,6 @@ const CARD_SHADOW = {
 const s = StyleSheet.create({
   safe: { flex: 1, paddingTop: 16, backgroundColor: '#F4F6FB' },
 
-  /* ── Barre bleue supérieure avec ticker ── */
-  appBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#03154A',
-    height: 46,
-  },
-  appBarLogo: {
-    width: 46,
-    height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appBarSep: {
-    width: 1,
-    height: 28,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
-  tickerZone: {
-    flex: 1,
-    overflow: 'hidden',
-    height: 46,
-    justifyContent: 'center',
-    paddingLeft: 10,
-  },
-  tickerText: {
-    color: 'rgba(255,255,255,0.92)',
-    fontSize: 12.5,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
   loader: { marginVertical: 24 },
 
   /* espace augmenté entre les sections */
@@ -552,7 +460,6 @@ const s = StyleSheet.create({
   innovIcon:  { fontSize: 28 },
   innovTitle: { fontSize: 13, fontWeight: '800', color: '#111827' },
   innovDesc:  { fontSize: 11.5, color: '#6B7280', lineHeight: 17 },
-
 
   /* ── Témoignages (carte étroite et haute) ── */
   testimonialCard: {

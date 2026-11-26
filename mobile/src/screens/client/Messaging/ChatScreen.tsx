@@ -11,7 +11,7 @@ import { messagesApi } from '../../../services/api/endpoints/messages';
 import { socketService } from '../../../services/socket/socketService';
 import { useChatStore, type Message } from '../../../store/chatStore';
 import { useAuth } from '../../../hooks/useAuth';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // Stable reference so the Zustand selector never returns a new [] on each call

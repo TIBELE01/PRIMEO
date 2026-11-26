@@ -5,13 +5,13 @@ on:
     branches: [main, 'feature/**', 'fix/**']
     paths:
       - 'backend/**'
-      - 'k6/**'
+      - 'tests/load/**'
       - '.github/workflows/ci-backend.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
-      - 'k6/**'
+      - 'tests/load/**'
 
 # Annule les exécutions précédentes encore en cours sur la même réf
 concurrency:

@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { useRouter } from 'next/navigation';
-import { Ticket, MessageSquare, Clock, CheckCircle, AlertTriangle, Bot } from 'lucide-react';
+import { Ticket, Clock, CheckCircle, Bot } from 'lucide-react';
 
 export default function SupportPage() {
   const router = useRouter();

@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, TouchableOpacity, TextInput, Modal, StyleSheet, ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { propertiesApi } from '../../../services/api/endpoints/properties';
 import { reviewsApi } from '../../../services/api/endpoints/reviews';
@@ -42,7 +41,6 @@ function formatDate(iso: string): string {
 }
 
 export default function ProReceivedReviewsScreen() {
-  const navigation = useNavigation<any>();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

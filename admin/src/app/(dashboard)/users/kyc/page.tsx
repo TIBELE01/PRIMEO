@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck, ShieldX, Home, Hotel, Building2, UtensilsCrossed } from 'lucide-react';

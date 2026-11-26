@@ -52,7 +52,7 @@ jobs:
   # ── E2E Detox — NON bloquant (continue-on-error) ─────────────────────────────
   # Parcours complet client (inscription → recherche → réservation 10 % →
   # confirmation) sur émulateur Android. Lourd (prebuild + build natif + AVD) :
-  # toléré en échec pour l'instant (cf. docs/E2E-DETOX.md).
+  # toléré en échec pour l'instant (cf. docs/guides/E2E-DETOX.md).
   e2e-detox-android:
     name: E2E Detox (Android, non bloquant)
     runs-on: ubuntu-latest

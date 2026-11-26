@@ -2,4 +2,3 @@ packages:
   - 'backend'
   - 'mobile'
   - 'admin'
-  - 'packages/*'

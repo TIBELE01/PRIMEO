@@ -24,7 +24,7 @@ import { DarkCalendarModal } from '../../../components/common/DarkCalendarModal'
 import { trackEvent } from '../../../services/analytics';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledOptions, filterEnabledProperties, sectorOfPropertyType } from '../../../utils/sectors';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 import { trackPropertyClick } from '../../../utils/propertyStats';
 

@@ -85,14 +85,23 @@ bash scripts/healthcheck.sh
 
 ```
 primeo/
-├── backend/          # API REST Node.js + Express (Phase 2)
-├── mobile/           # Application React Native + Expo (Phase 3)
-├── admin/            # Dashboard Next.js (Phase 4)
+├── backend/          # API REST Node.js + Express
+├── mobile/           # Application React Native + Expo
+├── admin/            # Dashboard Next.js
+├── Primeo/           # Site vitrine (statique)
+├── legal-site/       # Site légal (statique)
 ├── docs/
-│   ├── architecture/
+│   ├── presentation/ # Présentation de Primeo
+│   ├── architecture/ # Architecture, authentification, RLS
+│   ├── api/
 │   ├── deployment/
-│   └── guides/
-├── scripts/
+│   ├── operations/   # Runbooks (paiement live, communication)
+│   ├── guides/       # Accessibilité, tests E2E…
+│   ├── sites/        # Docs vitrine et site légal
+│   └── mobile/
+├── scripts/          # Scripts d'exploitation
+├── tests/load/       # Tests de charge k6
+├── .github/          # CI/CD
 ├── .env.example
 ├── docker-compose.yml
 └── pnpm-workspace.yaml

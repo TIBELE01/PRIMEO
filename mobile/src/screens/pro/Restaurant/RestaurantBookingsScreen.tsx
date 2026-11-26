@@ -10,7 +10,6 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { bookingsApi } from '../../../services/api/endpoints/bookings';
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
@@ -335,7 +334,6 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export default function RestaurantBookingsScreen() {
-  const navigation = useNavigation<any>();
 
   const [activeTab, setActiveTab] = useState<TabKey>('pending');
   const [bookings, setBookings] = useState<Record<TabKey, RestaurantBooking[]>>({

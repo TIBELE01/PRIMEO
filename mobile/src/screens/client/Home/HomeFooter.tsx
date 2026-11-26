@@ -2,7 +2,7 @@
 // PublicHomeScreen (visiteur). Source unique de vérité pour les liens vers le
 // site vitrine : toute mise à jour d'URL se fait ici, jamais en double.
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LogoTile } from '../../../components/common/Logo';
 import { VITRINE_URL as VITRINE, LEGAL_URL as LEGAL, SOCIAL_URLS, openExternal } from '../../../constants/externalLinks';
 

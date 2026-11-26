@@ -5,13 +5,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { KPICard } from '../../../components/dashboard/KPICard';
 import { AlertCard } from '../../../components/dashboard/AlertCard';
 import { proDashboardApi } from '../../../services/api/endpoints/proDashboard';
 import { useProTheme } from '../../../hooks/useProTheme';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscription } from '../../../hooks/useSubscription';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const { width } = Dimensions.get('window');

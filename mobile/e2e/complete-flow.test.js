@@ -4,7 +4,7 @@
 //
 // Sélecteurs : on privilégie les testID (stables) avec repli sur le texte FR
 // visible. Les testID attendus par ce scénario sont listés dans
-// docs/E2E-DETOX.md (section « testID requis ») — à ajouter aux écrans si absents.
+// docs/guides/E2E-DETOX.md (section « testID requis ») — à ajouter aux écrans si absents.
 //
 // helper : tape le premier élément disponible parmi plusieurs matchers (rend le
 // test résilient aux variations d'UI / libellés).

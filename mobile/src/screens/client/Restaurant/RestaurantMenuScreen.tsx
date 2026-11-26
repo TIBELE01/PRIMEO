@@ -11,7 +11,7 @@ import type { ClientScreenProps, RestaurantDish } from '../../../navigation/type
 import { restaurantApi } from '../../../services/api/endpoints/restaurantApi';
 import { trackPropertyView } from '../../../utils/propertyStats';
 import { useCurrency } from '../../../hooks/useCurrency';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 const PRIMARY = '#DC2626';

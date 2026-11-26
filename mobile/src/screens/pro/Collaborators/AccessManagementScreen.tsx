@@ -3,13 +3,13 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, Modal, TextInput, Switch,
+  ActivityIndicator, Alert, Modal, TextInput,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { collaboratorsApi, CollaboratorRole } from '../../../services/api/endpoints/collaboratorsApi';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_BG, HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

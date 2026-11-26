@@ -23,7 +23,7 @@ import { PaymentOptionsSelector, type PaymentChoice } from './PaymentOptionsSele
 import { useCurrency } from '../../../hooks/useCurrency';
 import { generateUUID } from '../../../utils/uuid';
 import { trackEvent } from '../../../services/analytics';
-import { HEADER_BG, HEADER_FG, HEADER_BUTTON_BG, HEADER_SUBTLE, HEADER_SHAPE } from '../../../theme/header';
+import { HEADER_FG, HEADER_SHAPE } from '../../../theme/header';
 import { HeaderBackdrop } from '../../../components/layout/HeaderBackdrop';
 import { showStyledAlert } from '../../../utils/alertManager';
 

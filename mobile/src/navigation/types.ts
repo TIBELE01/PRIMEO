@@ -1,6 +1,5 @@
 // TypeScript types for all navigation stacks and routes
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { Panorama } from '../types/property';
 
 // ─── Auth Stack ───────────────────────────────────────────────────────────────
