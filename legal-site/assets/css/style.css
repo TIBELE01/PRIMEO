@@ -641,3 +641,46 @@ table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:to
 
 /* Informations à compléter par l'éditeur (mentions obligatoires) */
 .todo{background:#fff3cd;color:#7a4b00;padding:0 .3em;border-radius:3px;font-weight:600}
+
+/* ── Accueil : présentation + 4 cartes d'information (même style que le site vitrine) ── */
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  border-top: 0;
+}
+.hero-stats > div {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 14px;
+  padding: .9rem .6rem;
+}
+.legal-intro { max-width: 1100px; margin: 0 auto; padding: 3.5rem 1.5rem .5rem; }
+.legal-intro__head { text-align: center; max-width: 760px; margin: 0 auto 2.2rem; }
+.legal-intro__label {
+  display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--blue); background: var(--blue-light); border-radius: var(--radius-pill); padding: .35rem .95rem; margin-bottom: 1rem;
+}
+.legal-intro__title { font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 800; color: var(--dark); letter-spacing: -.02em; line-height: 1.2; margin: 0 0 .7rem; }
+.legal-intro__subtitle { font-size: 1.05rem; font-weight: 600; color: var(--blue); margin: 0 0 .9rem; }
+.legal-intro__message { color: var(--muted); line-height: 1.75; margin: 0; }
+.legal-info-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+.legal-info-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem 1.3rem;
+  box-shadow: var(--shadow-sm); transition: box-shadow var(--t), transform var(--t);
+}
+.legal-info-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.legal-info-card__icon { font-size: 1.6rem; margin-bottom: .7rem; }
+.legal-info-card h3 { font-size: 1rem; font-weight: 700; color: var(--dark); margin: 0 0 .4rem; }
+.legal-info-card p { font-size: .88rem; color: var(--muted); line-height: 1.6; margin: 0; }
+.legal-info-card a { font-weight: 600; }
+@media (max-width: 1024px) { .legal-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .legal-info-grid { gap: .75rem; }
+  .legal-info-card { padding: 1.1rem .9rem; }
+  .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .legal-intro { padding-top: 2.5rem; }
+}

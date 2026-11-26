@@ -30,13 +30,15 @@ const DEFAULT_MISSION = {
 const DEFAULT_SOLUTIONS = [
   { id: 'default-1', title: 'Voyageurs', summary: "Trouvez et réservez facilement votre hébergement idéal en Côte d'Ivoire. Comparez les prix, lisez les avis, payez comme vous le souhaitez.", icon: '✈️', link: '/solutions', sortOrder: 0 },
   { id: 'default-2', title: "Professionnels de l'hébergement", summary: 'Publiez vos annonces, gérez vos réservations et suivez votre activité. Accédez à des outils professionnels pensés pour les hôteliers ivoiriens.', icon: '🏨', link: '/solutions', sortOrder: 1 },
-  { id: 'default-3', title: 'Restaurateurs & Immobilier', summary: 'Gérez votre restaurant en ligne, acceptez des réservations de tables et publiez vos offres immobilières sur une seule et même plateforme.', icon: '🍽️', link: '/solutions', sortOrder: 2 },
+  { id: 'default-3', title: 'Restaurateurs', summary: 'Gérez votre restaurant en ligne : acceptez des réservations de tables, mettez votre carte en valeur et fidélisez vos clients.', icon: '🍽️', link: '/solutions', sortOrder: 2 },
+  { id: 'default-4', title: "Professionnels de l'immobilier", summary: 'Publiez vos biens à la vente ou en location longue durée, avec photos et visites 3D, et suivez vos demandes et prospects.', icon: '🏢', link: '/solutions', sortOrder: 3 },
 ];
 
 const DEFAULT_PRODUCTS = [
   { id: 'default-1', title: 'Shooting Photo', description: 'Photos haute définition et panoramiques 360° pour sublimer vos biens et attirer plus de réservations.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433592/primeo/Website/products/shooting-photo.jpg', badge: null, link: '/produits/#shooting-photo', sortOrder: 0 },
   { id: 'default-2', title: 'PrimeoPay', description: 'Paiement en ligne sécurisé : Mobile Money (Orange, MTN, Wave, Moov) et carte bancaire, avec reversements automatiques.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433599/primeo/Website/products/primeopay.jpg', badge: 'Sécurisé', link: '/produits/#primeopay', sortOrder: 1 },
   { id: 'default-3', title: 'Formation', description: 'Formations en ligne pour optimiser vos annonces, gérer vos réservations et développer votre activité.', imageUrl: 'https://res.cloudinary.com/dlnnxvepd/image/upload/f_auto,q_auto,c_fill,w_640,h_400/v1782433604/primeo/Website/products/formation.jpg', badge: null, link: '/produits/#formation', sortOrder: 2 },
+  { id: 'default-4', title: 'Boost de visibilité', description: 'Mettez vos annonces en avant dans les résultats de recherche pendant quelques jours pour toucher davantage de clients.', imageUrl: null, badge: null, link: '/professionnels/#tarifs', sortOrder: 3 },
 ];
 
 const DEFAULT_WHY = [
