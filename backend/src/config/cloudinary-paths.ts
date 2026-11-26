@@ -116,6 +116,9 @@ export const cloudinaryPaths = {
   supportTicket: (ticketId: string, kind: 'attachments' | 'screenshots') => root(`Support/tickets/${ticketId}/${kind}`),
   supportChatbotTraining: () => root('Support/chatbot/training-data'),
 
+  // ── Messaging ────────────────────────────────────────────────────────────────
+  messageAttachments: (bookingId: string) => root(`Messages/bookings/${bookingId}/images`),
+
   // ── Temporary ────────────────────────────────────────────────────────────────
   tempUploads: () => root('Temporary/uploads'),
   tempConversions: () => root('Temporary/conversions'),

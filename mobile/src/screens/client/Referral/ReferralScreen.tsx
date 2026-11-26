@@ -1,6 +1,6 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Linking, Share, Clipboard, TextInput,
+  ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Linking, Clipboard, TextInput,
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import type { ClientScreenProps } from '../../../navigation/types';
 import { referralsApi } from '../../../services/api/endpoints/referrals';
 import { ReferralHistoryItem } from '../../../components/referral/ReferralHistoryItem';
 import { normalizeReferralHistory, type ReferralEntry } from '../../../utils/referrals';
+import { shareSafely } from '../../../utils/share';
 
 interface ReferralCode {
   code: string;
@@ -102,7 +103,7 @@ export function ReferralScreen({ navigation }: Props) {
 
   const handleShareNative = async () => {
     if (!shareMessage) return;
-    await Share.share({ message: shareMessage, title: 'Inviter sur PRIMEO' });
+    await shareSafely({ message: shareMessage, title: 'Inviter sur PRIMEO' });
   };
 
   const handleShareWhatsApp = async () => {

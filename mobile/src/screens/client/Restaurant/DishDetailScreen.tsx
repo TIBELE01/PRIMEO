@@ -7,7 +7,7 @@
 // restaurant chargée via usePropertyDetail.
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Share, Alert, Dimensions,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ClientScreenProps } from '../../../navigation/types';
@@ -24,6 +24,7 @@ import { LocationSection } from '../PropertyDetail/sections/LocationSection';
 import { HostSection } from '../PropertyDetail/sections/HostSection';
 import { ContactHostSection } from '../PropertyDetail/sections/ContactHostSection';
 import { num } from '@/utils/normalizeProperty';
+import { shareSafely } from '../../../utils/share';
 
 type Props = ClientScreenProps<'DishDetail'>;
 
@@ -72,7 +73,7 @@ export default function DishDetailScreen({ navigation, route }: Props) {
   }, [isAuthenticated, favLoading, isFav, propertyId]);
 
   const handleShare = useCallback(async () => {
-    await Share.share({ message: `${dish.name}${restaurantName ? ` — ${restaurantName}` : ''} sur PRIMEO`, title: dish.name });
+    await shareSafely({ message: `${dish.name}${restaurantName ? ` — ${restaurantName}` : ''} sur PRIMEO`, title: dish.name });
   }, [dish.name, restaurantName]);
 
   const goOrder = () => navigation.navigate('DishOrder', { dish, propertyId, restaurantName });

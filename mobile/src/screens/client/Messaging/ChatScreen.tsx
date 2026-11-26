@@ -239,9 +239,29 @@ export function ChatScreen({ navigation, route }: Props) {
       type: 'image/*',
       copyToCacheDirectory: true,
     });
-    if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      socketService.sendMessage(bookingId, `[Image] ${uri}`);
+    if (result.canceled || !result.assets[0]) return;
+    // L'image est d'abord téléversée : l'adresse locale (file:// ou blob:)
+    // n'est lisible que sur cet appareil, jamais par l'autre participant.
+    const asset = result.assets[0] as DocumentPicker.DocumentPickerAsset & { file?: File };
+    const form = new FormData();
+    if (asset.file) {
+      form.append('file', asset.file);
+    } else if (typeof document !== 'undefined' && asset.uri.startsWith('blob:')) {
+      const blob = await fetch(asset.uri).then((r) => r.blob());
+      form.append('file', new File([blob], asset.name ?? 'image.jpg', { type: blob.type || 'image/jpeg' }));
+    } else {
+      form.append('file', { uri: asset.uri, name: asset.name ?? 'image.jpg', type: asset.mimeType ?? 'image/jpeg' } as unknown as Blob);
+    }
+    setSending(true);
+    try {
+      const res = await messagesApi.uploadAttachment(bookingId, form);
+      const url: string | undefined = res.data?.url ?? res.data?.data?.url;
+      if (!url) throw new Error('no url');
+      socketService.sendMessage(bookingId, `[Image] ${url}`);
+    } catch {
+      Alert.alert('Erreur', "Impossible d'envoyer l'image pour le moment.");
+    } finally {
+      setSending(false);
     }
   };
 

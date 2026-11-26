@@ -1,6 +1,6 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Alert, Share, TextInput, Modal,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PageHeader } from '../../../components/layout/PageHeader';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { favoritesApi } from '../../../services/api/endpoints/favorites';
 import { propertyCoverUrl } from '@/utils/propertyCover';
+import { shareSafely } from '../../../utils/share';
 
 interface FavoriteProperty {
   id: string;
@@ -192,7 +193,7 @@ export function FavoritesScreen({ navigation }: Props) {
       .filter(f => list.propertyIds.includes(f.property.id))
       .map(f => `• ${f.property.name} (${f.property.city})`)
       .join('\n');
-    await Share.share({
+    await shareSafely({
       title: `Ma liste "${list.name}" sur PRIMEO`,
       message: `Découvrez ma liste de logements "${list.name}" sur PRIMEO :\n\n${names}\n\nhttps://primeo.ci`,
     });

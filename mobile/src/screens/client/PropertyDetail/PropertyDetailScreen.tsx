@@ -4,7 +4,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  StatusBar, ActivityIndicator, Share, Alert,
+  StatusBar, ActivityIndicator, Alert,
   ImageBackground, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +41,7 @@ import { addDaysStr, todayStr } from '../../../utils/dates';
 import { View as RNView, Text as RNText, StyleSheet as RNStyleSheet } from 'react-native';
 import { trackEvent } from '../../../services/analytics';
 import { panoramaPreviewUrl } from '../../../utils/panorama';
+import { shareSafely } from '../../../utils/share';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -147,7 +148,7 @@ export function PropertyDetailScreen() {
 
   const handleShare = useCallback(async () => {
     if (!property) return;
-    await Share.share({ message: `${property.name} — ${property.city} sur PRIMEO`, title: property.name });
+    await shareSafely({ message: `${property.name} — ${property.city} sur PRIMEO`, title: property.name });
   }, [property]);
 
   // Redirige vers la connexion. « Connexion » est l'onglet d'auth de PublicTabs ;
