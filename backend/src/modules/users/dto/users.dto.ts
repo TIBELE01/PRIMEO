@@ -26,7 +26,9 @@ export type UpdateProfileInput = z.infer<typeof UpdateProfileDto>;
 
 export const ChangePasswordDto = z.object({
   currentPassword: z.string(),
-  newPassword:     z.string().min(8).max(100),
+  // Même exigence qu'à l'inscription et à la réinitialisation
+  newPassword:     z.string().min(8).max(100)
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
 });
 export type ChangePasswordInput = z.infer<typeof ChangePasswordDto>;
 
