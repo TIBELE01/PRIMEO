@@ -103,10 +103,29 @@ describe('referralsService.triggerReward', () => {
 
     const where = mockPrisma.booking.count.mock.calls[0][0].where;
     expect(where.status).toBe('completed'); // « confirmée » ne suffit plus
-    expect(where.endDate.lt).toBeInstanceOf(Date); // le séjour doit être passé
-    const startOfToday = new Date();
-    startOfToday.setUTCHours(0, 0, 0, 0);
-    expect(where.endDate.lt.getTime()).toBe(startOfToday.getTime());
+    // Jour de départ atteint : une clôture le jour même du départ compte aussitôt
+    expect(where.endDate.lte).toBeInstanceOf(Date);
+    const endOfToday = new Date();
+    endOfToday.setUTCHours(23, 59, 59, 999);
+    expect(where.endDate.lte.getTime()).toBe(endOfToday.getTime());
+  });
+
+  it('séjour clôturé le jour du départ → parrainage « rewarded » immédiatement et parrain crédité', async () => {
+    mockPrisma.referral.findFirst.mockResolvedValue({
+      id: 'ref-today',
+      referrerId: 'parrain-today',
+      referee: { firstName: 'Awa', lastName: 'K.', accountType: 'client' },
+    });
+    mockPrisma.booking.count.mockResolvedValue(1);
+    const tx = { referral: { update: jest.fn(async () => ({})) }, transaction: { create: jest.fn(async () => ({})) } };
+    mockPrisma.$transaction.mockImplementationOnce(async (cb: any) => cb(tx));
+
+    await referralsService.triggerReward('referee-today');
+
+    expect(tx.referral.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ref-today' },
+      data: expect.objectContaining({ status: 'rewarded', rewardAmount: 250 }),
+    }));
   });
 
   it('crédite 1000 FCFA au parrain pour un filleul professionnel au KYC approuvé', async () => {

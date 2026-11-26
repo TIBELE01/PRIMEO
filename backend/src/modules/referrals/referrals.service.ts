@@ -153,13 +153,14 @@ export const referralsService = {
   // Vérifie si le filleul remplit la condition de versement selon son type de compte.
   async _isRewardConditionMet(refereeId: string, accountType: string): Promise<boolean> {
     if (accountType === 'client') {
-      // Récompense APRÈS le séjour : réservation « terminée » dont la date de départ
-      // est passée (début de journée UTC = heure d'Abidjan). Une réservation
-      // confirmée mais pas encore terminée — ou clôturée avant le départ — ne compte pas.
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      // Récompense dès que le séjour est terminé : réservation « terminée » dont le jour
+      // de départ est atteint (fin de journée UTC = heure d'Abidjan). Une clôture le jour
+      // même du départ compte aussitôt ; une réservation clôturée AVANT le jour du départ
+      // ou seulement confirmée ne compte pas.
+      const endOfToday = new Date();
+      endOfToday.setUTCHours(23, 59, 59, 999);
       const completed = await prisma.booking.count({
-        where: { clientId: refereeId, status: 'completed', endDate: { lt: today } },
+        where: { clientId: refereeId, status: 'completed', endDate: { lte: endOfToday } },
       });
       return completed > 0;
     }

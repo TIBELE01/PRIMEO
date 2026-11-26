@@ -17,8 +17,10 @@ export const ReferralHistoryItem: React.FC<ReferralHistoryItemProps> = ({ refere
       <Text style={styles.date}>{joinedAt}</Text>
     </View>
     <View>
-      <Text style={styles.amount}>+{(earnedAmount ?? 0).toLocaleString()} XOF</Text>
-      <Text style={[styles.status, status === 'credited' && styles.credited]}>{status === 'credited' ? 'Crédité' : 'En attente'}</Text>
+      {status === 'credited' && (
+        <Text style={styles.amount}>+{(earnedAmount ?? 0).toLocaleString('fr-FR')} FCFA</Text>
+      )}
+      <Text style={[styles.status, status === 'credited' && styles.credited]}>{status === 'credited' ? 'Récompensé' : 'En attente'}</Text>
     </View>
   </View>
 );

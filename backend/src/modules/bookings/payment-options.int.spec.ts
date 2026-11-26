@@ -69,6 +69,7 @@ jest.mock('../../database/prisma.service', () => ({ prisma: mockPrisma }));
 import { bookingsService } from './bookings.service';
 import { processSuccessfulPayment, processFailedPayment } from '../webhooks/handlers/genius-pay.handler';
 import { pricingService } from './services/pricing.service';
+import { walletService } from '../wallets/wallets.service';
 import { geniusPayService } from '../payments/services/genius-pay.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { messagingService } from '../messaging/messaging.service';
@@ -171,6 +172,32 @@ describe('Option 3 — 0 % en ligne → CONFIRMATION IMMÉDIATE (sans webhook)',
 });
 
 describe('Portefeuille et code promo — restitution et couverture intégrale', () => {
+  it('sans accord explicite (useWallet absent) → le solde n\'est ni lu ni déduit', async () => {
+    (walletService.getBalance as jest.Mock).mockClear().mockResolvedValue(2500);
+    (pricingService.compute as jest.Mock).mockClear().mockResolvedValue({
+      totalAmount: 165000, onlinePaidAmount: 0, commissionAmount: 0, remainingCashAmount: 165000, walletDeduction: 0, validatedPromoCodeId: null,
+    });
+    await bookingsService.create(CLIENT, {
+      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'zero_online',
+    } as never);
+    await flush();
+    expect(walletService.getBalance).not.toHaveBeenCalled();
+    expect(pricingService.compute).toHaveBeenCalledWith(expect.objectContaining({ walletCredit: 0 }));
+    expect(walletService.debit).not.toHaveBeenCalled();
+  });
+
+  it('client qui accepte (useWallet: true) → le solde est proposé au calcul du prix', async () => {
+    (walletService.getBalance as jest.Mock).mockClear().mockResolvedValue(2500);
+    (pricingService.compute as jest.Mock).mockClear().mockResolvedValue({
+      totalAmount: 162500, onlinePaidAmount: 0, commissionAmount: 0, remainingCashAmount: 162500, walletDeduction: 2500, validatedPromoCodeId: null,
+    });
+    await bookingsService.create(CLIENT, {
+      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'zero_online', useWallet: true,
+    } as never);
+    await flush();
+    expect(pricingService.compute).toHaveBeenCalledWith(expect.objectContaining({ walletCredit: 2500 }));
+  });
+
   it('montant entièrement couvert par le portefeuille → confirmée tout de suite, sans Genius Pay', async () => {
     // 100 % en ligne demandé, mais le portefeuille couvre tout : il ne reste rien à payer.
     (pricingService.compute as jest.Mock).mockResolvedValue({
@@ -190,7 +217,7 @@ describe('Portefeuille et code promo — restitution et couverture intégrale', 
     }));
 
     const res = await bookingsService.create(CLIENT, {
-      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'full_online',
+      propertyId: 'p1', startDate: '2026-09-01', endDate: '2026-09-04', guests: 2, paymentOption: 'full_online', useWallet: true,
     } as never);
     await flush();
 

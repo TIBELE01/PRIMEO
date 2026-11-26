@@ -95,8 +95,9 @@ export const bookingsService = {
       await availabilityService.checkDatesAvailable(input.propertyId, startDate, endDate);
     }
 
-    // Use client wallet balance if they have credits (source de vérité : table wallets)
-    const currentWalletBalance = await walletService.getBalance(clientId);
+    // Solde du portefeuille (source de vérité : table wallets) — utilisé UNIQUEMENT si le client
+    // l'a explicitement accepté au récapitulatif (useWallet). Jamais de débit automatique.
+    const currentWalletBalance = input.useWallet ? await walletService.getBalance(clientId) : 0;
     const walletCredit = currentWalletBalance > 0 ? currentWalletBalance : 0;
 
     // Restaurant : réservation de table gratuite → tarification nulle, paiement ignoré.

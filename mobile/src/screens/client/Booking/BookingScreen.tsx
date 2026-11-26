@@ -106,6 +106,9 @@ export function BookingScreen({ navigation, route }: Props) {
   // Données chargées
   const [pricePerNight, setPricePerNight] = useState<number | null>(paramPricePerNight ?? null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  // Utilisation du solde du portefeuille : décidée explicitement par le client au récapitulatif.
+  // null = pas encore choisi ; le solde n'est JAMAIS déduit sans un « Oui » du client.
+  const [useWallet, setUseWallet] = useState<boolean | null>(null);
   const [maxGuests, setMaxGuests] = useState<number>(10);
   const [resolvedPropertyName, setResolvedPropertyName] = useState<string>(propertyName ?? '');
 
@@ -162,7 +165,10 @@ export function BookingScreen({ navigation, route }: Props) {
 
   const nights = countNights(checkIn, checkOut);
   const basePrice = pricePerNight != null ? pricePerNight * nights : 0;
-  const walletDeduction = Math.min(walletBalance, Math.max(0, basePrice));
+  const walletAvailable = Math.min(walletBalance, Math.max(0, basePrice));
+  const walletDeduction = useWallet === true ? walletAvailable : 0;
+  // Choix obligatoire au récapitulatif quand le client a un solde utilisable
+  const walletChoicePending = !isTable && !isInterest && walletAvailable > 0 && useWallet === null;
   const totalAmount = Math.max(0, basePrice - walletDeduction);
   const tenPercent = Math.ceil(totalAmount * 0.1);
   const ninetyPercent = totalAmount - tenPercent;
@@ -288,6 +294,8 @@ export function BookingScreen({ navigation, route }: Props) {
         ...(isTable && reservationTime ? { reservationTime } : {}),
         ...(isInterest && interestMessage.trim() ? { interestMessage: interestMessage.trim() } : {}),
         ...(!isTable && !isInterest && promoCode ? { promoCode } : {}),
+        // Solde du portefeuille : uniquement sur accord explicite (« Oui, utiliser mon solde »)
+        useWallet: !isTable && !isInterest && useWallet === true,
       }, idempotencyKey.current);
 
       const responseData = res?.data;
@@ -780,9 +788,9 @@ export function BookingScreen({ navigation, route }: Props) {
                   <Text style={styles.priceValue}>{formatPrice(basePrice)}</Text>
                 </View>
 
-                {walletBalance > 0 && (
+                {walletDeduction > 0 && (
                   <View style={styles.priceRow}>
-                    <Text style={styles.walletLabel}>Crédits parrainage</Text>
+                    <Text style={styles.walletLabel}>Portefeuille Primeo</Text>
                     <Text style={styles.walletValue}>−{formatPrice(walletDeduction)}</Text>
                   </View>
                 )}
@@ -793,6 +801,12 @@ export function BookingScreen({ navigation, route }: Props) {
                   <Text style={styles.totalLabel}>Total estimé</Text>
                   <Text style={styles.totalValue}>{formatPrice(totalAmount)}</Text>
                 </View>
+
+                {walletAvailable > 0 && useWallet === null && (
+                  <Text style={styles.walletHint}>
+                    💜 Vous avez {formatPrice(walletBalance)} dans votre portefeuille Primeo. Vous pourrez choisir de l'utiliser au récapitulatif.
+                  </Text>
+                )}
 
                 {isIndicative && (
                   <Text style={styles.indicativeNote}>
@@ -898,20 +912,60 @@ export function BookingScreen({ navigation, route }: Props) {
               </View>
             </View>
 
+            {/* Portefeuille : choix explicite du client */}
+            {walletAvailable > 0 && (
+              <View style={[styles.walletChoice, walletChoicePending && styles.walletChoicePending]} testID="wallet-choice">
+                <Text style={styles.walletChoiceTitle}>
+                  Vous avez {formatPrice(walletBalance)} dans votre portefeuille Primeo. Souhaitez-vous l'utiliser pour cette réservation ?
+                </Text>
+                <TouchableOpacity
+                  testID="wallet-use-yes"
+                  style={[styles.walletOption, useWallet === true && styles.walletOptionActive]}
+                  onPress={() => setUseWallet(true)}
+                  activeOpacity={0.85}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: useWallet === true }}
+                >
+                  <View style={[styles.walletRadio, useWallet === true && styles.walletRadioActive]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.walletOptionTitle}>Oui, utiliser mon solde</Text>
+                    <Text style={styles.walletOptionDesc}>
+                      {formatPrice(walletAvailable)} déduits du total ; vous payez le reste selon le mode choisi.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="wallet-use-no"
+                  style={[styles.walletOption, useWallet === false && styles.walletOptionActive]}
+                  onPress={() => setUseWallet(false)}
+                  activeOpacity={0.85}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: useWallet === false }}
+                >
+                  <View style={[styles.walletRadio, useWallet === false && styles.walletRadioActive]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.walletOptionTitle}>Non, payer le montant total</Text>
+                    <Text style={styles.walletOptionDesc}>Votre solde reste intact dans votre portefeuille.</Text>
+                  </View>
+                </TouchableOpacity>
+                {walletChoicePending && (
+                  <Text style={styles.walletChoiceHint}>Choisissez une option pour confirmer la réservation.</Text>
+                )}
+              </View>
+            )}
+
             {/* Prix */}
             <View style={styles.summaryBlock}>
               <Text style={styles.summaryBlockTitle}>Prix</Text>
-              {pricePerNight != null && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>
-                    {formatPrice(pricePerNight)} × {nights} nuit{nights > 1 ? 's' : ''}
-                  </Text>
-                  <Text style={styles.summaryVal}>{formatPrice(basePrice)}</Text>
-                </View>
-              )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryKey}>
+                  Prix total{pricePerNight != null ? ` (${formatPrice(pricePerNight)} × ${nights} nuit${nights > 1 ? 's' : ''})` : ''}
+                </Text>
+                <Text style={styles.summaryVal}>{formatPrice(basePrice)}</Text>
+              </View>
               {walletDeduction > 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Crédits parrainage</Text>
+                <View style={styles.summaryRow} testID="wallet-deduction-row">
+                  <Text style={styles.summaryKey}>Déduit du portefeuille</Text>
                   <Text style={[styles.summaryVal, { color: '#7C3AED' }]}>−{formatPrice(walletDeduction)}</Text>
                 </View>
               )}
@@ -922,7 +976,7 @@ export function BookingScreen({ navigation, route }: Props) {
                 </View>
               )}
               <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-                <Text style={styles.summaryTotalKey}>Total</Text>
+                <Text style={styles.summaryTotalKey}>Reste à payer</Text>
                 <Text style={styles.summaryTotalVal}>{formatPrice(totalAmount)}</Text>
               </View>
             </View>
@@ -981,9 +1035,9 @@ export function BookingScreen({ navigation, route }: Props) {
         ) : (
           <TouchableOpacity
             testID="booking-confirm"
-            style={[styles.confirmBtn, isLoading && styles.confirmBtnDisabled]}
+            style={[styles.confirmBtn, (isLoading || walletChoicePending) && styles.confirmBtnDisabled]}
             onPress={handleConfirm}
-            disabled={isLoading}
+            disabled={isLoading || walletChoicePending}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel={isInterest ? 'Envoyer ma demande' : 'Confirmer la réservation'}
@@ -1143,6 +1197,17 @@ const styles = StyleSheet.create({
   priceValue: { fontSize: 14, color: '#374151', fontWeight: '500' },
   walletLabel: { fontSize: 14, color: '#7C3AED' },
   walletValue: { fontSize: 14, color: '#7C3AED', fontWeight: '600' },
+  walletHint: { fontSize: 12.5, color: '#6D28D9', marginTop: 10, lineHeight: 18 },
+  walletChoice: { backgroundColor: '#F5F3FF', borderRadius: 14, padding: 14, marginBottom: 14, borderWidth: 1.5, borderColor: '#DDD6FE', gap: 10 },
+  walletChoicePending: { borderColor: '#7C3AED' },
+  walletChoiceTitle: { fontSize: 14, fontWeight: '700', color: '#3B0764', lineHeight: 20 },
+  walletOption: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 12, borderWidth: 1.5, borderColor: '#E5E7EB' },
+  walletOptionActive: { borderColor: '#7C3AED', backgroundColor: '#FAF5FF' },
+  walletRadio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#9CA3AF' },
+  walletRadioActive: { borderColor: '#7C3AED', borderWidth: 6 },
+  walletOptionTitle: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  walletOptionDesc: { fontSize: 12.5, color: '#6B7280', marginTop: 2, lineHeight: 17 },
+  walletChoiceHint: { fontSize: 12, color: '#7C3AED', fontWeight: '600' },
   divider: { height: 1, backgroundColor: '#E5E7EB', marginVertical: 10 },
   totalLabel: { fontSize: 15, fontWeight: '700', color: '#111827' },
   totalValue: { fontSize: 18, fontWeight: '800', color: '#1056E0' },

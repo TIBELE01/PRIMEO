@@ -1,12 +1,15 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Linking, Share, FlatList, Clipboard, TextInput,
+  RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import type { ClientScreenProps } from '../../../navigation/types';
 import { referralsApi } from '../../../services/api/endpoints/referrals';
 import { ReferralHistoryItem } from '../../../components/referral/ReferralHistoryItem';
+import { normalizeReferralHistory, type ReferralEntry } from '../../../utils/referrals';
 
 interface ReferralCode {
   code: string;
@@ -23,13 +26,7 @@ interface ReferralStats {
   totalRewardsFcfa: number;
 }
 
-interface ReferralEntry {
-  id: string;
-  refereeName: string;
-  joinedAt: string;
-  earnedAmount: number;
-  status: 'pending' | 'credited';
-}
+
 
 interface RewardEntry {
   id: string;
@@ -47,13 +44,15 @@ export function ReferralScreen({ navigation }: Props) {
   const [history, setHistory] = useState<ReferralEntry[]>([]);
   const [rewards, setRewards] = useState<RewardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('filleuls');
   const [applyInput, setApplyInput] = useState('');
   const [applying, setApplying] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  // `silent` : rafraîchissement sans écran de chargement (retour sur l'écran, tirer pour actualiser)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [codeRes, statsRes, histRes, rewardsRes] = await Promise.allSettled([
         referralsApi.getCode(),
@@ -68,7 +67,7 @@ export function ReferralScreen({ navigation }: Props) {
         setStats(statsRes.value?.data?.data ?? statsRes.value?.data);
       }
       if (histRes.status === 'fulfilled') {
-        setHistory(histRes.value?.data?.data ?? histRes.value?.data ?? []);
+        setHistory(normalizeReferralHistory(histRes.value?.data?.data ?? histRes.value?.data ?? []));
       }
       if (rewardsRes.status === 'fulfilled') {
         setRewards(rewardsRes.value?.data?.data ?? rewardsRes.value?.data ?? []);
@@ -79,6 +78,16 @@ export function ReferralScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  // Statuts toujours synchronisés avec la base : rechargement à chaque retour sur l'onglet
+  const firstFocus = React.useRef(true);
+  useFocusEffect(useCallback(() => {
+    if (firstFocus.current) { firstFocus.current = false; return; }
+    void load(true);
+  }, [load]));
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await load(true); } finally { setRefreshing(false); }
+  }, [load]);
 
   const handleCopy = () => {
     if (!codeData?.code) return;
@@ -156,7 +165,11 @@ export function ReferralScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1056E0']} tintColor="#1056E0" />}
+      >
         <PageHeader title="Parrainage" />
 
         {/* Reward info card — montants différenciés selon le type de filleul */}
@@ -306,7 +319,7 @@ export function ReferralScreen({ navigation }: Props) {
                 <ReferralHistoryItem
                   key={entry.id}
                   refereeName={entry.refereeName}
-                  joinedAt={new Date(entry.joinedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  joinedAt={entry.joinedAt ? new Date(entry.joinedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
                   earnedAmount={entry.earnedAmount}
                   status={entry.status}
                 />
