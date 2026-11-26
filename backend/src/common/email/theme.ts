@@ -35,8 +35,8 @@ export const EMAIL_GRADIENTS = {
 // Liens publics — réseaux sociaux officiels + site vitrine + mentions légales.
 // Les URLs des services sont configurables via variables d'environnement afin de
 // suivre les déploiements (Render, domaine personnalisé…) sans toucher au code.
-const VITRINE_FALLBACK = 'https://primeo-vitrine-152o.onrender.com';
-const LEGAL_FALLBACK = 'https://primeo-legal-kg6t.onrender.com';
+const VITRINE_FALLBACK = 'https://primeo.ci';
+const LEGAL_FALLBACK = 'https://legal.primeo.ci';
 const LEGAL_BASE = process.env['LEGAL_URL']?.trim() || LEGAL_FALLBACK;
 
 export const EMAIL_LINKS = {

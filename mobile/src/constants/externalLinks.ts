@@ -5,8 +5,8 @@ import { Linking } from 'react-native';
 
 const clean = (v: string | undefined, fallback: string) => (v?.trim() || fallback).replace(/\/+$/, '');
 
-export const VITRINE_URL = clean(process.env['EXPO_PUBLIC_VITRINE_URL'], 'https://primeo-vitrine-152o.onrender.com');
-export const LEGAL_URL   = clean(process.env['EXPO_PUBLIC_LEGAL_URL'],   'https://primeo-legal-kg6t.onrender.com');
+export const VITRINE_URL = clean(process.env['EXPO_PUBLIC_VITRINE_URL'], 'https://primeo.ci');
+export const LEGAL_URL   = clean(process.env['EXPO_PUBLIC_LEGAL_URL'],   'https://legal.primeo.ci');
 
 /** Page du site vitrine (avec barre finale) — ex. vitrineUrl('a-propos') */
 export const vitrineUrl = (path = '') => `${VITRINE_URL}/${path.replace(/^\/+/, '')}`;

@@ -9,7 +9,7 @@ import { createAudit } from '../admin/admin.service';
 export const DOSSIER_BUCKET = 'website-docs';
 export const DOSSIER_CONFIG_KEY = 'partnership_dossier';
 export const DOSSIER_DOWNLOAD_NAME = 'Primeo-dossier-de-partenariat.pdf';
-const VITRINE = (process.env['VITRINE_URL']?.trim() || 'https://primeo-vitrine-152o.onrender.com').replace(/\/+$/, '');
+const VITRINE = (process.env['VITRINE_URL']?.trim() || 'https://primeo.ci').replace(/\/+$/, '');
 /** Fichier d'origine livré avec le site vitrine (utilisé tant qu'aucun dossier n'a été téléversé) */
 export const DOSSIER_DEFAULT_URL = `${VITRINE}/assets/docs/primeo-dossier-partenariat.pdf`;
 const MAX_SIZE = 10 * 1024 * 1024;

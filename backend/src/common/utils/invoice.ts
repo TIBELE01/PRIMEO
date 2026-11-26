@@ -293,7 +293,7 @@ function renderInvoicePdf(m: InvoiceModel): Promise<Buffer> {
     doc.font('Helvetica').fontSize(7).fillColor(PDF.muted);
     t(`${COMPANY_INFO.address} · ${COMPANY_INFO.email} · ${COMPANY_INFO.phone}`, L, fy + 31, { width: CW, align: 'center' });
     t('TVA non applicable. Document généré automatiquement par Primeo, valant facture. Conservez-le pour vos dossiers.', L, fy + 44, { width: CW, align: 'center' });
-    t('Conditions générales de vente et mentions légales : primeo-legal-kg6t.onrender.com', L, fy + 57, { width: CW, align: 'center' });
+    t('Conditions générales de vente et mentions légales : legal.primeo.ci', L, fy + 57, { width: CW, align: 'center' });
 
     doc.end();
   });

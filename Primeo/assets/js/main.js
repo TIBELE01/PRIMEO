@@ -16,7 +16,7 @@
   var apiMeta = document.querySelector('meta[name="api-url"]');
   var API = (apiMeta && apiMeta.content
     ? apiMeta.content
-    : (window.PRIMEO_API_BASE_URL || 'https://api-primeo.onrender.com')).replace(/\/$/, '');
+    : (window.PRIMEO_API_BASE_URL || 'https://api.primeo.ci')).replace(/\/$/, '');
 
   /* ── 1. Redirection si maintenance active ── */
   var onMaintenancePage = window.location.pathname.indexOf('/maintenance') === 0;
@@ -138,7 +138,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    affichage immédiat, puis rafraîchie à chaque visite. */
 !function(){"use strict";
 var meta=document.querySelector('meta[name="api-url"]');
-var API=(meta&&meta.content?meta.content:"https://api-primeo.onrender.com").replace(/\/+$/,"");
+var API=(meta&&meta.content?meta.content:"https://api.primeo.ci").replace(/\/+$/,"");
 var ALLOWED={A:1,BR:1,STRONG:1,B:1,EM:1,I:1,U:1,SPAN:1,SMALL:1,MARK:1,SUP:1,SUB:1,CODE:1};
 var SAFE=/^(\/(?!\/)|#|https?:\/\/|mailto:|tel:)/i;
 var blocks={};

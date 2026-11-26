@@ -4,7 +4,7 @@
   'use strict';
 
   var meta = document.querySelector('meta[name="api-url"]');
-  var API = meta ? meta.content.replace(/\/$/, '') : 'https://api-primeo.onrender.com';
+  var API = meta ? meta.content.replace(/\/$/, '') : 'https://api.primeo.ci';
   var LAT = 5.3615, LON = -3.98;
   var GMAPS = 'https://www.google.com/maps/dir/?api=1&destination=' + LAT + ',' + LON;
 

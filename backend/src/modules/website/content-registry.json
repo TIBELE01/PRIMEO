@@ -9391,7 +9391,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/mentions-legales/\" target=\"_blank\">Mentions légales</a>"
+  "default": "<a href=\"https://legal.primeo.ci/mentions-legales/\" target=\"_blank\">Mentions légales</a>"
  },
  {
   "key": "global.site-footer.li16",
@@ -9399,7 +9399,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/confidentialite/\" target=\"_blank\">Confidentialité</a>"
+  "default": "<a href=\"https://legal.primeo.ci/confidentialite/\" target=\"_blank\">Confidentialité</a>"
  },
  {
   "key": "global.site-footer.li17",
@@ -9407,7 +9407,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/cgu/\" target=\"_blank\">CGU</a>"
+  "default": "<a href=\"https://legal.primeo.ci/cgu/\" target=\"_blank\">CGU</a>"
  },
  {
   "key": "global.site-footer.li18",
@@ -9415,7 +9415,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/conditions-vente/\" target=\"_blank\">CGV</a>"
+  "default": "<a href=\"https://legal.primeo.ci/conditions-vente/\" target=\"_blank\">CGV</a>"
  },
  {
   "key": "global.site-footer.li19",
@@ -9423,7 +9423,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/professionnels/\" target=\"_blank\">Professionnels</a>"
+  "default": "<a href=\"https://legal.primeo.ci/professionnels/\" target=\"_blank\">Professionnels</a>"
  },
  {
   "key": "global.site-footer.li20",
@@ -9431,7 +9431,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/litiges-mediation/\" target=\"_blank\">Litiges &amp; Médiation</a>"
+  "default": "<a href=\"https://legal.primeo.ci/litiges-mediation/\" target=\"_blank\">Litiges &amp; Médiation</a>"
  },
  {
   "key": "global.site-footer.li21",
@@ -9439,7 +9439,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/propriete-intellectuelle/\" target=\"_blank\">Propriété intellectuelle</a>"
+  "default": "<a href=\"https://legal.primeo.ci/propriete-intellectuelle/\" target=\"_blank\">Propriété intellectuelle</a>"
  },
  {
   "key": "global.site-footer.li22",
@@ -9447,7 +9447,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"https://primeo-legal-kg6t.onrender.com/\" target=\"_blank\">Tous les documents</a>"
+  "default": "<a href=\"https://legal.primeo.ci/\" target=\"_blank\">Tous les documents</a>"
  },
  {
   "key": "global.site-footer.span1",
@@ -9471,7 +9471,7 @@
   "section": "app-hero",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/recherche.jpg",
+  "default": "https://primeo.ci/assets/img/app/recherche.jpg",
   "alt": "Recherche avancée dans l’application Primeo"
  },
  {
@@ -9480,7 +9480,7 @@
   "section": "app-hero",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/accueil.jpg",
+  "default": "https://primeo.ci/assets/img/app/accueil.jpg",
   "alt": "Écran d’accueil de l’application Primeo"
  },
  {
@@ -9489,7 +9489,7 @@
   "section": "app-hero",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/paiement.jpg",
+  "default": "https://primeo.ci/assets/img/app/paiement.jpg",
   "alt": "Choix du mode de paiement dans l’application Primeo"
  },
  {
@@ -9498,7 +9498,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/accueil.jpg",
+  "default": "https://primeo.ci/assets/img/app/accueil.jpg",
   "alt": "Application Primeo — Accueil"
  },
  {
@@ -9507,7 +9507,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/recherche.jpg",
+  "default": "https://primeo.ci/assets/img/app/recherche.jpg",
   "alt": "Application Primeo — Recherche"
  },
  {
@@ -9516,7 +9516,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/fiche-propriete.jpg",
+  "default": "https://primeo.ci/assets/img/app/fiche-propriete.jpg",
   "alt": "Application Primeo — Fiche propriété"
  },
  {
@@ -9525,7 +9525,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/paiement.jpg",
+  "default": "https://primeo.ci/assets/img/app/paiement.jpg",
   "alt": "Application Primeo — Paiement"
  },
  {
@@ -9534,7 +9534,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/messagerie.jpg",
+  "default": "https://primeo.ci/assets/img/app/messagerie.jpg",
   "alt": "Application Primeo — Messagerie"
  },
  {
@@ -9543,7 +9543,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/pro-tableau-de-bord.jpg",
+  "default": "https://primeo.ci/assets/img/app/pro-tableau-de-bord.jpg",
   "alt": "Application Primeo — Espace professionnel"
  },
  {
@@ -9560,7 +9560,7 @@
   "section": "app-shots",
   "tag": "img",
   "type": "image",
-  "default": "https://primeo-vitrine-152o.onrender.com/assets/img/app/pro-annonces.jpg",
+  "default": "https://primeo.ci/assets/img/app/pro-annonces.jpg",
   "alt": "Application Primeo — Gestion des annonces"
  },
  {

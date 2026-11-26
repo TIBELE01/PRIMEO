@@ -103,7 +103,7 @@
 
   function init() {
     var m = document.querySelector('meta[name="api-url"]');
-    var api = m ? m.content.replace(/\/$/, '') : 'https://api-primeo.onrender.com';
+    var api = m ? m.content.replace(/\/$/, '') : 'https://api.primeo.ci';
     Promise.all([
       get(api + '/api/website/solutions/intro').catch(function () { return null; }),
       get(api + '/api/website/solutions/blocs').catch(function () { return null; })

@@ -7,21 +7,21 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-primeo.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://api.primeo.ci",
         "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     },
     "staging": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-primeo.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://api.primeo.ci",
         "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     },
     "production": {
       "distribution": "store",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-primeo.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://api.primeo.ci",
         "EXPO_PUBLIC_SUPABASE_URL": "https://kgpwtnetqwygtvgxqubs.supabase.co"
       }
     }
