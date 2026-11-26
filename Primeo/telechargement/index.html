@@ -436,19 +436,34 @@
       const items = track.querySelectorAll('.dl-screenshot');
       const itemW = () => items[0]?.offsetWidth + 16 || 176; // width + gap
 
+      // Pendant le défilement déclenché par un point, on garde ce point actif
+      // (sur grand écran plusieurs captures sont visibles et la fin du défilement
+      // est atteinte avant la capture demandée).
+      let lockUntil = 0;
+      const setActive = (idx) => dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
       dots.forEach((dot) => {
         dot.addEventListener('click', () => {
           const idx = parseInt(dot.dataset.index, 10);
+          lockUntil = Date.now() + 900;
           track.scrollTo({ left: idx * itemW(), behavior: 'smooth' });
-          dots.forEach((d) => d.classList.remove('active'));
-          dot.classList.add('active');
+          setActive(idx);
         });
       });
 
       track.addEventListener('scroll', () => {
-        const idx = Math.round(track.scrollLeft / itemW());
-        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (Date.now() < lockUntil) return;
+        const max = track.scrollWidth - track.clientWidth;
+        const idx = track.scrollLeft >= max - 2 ? dots.length - 1 : Math.round(track.scrollLeft / itemW());
+        setActive(idx);
       });
+
+      // Toutes les captures tiennent à l'écran : les points sont inutiles
+      const dotsBox = dots[0].parentElement;
+      const syncDots = () => { dotsBox.style.display = track.scrollWidth - track.clientWidth > 2 ? '' : 'none'; };
+      window.addEventListener('resize', syncDots);
+      window.addEventListener('load', syncDots);
+      syncDots();
     })();
   </script>
 </body>
