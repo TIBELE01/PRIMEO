@@ -3479,12 +3479,20 @@
   "default": "Espace presse — Primeo"
  },
  {
+  "key": "professionnels.meta.title",
+  "page": "professionnels",
+  "section": "meta",
+  "tag": "title",
+  "type": "text",
+  "default": "Espace Professionnels — Primeo"
+ },
+ {
   "key": "professionnels.hero.span1",
   "page": "professionnels",
   "section": "hero",
-  "tag": "span",
+  "tag": "p",
   "type": "text",
-  "default": "Espace Professionnels"
+  "default": "Espace professionnel"
  },
  {
   "key": "professionnels.hero.h11",
@@ -3492,7 +3500,7 @@
   "section": "hero",
   "tag": "h1",
   "type": "html",
-  "default": "Développez votre activité<br>avec <em>Primeo</em>"
+  "default": "Développez votre activité avec <em>Primeo</em>"
  },
  {
   "key": "professionnels.hero.p1",
@@ -3500,127 +3508,55 @@
   "section": "hero",
   "tag": "p",
   "type": "text",
-  "default": "Rejoignez plus de 1 200 professionnels qui utilisent Primeo pour gérer leurs réservations et développer leur chiffre d'affaires en Côte d'Ivoire."
+  "default": "Résidences, hôtels, agences immobilières et restaurants : publiez vos offres, recevez des réservations et gérez votre activité depuis une seule application."
  },
  {
-  "key": "professionnels.hero.div1",
+  "key": "professionnels.hero.a1",
   "page": "professionnels",
   "section": "hero",
-  "tag": "div",
-  "type": "html",
-  "default": "<a href=\"#inscription\" class=\"btn btn-primary btn-lg\">Créer mon compte professionnel</a> <a href=\"#types\" class=\"btn btn-outline btn-lg\" style=\"color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);background:transparent;\">Découvrir les offres</a>"
+  "tag": "a",
+  "type": "text",
+  "default": "Inscription professionnelle"
+ },
+ {
+  "key": "professionnels.hero.a2",
+  "page": "professionnels",
+  "section": "hero",
+  "tag": "a",
+  "type": "text",
+  "default": "Nous contacter"
  },
  {
   "key": "professionnels.hero.div2",
   "page": "professionnels",
   "section": "hero",
-  "tag": "div",
+  "tag": "span",
   "type": "text",
-  "default": "1 200+"
- },
- {
-  "key": "professionnels.hero.div3",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Professionnels actifs"
+  "default": "secteurs d'activité"
  },
  {
   "key": "professionnels.hero.div4",
   "page": "professionnels",
   "section": "hero",
-  "tag": "div",
+  "tag": "span",
   "type": "text",
-  "default": "18"
- },
- {
-  "key": "professionnels.hero.div5",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Villes couvertes"
+  "default": "pour valider votre dossier"
  },
  {
   "key": "professionnels.hero.div6",
   "page": "professionnels",
   "section": "hero",
-  "tag": "div",
+  "tag": "span",
   "type": "text",
-  "default": "4"
+  "default": "inscription sans engagement"
  },
  {
-  "key": "professionnels.hero.div7",
+  "key": "professionnels.types.span1",
   "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
+  "section": "types",
+  "tag": "span",
   "type": "text",
-  "default": "Secteurs d'activité"
- },
- {
-  "key": "professionnels.hero.div8",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Résidence / Appartement"
- },
- {
-  "key": "professionnels.hero.div9",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Hébergement meublé"
- },
- {
-  "key": "professionnels.hero.div10",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Hôtel"
- },
- {
-  "key": "professionnels.hero.div11",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Gestion hôtelière"
- },
- {
-  "key": "professionnels.hero.div12",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Immobilier"
- },
- {
-  "key": "professionnels.hero.div13",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Vente & location"
- },
- {
-  "key": "professionnels.hero.div14",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Restaurateur"
- },
- {
-  "key": "professionnels.hero.div15",
-  "page": "professionnels",
-  "section": "hero",
-  "tag": "div",
-  "type": "text",
-  "default": "Réservations de table"
+  "default": "Quatre profils"
  },
  {
   "key": "professionnels.types.h21",
@@ -3631,7 +3567,7 @@
   "default": "Quel professionnel êtes-vous ?"
  },
  {
-  "key": "professionnels.types.p1",
+  "key": "professionnels.types.p0",
   "page": "professionnels",
   "section": "types",
   "tag": "p",
@@ -3647,20 +3583,12 @@
   "default": "Résidence / Appartement"
  },
  {
-  "key": "professionnels.types.p2",
+  "key": "professionnels.types.p1",
   "page": "professionnels",
   "section": "types",
   "tag": "p",
   "type": "text",
   "default": "Publiez vos résidences meublées, appartements ou maisons. Gérez vos disponibilités, tarifs et réservations en temps réel."
- },
- {
-  "key": "professionnels.types.span1",
-  "page": "professionnels",
-  "section": "types",
-  "tag": "span",
-  "type": "text",
-  "default": "S'inscrire"
  },
  {
   "key": "professionnels.types.h32",
@@ -3671,20 +3599,12 @@
   "default": "Hôtel"
  },
  {
-  "key": "professionnels.types.p3",
+  "key": "professionnels.types.p2",
   "page": "professionnels",
   "section": "types",
   "tag": "p",
   "type": "text",
-  "default": "Gérez vos chambres, vos tarifs saisonniers et vos réservations. Intégration facile avec votre PMS existant."
- },
- {
-  "key": "professionnels.types.span2",
-  "page": "professionnels",
-  "section": "types",
-  "tag": "span",
-  "type": "text",
-  "default": "S'inscrire"
+  "default": "Gérez vos chambres, vos tarifs saisonniers et vos réservations depuis un seul tableau de bord."
  },
  {
   "key": "professionnels.types.h33",
@@ -3695,7 +3615,7 @@
   "default": "Immobilier"
  },
  {
-  "key": "professionnels.types.p4",
+  "key": "professionnels.types.p3",
   "page": "professionnels",
   "section": "types",
   "tag": "p",
@@ -3703,148 +3623,28 @@
   "default": "Publiez des biens à la vente ou en location longue durée. Attirez des acheteurs et locataires qualifiés sur Primeo."
  },
  {
-  "key": "professionnels.types.span3",
-  "page": "professionnels",
-  "section": "types",
-  "tag": "span",
-  "type": "text",
-  "default": "S'inscrire"
- },
- {
   "key": "professionnels.types.h34",
   "page": "professionnels",
   "section": "types",
   "tag": "h3",
   "type": "text",
-  "default": "Restaurateur"
+  "default": "Restaurant"
  },
  {
-  "key": "professionnels.types.p5",
+  "key": "professionnels.types.p4",
   "page": "professionnels",
   "section": "types",
   "tag": "p",
   "type": "text",
-  "default": "Acceptez des réservations de table en ligne, gérez vos créneaux et votre carte. Fidélisez vos clients avec des offres ciblées."
+  "default": "Acceptez des réservations de table en ligne, gérez vos créneaux et votre carte, et fidélisez vos clients."
  },
  {
-  "key": "professionnels.types.span4",
+  "key": "professionnels.avantages.span1",
   "page": "professionnels",
-  "section": "types",
+  "section": "avantages",
   "tag": "span",
   "type": "text",
-  "default": "S'inscrire"
- },
- {
-  "key": "professionnels.comment.h21",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "h2",
-  "type": "text",
-  "default": "Comment ça marche ?"
- },
- {
-  "key": "professionnels.comment.p1",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "p",
-  "type": "text",
-  "default": "Rejoindre Primeo prend moins de 5 minutes. Notre équipe valide votre compte sous 24 à 48 h."
- },
- {
-  "key": "professionnels.comment.div1",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "div",
-  "type": "text",
-  "default": "1"
- },
- {
-  "key": "professionnels.comment.h31",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "h3",
-  "type": "text",
-  "default": "Choisissez votre type"
- },
- {
-  "key": "professionnels.comment.p2",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "p",
-  "type": "text",
-  "default": "Résidence, hôtel, immobilier ou restaurateur — sélectionnez le profil qui correspond à votre activité."
- },
- {
-  "key": "professionnels.comment.div2",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "div",
-  "type": "text",
-  "default": "2"
- },
- {
-  "key": "professionnels.comment.h32",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "h3",
-  "type": "text",
-  "default": "Créez votre compte"
- },
- {
-  "key": "professionnels.comment.p3",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "p",
-  "type": "text",
-  "default": "Renseignez vos informations personnelles et professionnelles. Acceptez les CGU en quelques secondes."
- },
- {
-  "key": "professionnels.comment.div3",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "div",
-  "type": "text",
-  "default": "3"
- },
- {
-  "key": "professionnels.comment.h33",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "h3",
-  "type": "text",
-  "default": "Validation KYC"
- },
- {
-  "key": "professionnels.comment.p4",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "p",
-  "type": "text",
-  "default": "Notre équipe vérifie votre dossier sous 24 à 48 h. Vous recevez une notification dès l'activation."
- },
- {
-  "key": "professionnels.comment.div4",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "div",
-  "type": "text",
-  "default": "4"
- },
- {
-  "key": "professionnels.comment.h34",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "h3",
-  "type": "text",
-  "default": "Publiez & développez"
- },
- {
-  "key": "professionnels.comment.p5",
-  "page": "professionnels",
-  "section": "comment",
-  "tag": "p",
-  "type": "text",
-  "default": "Créez vos annonces et commencez à recevoir des réservations dès le premier jour."
+  "default": "Vos avantages"
  },
  {
   "key": "professionnels.avantages.h21",
@@ -3855,12 +3655,12 @@
   "default": "Pourquoi choisir Primeo ?"
  },
  {
-  "key": "professionnels.avantages.p1",
+  "key": "professionnels.avantages.p0",
   "page": "professionnels",
   "section": "avantages",
   "tag": "p",
   "type": "text",
-  "default": "Des outils professionnels pensés pour votre quotidien, sans complexité ni coût caché."
+  "default": "Des outils professionnels pensés pour votre quotidien, sans complexité."
  },
  {
   "key": "professionnels.avantages.h31",
@@ -3868,15 +3668,15 @@
   "section": "avantages",
   "tag": "h3",
   "type": "text",
-  "default": "Tableau de bord complet"
+  "default": "Visibilité auprès des clients"
  },
  {
-  "key": "professionnels.avantages.p2",
+  "key": "professionnels.avantages.p1",
   "page": "professionnels",
   "section": "avantages",
   "tag": "p",
   "type": "text",
-  "default": "Suivez vos réservations, revenus, avis clients et statistiques de performance en temps réel depuis votre application."
+  "default": "Vos annonces sont présentées aux voyageurs et aux clients de Primeo partout en Côte d'Ivoire."
  },
  {
   "key": "professionnels.avantages.h32",
@@ -3884,26 +3684,10 @@
   "section": "avantages",
   "tag": "h3",
   "type": "text",
-  "default": "Visibilité auprès des clients"
- },
- {
-  "key": "professionnels.avantages.p3",
-  "page": "professionnels",
-  "section": "avantages",
-  "tag": "p",
-  "type": "text",
-  "default": "Vos annonces sont présentées à tous les voyageurs et clients de Primeo, en Côte d'Ivoire et au-delà."
- },
- {
-  "key": "professionnels.avantages.h33",
-  "page": "professionnels",
-  "section": "avantages",
-  "tag": "h3",
-  "type": "text",
   "default": "Paiements sécurisés"
  },
  {
-  "key": "professionnels.avantages.p4",
+  "key": "professionnels.avantages.p2",
   "page": "professionnels",
   "section": "avantages",
   "tag": "p",
@@ -3911,36 +3695,236 @@
   "default": "Genius Pay intègre Mobile Money, Wave et carte bancaire. Vos fonds sont versés rapidement et en toute sécurité."
  },
  {
+  "key": "professionnels.avantages.h33",
+  "page": "professionnels",
+  "section": "avantages",
+  "tag": "h3",
+  "type": "text",
+  "default": "Calendrier et messagerie"
+ },
+ {
+  "key": "professionnels.avantages.p3",
+  "page": "professionnels",
+  "section": "avantages",
+  "tag": "p",
+  "type": "text",
+  "default": "Gérez vos disponibilités en temps réel, évitez les doubles réservations et échangez directement avec vos clients."
+ },
+ {
   "key": "professionnels.avantages.h34",
   "page": "professionnels",
   "section": "avantages",
   "tag": "h3",
   "type": "text",
-  "default": "Calendrier intelligent"
+  "default": "Tableau de bord complet"
  },
  {
-  "key": "professionnels.avantages.p5",
+  "key": "professionnels.avantages.p4",
   "page": "professionnels",
   "section": "avantages",
   "tag": "p",
   "type": "text",
-  "default": "Gérez vos disponibilités en temps réel. Évitez les doubles réservations avec une synchronisation automatique."
+  "default": "Suivez réservations, revenus, avis clients et statistiques de performance en temps réel depuis votre application."
  },
  {
-  "key": "professionnels.avantages.h35",
+  "key": "professionnels.comment.span1",
   "page": "professionnels",
-  "section": "avantages",
+  "section": "comment",
+  "tag": "span",
+  "type": "text",
+  "default": "En 4 étapes"
+ },
+ {
+  "key": "professionnels.comment.h21",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "h2",
+  "type": "text",
+  "default": "Comment ça marche ?"
+ },
+ {
+  "key": "professionnels.comment.p0",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "p",
+  "type": "text",
+  "default": "Rejoindre Primeo prend quelques minutes. Notre équipe valide votre compte sous 24 à 48 h."
+ },
+ {
+  "key": "professionnels.comment.h31",
+  "page": "professionnels",
+  "section": "comment",
   "tag": "h3",
   "type": "text",
-  "default": "Messagerie intégrée"
+  "default": "Choisissez votre profil"
  },
  {
-  "key": "professionnels.avantages.p6",
+  "key": "professionnels.comment.p1",
   "page": "professionnels",
-  "section": "avantages",
+  "section": "comment",
   "tag": "p",
   "type": "text",
-  "default": "Communiquez directement avec vos clients depuis l'application, avant et après chaque séjour ou réservation."
+  "default": "Résidence, hôtel, immobilier ou restaurant : sélectionnez le profil qui correspond à votre activité."
+ },
+ {
+  "key": "professionnels.comment.h32",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "h3",
+  "type": "text",
+  "default": "Créez votre compte"
+ },
+ {
+  "key": "professionnels.comment.p2",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "p",
+  "type": "text",
+  "default": "Renseignez vos informations personnelles et professionnelles depuis l'application, en quelques minutes."
+ },
+ {
+  "key": "professionnels.comment.h33",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "h3",
+  "type": "text",
+  "default": "Validation du dossier"
+ },
+ {
+  "key": "professionnels.comment.p3",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "p",
+  "type": "text",
+  "default": "Notre équipe vérifie votre dossier sous 24 à 48 h. Vous êtes notifié dès l'activation de votre compte."
+ },
+ {
+  "key": "professionnels.comment.h34",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "h3",
+  "type": "text",
+  "default": "Publiez et développez"
+ },
+ {
+  "key": "professionnels.comment.p4",
+  "page": "professionnels",
+  "section": "comment",
+  "tag": "p",
+  "type": "text",
+  "default": "Créez vos annonces et commencez à recevoir des réservations dès le premier jour."
+ },
+ {
+  "key": "professionnels.tarifs.span1",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "span",
+  "type": "text",
+  "default": "Tarification"
+ },
+ {
+  "key": "professionnels.tarifs.h21",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "h2",
+  "type": "text",
+  "default": "Une tarification simple et transparente"
+ },
+ {
+  "key": "professionnels.tarifs.p0",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "p",
+  "type": "text",
+  "default": "Commencez gratuitement, puis choisissez la formule qui accompagne la croissance de votre activité."
+ },
+ {
+  "key": "professionnels.tarifs.h31",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "h3",
+  "type": "text",
+  "default": "Inscription gratuite"
+ },
+ {
+  "key": "professionnels.tarifs.p1",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "p",
+  "type": "text",
+  "default": "Créez votre compte professionnel gratuitement et sans engagement, puis publiez vos premières annonces."
+ },
+ {
+  "key": "professionnels.tarifs.h32",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "h3",
+  "type": "text",
+  "default": "Des formules évolutives"
+ },
+ {
+  "key": "professionnels.tarifs.p2",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "p",
+  "type": "text",
+  "default": "Choisissez la formule adaptée à votre activité et au nombre d'annonces que vous gérez, et faites-la évoluer à tout moment."
+ },
+ {
+  "key": "professionnels.tarifs.h33",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "h3",
+  "type": "text",
+  "default": "Tout le détail dans l'application"
+ },
+ {
+  "key": "professionnels.tarifs.p3",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "p",
+  "type": "text",
+  "default": "Formules et options de mise en avant sont présentées dans votre espace professionnel, avant tout engagement."
+ },
+ {
+  "key": "professionnels.tarifs.p4",
+  "page": "professionnels",
+  "section": "tarifs",
+  "tag": "p",
+  "type": "html",
+  "default": "Une question sur les formules ? Écrivez-nous à <a href=\"mailto:professionnel@primeo.ci\">professionnel@primeo.ci</a> ou passez par la page <a href=\"/contact/\">Contact</a>."
+ },
+ {
+  "key": "professionnels.temoignages.span1",
+  "page": "professionnels",
+  "section": "temoignages",
+  "tag": "span",
+  "type": "text",
+  "default": "Témoignages"
+ },
+ {
+  "key": "professionnels.temoignages.h21",
+  "page": "professionnels",
+  "section": "temoignages",
+  "tag": "h2",
+  "type": "text",
+  "default": "Ils utilisent Primeo"
+ },
+ {
+  "key": "professionnels.temoignages.p0",
+  "page": "professionnels",
+  "section": "temoignages",
+  "tag": "p",
+  "type": "text",
+  "default": "Ce que disent les utilisateurs de la plateforme."
+ },
+ {
+  "key": "professionnels.faq.span1",
+  "page": "professionnels",
+  "section": "faq",
+  "tag": "span",
+  "type": "text",
+  "default": "Questions fréquentes"
  },
  {
   "key": "professionnels.faq.h21",
@@ -3948,10 +3932,10 @@
   "section": "faq",
   "tag": "h2",
   "type": "text",
-  "default": "Questions fréquentes"
+  "default": "Vos questions"
  },
  {
-  "key": "professionnels.faq.p1",
+  "key": "professionnels.faq.p0",
   "page": "professionnels",
   "section": "faq",
   "tag": "p",
@@ -4036,7 +4020,7 @@
   "section": "inscription",
   "tag": "p",
   "type": "text",
-  "default": "Téléchargez l'application Primeo et créez votre compte professionnel en moins de 5 minutes."
+  "default": "Téléchargez l'application Primeo et créez votre compte professionnel en quelques minutes. Inscription gratuite, sans engagement."
  },
  {
   "key": "professionnels.inscription.a1",
@@ -4044,7 +4028,15 @@
   "section": "inscription",
   "tag": "a",
   "type": "text",
-  "default": "Télécharger l'application"
+  "default": "Inscription professionnelle"
+ },
+ {
+  "key": "professionnels.inscription.a2",
+  "page": "professionnels",
+  "section": "inscription",
+  "tag": "a",
+  "type": "text",
+  "default": "Contacter l'équipe"
  },
  {
   "key": "professionnels.inscription.a1-href",
@@ -4053,48 +4045,6 @@
   "tag": "a",
   "type": "link",
   "default": "https://primeo.ci/telechargement/"
- },
- {
-  "key": "professionnels.inscription.p2",
-  "page": "professionnels",
-  "section": "inscription",
-  "tag": "p",
-  "type": "text",
-  "default": "Disponible sur iOS et Android — Inscription gratuite, sans engagement"
- },
- {
-  "key": "professionnels.main.p1",
-  "page": "professionnels",
-  "section": "main",
-  "tag": "p",
-  "type": "text",
-  "default": "Accédez à tous vos outils professionnels depuis votre smartphone"
- },
- {
-  "key": "professionnels.main.img1",
-  "page": "professionnels",
-  "section": "main",
-  "tag": "img",
-  "type": "image",
-  "default": "../assets/img/stores/app-store-badge.svg",
-  "alt": "Download on the App Store"
- },
- {
-  "key": "professionnels.main.img2",
-  "page": "professionnels",
-  "section": "main",
-  "tag": "img",
-  "type": "image",
-  "default": "../assets/img/stores/google-play-badge.svg",
-  "alt": "Get it on Google Play"
- },
- {
-  "key": "professionnels.meta.title",
-  "page": "professionnels",
-  "section": "meta",
-  "tag": "title",
-  "type": "text",
-  "default": "Espace Professionnels — Primeo"
  },
  {
   "key": "telechargement.dl-hero.p1",
@@ -9158,7 +9108,7 @@
   "section": "mobile-nav",
   "tag": "div",
   "type": "html",
-  "default": "<a href=\"/solutions/\" class=\"mobile-nav__sub-link\" data-page=\"solutions\">Nos Solutions</a> <a href=\"/produits/\" class=\"mobile-nav__sub-link\" data-page=\"produits\">Nos Produits</a> <a href=\"/telechargement/\" class=\"mobile-nav__sub-link\" data-page=\"telechargement\">Application mobile</a>"
+  "default": "<a href=\"/solutions/\" class=\"mobile-nav__sub-link\" data-page=\"solutions\">Nos Solutions</a> <a href=\"/produits/\" class=\"mobile-nav__sub-link\" data-page=\"produits\">Nos Produits</a> <a href=\"/professionnels/\" class=\"mobile-nav__sub-link\" data-page=\"professionnels\">Espace professionnel</a> <a href=\"/telechargement/\" class=\"mobile-nav__sub-link\" data-page=\"telechargement\">Application mobile</a>"
  },
  {
   "key": "global.mobile-nav.button2",
@@ -9263,7 +9213,7 @@
   "section": "site-footer",
   "tag": "li",
   "type": "html",
-  "default": "<a href=\"/professionnels/\">Devenir professionnel</a>"
+  "default": "<a href=\"/professionnels/\">Espace professionnel</a>"
  },
  {
   "key": "global.site-footer.li3",

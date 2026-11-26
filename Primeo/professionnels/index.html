@@ -9,14 +9,14 @@
   <meta property="og:site_name" content="Primeo">
   <meta property="og:url" content="https://primeo.ci/professionnels/">
   <meta property="og:title" content="Espace Professionnels — Primeo">
-  <meta property="og:description" content="Rejoignez plus de 1 200 professionnels sur Primeo et développez votre activité en Côte d'Ivoire.">
+  <meta property="og:description" content="Résidences, hôtels, immobilier et restaurants : publiez vos offres sur Primeo et développez votre activité en Côte d'Ivoire.">
   <meta property="og:image" content="https://primeo.ci/assets/img/og/og-pro.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Espace Professionnels — Primeo">
-  <meta name="twitter:description" content="Rejoignez plus de 1 200 professionnels sur Primeo et développez votre activité en Côte d'Ivoire.">
+  <meta name="twitter:description" content="Résidences, hôtels, immobilier et restaurants : publiez vos offres sur Primeo et développez votre activité en Côte d'Ivoire.">
   <meta name="twitter:image" content="https://primeo.ci/assets/img/og/og-pro.png">
   <meta name="api-url" content="https://api.primeo.ci">
   <title data-cms="professionnels.meta.title" data-cms-type="text">Espace Professionnels — Primeo</title>
@@ -25,426 +25,191 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
-<link rel="stylesheet" href="../assets/css/hero-card.css">
+  <link rel="stylesheet" href="../assets/css/hero-card.css">
+  <link rel="stylesheet" href="../assets/css/solutions.css">
+  <link rel="stylesheet" href="../assets/css/professionnels.css?v=2">
   <link rel="icon" href="../assets/img/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="../assets/img/favicon-192.png">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <style>
-    /* ── Variables ── */
-    :root {
-      --blue: #1056E0;
-      --blue-light: #EFF4FF;
-      --blue-dark: #0A3DAA;
-      --green: #059669;
-      --green-light: #ECFDF5;
-      --text: #0F172A;
-      --text-2: #475569;
-      --text-3: #94A3B8;
-      --border: #E2E8F0;
-      --surface: #F8FAFC;
-      --white: #FFFFFF;
-      --shadow: 0 4px 24px rgba(15,23,42,.08);
-      --shadow-lg: 0 12px 48px rgba(15,23,42,.14);
-      --radius: 20px;
-      --radius-sm: 12px;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', system-ui, sans-serif; color: var(--text); background: var(--white); }
-
-    /* ── Layout ── */
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-    section { padding: 80px 0; }
-
-    /* ── Typography ── */
-    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.15; letter-spacing: -.02em; }
-    h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; line-height: 1.2; letter-spacing: -.015em; }
-    h3 { font-size: 1.1rem; font-weight: 700; }
-    p  { line-height: 1.7; }
-    em { font-style: normal; color: var(--blue); }
-
-    /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: var(--radius-sm); font-size: .95rem; font-weight: 700; text-decoration: none; transition: transform .15s, box-shadow .15s, background .15s; cursor: pointer; border: none; }
-    .btn:hover  { transform: translateY(-2px); }
-    .btn-primary { background: var(--blue); color: #fff; box-shadow: 0 6px 20px rgba(16,86,224,.35); }
-    .btn-primary:hover { background: var(--blue-dark); box-shadow: 0 8px 28px rgba(16,86,224,.45); }
-    .btn-outline { background: transparent; color: var(--blue); border: 2px solid var(--blue); }
-    .btn-outline:hover { background: var(--blue-light); }
-    .btn-lg { padding: 16px 36px; font-size: 1rem; border-radius: 14px; }
-
-    /* ── Badge ── */
-    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--blue-light); color: var(--blue); border-radius: 100px; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-
-    /* ═══════════════════════════════ HERO ═══════════════════════════════ */
-    .hero {
-      background: linear-gradient(135deg, #030C1F 0%, #0A1F4A 60%, #0D2A60 100%);
-      padding: 100px 0 80px;
-      overflow: hidden;
-      position: relative;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 80% at 80% 40%, rgba(16,86,224,.22) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero__inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; position: relative; }
-    .hero__badge { margin-bottom: 20px; }
-    .hero__badge .badge { background: rgba(16,86,224,.25); color: rgba(255,255,255,.9); border: 1px solid rgba(16,86,224,.4); }
-    .hero h1 { color: #fff; margin-bottom: 20px; }
-    .hero p  { color: rgba(255,255,255,.7); font-size: 1.05rem; max-width: 520px; margin-bottom: 36px; }
-    .hero__actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .hero__stats { display: flex; gap: 32px; margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,.1); }
-    .hero__stat-num   { font-size: 1.8rem; font-weight: 800; color: #fff; }
-    .hero__stat-label { font-size: .8rem; color: rgba(255,255,255,.5); font-weight: 500; margin-top: 2px; }
-
-    /* Hero visual — floating cards */
-    .hero__visual { position: relative; height: 420px; display: flex; align-items: center; justify-content: center; }
-    .hero__card {
-      position: absolute; background: rgba(255,255,255,.06); backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,.12); border-radius: 18px;
-      padding: 20px 24px; color: #fff; font-size: .88rem; min-width: 180px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.3);
-    }
-    .hero__card-icon { font-size: 1.8rem; margin-bottom: 8px; }
-    .hero__card-title { font-weight: 700; font-size: .95rem; }
-    .hero__card-sub   { color: rgba(255,255,255,.55); font-size: .78rem; margin-top: 4px; }
-    .card-1 { top: 10%;  left: 0; }
-    .card-2 { top: 28%;  right: 0; }
-    .card-3 { bottom: 12%; left: 10%; }
-    .card-4 { bottom: 24%; right: 10%; }
-    .hero__center-glow {
-      width: 160px; height: 160px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(16,86,224,.5) 0%, transparent 70%);
-    }
-
-    /* ═══════════════════════════════ TYPES ══════════════════════════════ */
-    .pro-types { background: var(--surface); }
-    .section-header { text-align: center; max-width: 600px; margin: 0 auto 56px; }
-    .section-header p { color: var(--text-2); margin-top: 14px; font-size: 1.05rem; }
-
-    .types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-    .type-card {
-      background: var(--white); border-radius: var(--radius); padding: 32px 28px;
-      border: 2px solid transparent; box-shadow: var(--shadow);
-      transition: border-color .2s, transform .2s, box-shadow .2s;
-      text-decoration: none; color: inherit; display: block;
-    }
-    .type-card:hover { border-color: var(--blue); transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-    .type-card__emoji { font-size: 2.4rem; margin-bottom: 18px; }
-    .type-card h3 { margin-bottom: 10px; }
-    .type-card p  { font-size: .88rem; color: var(--text-2); line-height: 1.6; }
-    .type-card__cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; color: var(--blue); font-weight: 700; font-size: .88rem; }
-    .type-card__cta::after { content: '→'; transition: transform .15s; }
-    .type-card:hover .type-card__cta::after { transform: translateX(4px); }
-
-    /* ═══════════════════════════════ HOW IT WORKS ══════════════════════ */
-    .how { background: var(--white); }
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; margin-top: 56px; }
-    .step { text-align: center; }
-    .step__num {
-      width: 56px; height: 56px; border-radius: 50%; background: var(--blue-light);
-      color: var(--blue); font-size: 1.3rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 18px; border: 2px solid rgba(16,86,224,.25);
-    }
-    .step h3 { margin-bottom: 8px; }
-    .step p  { font-size: .88rem; color: var(--text-2); line-height: 1.6; }
-
-    /* ═══════════════════════════════ BENEFITS ══════════════════════════ */
-    .benefits { background: var(--surface); }
-    .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 56px; }
-    .benefit-card {
-      background: var(--white); border-radius: var(--radius-sm); padding: 28px 24px;
-      box-shadow: var(--shadow); display: flex; gap: 18px; align-items: flex-start;
-    }
-    .benefit-icon {
-      width: 48px; height: 48px; min-width: 48px; border-radius: 14px;
-      background: var(--blue-light); color: var(--blue);
-      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
-    }
-    .benefit-card h3 { margin-bottom: 6px; }
-    .benefit-card p  { font-size: .85rem; color: var(--text-2); line-height: 1.6; }
-
-    /* ═══════════════════════════════ PLANS ══════════════════════════════ */
-    .plans { background: var(--white); }
-    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 56px; }
-    .plan-card {
-      border: 2px solid var(--border); border-radius: var(--radius); padding: 32px 28px;
-      text-align: center; transition: border-color .2s, box-shadow .2s;
-      position: relative; background: var(--white);
-    }
-    .plan-card:hover     { border-color: var(--blue); box-shadow: var(--shadow-lg); }
-    .plan-card--featured { border-color: var(--blue); box-shadow: var(--shadow-lg); }
-    .plan-badge {
-      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-      background: var(--blue); color: #fff; padding: 4px 16px; border-radius: 100px;
-      font-size: .75rem; font-weight: 700; white-space: nowrap;
-    }
-    .plan-name  { font-size: 1rem; font-weight: 700; color: var(--text-2); margin-bottom: 10px; }
-    .plan-price { font-size: 2rem; font-weight: 800; color: var(--text); }
-    .plan-price span { font-size: 1rem; font-weight: 500; color: var(--text-3); }
-    .plan-desc  { font-size: .85rem; color: var(--text-2); margin: 12px 0 24px; line-height: 1.5; }
-    .plan-features { list-style: none; text-align: left; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
-    .plan-features li { font-size: .88rem; color: var(--text-2); display: flex; gap: 10px; align-items: flex-start; }
-    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 800; flex-shrink: 0; }
-
-    /* ═══════════════════════════════ FAQ ════════════════════════════════ */
-    .faq { background: var(--surface); }
-    .faq-list { max-width: 760px; margin: 56px auto 0; display: flex; flex-direction: column; gap: 12px; }
-    .faq-item { background: var(--white); border-radius: var(--radius-sm); border: 1.5px solid var(--border); overflow: hidden; }
-    .faq-question {
-      padding: 20px 24px; font-weight: 700; cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center;
-      list-style: none; font-size: .95rem;
-    }
-    .faq-question::-webkit-details-marker { display: none; }
-    .faq-question::after { content: '+'; font-size: 1.3rem; color: var(--blue); transition: transform .2s; }
-    details[open] .faq-question::after { transform: rotate(45deg); }
-    .faq-answer { padding: 0 24px 20px; font-size: .9rem; color: var(--text-2); line-height: 1.7; }
-
-    /* ═══════════════════════════════ CTA ════════════════════════════════ */
-    .cta-section {
-      background: linear-gradient(135deg, #030C1F 0%, #0A1F4A 100%);
-      text-align: center; padding: 100px 0;
-    }
-    .cta-section h2 { color: #fff; max-width: 600px; margin: 0 auto 20px; }
-    .cta-section p  { color: rgba(255,255,255,.65); max-width: 520px; margin: 0 auto 40px; font-size: 1.05rem; }
-    .cta-section .btn-primary { font-size: 1.05rem; padding: 18px 40px; border-radius: 16px; }
-    .cta-note { margin-top: 20px; font-size: .82rem; color: rgba(255,255,255,.4); }
-
-    /* ═══════════════════════════════ DOWNLOAD PROMPT ════════════════════ */
-    .download-cta {
-      background: var(--white); border-top: 1px solid var(--border);
-      padding: 48px 0; text-align: center;
-    }
-    .download-cta p { color: var(--text-2); margin-bottom: 24px; font-size: .95rem; }
-    .store-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .store-btn {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: var(--text); color: #fff; border-radius: 12px;
-      padding: 12px 22px; text-decoration: none; font-weight: 600; font-size: .9rem;
-      transition: background .15s;
-    }
-    .store-btn:hover { background: #1e293b; }
-    .store-btn__icon { font-size: 1.5rem; }
-
-    /* ═══════════════════════════════ RESPONSIVE ═════════════════════════ */
-    @media (max-width: 768px) {
-      section { padding: 56px 0; }
-      .hero { padding: 72px 0 56px; }
-      .hero__inner { grid-template-columns: 1fr; }
-      .hero__visual { display: none; }
-      .hero__stats { gap: 20px; }
-      .cta-section { padding: 72px 0; }
-    }
-  </style>
 </head>
 <body data-cms-page="professionnels">
 
   <div id="header-placeholder"></div>
 
   <main>
-
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- HERO                                                               -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <section class="hero">
+    <!-- Hero -->
+    <section class="page-hero pro-hero">
       <div class="container">
-        <div class="hero__inner">
-
-          <!-- Texte -->
-          <div class="hc-card hc-card--col">
-            <div class="hero__badge">
-              <span class="badge hc-eyebrow" data-cms="professionnels.hero.span1" data-cms-type="text">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                Espace Professionnels
-              </span>
-            </div>
-            <h1 class="hc-title" data-cms="professionnels.hero.h11" data-cms-type="html">Développez votre activité<br>avec <em>Primeo</em></h1>
-            <p class="hc-desc" data-cms="professionnels.hero.p1" data-cms-type="text">Rejoignez plus de 1 200 professionnels qui utilisent Primeo pour gérer leurs réservations et développer leur chiffre d'affaires en Côte d'Ivoire.</p>
-            <div class="hero__actions hc-actions" data-cms="professionnels.hero.div1" data-cms-type="html">
-              <a href="#inscription" class="btn btn-primary btn-lg">Créer mon compte professionnel</a>
-              <a href="#types" class="btn btn-outline btn-lg" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);background:transparent;">Découvrir les offres</a>
-            </div>
-            <div class="hero__stats hc-tiles hc-tiles--3">
-              <div>
-                <div class="hero__stat-num" data-cms="professionnels.hero.div2" data-cms-type="text">1 200+</div>
-                <div class="hero__stat-label" data-cms="professionnels.hero.div3" data-cms-type="text">Professionnels actifs</div>
-              </div>
-              <div>
-                <div class="hero__stat-num" data-cms="professionnels.hero.div4" data-cms-type="text">18</div>
-                <div class="hero__stat-label" data-cms="professionnels.hero.div5" data-cms-type="text">Villes couvertes</div>
-              </div>
-              <div>
-                <div class="hero__stat-num" data-cms="professionnels.hero.div6" data-cms-type="text">4</div>
-                <div class="hero__stat-label" data-cms="professionnels.hero.div7" data-cms-type="text">Secteurs d'activité</div>
-              </div>
-            </div>
+        <div class="hc-card">
+          <p class="page-hero__label hc-eyebrow" data-cms="professionnels.hero.span1" data-cms-type="text">Espace professionnel</p>
+          <h1 class="hc-title" data-cms="professionnels.hero.h11" data-cms-type="html">Développez votre activité avec <em>Primeo</em></h1>
+          <p class="hc-desc" data-cms="professionnels.hero.p1" data-cms-type="text">Résidences, hôtels, agences immobilières et restaurants : publiez vos offres, recevez des réservations et gérez votre activité depuis une seule application.</p>
+          <div class="pro-hero__actions">
+            <a href="#inscription" class="btn btn-white btn-lg" data-cms="professionnels.hero.a1" data-cms-type="text">Inscription professionnelle</a>
+            <a href="/contact/" class="btn btn-ghost-light btn-lg" data-cms="professionnels.hero.a2" data-cms-type="text">Nous contacter</a>
           </div>
-
-          <!-- Illustration -->
-          <div class="hero__visual" aria-hidden="true">
-            <div class="hero__center-glow"></div>
-            <div class="hero__card card-1">
-              <div class="hero__card-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
-              <div class="hero__card-title" data-cms="professionnels.hero.div8" data-cms-type="text">Résidence / Appartement</div>
-              <div class="hero__card-sub" data-cms="professionnels.hero.div9" data-cms-type="text">Hébergement meublé</div>
-            </div>
-            <div class="hero__card card-2">
-              <div class="hero__card-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
-              <div class="hero__card-title" data-cms="professionnels.hero.div10" data-cms-type="text">Hôtel</div>
-              <div class="hero__card-sub" data-cms="professionnels.hero.div11" data-cms-type="text">Gestion hôtelière</div>
-            </div>
-            <div class="hero__card card-3">
-              <div class="hero__card-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
-              <div class="hero__card-title" data-cms="professionnels.hero.div12" data-cms-type="text">Immobilier</div>
-              <div class="hero__card-sub" data-cms="professionnels.hero.div13" data-cms-type="text">Vente & location</div>
-            </div>
-            <div class="hero__card card-4">
-              <div class="hero__card-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2zM18 15v7"/></svg></div>
-              <div class="hero__card-title" data-cms="professionnels.hero.div14" data-cms-type="text">Restaurateur</div>
-              <div class="hero__card-sub" data-cms="professionnels.hero.div15" data-cms-type="text">Réservations de table</div>
-            </div>
-          </div>
-
+          <ul class="pro-hero__facts">
+            <li><strong>4</strong><span data-cms="professionnels.hero.div2" data-cms-type="text">secteurs d'activité</span></li>
+            <li><strong>24–48 h</strong><span data-cms="professionnels.hero.div4" data-cms-type="text">pour valider votre dossier</span></li>
+            <li><strong>Gratuit</strong><span data-cms="professionnels.hero.div6" data-cms-type="text">inscription sans engagement</span></li>
+          </ul>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- TYPES DE PROFESSIONNELS                                            -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <section class="pro-types" id="types">
+    <!-- Types de comptes -->
+    <section class="pro-section" id="types">
       <div class="container">
-        <div class="section-header">
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.types.span1" data-cms-type="text">Quatre profils</span>
           <h2 data-cms="professionnels.types.h21" data-cms-type="text">Quel professionnel êtes-vous ?</h2>
-          <p data-cms="professionnels.types.p1" data-cms-type="text">Primeo s'adapte à votre secteur d'activité. Choisissez votre profil et accédez à des outils pensés pour votre métier.</p>
+          <p data-cms="professionnels.types.p0" data-cms-type="text">Primeo s'adapte à votre secteur d'activité. Choisissez votre profil et accédez à des outils pensés pour votre métier.</p>
         </div>
-
-        <div class="types-grid">
-          <a href="#inscription" class="type-card">
-            <div class="type-card__emoji"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
+        <div class="pro-grid pro-grid--4">
+          <article class="pro-type pro-type--blue reveal">
+            <div class="pro-type__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
             <h3 data-cms="professionnels.types.h31" data-cms-type="text">Résidence / Appartement</h3>
-            <p data-cms="professionnels.types.p2" data-cms-type="text">Publiez vos résidences meublées, appartements ou maisons. Gérez vos disponibilités, tarifs et réservations en temps réel.</p>
-            <span class="type-card__cta" data-cms="professionnels.types.span1" data-cms-type="text">S'inscrire</span>
-          </a>
-          <a href="#inscription" class="type-card">
-            <div class="type-card__emoji"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
+            <p data-cms="professionnels.types.p1" data-cms-type="text">Publiez vos résidences meublées, appartements ou maisons. Gérez vos disponibilités, tarifs et réservations en temps réel.</p>
+            <a href="#inscription" class="pro-type__cta">S'inscrire <span aria-hidden="true">→</span></a>
+          </article>
+          <article class="pro-type pro-type--indigo reveal">
+            <div class="pro-type__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
             <h3 data-cms="professionnels.types.h32" data-cms-type="text">Hôtel</h3>
-            <p data-cms="professionnels.types.p3" data-cms-type="text">Gérez vos chambres, vos tarifs saisonniers et vos réservations. Intégration facile avec votre PMS existant.</p>
-            <span class="type-card__cta" data-cms="professionnels.types.span2" data-cms-type="text">S'inscrire</span>
-          </a>
-          <a href="#inscription" class="type-card">
-            <div class="type-card__emoji"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
+            <p data-cms="professionnels.types.p2" data-cms-type="text">Gérez vos chambres, vos tarifs saisonniers et vos réservations depuis un seul tableau de bord.</p>
+            <a href="#inscription" class="pro-type__cta">S'inscrire <span aria-hidden="true">→</span></a>
+          </article>
+          <article class="pro-type pro-type--orange reveal">
+            <div class="pro-type__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
             <h3 data-cms="professionnels.types.h33" data-cms-type="text">Immobilier</h3>
-            <p data-cms="professionnels.types.p4" data-cms-type="text">Publiez des biens à la vente ou en location longue durée. Attirez des acheteurs et locataires qualifiés sur Primeo.</p>
-            <span class="type-card__cta" data-cms="professionnels.types.span3" data-cms-type="text">S'inscrire</span>
-          </a>
-          <a href="#inscription" class="type-card">
-            <div class="type-card__emoji"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2zM18 15v7"/></svg></div>
-            <h3 data-cms="professionnels.types.h34" data-cms-type="text">Restaurateur</h3>
-            <p data-cms="professionnels.types.p5" data-cms-type="text">Acceptez des réservations de table en ligne, gérez vos créneaux et votre carte. Fidélisez vos clients avec des offres ciblées.</p>
-            <span class="type-card__cta" data-cms="professionnels.types.span4" data-cms-type="text">S'inscrire</span>
-          </a>
+            <p data-cms="professionnels.types.p3" data-cms-type="text">Publiez des biens à la vente ou en location longue durée. Attirez des acheteurs et locataires qualifiés sur Primeo.</p>
+            <a href="#inscription" class="pro-type__cta">S'inscrire <span aria-hidden="true">→</span></a>
+          </article>
+          <article class="pro-type pro-type--green reveal">
+            <div class="pro-type__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2zM18 15v7"/></svg></div>
+            <h3 data-cms="professionnels.types.h34" data-cms-type="text">Restaurant</h3>
+            <p data-cms="professionnels.types.p4" data-cms-type="text">Acceptez des réservations de table en ligne, gérez vos créneaux et votre carte, et fidélisez vos clients.</p>
+            <a href="#inscription" class="pro-type__cta">S'inscrire <span aria-hidden="true">→</span></a>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- COMMENT ÇA MARCHE                                                  -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <section class="how" id="comment">
+    <!-- Avantages -->
+    <section class="pro-section pro-section--alt" id="avantages">
       <div class="container">
-        <div class="section-header">
-          <h2 data-cms="professionnels.comment.h21" data-cms-type="text">Comment ça marche ?</h2>
-          <p data-cms="professionnels.comment.p1" data-cms-type="text">Rejoindre Primeo prend moins de 5 minutes. Notre équipe valide votre compte sous 24 à 48 h.</p>
-        </div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step__num" data-cms="professionnels.comment.div1" data-cms-type="text">1</div>
-            <h3 data-cms="professionnels.comment.h31" data-cms-type="text">Choisissez votre type</h3>
-            <p data-cms="professionnels.comment.p2" data-cms-type="text">Résidence, hôtel, immobilier ou restaurateur — sélectionnez le profil qui correspond à votre activité.</p>
-          </div>
-          <div class="step">
-            <div class="step__num" data-cms="professionnels.comment.div2" data-cms-type="text">2</div>
-            <h3 data-cms="professionnels.comment.h32" data-cms-type="text">Créez votre compte</h3>
-            <p data-cms="professionnels.comment.p3" data-cms-type="text">Renseignez vos informations personnelles et professionnelles. Acceptez les CGU en quelques secondes.</p>
-          </div>
-          <div class="step">
-            <div class="step__num" data-cms="professionnels.comment.div3" data-cms-type="text">3</div>
-            <h3 data-cms="professionnels.comment.h33" data-cms-type="text">Validation KYC</h3>
-            <p data-cms="professionnels.comment.p4" data-cms-type="text">Notre équipe vérifie votre dossier sous 24 à 48 h. Vous recevez une notification dès l'activation.</p>
-          </div>
-          <div class="step">
-            <div class="step__num" data-cms="professionnels.comment.div4" data-cms-type="text">4</div>
-            <h3 data-cms="professionnels.comment.h34" data-cms-type="text">Publiez &amp; développez</h3>
-            <p data-cms="professionnels.comment.p5" data-cms-type="text">Créez vos annonces et commencez à recevoir des réservations dès le premier jour.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- AVANTAGES                                                          -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <section class="benefits" id="avantages">
-      <div class="container">
-        <div class="section-header">
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.avantages.span1" data-cms-type="text">Vos avantages</span>
           <h2 data-cms="professionnels.avantages.h21" data-cms-type="text">Pourquoi choisir Primeo ?</h2>
-          <p data-cms="professionnels.avantages.p1" data-cms-type="text">Des outils professionnels pensés pour votre quotidien, sans complexité ni coût caché.</p>
+          <p data-cms="professionnels.avantages.p0" data-cms-type="text">Des outils professionnels pensés pour votre quotidien, sans complexité.</p>
         </div>
+        <div class="pro-grid pro-grid--4">
+          <article class="pro-benefit reveal">
+            <div class="pro-benefit__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
+            <h3 data-cms="professionnels.avantages.h31" data-cms-type="text">Visibilité auprès des clients</h3>
+            <p data-cms="professionnels.avantages.p1" data-cms-type="text">Vos annonces sont présentées aux voyageurs et aux clients de Primeo partout en Côte d'Ivoire.</p>
+          </article>
+          <article class="pro-benefit reveal">
+            <div class="pro-benefit__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+            <h3 data-cms="professionnels.avantages.h32" data-cms-type="text">Paiements sécurisés</h3>
+            <p data-cms="professionnels.avantages.p2" data-cms-type="text">Genius Pay intègre Mobile Money, Wave et carte bancaire. Vos fonds sont versés rapidement et en toute sécurité.</p>
+          </article>
+          <article class="pro-benefit reveal">
+            <div class="pro-benefit__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <h3 data-cms="professionnels.avantages.h33" data-cms-type="text">Calendrier et messagerie</h3>
+            <p data-cms="professionnels.avantages.p3" data-cms-type="text">Gérez vos disponibilités en temps réel, évitez les doubles réservations et échangez directement avec vos clients.</p>
+          </article>
+          <article class="pro-benefit reveal">
+            <div class="pro-benefit__icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v3M12 10v8M17 6v12"/></svg></div>
+            <h3 data-cms="professionnels.avantages.h34" data-cms-type="text">Tableau de bord complet</h3>
+            <p data-cms="professionnels.avantages.p4" data-cms-type="text">Suivez réservations, revenus, avis clients et statistiques de performance en temps réel depuis votre application.</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
-        <div class="benefits-grid">
-          <div class="benefit-card">
-            <div class="benefit-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v3M12 10v8M17 6v12"/></svg></div>
-            <div>
-              <h3 data-cms="professionnels.avantages.h31" data-cms-type="text">Tableau de bord complet</h3>
-              <p data-cms="professionnels.avantages.p2" data-cms-type="text">Suivez vos réservations, revenus, avis clients et statistiques de performance en temps réel depuis votre application.</p>
-            </div>
+    <!-- Comment ça marche -->
+    <section class="pro-section" id="comment">
+      <div class="container">
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.comment.span1" data-cms-type="text">En 4 étapes</span>
+          <h2 data-cms="professionnels.comment.h21" data-cms-type="text">Comment ça marche ?</h2>
+          <p data-cms="professionnels.comment.p0" data-cms-type="text">Rejoindre Primeo prend quelques minutes. Notre équipe valide votre compte sous 24 à 48 h.</p>
+        </div>
+        <div class="pro-steps">
+          <div class="pro-step reveal">
+            <div class="pro-step__num">1</div>
+            <h3 data-cms="professionnels.comment.h31" data-cms-type="text">Choisissez votre profil</h3>
+            <p data-cms="professionnels.comment.p1" data-cms-type="text">Résidence, hôtel, immobilier ou restaurant : sélectionnez le profil qui correspond à votre activité.</p>
           </div>
-          <div class="benefit-card">
-            <div class="benefit-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
-            <div>
-              <h3 data-cms="professionnels.avantages.h32" data-cms-type="text">Visibilité auprès des clients</h3>
-              <p data-cms="professionnels.avantages.p3" data-cms-type="text">Vos annonces sont présentées à tous les voyageurs et clients de Primeo, en Côte d'Ivoire et au-delà.</p>
-            </div>
+          <div class="pro-step reveal">
+            <div class="pro-step__num">2</div>
+            <h3 data-cms="professionnels.comment.h32" data-cms-type="text">Créez votre compte</h3>
+            <p data-cms="professionnels.comment.p2" data-cms-type="text">Renseignez vos informations personnelles et professionnelles depuis l'application, en quelques minutes.</p>
           </div>
-          <div class="benefit-card">
-            <div class="benefit-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-            <div>
-              <h3 data-cms="professionnels.avantages.h33" data-cms-type="text">Paiements sécurisés</h3>
-              <p data-cms="professionnels.avantages.p4" data-cms-type="text">Genius Pay intègre Mobile Money, Wave et carte bancaire. Vos fonds sont versés rapidement et en toute sécurité.</p>
-            </div>
+          <div class="pro-step reveal">
+            <div class="pro-step__num">3</div>
+            <h3 data-cms="professionnels.comment.h33" data-cms-type="text">Validation du dossier</h3>
+            <p data-cms="professionnels.comment.p3" data-cms-type="text">Notre équipe vérifie votre dossier sous 24 à 48 h. Vous êtes notifié dès l'activation de votre compte.</p>
           </div>
-          <div class="benefit-card">
-            <div class="benefit-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-            <div>
-              <h3 data-cms="professionnels.avantages.h34" data-cms-type="text">Calendrier intelligent</h3>
-              <p data-cms="professionnels.avantages.p5" data-cms-type="text">Gérez vos disponibilités en temps réel. Évitez les doubles réservations avec une synchronisation automatique.</p>
-            </div>
-          </div>
-          <div class="benefit-card">
-            <div class="benefit-icon"><svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-            <div>
-              <h3 data-cms="professionnels.avantages.h35" data-cms-type="text">Messagerie intégrée</h3>
-              <p data-cms="professionnels.avantages.p6" data-cms-type="text">Communiquez directement avec vos clients depuis l'application, avant et après chaque séjour ou réservation.</p>
-            </div>
+          <div class="pro-step reveal">
+            <div class="pro-step__num">4</div>
+            <h3 data-cms="professionnels.comment.h34" data-cms-type="text">Publiez et développez</h3>
+            <p data-cms="professionnels.comment.p4" data-cms-type="text">Créez vos annonces et commencez à recevoir des réservations dès le premier jour.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="faq" id="faq">
+    <!-- Tarification -->
+    <section class="pro-section pro-section--alt" id="tarifs">
       <div class="container">
-        <div class="section-header">
-          <h2 data-cms="professionnels.faq.h21" data-cms-type="text">Questions fréquentes</h2>
-          <p data-cms="professionnels.faq.p1" data-cms-type="text">Tout ce que vous devez savoir avant de créer votre compte professionnel.</p>
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.tarifs.span1" data-cms-type="text">Tarification</span>
+          <h2 data-cms="professionnels.tarifs.h21" data-cms-type="text">Une tarification simple et transparente</h2>
+          <p data-cms="professionnels.tarifs.p0" data-cms-type="text">Commencez gratuitement, puis choisissez la formule qui accompagne la croissance de votre activité.</p>
         </div>
+        <div class="pro-grid pro-grid--3">
+          <article class="pro-price reveal">
+            <div class="pro-price__icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+            <h3 data-cms="professionnels.tarifs.h31" data-cms-type="text">Inscription gratuite</h3>
+            <p data-cms="professionnels.tarifs.p1" data-cms-type="text">Créez votre compte professionnel gratuitement et sans engagement, puis publiez vos premières annonces.</p>
+          </article>
+          <article class="pro-price reveal">
+            <div class="pro-price__icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+            <h3 data-cms="professionnels.tarifs.h32" data-cms-type="text">Des formules évolutives</h3>
+            <p data-cms="professionnels.tarifs.p2" data-cms-type="text">Choisissez la formule adaptée à votre activité et au nombre d'annonces que vous gérez, et faites-la évoluer à tout moment.</p>
+          </article>
+          <article class="pro-price reveal">
+            <div class="pro-price__icon"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+            <h3 data-cms="professionnels.tarifs.h33" data-cms-type="text">Tout le détail dans l'application</h3>
+            <p data-cms="professionnels.tarifs.p3" data-cms-type="text">Formules et options de mise en avant sont présentées dans votre espace professionnel, avant tout engagement.</p>
+          </article>
+        </div>
+        <p class="pro-note" data-cms="professionnels.tarifs.p4" data-cms-type="html">Une question sur les formules ? Écrivez-nous à <a href="mailto:professionnel@primeo.ci">professionnel@primeo.ci</a> ou passez par la page <a href="/contact/">Contact</a>.</p>
+      </div>
+    </section>
 
+    <!-- Témoignages (affichés uniquement s'il y en a) -->
+    <section class="pro-section" id="temoignages" hidden>
+      <div class="container">
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.temoignages.span1" data-cms-type="text">Témoignages</span>
+          <h2 data-cms="professionnels.temoignages.h21" data-cms-type="text">Ils utilisent Primeo</h2>
+          <p data-cms="professionnels.temoignages.p0" data-cms-type="text">Ce que disent les utilisateurs de la plateforme.</p>
+        </div>
+        <div class="pro-grid pro-grid--3" id="pro-testimonials"></div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="pro-section pro-section--alt" id="faq">
+      <div class="container">
+        <div class="sol-intro reveal">
+          <span class="sol-intro__label" data-cms="professionnels.faq.span1" data-cms-type="text">Questions fréquentes</span>
+          <h2 data-cms="professionnels.faq.h21" data-cms-type="text">Vos questions</h2>
+          <p data-cms="professionnels.faq.p0" data-cms-type="text">Tout ce que vous devez savoir avant de créer votre compte professionnel.</p>
+        </div>
         <div class="faq-list">
           <details class="faq-item">
             <summary class="faq-question" data-cms="professionnels.faq.summary1" data-cms-type="text">Combien de temps prend la validation de mon compte ?</summary>
@@ -466,36 +231,24 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- CTA INSCRIPTION                                                    -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <section class="cta-section" id="inscription">
+    <!-- CTA final -->
+    <section class="sol-final" id="inscription">
       <div class="container">
-        <h2 data-cms="professionnels.inscription.h21" data-cms-type="text">Prêt à développer votre activité sur Primeo ?</h2>
-        <p data-cms="professionnels.inscription.p1" data-cms-type="text">Téléchargez l'application Primeo et créez votre compte professionnel en moins de 5 minutes.</p>
-        <a href="/telechargement/" class="btn btn-primary" data-cms-href="professionnels.inscription.a1-href" data-cms="professionnels.inscription.a1" data-cms-type="text">Télécharger l'application</a>
-        <p class="cta-note" data-cms="professionnels.inscription.p2" data-cms-type="text">Disponible sur iOS et Android — Inscription gratuite, sans engagement</p>
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- DOWNLOAD SHORTCUT                                                  -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <div class="download-cta">
-      <div class="container">
-        <p data-cms="professionnels.main.p1" data-cms-type="text">Accédez à tous vos outils professionnels depuis votre smartphone</p>
-        <div class="store-btns" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;align-items:center">
-          <a href="#" aria-label="Download on the App Store" style="display:inline-block;line-height:0"><img src="../assets/img/stores/app-store-badge.svg" alt="Download on the App Store" width="168" height="56" style="height:56px;width:auto" data-cms-src="professionnels.main.img1"></a>
-          <a href="#" aria-label="Get it on Google Play" style="display:inline-block;line-height:0"><img src="../assets/img/stores/google-play-badge.svg" alt="Get it on Google Play" width="196" height="76" style="height:76px;width:auto;margin:-10px -12px" data-cms-src="professionnels.main.img2"></a>
+        <div class="sol-final__card reveal">
+          <h2 data-cms="professionnels.inscription.h21" data-cms-type="text">Prêt à développer votre activité sur Primeo ?</h2>
+          <p data-cms="professionnels.inscription.p1" data-cms-type="text">Téléchargez l'application Primeo et créez votre compte professionnel en quelques minutes. Inscription gratuite, sans engagement.</p>
+          <div class="sol-final__actions">
+            <a href="/telechargement/" class="btn btn-white btn-lg" data-cms-href="professionnels.inscription.a1-href" data-cms="professionnels.inscription.a1" data-cms-type="text">Inscription professionnelle</a>
+            <a href="/contact/" class="btn btn-ghost-light btn-lg" data-cms="professionnels.inscription.a2" data-cms-type="text">Contacter l'équipe</a>
+          </div>
         </div>
       </div>
-    </div>
-
+    </section>
   </main>
 
   <div id="footer-placeholder"></div>
 
   <script src="../assets/js/main.js" data-base=".."></script>
-
+  <script src="../assets/js/professionnels.js?v=1"></script>
 </body>
 </html>
