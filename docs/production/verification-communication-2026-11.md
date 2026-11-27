@@ -81,7 +81,7 @@ Corrigés pendant la vérification (bloquants pour l'encaissement ou la sécurit
 | Flux | Résultat | Blocage | Action |
 |---|---|---|---|
 | Réservation client (hébergement) | ✅ | — | — |
-| Paiement (initiation → webhook → facture) | ✅ simulé | Aucun paiement réel testé | Payer 200 FCFA en réel |
+| Paiement (initiation → webhook → facture) | ✅ réel (Wave, 250 FCFA) | — | — |
 | Restaurant (menu, commande, table) | ✅ | La commande n'ouvre pas de conversation (messagerie liée aux réservations) | — |
 | Professionnel (OTP e-mail, KYC, annonce, modération) | ✅ | — | — |
 | Réservation reçue par le pro | ✅ | Réservation instantanée (pas d'étape d'acceptation) | — |
@@ -102,7 +102,12 @@ groupé, les entrées vitrine, le document KYC Cloudinary). Code promo **PREMIER
 
 1. **Changer la clé secrète Genius Pay** (dashboard Genius Pay → Paramètres → API), puis mettre à
    jour `GENIUS_PAY_SECRET_API_KEY` sur Render.
-2. **Faire un vrai paiement** avec PREMIERE90 (paiement intégral en ligne ; montant payé ≥ 200 FCFA).
+2. ~~Paiement réel~~ **validé le 27/11** : MTX-KDT9VQXRA4, 250 FCFA par Wave (acompte 10 % d'un séjour de
+   25 000 FCFA avec PREMIERE90). Webhook signé reçu en 4 s → réservation confirmée, code promo
+   décompté, notifications in-app client et pro, 3 e-mails délivrés et ouverts, facture PDF. Deux
+   anomalies corrigées dans la foulée : push refusé par OneSignal (`android_channel_id` inconnu) et
+   facture sans la ligne de remise (prix unitaire affiché 2 500 au lieu de 25 000 FCFA). Frais Genius
+   Pay prélevés : 106,25 FCFA sur 250 (net 143,75 FCFA).
 3. Activer la 2FA du super-admin (Admin → Configuration → Sécurité du compte).
 4. Supabase → Authentication → Sessions (ou Attack Protection) : activer « Detect and revoke
    potentially compromised refresh tokens », intervalle de réutilisation 10 s. Non modifiable par
