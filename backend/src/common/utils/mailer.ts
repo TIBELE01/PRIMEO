@@ -2,7 +2,7 @@
 // N'utilise pas SMTP : la clé API (BREVO_API_KEY) suffit, aucun credential SMTP requis.
 import axios from 'axios';
 import { brevoConfig } from '../../config/brevo.config';
-import { EMAILS } from '../../config/emails.config';
+import { EMAILS, mailboxLabel } from '../../config/emails.config';
 import { env } from '../../config/env.config';
 import { logger } from './logger';
 import { prisma } from '../../database/prisma.service';
@@ -48,6 +48,11 @@ interface SendEmailOptions {
 }
 
 
+const isPrimeoAddress = (email: string) => {
+  const domain = brevoConfig.senderEmail.split('@')[1]?.toLowerCase();
+  return !!domain && email.trim().toLowerCase().endsWith(`@${domain}`);
+};
+
 // ─── Envoi via l'API transactionnelle Brevo v3 ────────────────────────────────
 
 async function sendViaBrevoApi(
@@ -81,31 +86,53 @@ async function sendViaBrevoApi(
       }))).filter((a): a is EmailAttachment => a !== null)
     : undefined;
 
-  const sender = from?.email
-    ? { email: from.email, name: from.name ?? brevoConfig.senderName }
-    : { email: brevoConfig.senderEmail, name: brevoConfig.senderName };
+  const defaultSender = { email: brevoConfig.senderEmail, name: brevoConfig.senderName };
   const reply = replyTo?.email
     ? { email: replyTo.email, name: replyTo.name ?? replyTo.email }
     : { email: brevoConfig.replyTo, name: 'Primeo' };
-  // En-tête Reply-To seulement s'il diffère de l'expéditeur : sinon il est redondant et Gmail
-  // affiche une ligne « Répondre à » superflue. Sans lui, la réponse part vers l'expéditeur.
-  const sameAsSender = reply.email.trim().toLowerCase() === sender.email.trim().toLowerCase();
+  // Règle Primeo : l'email part de la boîte qui reçoit les réponses (réclamation@, facturation@…).
+  // « Répondre » y mène directement, sans en-tête Reply-To ni ligne « Répondre à » dans Gmail.
+  // Un Reply-To externe (visiteur, client — emails internes à l'équipe) garde l'expéditeur
+  // Primeo : on ne peut pas envoyer au nom d'une adresse d'un autre domaine.
+  const sender = isPrimeoAddress(reply.email)
+    ? { email: reply.email, name: replyTo?.name ?? mailboxLabel(reply.email) }
+    : from?.email
+      ? { email: from.email, name: from.name ?? brevoConfig.senderName }
+      : defaultSender;
 
-  const res = await axios.post<{ messageId?: string }>(
-    `${brevoConfig.baseUrl}/smtp/email`,
-    {
-      sender,
-      ...(sameAsSender ? {} : { replyTo: reply }),
-      to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
-      subject,
-      htmlContent,
-      ...(resolvedAttachment && resolvedAttachment.length ? { attachment: resolvedAttachment } : {}),
-    },
-    {
-      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
-      timeout: 15_000,
-    },
-  );
+  const post = (s: { email: string; name: string }) => {
+    const sameAsSender = reply.email.trim().toLowerCase() === s.email.trim().toLowerCase();
+    return axios.post<{ messageId?: string }>(
+      `${brevoConfig.baseUrl}/smtp/email`,
+      {
+        sender: s,
+        ...(sameAsSender ? {} : { replyTo: reply }),
+        to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
+        subject,
+        htmlContent,
+        ...(resolvedAttachment && resolvedAttachment.length ? { attachment: resolvedAttachment } : {}),
+      },
+      {
+        headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+        timeout: 15_000,
+      },
+    );
+  };
+
+  let res;
+  try {
+    res = await post(sender);
+  } catch (err) {
+    // Expéditeur refusé par Brevo (non déclaré) : l'email part quand même, depuis
+    // l'expéditeur par défaut avec Reply-To vers la bonne boîte — aucune réponse perdue.
+    const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+    if (status === 400 && sender.email.toLowerCase() !== defaultSender.email.toLowerCase()) {
+      logger.warn(`Expéditeur ${sender.email} refusé par Brevo — envoi depuis ${defaultSender.email}`);
+      res = await post(defaultSender);
+    } else {
+      throw err;
+    }
+  }
   // Identifiant Brevo : relie les événements du webhook (délivré, ouvert, bounce) au journal
   return res.data?.messageId ?? null;
 }
@@ -244,7 +271,45 @@ export async function validateSmtpConnection(): Promise<void> {
     logger.info('Brevo API : connexion vérifiée ✓');
   } catch (err) {
     logger.error('Brevo API : échec de connexion au démarrage', err);
+    return;
   }
+  await ensureBrevoSenders().catch((err) => logger.warn('Brevo : vérification des expéditeurs impossible', err));
+}
+
+/** Boîtes Primeo utilisées comme expéditeur (l'email part de la boîte qui reçoit les réponses). */
+export function senderMailboxes(): Array<{ email: string; name: string }> {
+  const boxes = [
+    EMAILS.from, EMAILS.replyTo, EMAILS.support, EMAILS.reclamation, EMAILS.billing,
+    EMAILS.professional, EMAILS.partnership, EMAILS.careers, EMAILS.dpo, EMAILS.legal, EMAILS.press,
+  ];
+  const seen = new Set<string>();
+  return boxes
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => isPrimeoAddress(e) && !seen.has(e) && seen.add(e))
+    .map((email) => ({ email, name: mailboxLabel(email) }));
+}
+
+/**
+ * Déclare dans Brevo les expéditeurs manquants (idempotent, au démarrage). L'API Brevo
+ * n'accepte que les IP autorisées du compte : l'appel part donc du serveur Primeo.
+ */
+export async function ensureBrevoSenders(): Promise<string[]> {
+  const headers = { 'api-key': brevoConfig.apiKey!, accept: 'application/json', 'content-type': 'application/json' };
+  const { data } = await axios.get<{ senders?: Array<{ email: string }> }>(`${brevoConfig.baseUrl}/senders`, { headers, timeout: 10_000 });
+  const existing = new Set((data.senders ?? []).map((s) => s.email.toLowerCase()));
+  const created: string[] = [];
+  for (const box of senderMailboxes()) {
+    if (existing.has(box.email)) continue;
+    try {
+      await axios.post(`${brevoConfig.baseUrl}/senders`, box, { headers, timeout: 10_000 });
+      created.push(box.email);
+      logger.info(`Brevo : expéditeur déclaré — ${box.name} <${box.email}>`);
+    } catch (err) {
+      logger.warn(`Brevo : déclaration de l'expéditeur ${box.email} impossible`, err);
+    }
+  }
+  if (!created.length) logger.info('Brevo : tous les expéditeurs Primeo sont déclarés ✓');
+  return created;
 }
 
 // ─── Emails métier ────────────────────────────────────────────────────────────
