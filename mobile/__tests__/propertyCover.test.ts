@@ -1,4 +1,4 @@
-import { propertyCoverUrl, videoPosterFromUrl } from '../src/utils/propertyCover';
+import { listPhotoUrl, propertyCoverUrl, videoPosterFromUrl } from '../src/utils/propertyCover';
 
 const VID = 'https://res.cloudinary.com/x/video/upload/v1/p/videos/tour.mp4';
 const PANO = 'https://res.cloudinary.com/x/image/upload/v1/p/3d/salon.jpg';
@@ -22,5 +22,18 @@ describe('propertyCoverUrl', () => {
   it('aucun média : undefined (placeholder)', () => {
     expect(propertyCoverUrl({ images: [] })).toBeUndefined();
     expect(propertyCoverUrl(undefined)).toBeUndefined();
+  });
+});
+
+describe('listPhotoUrl', () => {
+  it('photo Cloudinary originale : taille carte, format et qualité automatiques', () => {
+    expect(listPhotoUrl('https://res.cloudinary.com/x/image/upload/v1/p/photo.jpg'))
+      .toBe('https://res.cloudinary.com/x/image/upload/c_limit,w_900,q_auto,f_auto/v1/p/photo.jpg');
+    expect(propertyCoverUrl({ images: [{ url: 'https://res.cloudinary.com/x/image/upload/p/a.jpg' }] })).toContain('/upload/c_limit,w_900,q_auto,f_auto/p/a.jpg');
+  });
+  it('URL déjà transformée ou hors Cloudinary : inchangée', () => {
+    const t = 'https://res.cloudinary.com/x/image/upload/c_fill,w_640/v1/a.jpg';
+    expect(listPhotoUrl(t)).toBe(t);
+    expect(listPhotoUrl('https://exemple.ci/a.jpg')).toBe('https://exemple.ci/a.jpg');
   });
 });

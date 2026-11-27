@@ -26,6 +26,7 @@ import { OwnerBenefits } from '../../../components/home/OwnerBenefits';
 import { useSectorFlags } from '../../../hooks/useSectorFlags';
 import { filterEnabledProperties } from '../../../utils/sectors';
 import { trackPropertyClick } from '../../../utils/propertyStats';
+import { NetworkStatus } from '../../../components/common/NetworkStatus';
 
 type Nav = NativeStackNavigationProp<ClientStackParamList>;
 
@@ -239,6 +240,7 @@ export function HomeScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6FB" />
+      <NetworkStatus />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -464,7 +466,7 @@ const s = StyleSheet.create({
   },
   statIcon:  { fontSize: 28 },
   statValue: { fontSize: 22, fontWeight: '900', color: '#1056E0' },
-  statLabel: { fontSize: 11, color: '#6B7280', textAlign: 'center', fontWeight: '600' },
+  statLabel: { fontSize: 11, color: '#5B6472', textAlign: 'center', fontWeight: '600' },
 
   /* ── Innovations ── */
   innovGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
@@ -475,7 +477,7 @@ const s = StyleSheet.create({
   },
   innovIcon:  { fontSize: 28 },
   innovTitle: { fontSize: 13, fontWeight: '800', color: '#111827' },
-  innovDesc:  { fontSize: 11.5, color: '#6B7280', lineHeight: 17 },
+  innovDesc:  { fontSize: 11.5, color: '#5B6472', lineHeight: 17 },
 
   /* ── Témoignages (carte étroite et haute) ── */
   testimonialCard: {
@@ -488,7 +490,7 @@ const s = StyleSheet.create({
   avatar:      { width: 48, height: 48, borderRadius: 24, backgroundColor: '#1056E0', alignItems: 'center', justifyContent: 'center' },
   avatarText:  { color: '#fff', fontWeight: '800', fontSize: 15 },
   testimonialName: { fontSize: 14, fontWeight: '800', color: '#111827' },
-  testimonialRole: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  testimonialRole: { fontSize: 12, color: '#5B6472', marginTop: 2 },
   stars: { color: '#F59E0B', fontSize: 16 },
 
   /* ── Partenaires (carte étroite et haute) ── */
@@ -500,7 +502,7 @@ const s = StyleSheet.create({
   },
   partnerIcon: { fontSize: 52 },
   partnerName: { fontSize: 18, color: '#111827', fontWeight: '800' },
-  partnerDesc: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+  partnerDesc: { fontSize: 13, color: '#5B6472', fontWeight: '500' },
 
   /* ── FAQ ── */
   faqList:  { marginHorizontal: 16 },
@@ -517,7 +519,7 @@ const s = StyleSheet.create({
   faqIconBoxOpen: { backgroundColor: '#1056E0' },
   faqChevron: { fontSize: 10, color: '#1056E0' },
   faqChevronOpen: { color: '#fff' },
-  faqA:     { fontSize: 13, color: '#6B7280', lineHeight: 20, paddingHorizontal: 15, paddingBottom: 15 },
+  faqA:     { fontSize: 13, color: '#5B6472', lineHeight: 20, paddingHorizontal: 15, paddingBottom: 15 },
 
   /* ── Newsletter (FOND ORANGE) ── */
   newsletterSection: { backgroundColor: '#F08A1D', marginBottom: 0, paddingVertical: 26, paddingHorizontal: 16, gap: 12 },

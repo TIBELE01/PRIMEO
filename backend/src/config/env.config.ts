@@ -128,6 +128,10 @@ const envSchema = z.object({
   GEOAPIFY_API_KEY: z.string().optional(),
   GEOAPIFY_URL: z.string().optional(),
 
+  // Google Analytics 4 du site vitrine et du site légal (ID de mesure public « G-XXXXXXX »).
+  // Transmis aux sites par /website/public-config ; chargé uniquement après consentement cookies.
+  GA4_MEASUREMENT_ID: z.string().regex(/^G-[A-Z0-9]+$/, 'Format attendu : G-XXXXXXXXXX').optional(),
+
   // Upstash Redis (rate limiting, caching)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),

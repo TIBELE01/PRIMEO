@@ -90,10 +90,10 @@ export function Sidebar() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="https://res.cloudinary.com/dlnnxvepd/image/upload/e_trim/c_fit,w_240,h_240,f_png/v1795644228/primeo_logo_z7suoi.png" alt="Primeo" className="h-6 w-auto" />
             </span>
-            <p className="text-xs text-primary-400">Administration</p>
+            <p className="text-xs text-primary-200">Administration</p>
           </div>
         )}
-        <button onClick={toggleSidebar} className="text-primary-300 hover:text-white p-1 rounded">
+        <button onClick={toggleSidebar} className="text-primary-300 hover:text-white p-1 rounded" aria-label={sidebarCollapsed ? 'Déplier le menu' : 'Replier le menu'} title={sidebarCollapsed ? 'Déplier le menu' : 'Replier le menu'}>
           {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
@@ -132,9 +132,9 @@ export function Sidebar() {
 
       {!sidebarCollapsed && admin && (
         <div className="px-4 py-3 border-t border-primary-800">
-          <p className="text-xs text-primary-400">Connecté en tant que</p>
+          <p className="text-xs text-primary-200">Connecté en tant que</p>
           <p className="text-xs font-semibold text-primary-200 mt-0.5">{admin.firstName} {admin.lastName}</p>
-          <p className="text-xs text-primary-400 mt-0.5">{roleLabel[role] ?? role}</p>
+          <p className="text-xs text-primary-200 mt-0.5">{roleLabel[role] ?? role}</p>
         </div>
       )}
     </aside>

@@ -105,6 +105,8 @@ export function Header() {
           <input
             ref={inputRef}
             type="search"
+            role="combobox"
+            aria-autocomplete="list"
             placeholder="Rechercher…"
             aria-label="Recherche globale (Ctrl + K)"
             aria-controls="global-search-results"
@@ -123,7 +125,7 @@ export function Header() {
             className="w-full pl-9 pr-14 py-2 text-sm bg-gray-100 dark:bg-gray-700 dark:text-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-gray-600"
           />
           {!searching && (
-            <kbd className="hidden lg:block absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400 border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 pointer-events-none">Ctrl K</kbd>
+            <kbd className="hidden lg:block absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-500 border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 pointer-events-none">Ctrl K</kbd>
           )}
           {searching && term && (
             <ul id="global-search-results" role="listbox" className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
@@ -151,7 +153,7 @@ export function Header() {
         {/* Session countdown */}
         <div className={cn(
           'hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full',
-          isWarning ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300',
+          isWarning ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
         )}>
           <Clock size={12} />
           <span>Session : {sessionLabel}</span>

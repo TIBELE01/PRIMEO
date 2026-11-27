@@ -26,7 +26,7 @@ export function Breadcrumbs() {
 
   return (
     <nav className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-4">
-      <Link href="/dashboard" className="hover:text-primary-700"><Home size={14} /></Link>
+      <Link href="/dashboard" className="hover:text-primary-700" aria-label="Tableau de bord"><Home size={14} aria-hidden="true" /></Link>
       {parts.map((part, i) => {
         const href = '/' + parts.slice(0, i + 1).join('/');
         const isLast = i === parts.length - 1;

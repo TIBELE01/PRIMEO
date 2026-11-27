@@ -111,6 +111,7 @@ export default function ConfigurationPage() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
+                aria-label="Délai de grâce en jours"
                 min={1}
                 max={30}
                 value={config.grace.subscriptionGraceDays}
@@ -149,6 +150,7 @@ export default function ConfigurationPage() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
+                aria-label="Frais Genius Pay en pourcentage"
                 min={0}
                 max={100}
                 step={0.1}

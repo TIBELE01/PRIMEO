@@ -382,10 +382,10 @@ export default function CommunicationPage() {
         </div>
       ))}
 
-      <div className="flex gap-1 border-b border-gray-200" role="tablist">
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto" role="tablist">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button key={id} role="tab" aria-selected={tab === id} data-testid={`tab-${id}`} onClick={() => setTab(id)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === id ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`flex shrink-0 whitespace-nowrap items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === id ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             <Icon size={14} /> {label}
           </button>
         ))}

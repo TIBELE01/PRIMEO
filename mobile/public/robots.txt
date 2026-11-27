@@ -1,0 +1,5 @@
+# robots.txt — application web Primeo (https://app.primeo.ci)
+# Espaces clients et professionnels : aucune indexation.
+# Les pages publiques à référencer sont sur https://primeo.ci
+User-agent: *
+Disallow: /

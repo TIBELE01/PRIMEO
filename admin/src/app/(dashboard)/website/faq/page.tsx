@@ -107,7 +107,7 @@ export default function FaqPage() {
       ) : (
         <div className="space-y-6">
           {grouped.map(([cat, catItems]) => (
-            <div key={cat} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div key={cat} className="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-gray-700">{cat}</h2>
                 <span className="text-xs text-gray-400">{catItems.length} question{catItems.length !== 1 ? 's' : ''}</span>

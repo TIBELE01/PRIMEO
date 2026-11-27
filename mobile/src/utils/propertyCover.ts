@@ -38,15 +38,26 @@ export function panoramaThumbFromUrl(url: string): string {
   return insertCloudinary(url, 'image', 'c_fill,g_center,w_900,h_600,q_auto,f_auto') ?? url;
 }
 
+/**
+ * Photo Cloudinary servie à la taille d'une carte (900 px max, WebP/AVIF selon le navigateur,
+ * qualité automatique) au lieu du fichier original (souvent 2 000 px et plus).
+ * URL non Cloudinary ou déjà transformée : inchangée.
+ */
+export function listPhotoUrl(url: string): string {
+  const m = url.match(/\/image\/upload\/([^/]+)\//);
+  if (!m || /^[a-z]{1,3}_/.test(m[1])) return url;
+  return insertCloudinary(url, 'image', 'c_limit,w_900,q_auto,f_auto') ?? url;
+}
+
 export function propertyCoverUrl(p: CoverSource | null | undefined): string | undefined {
   if (!p) return undefined;
   const main = p.mainImageUrl ?? p.coverImage;
-  if (main && !VIDEO_EXT.test(main)) return main;
+  if (main && !VIDEO_EXT.test(main)) return listPhotoUrl(main);
 
   const media = [...(p.images ?? []), ...(p.media ?? [])].filter((m): m is MediaLike & { url: string } => !!m?.url);
   const photos = media.filter((m) => !isVideo(m));
   const photo = photos.find((m) => m.isPrimary) ?? photos[0];
-  if (photo) return photo.url;
+  if (photo) return listPhotoUrl(photo.url);
 
   if (p.video?.posterUrl) return p.video.posterUrl;
   const video = media.find(isVideo);

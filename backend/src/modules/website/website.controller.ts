@@ -649,7 +649,7 @@ export async function adminReorderAboutPartners(req: Request, res: Response, nex
 export async function getPublicConfig(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { env } = await import('../../config/env.config');
-    res.json({ geoapifyKey: env.GEOAPIFY_API_KEY ?? '' });
+    res.json({ geoapifyKey: env.GEOAPIFY_API_KEY ?? '', ga4MeasurementId: env.GA4_MEASUREMENT_ID ?? '' });
   } catch (e) { next(e); }
 }
 

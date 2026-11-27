@@ -54,7 +54,7 @@ export default function NewsletterPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
         {isLoading ? (
           <div className="p-8 text-center text-gray-400 text-sm">Chargement…</div>
         ) : !subs.length ? (

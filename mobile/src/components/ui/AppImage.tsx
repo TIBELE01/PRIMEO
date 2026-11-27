@@ -36,6 +36,9 @@ export function AppImage({
       cachePolicy="memory-disk"
       placeholder={{ blurhash: BLURHASH }}
       placeholderContentFit="cover"
+      // Accessibilité web : sans libellé fourni, l'image est décorative (alt="") — le texte
+      // voisin (titre de l'annonce, nom…) la décrit déjà et le lecteur d'écran l'ignore.
+      alt={props.alt ?? props.accessibilityLabel ?? ''}
       {...props}
     />
   );
