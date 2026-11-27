@@ -82,6 +82,8 @@ export interface BookingInvoiceData {
   sectionLabel?: string; // surcharge de l'étiquette « Séjour » dans les métadonnées
   // Champs d'affichage (facultatifs — anciens liens signés sans ces champs restent valides)
   walletDeduction?: number; // FCFA — déjà déduit du total (solde portefeuille utilisé)
+  promoDiscount?: number; // FCFA — remise du code promo, déjà déduite du total
+  promoCode?: string;
   customerPhone?: string;
   professionalName?: string; // nom de l'établissement
   professionalAddress?: string;
@@ -321,7 +323,8 @@ function renderInvoicePdf(m: InvoiceModel): Promise<Buffer> {
 function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
   const toDate = (d: Date | string) => new Date(d);
   const wallet = Math.max(0, data.walletDeduction ?? 0);
-  const subtotal = data.totalAmount + wallet; // total avant déduction du portefeuille
+  const promo = Math.max(0, data.promoDiscount ?? 0);
+  const subtotal = data.totalAmount + wallet + promo; // prix du séjour avant code promo et portefeuille
   const isTable = (data.sectionLabel ?? '') === 'Réservation';
   const qty = Math.max(1, data.quantity ?? data.nights ?? 1);
   const unitLabel = data.unitLabel ?? (isTable ? 'couvert' : 'nuit');
@@ -362,7 +365,10 @@ function buildBookingPdfBuffer(data: BookingInvoiceData): Promise<Buffer> {
       total: subtotal,
     }],
     subtotal,
-    discounts: wallet > 0 ? [{ label: 'Remise (solde portefeuille)', amount: wallet }] : [],
+    discounts: [
+      ...(promo > 0 ? [{ label: data.promoCode ? `Code promo ${data.promoCode}` : 'Code promo', amount: promo }] : []),
+      ...(wallet > 0 ? [{ label: 'Remise (solde portefeuille)', amount: wallet }] : []),
+    ],
     total: data.totalAmount,
     payment: [
       { label: 'Payé en ligne (Genius Pay)', amount: paidOnline, color: PDF.green },

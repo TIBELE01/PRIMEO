@@ -23,6 +23,26 @@ function countNights(start: Date, end: Date): number {
   return diff > 0 ? diff : 1;
 }
 
+// Remise du code promo d'une réservation (la réservation ne stocke que le total après remise).
+// Le calcul de pricing.service est inversé : total après promo = base − remise, avec
+// remise = floor(base × % / 100) ou montant fixe plafonné à la base.
+export function promoDiscountFor(
+  afterPromo: number,
+  promo: { discountType: string; discountValue: number } | null | undefined,
+): number {
+  if (!promo || afterPromo <= 0 || promo.discountValue <= 0) return 0;
+  if (promo.discountType !== 'percent') return promo.discountValue;
+  const p = promo.discountValue;
+  if (p >= 100) return 0;
+  const estimate = Math.round((afterPromo * 100) / (100 - p));
+  // L'arrondi rend plusieurs bases possibles : on retient la plus proche de l'estimation
+  for (const offset of [0, 1, -1, 2, -2]) {
+    const base = estimate + offset;
+    if (base >= afterPromo && base - Math.floor((base * p) / 100) === afterPromo) return base - afterPromo;
+  }
+  return estimate - afterPromo;
+}
+
 // Génère (si absent) le lien de facture signé d'une réservation et le stocke.
 // `force` régénère un lien neuf (utile pour les réservations dont l'URL stockée
 // pointe encore vers un ancien CDN, et pour rafraîchir un jeton expiré).
@@ -42,6 +62,12 @@ export async function ensureBookingInvoice(bookingId: string, force = false): Pr
   if (!booking) return null;
   if (booking.invoiceUrl && booking.invoiceUrl.includes('/api/downloads/') && !force) return booking.invoiceUrl;
 
+  const promo = booking.promoCodeId
+    ? await prisma.promoCode.findUnique({
+      where: { id: booking.promoCodeId },
+      select: { code: true, discountType: true, discountValue: true },
+    })
+    : null;
   const isRestaurant = booking.property.propertyType === 'restaurant';
   const nights = countNights(booking.startDate, booking.endDate);
 
@@ -70,6 +96,8 @@ export async function ensureBookingInvoice(bookingId: string, force = false): Pr
       sectionLabel: isRestaurant ? 'Réservation' : 'Séjour',
       // Affichage uniquement (aucun recalcul) : portefeuille déjà déduit du total
       walletDeduction: booking.walletDeduction ?? 0,
+      promoDiscount: promoDiscountFor(booking.totalAmount + (booking.walletDeduction ?? 0), promo),
+      promoCode: promo?.code,
       customerPhone: booking.client.phone ?? undefined,
       professionalName:
         booking.property.owner?.professionalProfile?.businessName

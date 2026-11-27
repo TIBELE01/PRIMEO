@@ -51,6 +51,7 @@ describe('facture PDF — une seule page', () => {
     ['100 % sur place', { totalAmount: 70000, onlinePaidAmount: 0, remainingCashAmount: 70000 }],
     ['acompte 10 % + portefeuille', { totalAmount: 65000, onlinePaidAmount: 6500, remainingCashAmount: 58500, walletDeduction: 5000 }],
     ['100 % en ligne', { totalAmount: 70000, onlinePaidAmount: 70000, remainingCashAmount: 0 }],
+    ['code promo 90 % + acompte', { totalAmount: 2500, onlinePaidAmount: 250, remainingCashAmount: 2250, promoDiscount: 22500, promoCode: 'PREMIERE90' }],
     ['ancien lien signé (sans champs d’affichage) + titre très long', { totalAmount: 0, onlinePaidAmount: 0, remainingCashAmount: 0, propertyTitle: 'R'.repeat(300), sectionLabel: 'Réservation' }],
   ])('%s', async (_n, extra) => {
     const pdf = await generateBookingInvoiceBuffer({ ...base, ...extra });
