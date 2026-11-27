@@ -41,9 +41,9 @@ interface SendEmailOptions {
   templateId?: number;
   params?: Record<string, unknown>;
   attachment?: EmailAttachment[];
-  /** Expéditeur spécifique (ex. support@primeo.ci pour les réponses du support). Défaut : noreply@. */
+  /** Expéditeur spécifique (ex. support@primeo.ci pour les réponses du support). Défaut : EMAIL_FROM (contact@). */
   from?: EmailRecipient;
-  /** Adresse de réponse (bouton « Répondre »). Défaut : EMAIL_REPLY_TO (contact@). */
+  /** Adresse de réponse. Défaut : EMAIL_REPLY_TO (contact@) ; omise si identique à l'expéditeur. */
   replyTo?: EmailRecipient;
 }
 
@@ -81,15 +81,21 @@ async function sendViaBrevoApi(
       }))).filter((a): a is EmailAttachment => a !== null)
     : undefined;
 
+  const sender = from?.email
+    ? { email: from.email, name: from.name ?? brevoConfig.senderName }
+    : { email: brevoConfig.senderEmail, name: brevoConfig.senderName };
+  const reply = replyTo?.email
+    ? { email: replyTo.email, name: replyTo.name ?? replyTo.email }
+    : { email: brevoConfig.replyTo, name: 'Primeo' };
+  // En-tête Reply-To seulement s'il diffère de l'expéditeur : sinon il est redondant et Gmail
+  // affiche une ligne « Répondre à » superflue. Sans lui, la réponse part vers l'expéditeur.
+  const sameAsSender = reply.email.trim().toLowerCase() === sender.email.trim().toLowerCase();
+
   const res = await axios.post<{ messageId?: string }>(
     `${brevoConfig.baseUrl}/smtp/email`,
     {
-      sender: from?.email
-        ? { email: from.email, name: from.name ?? brevoConfig.senderName }
-        : { email: brevoConfig.senderEmail, name: brevoConfig.senderName },
-      replyTo: replyTo?.email
-        ? { email: replyTo.email, name: replyTo.name ?? replyTo.email }
-        : { email: brevoConfig.replyTo, name: 'Primeo' },
+      sender,
+      ...(sameAsSender ? {} : { replyTo: reply }),
       to: to.map(r => ({ email: r.email, name: r.name ?? r.email })),
       subject,
       htmlContent,

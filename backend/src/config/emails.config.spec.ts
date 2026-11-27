@@ -3,7 +3,7 @@ import { EMAILS, contactRecipientFor, mailboxLabel } from './emails.config';
 
 describe('adresses email professionnelles', () => {
   it('valeurs par défaut : vraies adresses primeo.ci, aucune adresse de substitution', () => {
-    expect(EMAILS.from).toBe('noreply@primeo.ci');
+    expect(EMAILS.from).toBe('contact@primeo.ci');
     expect(EMAILS.replyTo).toBe('contact@primeo.ci');
     expect(EMAILS.supportFrom).toBe('support@primeo.ci');
     expect(EMAILS.admin).toBe('admin@primeo.ci');

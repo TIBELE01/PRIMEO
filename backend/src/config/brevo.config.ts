@@ -4,7 +4,7 @@ import { EMAILS } from './emails.config';
 
 export const brevoConfig = {
   apiKey: env.BREVO_API_KEY,
-  // Expéditeur transactionnel : noreply@primeo.ci (EMAIL_FROM) — réponses vers contact@ (EMAIL_REPLY_TO)
+  // Expéditeur transactionnel : contact@primeo.ci (EMAIL_FROM) — Reply-To (EMAIL_REPLY_TO) omis s'il est identique
   senderEmail: EMAILS.from,
   senderName: EMAILS.fromName,
   replyTo: EMAILS.replyTo,

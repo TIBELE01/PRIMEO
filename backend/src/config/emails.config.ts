@@ -11,8 +11,9 @@ import { env } from './env.config';
 const pick = (v: string | undefined, fallback: string) => (v && v.trim() ? v.trim() : fallback);
 
 export const EMAILS = {
-  /** Expéditeur de tous les emails transactionnels (les réponses arrivent dans contact@). */
-  from: pick(env.EMAIL_FROM, 'noreply@primeo.ci'),
+  /** Expéditeur de tous les emails transactionnels : contact@, pour que « Répondre » y aille
+   *  directement, sans en-tête Reply-To (ligne « Répondre à » masquée dans Gmail). */
+  from: pick(env.EMAIL_FROM, 'contact@primeo.ci'),
   fromName: pick(env.EMAIL_FROM_NAME, 'Primeo'),
   /** Adresse de réponse des emails transactionnels. */
   replyTo: pick(env.EMAIL_REPLY_TO, 'contact@primeo.ci'),
