@@ -1,3 +1,4 @@
+import { kycDocumentViewUrl } from '../../common/utils/s3-client';
 // Admin service — platform oversight and moderation
 import { EMAILS } from '../../config/emails.config';
 import { panoramaCoverUrl, videoPosterUrl, videoPlaybackUrl } from '../properties/media-urls';
@@ -501,7 +502,7 @@ export const adminService = {
         id: d.id,
         userId: user.id,
         type: d.type,
-        fileUrl: d.url,
+        fileUrl: kycDocumentViewUrl(d.url),
         uploadedAt: d.uploadedAt,
         status: d.verifiedAt ? 'approved' : d.rejectedReason ? 'rejected' : 'pending',
       })),
@@ -637,7 +638,7 @@ export const adminService = {
       include: { documents: true },
     });
     if (!profile) throw new HttpError(404, 'Profil professionnel introuvable');
-    return profile;
+    return { ...profile, documents: profile.documents.map((d) => ({ ...d, url: kycDocumentViewUrl(d.url) ?? d.url })) };
   },
 
   async forcePasswordReset(userId: string, adminId: string) {
@@ -950,7 +951,7 @@ export const adminService = {
       ownerLegalDocs: (p.owner?.professionalProfile?.documents ?? []).map((doc: Record<string, unknown>) => ({
         id: doc['id'],
         type: doc['type'],
-        fileUrl: doc['fileUrl'],
+        fileUrl: kycDocumentViewUrl((doc['url'] ?? doc['fileUrl']) as string | undefined),
         status: doc['status'],
         uploadedAt: doc['createdAt'] ?? doc['uploadedAt'],
       })),

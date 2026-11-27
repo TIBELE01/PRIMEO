@@ -116,7 +116,7 @@ export const propertiesService = {
     return serializeList(result as { data: Record<string, unknown>[]; total: number; page: number; limit: number; pages: number });
   },
 
-  async getById(id: string) {
+  async getById(id: string, viewer?: { id: string; role?: string }) {
     const property = await prisma.property.findUnique({
       where: { id },
       include: {
@@ -138,6 +138,17 @@ export const propertiesService = {
       },
     });
     if (!property) throw new HttpError(404, 'Propriété introuvable');
+
+    // Annonce non publiée (brouillon, en modération, refusée, suspendue, archivée) : invisible
+    // pour les visiteurs. Restent autorisés le propriétaire, l'administration et un client
+    // ayant une réservation sur ce bien (accès à la fiche depuis « Mes réservations »).
+    if (property.status !== 'active') {
+      const isOwner = !!viewer && viewer.id === property.ownerId;
+      const isAdmin = viewer?.role === 'admin';
+      const hasBooking = !!viewer && !isOwner && !isAdmin
+        && !!(await prisma.booking.findFirst({ where: { propertyId: id, clientId: viewer.id }, select: { id: true } }));
+      if (!isOwner && !isAdmin && !hasBooking) throw new HttpError(404, 'Propriété introuvable');
+    }
 
     // Secteur désactivé par l'admin : la fiche publique n'est plus consultable
     // (503 « Service temporairement indisponible »).

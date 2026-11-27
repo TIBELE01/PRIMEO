@@ -13,6 +13,7 @@ jest.mock('../../config/cloudinary.config', () => ({
 const mockUpload = jest.fn((..._args: unknown[]) => Promise.resolve({ url: 'https://cdn.test/doc.pdf', publicId: 'p1', format: 'pdf', bytes: 100 }));
 jest.mock('../../common/utils/s3-client', () => ({
   uploadToCloudinary: (...args: unknown[]) => mockUpload(...args),
+  kycDocumentViewUrl: (u: string) => u,
 }));
 
 const mockPrisma = {

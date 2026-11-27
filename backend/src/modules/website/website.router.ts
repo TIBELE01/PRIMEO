@@ -232,6 +232,7 @@ websiteRouter.get('/admin/blog/newsletter',             c.adminListNewsletterSub
 websiteRouter.get('/admin/blog/newsletter/export',      c.adminExportNewsletterSubscribers);
 websiteRouter.put('/admin/blog/newsletter/:id/status',  c.adminUpdateNewsletterSubscriberStatus);
 websiteRouter.delete('/admin/blog/newsletter/:id',      c.adminDeleteNewsletterSubscriber);
+websiteRouter.post('/admin/blog/newsletter/sync-brevo', c.adminSyncNewsletterToBrevo);
 websiteRouter.get('/admin/blog/comments',               c.adminListBlogComments);
 websiteRouter.put('/admin/blog/comments/:id/approve',   c.adminApproveComment);
 websiteRouter.delete('/admin/blog/comments/:id',        c.adminDeleteComment);

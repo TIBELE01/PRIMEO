@@ -1194,3 +1194,7 @@ export async function adminUploadPartnershipDossier(req: Request, res: Response,
 export async function adminResetPartnershipDossier(req: Request, res: Response, next: NextFunction): Promise<void> {
   try { res.json(await partnershipDossierService.reset(req.user!.sub, req.ip)); } catch (e) { next(e); }
 }
+
+export async function adminSyncNewsletterToBrevo(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await websiteService.adminSyncNewsletterToBrevo()); } catch (e) { next(e); }
+}

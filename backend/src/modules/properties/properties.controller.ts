@@ -15,7 +15,7 @@ export async function listProperties(req: Request, res: Response, next: NextFunc
 
 export async function getProperty(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const property = await propertiesService.getById(req.params.id);
+    const property = await propertiesService.getById(req.params.id, req.user ? { id: req.user.sub, role: req.user.role } : undefined);
     res.json(property);
   } catch (err) {
     next(err);

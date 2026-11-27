@@ -192,6 +192,8 @@ function escapeHtml(v: unknown): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+import { addNewsletterContact, removeNewsletterContact } from './newsletter-brevo';
+
 export const websiteService = {
 
   async getHero() {
@@ -1326,11 +1328,13 @@ export const websiteService = {
       // Réabonnement d'un email précédemment désactivé → on le réactive.
       if (existing.status === 'disabled') {
         await prisma.newsletterSubscriber.update({ where: { id: existing.id }, data: { status: 'active' } });
+        void addNewsletterContact(email);
         return existing;
       }
       throw createHttpError(409, 'Cet email est déjà abonné.');
     }
     const sub = await prisma.newsletterSubscriber.create({ data: { email } });
+    void addNewsletterContact(email);
     await sendEmail({
       to: [{ email }],
       subject: 'Bienvenue sur le blog Primeo !',
@@ -1481,13 +1485,25 @@ export const websiteService = {
     const normalized = status === 'disabled' ? 'disabled' : 'active';
     const row = await prisma.newsletterSubscriber.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Abonné introuvable');
-    return prisma.newsletterSubscriber.update({ where: { id }, data: { status: normalized } });
+    const updated = await prisma.newsletterSubscriber.update({ where: { id }, data: { status: normalized } });
+    void (normalized === 'disabled' ? removeNewsletterContact(row.email) : addNewsletterContact(row.email));
+    return updated;
+  },
+
+  /** Synchronise tous les abonnés actifs avec la liste Brevo (rattrapage des abonnés existants). */
+  async adminSyncNewsletterToBrevo() {
+    const subs = await prisma.newsletterSubscriber.findMany({ where: { status: { not: 'disabled' } }, select: { email: true } });
+    let synced = 0;
+    for (const s of subs) if (await addNewsletterContact(s.email)) synced++;
+    return { total: subs.length, synced };
   },
 
   async adminDeleteNewsletterSubscriber(id: string) {
     const row = await prisma.newsletterSubscriber.findUnique({ where: { id } });
     if (!row) throw createHttpError(404, 'Abonné introuvable');
-    return prisma.newsletterSubscriber.delete({ where: { id } });
+    const deleted = await prisma.newsletterSubscriber.delete({ where: { id } });
+    void removeNewsletterContact(row.email);
+    return deleted;
   },
 
   async adminListBlogComments(page: number, limit: number, status?: string) {

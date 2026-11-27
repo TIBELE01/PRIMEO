@@ -3,7 +3,7 @@ import type { DocumentType } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
 import { HttpError } from '../../common/handlers/http-error.handler';
 import { twoFactorService } from '../auth/two-factor.service';
-import { uploadToCloudinary } from '../../common/utils/s3-client';
+import { uploadToCloudinary, kycDocumentViewUrl } from '../../common/utils/s3-client';
 import { cloudinaryPaths } from '../../config/cloudinary-paths';
 import { logger } from '../../common/utils/logger';
 import { SubmitKycInput } from './dto/professional.dto';
@@ -113,12 +113,13 @@ export const professionalService = {
           cloudinaryPaths.kycDocument(accountType, userId, documentType),
           file.originalname,
           'auto',
+          { type: 'authenticated' }, // documents d'identité : jamais accessibles par URL publique
         );
 
         await prisma.professionalDocument.create({
           data: { profileId: profile.id, type: documentType, url: result.url },
         });
-        uploaded.push({ type: documentType, url: result.url });
+        uploaded.push({ type: documentType, url: kycDocumentViewUrl(result.url) ?? result.url });
       }
     }
 
@@ -134,7 +135,7 @@ export const professionalService = {
       verificationStatus: refreshed?.verificationStatus,
       documentsCount: refreshed?.documents.length ?? 0,
       uploaded,
-      profile: refreshed,
+      profile: refreshed ? { ...refreshed, documents: refreshed.documents.map((d) => ({ ...d, url: kycDocumentViewUrl(d.url) ?? d.url })) } : refreshed,
     };
   },
 
@@ -156,7 +157,7 @@ export const professionalService = {
       },
     });
     if (!profile) throw new HttpError(404, 'Profil introuvable');
-    return profile;
+    return profile ? { ...profile, documents: profile.documents.map((d) => ({ ...d, url: kycDocumentViewUrl(d.url) ?? d.url })) } : profile;
   },
 
   // ── 2FA (TOTP) — voir modules/auth/two-factor.service.ts ──────────────────

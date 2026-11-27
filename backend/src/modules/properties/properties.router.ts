@@ -116,7 +116,9 @@ propertiesRouter.post(
 // ── Property detail and mutations ────────────────────────────────────────────
 
 // Public detail
-propertiesRouter.get('/:id', parseId, getProperty);
+// Fiche publique : authentification facultative (le propriétaire ou un admin voit aussi une
+// annonce en attente / suspendue ; un visiteur n'accède qu'aux annonces actives)
+propertiesRouter.get('/:id', parseId, optionalAuthenticate, getProperty);
 // Statistiques d'annonce : vue de la fiche ou clic depuis une liste (public, auth facultative)
 propertiesRouter.post(
   '/:id/events',

@@ -38,7 +38,7 @@ export async function uploadToCloudinary(
   folder: string,
   filename: string,
   resourceType: CloudinaryResourceType = 'image',
-  options?: { eager?: string; eagerAsync?: boolean },
+  options?: { eager?: string; eagerAsync?: boolean; type?: 'upload' | 'authenticated' },
 ): Promise<UploadResult> {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
   if (!cloudName || !apiKey || !apiSecret) {
@@ -49,6 +49,8 @@ export async function uploadToCloudinary(
   const signed: Record<string, string> = { folder, timestamp };
   if (options?.eager) signed['eager'] = options.eager;
   if (options?.eagerAsync) signed['eager_async'] = 'true';
+  // « authenticated » : fichier inaccessible par son URL publique (documents d'identité KYC)
+  if (options?.type === 'authenticated') signed['type'] = 'authenticated';
   const signature = signParams(signed, apiSecret);
 
   const form = new FormData();
@@ -58,6 +60,7 @@ export async function uploadToCloudinary(
   form.append('timestamp', timestamp);
   if (signed['eager']) form.append('eager', signed['eager']);
   if (signed['eager_async']) form.append('eager_async', signed['eager_async']);
+  if (signed['type']) form.append('type', signed['type']);
   form.append('signature', signature);
 
   let response;
@@ -223,16 +226,39 @@ export async function deleteFromCloudinary(
  * quand la livraison publique des PDF est bloquée. Sert aux CV envoyés avant la
  * migration vers le stockage privé.
  */
-export function cloudinaryPrivateDownloadUrl(publicId: string, format: string, resourceType: 'image' | 'raw' = 'image'): string {
+export function cloudinaryPrivateDownloadUrl(
+  publicId: string,
+  format: string,
+  resourceType: 'image' | 'raw' = 'image',
+  deliveryType: 'upload' | 'authenticated' = 'upload',
+): string {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig;
   if (!cloudName || !apiKey || !apiSecret) throw new Error('Cloudinary credentials not configured');
   const params: Record<string, string> = {
     format,
     public_id: publicId,
     timestamp: Math.floor(Date.now() / 1000).toString(),
-    type: 'upload',
+    type: deliveryType,
   };
   const signature = signParams(params, apiSecret);
   const qs = new URLSearchParams({ ...params, api_key: apiKey, signature }).toString();
   return `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/download?${qs}`;
+}
+
+/**
+ * Lien de consultation d'un document KYC. Les documents d'identité sont stockés en
+ * « authenticated » : leur URL Cloudinary n'est pas consultable telle quelle. On renvoie un
+ * lien de téléchargement signé, valable 1 heure. Les anciens documents publics (« /upload/ »)
+ * sont renvoyés tels quels.
+ */
+export function kycDocumentViewUrl(storedUrl: string | null | undefined): string | null {
+  if (!storedUrl) return null;
+  const m = storedUrl.match(/\/(image|raw)\/authenticated\/(?:v\d+\/)?(.+?)(?:\.([a-z0-9]+))?$/i);
+  if (!m) return storedUrl;
+  const [, resourceType, publicId, ext] = m;
+  try {
+    return cloudinaryPrivateDownloadUrl(publicId, (ext ?? 'jpg').toLowerCase(), resourceType as 'image' | 'raw', 'authenticated');
+  } catch {
+    return null;
+  }
 }
