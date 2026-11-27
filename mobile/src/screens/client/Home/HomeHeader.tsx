@@ -304,5 +304,5 @@ const s = StyleSheet.create({
   cardD: { backgroundColor: '#FFF0F5' },
   cardIcon:  { fontSize: 24, marginBottom: 2 },
   cardTitle: { fontSize: 13, fontWeight: '800', color: '#1056E0', lineHeight: 17 },
-  cardDesc:  { fontSize: 11.5, color: '#6B7280', lineHeight: 15 },
+  cardDesc:  { fontSize: 11.5, color: '#5B6472', lineHeight: 15 },
 });

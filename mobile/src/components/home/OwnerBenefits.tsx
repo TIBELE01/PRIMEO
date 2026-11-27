@@ -41,7 +41,7 @@ export function OwnerBenefits() {
 }
 
 const s = StyleSheet.create({
-  sub: { fontSize: 13, color: '#6B7280', lineHeight: 19, paddingHorizontal: 16, marginTop: -4, marginBottom: 14 },
+  sub: { fontSize: 13, color: '#5B6472', lineHeight: 19, paddingHorizontal: 16, marginTop: -4, marginBottom: 14 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
   card: {
     width: '47%', backgroundColor: '#fff',
@@ -54,5 +54,5 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
   title: { fontSize: 13, fontWeight: '800', color: '#111827' },
-  desc: { fontSize: 11.5, color: '#6B7280', lineHeight: 17 },
+  desc: { fontSize: 11.5, color: '#5B6472', lineHeight: 17 },
 });
