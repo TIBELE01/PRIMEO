@@ -2,79 +2,73 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://primeo.ci/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://primeo.ci/a-propos/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://primeo.ci/aide/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://primeo.ci/blog/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://primeo.ci/carrieres/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://primeo.ci/communaute/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://primeo.ci/contact/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/devenir-partenaire/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://primeo.ci/engagement/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://primeo.ci/espace-presse/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://primeo.ci/maintenance/</loc>
-    <lastmod>2026-11-17</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://primeo.ci/produits/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -86,49 +80,49 @@
   </url>
   <url>
     <loc>https://primeo.ci/solutions/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://primeo.ci/telechargement/</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-client.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-hotel.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-immobilier.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-residence.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-restaurant.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://primeo.ci/documentation/guide-revenus.html</loc>
-    <lastmod>2026-11-17</lastmod>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>

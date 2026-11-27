@@ -50,7 +50,7 @@
 .ct-submit-btn:disabled{opacity:.7;cursor:wait}
 .ct-spinner{width:20px;height:20px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ct-spin .8s linear infinite}
 @keyframes ct-spin{to{transform:rotate(360deg)}}
-.ct-consent{font-size:.78rem;color:var(--color-text-muted);line-height:1.6;margin-top:1rem;text-align:center}
+.ct-consent{font-size:.78rem;color:var(--color-text-muted);line-height:1.6;margin-top:1rem;text-align:center}.ct-consent a{text-decoration:underline}
 
 .ct-info-block,.ct-hours,.ct-social{padding:1.5rem 1.6rem}
 .ct-info-block__title,.ct-hours__title,.ct-social__title{font-size:1.05rem;font-weight:800;color:var(--color-dark)}

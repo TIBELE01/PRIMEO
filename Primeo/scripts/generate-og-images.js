@@ -119,7 +119,7 @@ function svg({ title, subtitle, accent = C.cta }) {
   </text>
 
   <!-- subtitle -->
-  <text x="80" y="${title.length > 40 ? 560 : 500}"
+  <text x="80" y="${320 + (wrapTitle(title, { maxChars: 26 }).split('<tspan').length - 2) * 76 + 80}"
         font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif"
         font-size="30" fill="#aab4cf">${esc(subtitle)}</text>
 
@@ -133,10 +133,10 @@ function svg({ title, subtitle, accent = C.cta }) {
 // One entry per generated image: filename → { title, subtitle, accent }
 const IMAGES = {
   'og-default': { title: "Réservez votre hébergement en Côte d'Ivoire", subtitle: 'Hôtels · Résidences · Restaurants · Immobilier', accent: C.cta },
-  'og-home': { title: "La plateforme de réservation #1 en Côte d'Ivoire", subtitle: '3 modes de paiement · Visites 3D · Réservation simple', accent: C.cta },
+  'og-home': { title: "Réservez en toute confiance en Côte d'Ivoire", subtitle: 'Résidences · Hôtels · Restaurants · Immobilier', accent: C.cta },
   'og-solutions': { title: 'Des solutions pour chaque professionnel', subtitle: 'Hôtellerie · Restauration · Immobilier · Événementiel', accent: C.primaryLight },
   'og-produits': { title: 'Tous les outils pour gérer votre activité', subtitle: 'Réservations · Paiements · Statistiques · Visites 3D', accent: C.primaryLight },
-  'og-pro': { title: 'Développez votre activité avec Primeo', subtitle: 'Rejoignez +1 200 professionnels en Côte d\'Ivoire', accent: C.gold },
+  'og-pro': { title: 'Développez votre activité avec Primeo', subtitle: 'Publiez vos annonces et recevez des réservations', accent: C.gold },
   'og-blog': { title: 'Le blog Primeo', subtitle: "Conseils, actualités et analyses du secteur", accent: C.primaryLight },
   'og-a-propos': { title: 'Notre mission : simplifier la réservation', subtitle: "Primeo — la fierté tech ivoirienne", accent: C.cta },
   'og-contact': { title: 'Contactez l\'équipe Primeo', subtitle: 'Support, partenariats et devis personnalisés', accent: C.primaryLight },
@@ -144,12 +144,20 @@ const IMAGES = {
   'og-communaute': { title: 'Rejoignez la communauté Primeo', subtitle: 'Hôtes, voyageurs et professionnels réunis', accent: C.cta },
   'og-engagement': { title: 'Nos engagements envers vous', subtitle: 'Sécurité · Transparence · Proximité', accent: C.cta },
   'og-presse': { title: 'Espace presse Primeo', subtitle: 'Communiqués et contacts', accent: C.primaryLight },
-  'og-telechargement': { title: "Téléchargez l'application Primeo", subtitle: 'Disponible sur iOS et Android', accent: C.cta },
+  'og-telechargement': { title: "Téléchargez l'application Primeo", subtitle: 'Réservez et payez depuis votre mobile', accent: C.cta },
   'og-documentation': { title: 'Documentation & guides Primeo', subtitle: 'Tout pour bien démarrer sur la plateforme', accent: C.primaryLight },
   'og-carrieres': { title: 'Rejoignez l\'aventure Primeo', subtitle: 'Construisons la tech ivoirienne de demain', accent: C.gold },
 };
 
+// Aperçu de partage du site légal (legal.primeo.ci), écrit dans legal-site/assets/images
+const LEGAL = { title: 'Centre légal PRIMEO', subtitle: 'CGU · Confidentialité · Conditions de vente · Conformité', accent: C.primaryLight };
+const LEGAL_OUT = path.join(__dirname, '..', '..', 'legal-site', 'assets', 'images', 'og-legal.png');
+
 (async () => {
+  if (fs.existsSync(path.dirname(LEGAL_OUT))) {
+    await sharp(Buffer.from(svg(LEGAL).replace('>primeo.ci<', '>legal.primeo.ci<').replace('width="220" height="46"', 'width="300" height="46"'))).png({ compressionLevel: 9 }).toFile(LEGAL_OUT);
+    console.log('  ✓ og-legal.png (site légal)');
+  }
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
   let count = 0;
   for (const [name, cfg] of Object.entries(IMAGES)) {

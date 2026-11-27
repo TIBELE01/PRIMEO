@@ -60,6 +60,8 @@ async function build() {
     const dir = path.join(ROOT, name);
     if (!fs.statSync(dir).isDirectory()) continue;
     if (!fs.existsSync(path.join(dir, 'index.html'))) continue;
+    // Pages marquées noindex (ex. /maintenance/) : jamais dans le sitemap
+    if (/<meta[^>]+name=["']robots["'][^>]+noindex/i.test(fs.readFileSync(path.join(dir, 'index.html'), 'utf8'))) continue;
     entries.push(urlEntry(`${BASE}/${name}/`, RULES[name] || DEFAULT_RULE));
   }
 

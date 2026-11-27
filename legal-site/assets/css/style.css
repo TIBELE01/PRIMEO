@@ -141,7 +141,7 @@ p { margin-bottom: .75rem; }
   list-style: none;
 }
 .nav-links a {
-  color: rgba(255,255,255,.82);
+  color: #fff;
   font-size: .875rem;
   font-weight: 500;
   padding: .4rem .75rem;
@@ -151,7 +151,7 @@ p { margin-bottom: .75rem; }
   white-space: nowrap;
 }
 .nav-links a:hover, .nav-links a.active {
-  background: rgba(255,255,255,.15);
+  background: rgba(0,0,0,.16);
   color: #fff;
 }
 .nav-toggle {

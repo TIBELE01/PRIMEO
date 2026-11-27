@@ -1,5 +1,9 @@
+# robots.txt — Centre légal PRIMEO (https://legal.primeo.ci)
+# Toutes les pages légales sont publiques et indexables.
+# /assets/ reste accessible : les moteurs en ont besoin pour afficher les pages
+# (CSS) et les réseaux sociaux pour l'image d'aperçu des liens partagés.
 User-agent: *
 Allow: /
-Disallow: /assets/
+Disallow: /404.html
 
 Sitemap: https://legal.primeo.ci/sitemap.xml
