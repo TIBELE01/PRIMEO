@@ -39,14 +39,14 @@ export function panoramaThumbFromUrl(url: string): string {
 }
 
 /**
- * Photo Cloudinary servie à la taille d'une carte (900 px max, WebP/AVIF selon le navigateur,
+ * Photo Cloudinary servie à la taille d'une carte (640 px max — net sur écran haute densité —, WebP/AVIF selon le navigateur,
  * qualité automatique) au lieu du fichier original (souvent 2 000 px et plus).
  * URL non Cloudinary ou déjà transformée : inchangée.
  */
 export function listPhotoUrl(url: string): string {
   const m = url.match(/\/image\/upload\/([^/]+)\//);
   if (!m || /^[a-z]{1,3}_/.test(m[1])) return url;
-  return insertCloudinary(url, 'image', 'c_limit,w_900,q_auto,f_auto') ?? url;
+  return insertCloudinary(url, 'image', 'c_limit,w_640,q_auto,f_auto') ?? url;
 }
 
 export function propertyCoverUrl(p: CoverSource | null | undefined): string | undefined {
