@@ -4,7 +4,8 @@ jest.mock('../../common/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 jest.mock('../../config/env.config', () => ({ env: { FRONTEND_URL: 'http://app.test' } }));
-jest.mock('./services/availability.service', () => ({ availabilityService: {} }));
+const mockRelease = jest.fn(async (..._a: unknown[]) => 2);
+jest.mock('./services/availability.service', () => ({ availabilityService: { releaseBookedDates: (...a: unknown[]) => mockRelease(...(a as [])) } }));
 jest.mock('./services/pricing.service', () => ({ pricingService: {} }));
 jest.mock('./services/cancellation.service', () => ({
   cancellationService: { computeRefund: jest.fn(() => ({ refundAmount: 0 })) },
@@ -39,6 +40,7 @@ const OWNER = 'owner-1';
 const baseBooking = {
   id: 'bk-1',
   clientId: CLIENT,
+  propertyId: 'prop-1',
   status: 'confirmed',
   onlinePaidAmount: 0,
   startDate: new Date('2026-07-01'),
@@ -75,5 +77,11 @@ describe('bookingsService.cancel — notifications aux deux parties', () => {
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({
       recipientId: CLIENT, data: expect.objectContaining({ cancelledBy: 'professional' }),
     }));
+  });
+
+  it('libère les jours « réservé » du calendrier (dates de nouveau réservables)', async () => {
+    mockRelease.mockClear();
+    await bookingsService.cancel(baseBooking.id, { sub: CLIENT, role: 'client' } as never, { reason: 'Imprévu' } as never).catch(() => {});
+    expect(mockRelease).toHaveBeenCalledWith(baseBooking.propertyId, baseBooking.startDate, baseBooking.endDate, expect.anything());
   });
 });

@@ -8,6 +8,17 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export const availabilityService = {
+  /**
+   * Libère les jours « booked » d'une réservation annulée (créés au paiement ou lors d'un
+   * changement de dates). Les blocages manuels/externes ne sont jamais touchés.
+   */
+  async releaseBookedDates(propertyId: string, startDate: Date, endDate: Date, db: Db = prisma): Promise<number> {
+    const { count } = await db.availability.deleteMany({
+      where: { propertyId, status: 'booked', date: { gte: startDate, lt: endDate } },
+    });
+    return count;
+  },
+
   async checkDatesAvailable(propertyId: string, startDate: Date, endDate: Date, db: Db = prisma): Promise<void> {
     const overlapping = await bookingRepository.findOverlapping(propertyId, startDate, endDate, undefined, db);
     if (overlapping.length > 0) throw new HttpError(409, 'Ces dates ne sont plus disponibles');

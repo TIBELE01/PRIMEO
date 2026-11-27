@@ -509,6 +509,9 @@ export const bookingsService = {
         },
       });
 
+      // Les dates redeviennent réservables (jours « booked » posés au paiement)
+      await availabilityService.releaseBookedDates(booking.propertyId, booking.startDate, booking.endDate, tx);
+
       if (refundAmount > 0 && booking.onlinePaidAmount > 0) {
         // Mark existing payment transaction as refunded
         await tx.transaction.updateMany({
