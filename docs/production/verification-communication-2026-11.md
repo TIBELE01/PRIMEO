@@ -9,10 +9,9 @@ e-mails sur des alias `support.primeo+…@gmail.com`). Comptes de contrôle cré
 
 **Préparation estimée : 85 %. Prêt avec réserves.**
 
-> ⚠️ **Builds Render bloqués** : l'espace de travail a épuisé ses minutes de build. La version en
-> ligne de l'API et de l'app est `e4e1261` (corrections 1, 2, 3, 7, 8). Les corrections 4, 5, 6 et la
-> redirection vers le détail de la réservation (commits `0fd9a8e`, `0b77e71`, `b230476`) sont
-> poussées sur `main` mais **pas encore déployées**.
+> Mise à jour du 27/11 : builds Render débloqués. API, app et admin sont en ligne en `2796345`,
+> qui contient toutes les corrections ci-dessous et les 3 améliorations du § F (KYC privés,
+> newsletter vers Brevo, annonces non publiées masquées).
 
 Corrigés pendant la vérification (bloquants pour l'encaissement ou la sécurité) :
 
@@ -57,7 +56,7 @@ Corrigés pendant la vérification (bloquants pour l'encaissement ou la sécurit
 **Vitrine ↔ API : OK.**
 - Formulaires contact, newsletter, partenariat et candidature (avec CV) : réponse 201 et accusés de réception reçus.
 - Chiffres réels issus de l'API. Boîtes internes : livraisons Brevo confirmées vers contact@, recrutement@, partenariat@ et dpo@.
-- La newsletter n'alimente pas Brevo : les abonnés sont en base, exportables en CSV.
+- La newsletter alimente la liste Brevo « Newsletter Primeo » (inscription, désinscription, suppression).
 
 **Site légal : OK.**
 - Lien « Retour au site principal », 9 liens du pied de page de la vitrine, 15 liens de l'application : tous en 200.
@@ -72,7 +71,7 @@ Corrigés pendant la vérification (bloquants pour l'encaissement ou la sécurit
 | Brevo | Envoi, expéditeurs, domaine, webhook | ✅ | Domaine authentifié, 9 expéditeurs actifs ; 3 erreurs du 26/11 antérieures à l'authentification ; statuts « délivré » et « ouvert » reçus par webhook |
 | SMS (Norasend) | OTP, alertes | ⚠️ Non vérifié | `sms_logs` vide : aucun SMS jamais envoyé ; OTP désormais par e-mail ; test avec un vrai numéro requis |
 | OneSignal | Jetons, envoi | ⚠️ Non vérifié | Application configurée ; 0 appareil enregistré, 0 envoi : test sur téléphone requis ; `ONESIGNAL_WEBHOOK_SECRET` absent |
-| Cloudinary | Upload, transformations, accès | ✅ | Upload KYC, WebP/AVIF ; ⚠️ documents KYC publics par URL |
+| Cloudinary | Upload, transformations, accès | ✅ | Upload KYC, WebP/AVIF ; documents KYC privés (liens signés 1 h) |
 | Geoapify | Géocodage | ✅ | Annonce créée géocodée ; 56/56 annonces actives géocodées |
 | Upstash Redis | Cache, limitation, idempotence | ✅ | Taux de change en cache, clés d'idempotence, compteurs par IP |
 | Sentry | Capture, filtrage | ✅ | Erreur 502 de test remontée ; 4xx filtrées, sauf webhooks (alerte de sécurité voulue) |
@@ -93,29 +92,28 @@ Corrigés pendant la vérification (bloquants pour l'encaissement ou la sécurit
 
 ## E. Points restants (intervention de votre part)
 
-0. **Débloquer les builds Render** (Workspace → Settings → Build pipeline : augmenter la limite ou le forfait), puis relancer le déploiement de l'API et de l'app : 3 correctifs en attente.
-1. **Changer la clé secrète Genius Pay** (dashboard Genius Pay → Paramètres → API), puis mettre à jour `GENIUS_PAY_SECRET_API_KEY` sur Render : elle figurait dans les journaux.
-2. **Faire un vrai paiement de 200 FCFA** pour valider le circuit complet en conditions réelles.
+Réglés depuis : redéploiement ; variables `CORS_ORIGIN` et `COOKIE_DOMAIN` supprimées ; documents
+KYC privés (2 existants migrés : URL brute → 401, lien signé admin → 200) ; newsletter synchronisée
+(liste Brevo « Newsletter Primeo », 7/7 contacts) ; fiche d'une annonce non publiée → 404 pour un
+visiteur, 200 pour l'admin ; données de contrôle supprimées (2 comptes, 2 annonces, 3 réservations,
+1 commande, 1 litige, 5 transactions dont le portefeuille fictif, 5 messages, CTRLPROD27, l'envoi
+groupé, les entrées vitrine, le document KYC Cloudinary). Code promo **PREMIERE90** créé (90 %,
+2 utilisations, valable jusqu'au 04/12/2026).
+
+1. **Changer la clé secrète Genius Pay** (dashboard Genius Pay → Paramètres → API), puis mettre à
+   jour `GENIUS_PAY_SECRET_API_KEY` sur Render.
+2. **Faire un vrai paiement** avec PREMIERE90 (paiement intégral en ligne ; montant payé ≥ 200 FCFA).
 3. Activer la 2FA du super-admin (Admin → Configuration → Sécurité du compte).
-4. Supabase → Authentication → activer la détection des refresh tokens compromis (réutilisation).
-5. Tester le push et le SMS sur un téléphone ; renseigner `ONESIGNAL_WEBHOOK_SECRET` si les webhooks OneSignal sont utilisés.
-6. Nettoyer les variables obsolètes de l'API sur Render : `CORS_ORIGIN` et `COOKIE_DOMAIN` (`.onrender.com`), non utilisées.
-7. Décider de la synchronisation newsletter → Brevo, et du passage des documents KYC en accès privé.
-8. Données de contrôle à supprimer quand vous le souhaitez (je n'ai rien supprimé) :
-   - les 2 comptes de contrôle ;
-   - les 2 annonces suspendues ;
-   - le code promo CTRLPROD27 (inactif) ;
-   - 2 500 FCFA fictifs sur le portefeuille du client de contrôle ;
-   - 2 paiements Genius Pay en attente (MTX-WLDGKSQHRM, MTX-NOR51OLQCJ), qui expireront d'eux-mêmes.
+4. Supabase → Authentication → Sessions (ou Attack Protection) : activer « Detect and revoke
+   potentially compromised refresh tokens », intervalle de réutilisation 10 s. Non modifiable par
+   SQL ni par le MCP ; jeton d'accès non fourni.
+5. Tester le push et le SMS sur un téléphone ; renseigner `ONESIGNAL_WEBHOOK_SECRET` si besoin.
+6. Les 2 paiements Genius Pay en attente (MTX-WLDGKSQHRM, MTX-NOR51OLQCJ) expireront d'eux-mêmes.
 
 ## F. Recommandations
 
 - **Avant l'ouverture :** points 1, 2 et 3 du § E.
-- **Après l'ouverture :**
-  - push et SMS sur appareil réel ;
-  - documents KYC privés ;
-  - synchronisation Brevo de la newsletter ;
-  - fiche d'une annonce en attente ou suspendue masquée aux visiteurs (aujourd'hui accessible par son identifiant).
+- **Après l'ouverture :** push et SMS sur appareil réel.
 - **À surveiller :**
   - journaux Render « Webhook recovery » ;
   - Sentry (webhooks) ;
