@@ -222,7 +222,9 @@ export async function updatePlanBenefits(
     context === 'payment_failure'  ? 'subscription_suspended'   :
     'subscription_renewal';
 
-  notificationsService.notify({
+  // Recalcul forcé par l'admin sans changement de formule : pas de notification au pro
+  const silent = context === 'admin_force' && previousPlan === newPlanType && suspendedProperties.length === 0;
+  if (!silent) notificationsService.notify({
     type: notifType,
     recipientId: userId,
     data: {
