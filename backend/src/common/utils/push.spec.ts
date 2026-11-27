@@ -61,6 +61,13 @@ describe('sendViaOneSignal', () => {
     expect(body.priority).toBe(10);
   });
 
+  it("n'envoie pas d'android_channel_id inconnu de OneSignal", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: { recipients: 1 } });
+    await sendViaOneSignal(['p1'], { ...payload, priority: 'high' });
+    const body = mockedAxios.post.mock.calls[0][1] as Record<string, unknown>;
+    expect(body).not.toHaveProperty('android_channel_id');
+  });
+
   it('sends normal-priority as 5', async () => {
     mockedAxios.post.mockResolvedValueOnce({ data: { recipients: 1 } });
     await sendViaOneSignal(['p1'], { ...payload, priority: 'normal' });

@@ -80,7 +80,8 @@ export async function sendViaOneSignal(
         contents: payload.contents,
         data: payload.data ?? {},
         priority: payload.priority === 'high' ? 10 : 5,
-        android_channel_id: payload.priority === 'high' ? 'high_priority' : 'default',
+        // Pas d'android_channel_id : OneSignal attend l'UUID d'un canal créé dans son tableau de bord
+        // (« high_priority » / « default » sont refusés). Sans ce champ, le canal par défaut est utilisé.
       },
       {
         headers: {
@@ -117,7 +118,6 @@ export async function sendPushBroadcast(payload: PushPayload): Promise<boolean> 
         contents: payload.contents,
         data: payload.data ?? {},
         priority: 10,
-        android_channel_id: 'high_priority',
       },
       {
         headers: {
