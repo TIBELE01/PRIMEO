@@ -4,7 +4,18 @@ import { LogtailTransport } from './logtail.transport';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
+import { redactSecrets } from './redact';
+export { redactSecrets };
+
+const redact = winston.format((info) => {
+  const cleaned = redactSecrets({ ...info }) as Record<string, unknown>;
+  for (const k of Object.keys(info)) if (!(k in cleaned)) delete (info as Record<string, unknown>)[k];
+  Object.assign(info, cleaned);
+  return info;
+});
+
 const devFormat = combine(
+  redact(),
   colorize(),
   timestamp({ format: 'HH:mm:ss' }),
   errors({ stack: true }),
@@ -13,7 +24,7 @@ const devFormat = combine(
   )
 );
 
-const prodFormat = combine(timestamp(), errors({ stack: true }), winston.format.json());
+const prodFormat = combine(errors({ stack: true }), redact(), timestamp(), winston.format.json());
 
 const logtailToken = process.env.LOGTAIL_SOURCE_TOKEN;
 

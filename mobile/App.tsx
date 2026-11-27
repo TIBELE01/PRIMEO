@@ -109,6 +109,18 @@ const linking = {
       };
     }
 
+    // Retour de la page de paiement Genius Pay (success_url / error_url) :
+    // /bookings/<id>/payment-status → détail de la réservation (statut du paiement à jour).
+    const payReturn = pathPart.replace(/^\//, '').match(/^bookings\/([A-Za-z0-9_-]+)\/payment-status\/?$/);
+    if (payReturn && useAuthStore.getState().user?.role === 'client') {
+      return {
+        routes: [{
+          name: 'MainTabs',
+          state: { routes: [{ name: 'Réservations', state: { index: 1, routes: [{ name: 'MyBookings' }, { name: 'BookingDetail', params: { bookingId: payReturn[1] } }] } }] },
+        }],
+      };
+    }
+
     // Lien de parrainage partagé : /register?ref=CODE → écran d'inscription, code prérempli.
     // Un utilisateur déjà connecté est simplement ramené à son accueil.
     if (pathPart.replace(/^\//, '').toLowerCase() === 'register') {
