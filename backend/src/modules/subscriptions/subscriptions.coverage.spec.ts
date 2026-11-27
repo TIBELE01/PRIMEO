@@ -15,7 +15,7 @@ jest.mock('../../common/handlers/http-error.handler', () => ({
 const mockPrisma: Record<string, any> = {
   subscription: { findUnique: jest.fn(), create: jest.fn(async () => ({ id: 'sub-1' })), update: jest.fn(async () => ({})) },
   user: { findUnique: jest.fn() },
-  property: { findMany: jest.fn(async () => []), updateMany: jest.fn(async () => ({})) },
+  property: { findMany: jest.fn(async () => []), updateMany: jest.fn(async () => ({ count: 1 })), count: jest.fn(async () => 0) },
   transaction: { create: jest.fn(async () => ({ id: 'tx-1' })), update: jest.fn(async () => ({})), findUnique: jest.fn(), findMany: jest.fn(async () => []), count: jest.fn(async () => 0) },
   auditLog: { create: jest.fn(async () => ({})) },
 };
@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe('updatePlanBenefits', () => {
   it('upgrade : crédite les boosts du mois, réactive les annonces, notifie upgraded', async () => {
-    mockPrisma.subscription.findUnique.mockResolvedValue(sub({ planType: 'starter' }));
+    mockPrisma.subscription.findUnique.mockResolvedValue(sub({ planType: 'starter', features: { downgradeSuspendedIds: ['p9'] } }));
     const res = await updatePlanBenefits('u1', 'business', 'upgrade');
     await flush();
     expect(res.previousPlan).toBe('starter');
@@ -48,7 +48,7 @@ describe('updatePlanBenefits', () => {
     }));
     // réactivation des annonces suspendues
     expect(mockPrisma.property.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { ownerId: 'u1', status: 'suspended' }, data: { status: 'active' },
+      where: { id: { in: ['p9'] }, ownerId: 'u1', status: 'suspended' }, data: { status: 'active' },
     }));
     expect(notificationsService.notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'subscription_upgraded' }));
   });

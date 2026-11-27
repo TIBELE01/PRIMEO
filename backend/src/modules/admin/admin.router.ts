@@ -1,4 +1,5 @@
 // Admin routes — platform management (admin role only)
+import { createAudit } from './admin.service';
 import { Router } from 'express';
 import {
   // Dashboard
@@ -121,6 +122,23 @@ adminRouter.post('/users/:id/revoke-2fa', parseId, revoke2fa);
 adminRouter.patch('/users/:id/plan', parseId, validate(ChangeUserPlanDto), changeUserPlan);
 adminRouter.get('/users/:id/subscription-history', parseId, getSubscriptionHistory);
 adminRouter.post('/users/:id/subscription/recalculate', parseId, forceRecalculateBenefits);
+// Envoie immédiatement le rapport mensuel PDF (mois écoulé) à un professionnel
+adminRouter.post('/users/:id/monthly-report', parseId, async (req, res, next) => {
+  try {
+    const { sendMonthlyReport } = await import('../../jobs/monthly-report.job');
+    const sent = await sendMonthlyReport(req.params['id']!);
+    res.json({ sent });
+  } catch (err) { next(err); }
+});
+// Lance immédiatement le traitement quotidien des abonnements (rappels J-3, liens, grâce, rétrogradation)
+adminRouter.post('/subscriptions/run-renewals', async (req, res, next) => {
+  try {
+    const { runSubscriptionRenewals } = await import('../../jobs/subscription.job');
+    const result = await runSubscriptionRenewals();
+    await createAudit({ adminId: req.user!.sub, action: 'admin.subscription.run_renewals', targetType: 'subscription', targetId: 'all', description: `Traitement des renouvellements lancé : ${result.reminders} rappel(s), ${result.due} échéance(s)`, ipAddress: req.ip });
+    res.json(result);
+  } catch (err) { next(err); }
+});
 
 // ── Abonnements — vue globale ──────────────────────────────────────────────────
 adminRouter.get('/subscriptions/payment-failures', getPaymentFailures);

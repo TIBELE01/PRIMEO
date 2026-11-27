@@ -172,6 +172,8 @@ export function normalizeProperty(raw: any): Property {
     // status 'active' en BDD → isPublished: true côté front
     isPublished:   raw.isPublished != null ? !!raw.isPublished : raw.status === 'active',
     isSuperHost:   !!raw.isSuperHost,
+    // Badge de la formule du professionnel : « verified » (Business) / « premium » (Entreprise)
+    badgeType:     raw.badgeType === 'premium' || raw.badgeType === 'verified' ? raw.badgeType : undefined,
     reviewsSummary: buildReviewsSummary(raw),
     createdAt:     raw.createdAt ?? new Date().toISOString(),
     updatedAt:     raw.updatedAt ?? new Date().toISOString(),

@@ -8,6 +8,7 @@ import { notificationsService } from '../notifications/notifications.service';
 import { env } from '../../config/env.config';
 import { logger } from '../../common/utils/logger';
 import { Decimal } from '@prisma/client/runtime/library';
+import { generateAndUploadInvoice } from '../../common/utils/invoice';
 
 // Contexte d'un recalcul d'avantages
 export type BenefitUpdateContext =
@@ -23,6 +24,40 @@ function planConfig(planType: string) {
   return plan;
 }
 
+// Montant minimal accepté par Genius Pay (XOF)
+const GENIUS_PAY_MIN_XOF = 200;
+
+/**
+ * Applique un code promo (créé dans l'admin) à un montant d'abonnement.
+ * Mêmes règles que pour les réservations : actif, dans sa période de validité,
+ * sous sa limite d'utilisation et au-dessus de son montant minimum.
+ */
+export async function resolveSubscriptionPromo(code: string | undefined, baseAmount: number) {
+  if (!code) return null;
+  const promo = await prisma.promoCode.findUnique({ where: { code: code.trim().toUpperCase() } });
+  if (!promo || !promo.isActive) throw new HttpError(400, 'Code promo invalide ou inactif');
+  const now = new Date();
+  if (now < promo.validFrom || now > promo.validUntil) throw new HttpError(400, 'Ce code promo a expiré ou n\'est pas encore actif');
+  if (promo.maxUses !== null && promo.usesCount >= promo.maxUses) throw new HttpError(400, 'Ce code promo a atteint sa limite d\'utilisation');
+  if (promo.minAmount !== null && baseAmount < promo.minAmount) {
+    throw new HttpError(400, `Ce code promo nécessite un montant minimum de ${promo.minAmount} FCFA`);
+  }
+  const raw = promo.discountType === 'percent' ? Math.floor((baseAmount * promo.discountValue) / 100) : promo.discountValue;
+  const discount = Math.min(raw, baseAmount);
+  return { id: promo.id, code: promo.code, discount };
+}
+
+/**
+ * Note d'une transaction de changement de formule : « upgrade:<plan>:<full|prorata>[:promo=<id>] — libellé ».
+ * Les anciennes notes (« business » ou « business — proraté 20j/30 ») restent reconnues.
+ */
+export function parseUpgradeNote(notes: string | null | undefined): { plan: string; mode: 'full' | 'prorata'; promoId?: string } | null {
+  const m = (notes ?? '').match(/^(?:upgrade:)?(starter|business|entreprise)(?::(full|prorata))?(?::promo=([A-Za-z0-9_-]+))?/);
+  if (!m) return null;
+  const legacyProrata = !m[2] && /proraté/.test(notes ?? '');
+  return { plan: m[1], mode: (m[2] as 'full' | 'prorata') ?? (legacyProrata ? 'prorata' : 'full'), promoId: m[3] };
+}
+
 function addOneMonth(date: Date): Date {
   const d = new Date(date);
   d.setMonth(d.getMonth() + 1);
@@ -36,6 +71,8 @@ function serializeSubscription<T extends Record<string, unknown>>(sub: T | null)
   renewalDate: unknown;
   monthlyCost: unknown;
   pendingPlan: string | null;
+  lapsedPlan: string | null;
+  suspendedListings: number;
 }) | null {
   if (!sub) return null;
   const features = (sub.features as Record<string, unknown> | null) ?? {};
@@ -47,6 +84,9 @@ function serializeSubscription<T extends Record<string, unknown>>(sub: T | null)
     renewalDate:  sub.nextBillingDate,
     monthlyCost:  sub.monthlyPrice,
     pendingPlan:  (features['pendingPlanType'] as string | undefined) ?? null,
+    // Formule perdue faute de paiement (rétablie dès le paiement du renouvellement)
+    lapsedPlan:   (features['suspendedFromPlan'] as string | undefined) ?? null,
+    suspendedListings: Array.isArray(features['downgradeSuspendedIds']) ? (features['downgradeSuspendedIds'] as unknown[]).length : 0,
     // capacités exposées pour l'app mobile
     videoUpload:  (planDef as any).videoUpload  ?? false,
     virtualTour:  (planDef as any).virtualTour  ?? false,
@@ -135,25 +175,47 @@ export async function updatePlanBenefits(
         data: { status: 'suspended' as never },
       });
       suspendedProperties.push(...excess);
+      // Mémorise les annonces suspendues par la formule : seules celles-ci seront
+      // réactivées au renouvellement (jamais une annonce suspendue par la modération).
+      const prev = Array.isArray(newFeatures['downgradeSuspendedIds']) ? (newFeatures['downgradeSuspendedIds'] as string[]) : [];
+      newFeatures['downgradeSuspendedIds'] = [...new Set([...prev, ...excess.map((p) => p.id)])];
+      await prisma.subscription.update({ where: { id: sub.id }, data: { features: newFeatures as never } });
       logger.warn(
         `updatePlanBenefits [${context}]: ${excess.length} annonce(s) suspendues (userId=${userId}, plan=${newPlanType})`,
       );
     }
   }
 
-  // Réactivation des annonces suspendues si reactivation ou upgrade
-  if (context === 'reactivation' || context === 'upgrade') {
-    await prisma.property.updateMany({
-      where: { ownerId: userId, status: 'suspended' },
-      data: { status: 'active' as never },
-    });
+  // Réactivation (renouvellement / montée en gamme) : uniquement les annonces suspendues
+  // par une rétrogradation, dans la limite de publications de la nouvelle formule.
+  let reactivatedCount = 0;
+  if (context === 'reactivation' || context === 'upgrade' || context === 'admin_force') {
+    const ids = Array.isArray(newFeatures['downgradeSuspendedIds']) ? (newFeatures['downgradeSuspendedIds'] as string[]) : [];
+    if (ids.length) {
+      const activeCount = await prisma.property.count({ where: { ownerId: userId, status: 'active' } });
+      const room = Math.max(0, pubLimit + (sub.extraPublicationSlots ?? 0) - activeCount);
+      const toReactivate = ids.slice(0, room);
+      if (toReactivate.length) {
+        const r = await prisma.property.updateMany({
+          where: { id: { in: toReactivate }, ownerId: userId, status: 'suspended' },
+          data: { status: 'active' as never },
+        });
+        reactivatedCount = r.count;
+      }
+      const remaining = ids.filter((id) => !toReactivate.includes(id));
+      if (remaining.length) newFeatures['downgradeSuspendedIds'] = remaining; else delete newFeatures['downgradeSuspendedIds'];
+      await prisma.subscription.update({ where: { id: sub.id }, data: { features: newFeatures as never } });
+      logger.info(`updatePlanBenefits [${context}]: ${reactivatedCount} annonce(s) réactivée(s) (userId=${userId})`);
+    }
   }
 
   // Notification multi-canal
   const prevPlanName = getPlanDetails(previousPlan)?.name ?? previousPlan;
   const newPlanName = newPlan.name;
 
+  const adminUp = context === 'admin_force' && newPlan.monthlyPrice > (getPlanDetails(previousPlan)?.monthlyPrice ?? 0);
   const notifType =
+    context === 'admin_force'      ? (adminUp ? 'subscription_upgraded' : 'subscription_downgraded') :
     context === 'upgrade'          ? 'subscription_upgraded'    :
     context === 'downgrade'        ? 'subscription_downgraded'  :
     context === 'reactivation'     ? 'subscription_reactivated' :
@@ -168,6 +230,7 @@ export async function updatePlanBenefits(
       newPlanName,
       planName: newPlanName,
       suspendedCount: suspendedProperties.length > 0 ? suspendedProperties.length : undefined,
+      reactivatedCount: reactivatedCount > 0 ? reactivatedCount : undefined,
       suspendedTitles: suspendedProperties.length > 0
         ? suspendedProperties.map((p) => p.title).join(', ')
         : undefined,
@@ -184,7 +247,7 @@ export async function updatePlanBenefits(
       description: `Formule ${previousPlan} → ${newPlanType} [${context}]`,
       metadata:    JSON.parse(JSON.stringify({
         old: { plan: previousPlan },
-        new: { plan: newPlanType, suspendedCount: suspendedProperties.length },
+        new: { plan: newPlanType, suspendedCount: suspendedProperties.length, reactivatedCount },
       })),
     },
   }).catch((err) => logger.warn(`updatePlanBenefits audit error (userId=${userId})`, err));
@@ -293,38 +356,65 @@ export const subscriptionsService = {
       throw new HttpError(400, 'Ajoutez un numéro de téléphone à votre profil pour régler votre abonnement.');
     }
 
-    // Proratisation : on ne charge que la différence de prix pour les jours restants
-    // dans la période de facturation en cours. Le plein tarif reprend au prochain cycle.
+    // Montant :
+    // - depuis Starter, ou abonnement échu / rétrogradé pour défaut de paiement : plein
+    //   tarif de la formule, nouvelle période d'un mois à partir du paiement ;
+    // - entre deux formules payantes en cours de période : différence au prorata des
+    //   jours restants, la date d'échéance est conservée.
     const now = new Date();
+    const subFeatures = (sub.features as Record<string, unknown> | null) ?? {};
+    const lapsed = sub.status === 'suspended' || !!subFeatures['suspendedFromPlan'] || sub.nextBillingDate.getTime() <= now.getTime();
+    const mode: 'full' | 'prorata' = sub.monthlyPrice <= 0 || lapsed ? 'full' : 'prorata';
     const daysRemaining = Math.max(
       1,
       Math.ceil((sub.nextBillingDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)),
     );
-    const proratedAmount = Math.max(
-      1,
-      Math.round((targetPlan.monthlyPrice - sub.monthlyPrice) * daysRemaining / 30),
-    );
+    const baseAmount = mode === 'full'
+      ? targetPlan.monthlyPrice
+      : Math.max(1, Math.round((targetPlan.monthlyPrice - sub.monthlyPrice) * daysRemaining / 30));
+    const promo = await resolveSubscriptionPromo(input.promoCode, baseAmount);
+    const discount = promo?.discount ?? 0;
+    let amount = baseAmount - discount;
+    if (amount > 0 && amount < GENIUS_PAY_MIN_XOF) amount = GENIUS_PAY_MIN_XOF;
+    const label = mode === 'full' ? `Abonnement ${targetPlan.name}` : `${targetPlan.name} — proraté ${daysRemaining}j/30`;
+    const note = `upgrade:${input.plan}:${mode}${promo ? `:promo=${promo.id}` : ''} — ${label}${promo ? ` (code ${promo.code} −${discount} FCFA)` : ''}`;
 
     const tx = await prisma.transaction.create({
       data: {
         userId,
         subscriptionId: sub.id,
         type:           'subscription_payment',
-        amount:         proratedAmount,
+        amount,
         fee:            0,
-        netAmount:      proratedAmount,
-        status:         'initiated',
-        notes:          `${input.plan} — proraté ${daysRemaining}j/30`,
+        netAmount:      amount,
+        status:         amount === 0 ? 'success' : 'initiated',
+        ...(amount === 0 ? { completedAt: now } : {}),
+        notes:          note,
       },
     });
 
+    // Code promo couvrant 100 % : la formule est activée sans passer par le paiement
+    if (amount === 0) {
+      await subscriptionsService.applyPaidPlanChange(tx.id);
+      return {
+        requiresPayment: false,
+        activated:       true,
+        plan:            input.plan,
+        amount:          0,
+        originalAmount:  baseAmount,
+        discount,
+        message:         `Formule ${targetPlan.name} activée (code ${promo?.code}).`,
+      };
+    }
+
     const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
-      amount:         proratedAmount,
+      amount,
       bookingId:      tx.id,
       customerEmail:  user.email,
       customerPhone:  user.phone ?? undefined,
       customerName:   `${user.firstName} ${user.lastName}`.trim(),
       returnUrl:      `${env.FRONTEND_URL ?? env.BACKEND_URL}/subscriptions?txId=${tx.id}`,
+      metadata:       { subscription_id: sub.id, purpose: 'subscription_upgrade', plan: input.plan },
     });
 
     await prisma.transaction.update({
@@ -337,9 +427,14 @@ export const subscriptionsService = {
       checkoutUrl,
       transactionId:   tx.id,
       plan:            input.plan,
-      amount:          proratedAmount,
-      daysRemaining,
-      message:         `Réglez ${proratedAmount.toLocaleString('fr-CI')} FCFA (${daysRemaining} jours restants) pour activer la formule ${targetPlan.name}.`,
+      amount,
+      originalAmount:  baseAmount,
+      discount,
+      mode,
+      daysRemaining:   mode === 'prorata' ? daysRemaining : undefined,
+      message:         mode === 'prorata'
+        ? `Réglez ${amount.toLocaleString('fr-CI')} FCFA (${daysRemaining} jours restants) pour activer la formule ${targetPlan.name}.`
+        : `Réglez ${amount.toLocaleString('fr-CI')} FCFA pour activer la formule ${targetPlan.name} pour un mois.`,
     };
   },
 
@@ -362,21 +457,47 @@ export const subscriptionsService = {
     if (!sub) return;
     const now = new Date();
     const base = sub.nextBillingDate.getTime() > now.getTime() - 7 * 86_400_000 ? sub.nextBillingDate : now;
+    const periodEnd = addOneMonth(base);
     await prisma.subscription.update({
       where: { id: sub.id },
-      data: { nextBillingDate: addOneMonth(base), status: 'active' },
+      data: { nextBillingDate: periodEnd, status: 'active' },
     });
-    if (sub.planType !== planType || sub.status === 'suspended') {
+    const restored = sub.planType !== planType || sub.status === 'suspended';
+    if (restored) {
+      // Formule rétrogradée pendant le délai de grâce : rétablie avec ses avantages et ses annonces
       await updatePlanBenefits(sub.userId, planType, 'reactivation');
     }
-    logger.info(`applyRenewalPayment : abonnement ${planType} renouvelé (sub=${sub.id})`);
+
+    // Facture + confirmation (email, push, in-app)
+    const plan = getPlanDetails(planType);
+    const user = await prisma.user.findUnique({ where: { id: sub.userId }, select: { email: true, firstName: true, lastName: true } });
+    let invoiceUrl = '';
+    if (user) {
+      invoiceUrl = await generateAndUploadInvoice({
+        invoiceNumber: tx.id, invoiceDate: now, periodStart: base, periodEnd,
+        customerName: `${user.firstName} ${user.lastName}`.trim(), customerEmail: user.email,
+        planName: plan?.name ?? planType, amount: tx.amount, isPaid: true,
+      }).catch((err) => { logger.warn(`applyRenewalPayment : facture non générée (tx=${tx.id})`, err); return ''; });
+    }
+    notificationsService.notify({
+      type: 'subscription_renewal',
+      recipientId: sub.userId,
+      data: {
+        planName: plan?.name ?? planType,
+        amount: `${tx.amount.toLocaleString('fr-FR')} FCFA`,
+        nextBillingDate: periodEnd.toLocaleDateString('fr-FR'),
+        invoiceUrl,
+      },
+    }).catch((err) => logger.warn(`applyRenewalPayment : notification échouée (sub=${sub.id})`, err));
+    logger.info(`applyRenewalPayment : abonnement ${planType} renouvelé jusqu'au ${periodEnd.toISOString().slice(0, 10)}${restored ? ' (formule rétablie)' : ''} (sub=${sub.id})`);
   },
 
   async applyPaidPlanChange(transactionId: string): Promise<void> {
     const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
     if (!tx || tx.type !== 'subscription_payment' || !tx.subscriptionId) return;
 
-    const targetPlanType = tx.notes;
+    const parsed = parseUpgradeNote(tx.notes);
+    const targetPlanType = parsed?.plan;
     if (!targetPlanType || !PLAN_DETAILS[targetPlanType]) {
       logger.warn(`applyPaidPlanChange : plan cible invalide pour tx=${transactionId}`);
       return;
@@ -385,17 +506,24 @@ export const subscriptionsService = {
     const sub = await prisma.subscription.findUnique({ where: { id: tx.subscriptionId } });
     if (!sub) return;
 
-    // Déterminer le contexte : réactivation si l'abonnement était suspendu
-    const isReactivation = sub.status === 'suspended';
+    // Réactivation : abonnement suspendu ou rétrogradé pour défaut de paiement
+    const feats = (sub.features as Record<string, unknown> | null) ?? {};
+    const isReactivation = sub.status === 'suspended' || !!feats['suspendedFromPlan'];
     const context = isReactivation ? 'reactivation' : 'upgrade';
 
     if (sub.planType === targetPlanType && !isReactivation) return;
 
-    // Avancer la date de facturation
-    await prisma.subscription.update({
-      where: { id: sub.id },
-      data: { nextBillingDate: addOneMonth(new Date()) },
-    });
+    // Plein tarif : nouvelle période d'un mois. Prorata : l'échéance en cours est conservée.
+    if (parsed.mode === 'full') {
+      await prisma.subscription.update({
+        where: { id: sub.id },
+        data: { nextBillingDate: addOneMonth(new Date()), status: 'active' },
+      });
+    }
+    if (parsed.promoId) {
+      await prisma.promoCode.update({ where: { id: parsed.promoId }, data: { usesCount: { increment: 1 } } })
+        .catch((err) => logger.warn(`applyPaidPlanChange : compteur du code promo non mis à jour (tx=${transactionId})`, err));
+    }
 
     // Recalculer tous les avantages via la méthode centralisée
     await updatePlanBenefits(sub.userId, targetPlanType, context);

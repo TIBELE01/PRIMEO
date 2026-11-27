@@ -59,6 +59,7 @@ export interface Property {
   paymentOptions?: string[];
   owner: PropertyOwner; virtualTour?: VirtualTourData;
   isSuperHost?: boolean; reviewsSummary?: ReviewsSummary;
+  badgeType?: 'verified' | 'premium';
   area?: number; // m² — for real_estate
   createdAt: string; updatedAt: string;
 

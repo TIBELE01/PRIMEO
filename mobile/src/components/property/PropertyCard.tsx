@@ -40,6 +40,11 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress, o
               <Text style={styles.verifiedBadgeText}>✓ Vérifié</Text>
             </View>
           )}
+          {property.badgeType === 'premium' && (
+            <View style={styles.premiumBadge} accessibilityLabel="Annonce Premium">
+              <Text style={styles.premiumBadgeText}>★ Premium</Text>
+            </View>
+          )}
 
           {onFavorite && (
             <TouchableOpacity style={styles.favBtn} onPress={onFavorite} activeOpacity={0.8}>

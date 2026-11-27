@@ -10,7 +10,9 @@ import {
   Linking,
   Platform,
   RefreshControl,
+  TextInput,
 } from 'react-native';
+import { apiClient } from '../../../services/api/client';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -539,6 +541,26 @@ export default function SubscriptionsScreen() {
   const [upgradingPlan, setUpgradingPlan] = useState<PlanKey | null>(null);
   // Annonces suspendues suite à une rétrogradation — affichées dans une alerte dédiée
   const [suspendedAfterDowngrade, setSuspendedAfterDowngrade] = useState<Array<{ id: string; title: string }>>([]);
+  // Code promo (créé dans l'admin) appliqué à la souscription / montée en gamme
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; discountType: string; discountValue: number } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoChecking, setPromoChecking] = useState(false);
+  const applyPromo = useCallback(async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoChecking(true); setPromoError(null);
+    try {
+      const r = await apiClient.post('/promos/validate', { code });
+      const d = r.data?.data ?? r.data;
+      setPromo({ code: d.code ?? code, discountType: d.discountType, discountValue: Number(d.discountValue) });
+    } catch (e: any) {
+      setPromo(null);
+      setPromoError(e?.response?.data?.error ?? e?.response?.data?.message ?? 'Code promo invalide');
+    } finally {
+      setPromoChecking(false);
+    }
+  }, [promoInput]);
 
   const fetchAll = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true);
@@ -612,8 +634,11 @@ export default function SubscriptionsScreen() {
         ? gained.length > 0 ? `\n\nNouveaux avantages :\n${gained.map((f) => `  ✓ ${f}`).join('\n')}` : ''
         : lost.length > 0   ? `\n\nAvantages retirés :\n${lost.map((f) => `  ✗ ${f}`).join('\n')}` : '';
 
+      const promoLine = isUpgrade && promo
+        ? `\n\nCode ${promo.code} : ${promo.discountType === 'percent' ? `−${promo.discountValue} %` : `−${promo.discountValue.toLocaleString('fr-FR')} FCFA`} sur le montant à régler.`
+        : '';
       const confirmMessage = isUpgrade
-        ? `Passer à la formule ${planDef?.name} (${planDef?.price}/mois) ?\n\nVous serez redirigé vers Genius Pay. La formule est activée dès la validation du paiement.${featureSummary}`
+        ? `Passer à la formule ${planDef?.name} (${planDef?.price}/mois) ?\n\nVous serez redirigé vers Genius Pay. La formule est activée dès la validation du paiement.${promoLine}${featureSummary}`
         : `Passer à la formule ${planDef?.name} ?\n\nLe changement prendra effet à votre prochaine date de facturation.${featureSummary}`;
 
       Alert.alert('Changer de formule', confirmMessage, [
@@ -624,10 +649,12 @@ export default function SubscriptionsScreen() {
           onPress: async () => {
             setUpgradingPlan(planKey);
             try {
-              const res = await subscriptionsApi.upgrade(toBackendPlan(planKey));
+              const res = await subscriptionsApi.upgrade(toBackendPlan(planKey), isUpgrade ? promo?.code : undefined);
               const data = res.data?.data ?? res.data;
 
-              if (data?.requiresPayment && data?.checkoutUrl) {
+              if (data?.activated) {
+                Alert.alert('Formule activée', data?.message ?? 'Votre nouvelle formule est active.');
+              } else if (data?.requiresPayment && data?.checkoutUrl) {
                 openCheckout(data.checkoutUrl);
                 Alert.alert(
                   'Paiement en cours',
@@ -659,7 +686,7 @@ export default function SubscriptionsScreen() {
         },
       ]);
     },
-    [fetchAll, openCheckout, subscription],
+    [fetchAll, openCheckout, subscription, promo],
   );
 
   const activePlanKey = normalizePlanKey(subscription?.plan);
@@ -719,6 +746,24 @@ export default function SubscriptionsScreen() {
           </View>
         )}
 
+        {/* ── Formule perdue faute de paiement : rétablissement en un paiement ── */}
+        {!!(subscription as any)?.lapsedPlan && (
+          <View style={styles.suspendedBanner}>
+            <Ionicons name="alert-circle-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.suspendedBannerText}>
+              Votre formule {String((subscription as any).lapsedPlan).charAt(0).toUpperCase() + String((subscription as any).lapsedPlan).slice(1)} a été suspendue faute de paiement
+              {(subscription as any).suspendedListings ? ` (${(subscription as any).suspendedListings} annonce(s) masquée(s))` : ''}. Réglez-la pour tout rétablir.
+            </Text>
+            <TouchableOpacity
+              style={styles.suspendedBannerBtn}
+              onPress={() => handleChoosePlan(normalizePlanKey((subscription as any).lapsedPlan) ?? 'business')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.suspendedBannerBtnText}>Rétablir</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── Section 1: Current plan & wallet ── */}
         <SectionHeader title="Mon abonnement" />
         <CurrentPlanCard subscription={subscription} />
@@ -726,6 +771,31 @@ export default function SubscriptionsScreen() {
 
         {/* ── Section 2: Plan comparison ── */}
         <SectionHeader title="Choisir une formule" />
+        <View style={styles.promoBox}>
+          <Text style={styles.promoLabel}>Code promo</Text>
+          <View style={styles.promoRow}>
+            <TextInput
+              value={promoInput}
+              onChangeText={(t) => { setPromoInput(t); if (promo) setPromo(null); setPromoError(null); }}
+              placeholder="Saisissez votre code"
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              style={styles.promoInput}
+              accessibilityLabel="Code promo"
+              onSubmitEditing={applyPromo}
+            />
+            <TouchableOpacity style={styles.promoBtn} onPress={applyPromo} disabled={promoChecking || !promoInput.trim()} activeOpacity={0.8}>
+              {promoChecking ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.promoBtnText}>Appliquer</Text>}
+            </TouchableOpacity>
+          </View>
+          {promo && (
+            <Text style={styles.promoOk}>
+              ✓ Code {promo.code} : {promo.discountType === 'percent' ? `−${promo.discountValue} %` : `−${promo.discountValue.toLocaleString('fr-FR')} FCFA`} sur votre prochaine souscription
+            </Text>
+          )}
+          {promoError && <Text style={styles.promoErr}>{promoError}</Text>}
+        </View>
         {PLANS.map((plan) => (
           <PlanCard
             key={plan.key}
@@ -785,6 +855,14 @@ export default function SubscriptionsScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  promoBox: { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', padding: 14, marginBottom: 12 },
+  promoLabel: { fontSize: 13, fontWeight: '700', color: '#111827', marginBottom: 8 },
+  promoRow: { flexDirection: 'row', gap: 8 },
+  promoInput: { flex: 1, borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#111827', letterSpacing: 1 },
+  promoBtn: { backgroundColor: '#0055FF', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center', minWidth: 96, alignItems: 'center' },
+  promoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  promoOk: { marginTop: 8, color: '#047857', fontSize: 13, fontWeight: '600' },
+  promoErr: { marginTop: 8, color: '#B91C1C', fontSize: 13 },
   safeArea: {
     flex: 1,
     paddingTop: 16, backgroundColor: '#F9FAFB',

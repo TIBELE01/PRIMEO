@@ -3,17 +3,13 @@ import cron from 'node-cron';
 import { prisma } from '../database/prisma.service';
 import { logger } from '../common/utils/logger';
 import { geniusPayService } from '../modules/payments/services/genius-pay.service';
-import { generateAndUploadInvoice } from '../common/utils/invoice';
-import { sendTemplateEmail, sendEmail } from '../common/utils/mailer';
+import { sendEmail } from '../common/utils/mailer';
 import { env } from '../config/env.config';
-import { brevoConfig } from '../config/brevo.config';
 import { getPlanDetails, getGraceDays } from '../common/constants/subscription-plans';
 import { notificationsService } from '../modules/notifications/notifications.service';
 import { updatePlanBenefits } from '../modules/subscriptions/subscriptions.service';
 
 const GRACE_PERIOD_DAYS = 7;
-// Avertissement envoyé à J-3 avant suspension (4ème échec = 3 jours restants)
-const GRACE_WARNING_DAY = 4;
 
 function addOneMonth(date: Date): Date {
   const d = new Date(date);
@@ -129,180 +125,110 @@ async function processSubscriptionRenewal(sub: {
     return;
   }
 
-  // Attempt direct charge via Genius Pay
-  const charge = await geniusPayService.chargeRecurring({
-    subscriptionId: sub.id,
-    amount: chargeAmount,
-    customerEmail: sub.user.email,
-    customerPhone: sub.user.phone ?? undefined,
-    description: `Abonnement Primeo ${plan.name}${newSlots > 0 ? ` + ${newSlots} publication(s) suppl.` : ''}`,
-  });
+  // Genius Pay n'offre pas de prélèvement automatique : le renouvellement passe par un lien
+  // de paiement. Le délai de grâce est mesuré en jours depuis l'échéance (et non en nombre
+  // d'exécutions de la tâche), ce qui reste exact même si une exécution est manquée.
+  const graceDays = getGraceDays(GRACE_PERIOD_DAYS);
+  const overdueDays = Math.floor((Date.now() - sub.nextBillingDate.getTime()) / 86_400_000);
 
-  if (charge.success) {
-    // Success — create transaction, advance billing date, generate invoice
-    const newBillingDate = addOneMonth(sub.nextBillingDate);
-
-    const tx = await prisma.transaction.create({
-      data: {
-        userId: sub.userId,
-        subscriptionId: sub.id,
-        type: 'subscription_payment',
-        amount: chargeAmount,
-        fee: 0,
-        netAmount: chargeAmount,
-        status: 'success',
-        geniusPayTransactionId: charge.reference || null,
-        completedAt: new Date(),
-        notes: `Renouvellement ${plan.name}${newSlots > 0 ? ` + ${newSlots} publ. suppl.` : ''} — ${sub.nextBillingDate.toLocaleDateString('fr-CI')}`,
-      },
-    });
-
+  if (overdueDays >= graceDays) {
+    // Fin du délai de grâce sans paiement : rétrogradation en Starter (formule d'origine
+    // mémorisée dans features.suspendedFromPlan, annonces excédentaires suspendues).
+    await updatePlanBenefits(sub.userId, 'starter', 'payment_failure');
     await prisma.subscription.update({
       where: { id: sub.id },
-      data: { nextBillingDate: newBillingDate, status: 'active' },
+      data: { nextBillingDate: addOneMonth(new Date()), extraPublicationSlots: 0 },
     });
-    // Applique les résiliations de slots programmées (retrait à l'échéance)
-    await applySlotChanges();
-
-    // Generate PDF invoice and upload to Cloudinary
-    let invoiceUrl: string | undefined;
-    try {
-      invoiceUrl = await generateAndUploadInvoice({
-        invoiceNumber: tx.id,
-        invoiceDate: new Date(),
-        periodStart: sub.nextBillingDate,
-        periodEnd: newBillingDate,
-        customerName: `${sub.user.firstName} ${sub.user.lastName}`,
-        customerEmail: sub.user.email,
-        planName: newSlots > 0 ? `${plan.name} + ${newSlots} publ. suppl.` : plan.name,
-        amount: chargeAmount,
-        isPaid: true,
-      });
-
-      await prisma.transaction.update({
-        where: { id: tx.id },
-        data: { notes: `${tx.notes} — Facture: ${invoiceUrl}` },
-      });
-    } catch (pdfErr) {
-      logger.warn(`Invoice PDF generation failed for subscription ${sub.id}`, pdfErr);
-    }
-
-    // Send payment confirmation email
-    await sendTemplateEmail(
-      [{ email: sub.user.email, name: sub.user.firstName }],
-      brevoConfig.templates.subscriptionRenewal,
-      {
-        firstName: sub.user.firstName,
-        planName: newSlots > 0 ? `${plan.name} + ${newSlots} publ. suppl.` : plan.name,
-        amount: chargeAmount.toLocaleString('fr-CI') + ' FCFA',
-        nextBillingDate: newBillingDate.toLocaleDateString('fr-CI'),
-        invoiceUrl: invoiceUrl ?? '',
-      },
-    ).catch((err) => logger.warn(`Renewal email failed for ${sub.user.email}`, err));
-
-    logger.info(`Subscription ${sub.id} renewed successfully (${plan.name})`);
-  } else {
-    // Failure — record failed transaction
     await prisma.transaction.create({
       data: {
-        userId: sub.userId,
-        subscriptionId: sub.id,
-        type: 'subscription_payment',
-        amount: chargeAmount,
-        fee: 0,
-        netAmount: chargeAmount,
-        status: 'failed',
-        notes: `Échec renouvellement: ${charge.error ?? 'unknown'}`,
+        userId: sub.userId, subscriptionId: sub.id, type: 'subscription_payment', amount: chargeAmount,
+        fee: 0, netAmount: chargeAmount, status: 'failed',
+        notes: `Renouvellement ${plan.name} non réglé après ${graceDays} jours de grâce — rétrogradation Starter`,
       },
     });
+    logger.warn(`Subscription ${sub.id} auto-downgraded to Starter (${overdueDays} jours après l'échéance)`);
+    return;
+  }
 
-    // Lien de paiement Genius Pay pour régulariser (renouvellement par paiement en ligne)
-    await sendRenewalPaymentLink(sub, activePlanType, plan.name, chargeAmount).catch((err) =>
-      logger.warn(`Renewal payment link failed (sub=${sub.id})`, err),
-    );
-    // Notification immédiate de l'échec (email + push + SMS critique — cf. CHANNEL_CONFIG)
+  // Lien de paiement (un par 24 h au maximum)
+  await sendRenewalPaymentLink(sub, activePlanType, plan.name, chargeAmount).catch((err) =>
+    logger.warn(`Renewal payment link failed (sub=${sub.id})`, err),
+  );
+
+  if (overdueDays === 0) {
+    // Jour de l'échéance : notification « paiement attendu » (email + push + SMS critique)
     notificationsService.notify({
       type: 'payment_failed',
       recipientId: sub.userId,
       data: { planName: plan.name },
     }).catch((err) => logger.warn(`payment_failed notify failed (sub=${sub.id})`, err));
+  } else if (overdueDays === Math.max(1, graceDays - 3)) {
+    notificationsService.notify({
+      type: 'subscription_grace_warning',
+      recipientId: sub.userId,
+      data: { planName: plan.name, daysRemaining: graceDays - overdueDays },
+    }).catch((err) => logger.warn(`Grace warning notify failed (sub=${sub.id})`, err));
+  }
+  logger.warn(`Subscription ${sub.id} en attente de paiement (jour ${overdueDays}/${graceDays})`);
+}
 
-    // Délai de grâce configurable (override admin), repli sur la constante.
-    const graceDays = getGraceDays(GRACE_PERIOD_DAYS);
-    // Count consecutive failures in the last `graceDays` days
-    const gracePeriodStart = new Date(Date.now() - graceDays * 24 * 60 * 60 * 1000);
+type DueSubscription = Parameters<typeof processSubscriptionRenewal>[0];
+const includeUser = { user: { select: { email: true, firstName: true, lastName: true, phone: true } } } as const;
 
-    const [failedCount, successCount] = await Promise.all([
-      prisma.transaction.count({
-        where: {
-          subscriptionId: sub.id,
-          type: 'subscription_payment',
-          status: 'failed',
-          initiatedAt: { gte: gracePeriodStart },
-        },
-      }),
-      prisma.transaction.count({
-        where: {
-          subscriptionId: sub.id,
-          type: 'subscription_payment',
-          status: 'success',
-          initiatedAt: { gte: gracePeriodStart },
-        },
-      }),
-    ]);
+/**
+ * Passage quotidien : rappel J-3 avec lien de paiement, puis traitement des échéances
+ * (lien, délai de grâce, rétrogradation). Idempotent — exécuté chaque nuit, au démarrage
+ * du serveur (rattrapage si une exécution a été manquée) et à la demande par l'admin.
+ */
+export async function runSubscriptionRenewals(): Promise<{ reminders: number; due: number }> {
+  const now = new Date();
+  const inThreeDays = new Date(now.getTime() + 3 * 86_400_000);
 
-    if (failedCount >= graceDays && successCount === 0) {
-      // Rétrograder vers Starter via updatePlanBenefits (stocke suspendedFromPlan dans features)
-      await updatePlanBenefits(sub.userId, 'starter', 'payment_failure');
+  // Rappel avant échéance : un lien de paiement par abonnement payant, envoyé une fois à J-3
+  const upcoming = await prisma.subscription.findMany({
+    where: { status: 'active', monthlyPrice: { gt: 0 }, nextBillingDate: { gt: now, lte: inThreeDays } },
+    include: includeUser,
+  });
+  let reminders = 0;
+  for (const sub of upcoming) {
+    const already = await prisma.transaction.findFirst({
+      where: { subscriptionId: sub.id, type: 'subscription_payment', notes: { startsWith: 'renewal:' }, initiatedAt: { gte: new Date(sub.nextBillingDate.getTime() - 4 * 86_400_000) } },
+      select: { id: true },
+    });
+    if (already) continue;
+    const plan = getPlanDetails(sub.planType);
+    if (!plan) continue;
+    const amount = plan.monthlyPrice + (sub.extraPublicationSlots ?? 0) * 500;
+    const url = await sendRenewalPaymentLink(sub, sub.planType, plan.name, amount).catch((err) => {
+      logger.warn(`Renewal reminder failed (sub=${sub.id})`, err); return null;
+    });
+    if (url) reminders++;
+  }
 
-      logger.warn(`Subscription ${sub.id} auto-downgraded to Starter after ${graceDays} payment failures`);
-    } else if (failedCount === GRACE_WARNING_DAY && successCount === 0) {
-      // Avertissement J-3 avant suspension
-      const daysRemaining = graceDays - failedCount;
-      notificationsService.notify({
-        type: 'subscription_grace_warning',
-        recipientId: sub.userId,
-        data: { planName: plan.name, daysRemaining },
-      }).catch((err) => logger.warn(`Grace warning notify failed (sub=${sub.id})`, err));
-
-      logger.warn(`Subscription ${sub.id} grace warning sent (${daysRemaining} days left)`);
-    } else {
-      logger.warn(`Subscription ${sub.id} payment failed (attempt ${failedCount}/${graceDays})`);
+  const due = await prisma.subscription.findMany({
+    where: { status: 'active', nextBillingDate: { lte: now } },
+    include: includeUser,
+  });
+  for (const sub of due as DueSubscription[]) {
+    try {
+      await processSubscriptionRenewal(sub);
+    } catch (err) {
+      logger.error(`Subscription renewal failed for ${sub.id}`, err);
     }
   }
+  logger.info(`Subscription renewals: ${reminders} rappel(s) J-3, ${due.length} échéance(s) traitée(s)`);
+  return { reminders, due: due.length };
 }
 
 export function startSubscriptionJob(): void {
-  // Daily at midnight — subscription renewals
-  cron.schedule('0 0 * * *', async () => {
-    logger.info('Subscription renewal job started');
-    try {
-      const now = new Date();
-
-      // Trouve tous les abonnements actifs en cours de renouvellement (y compris Starter gratuit)
-      const due = await prisma.subscription.findMany({
-        where: {
-          status:          'active',
-          nextBillingDate: { lte: now },
-        },
-        include: {
-          user: { select: { email: true, firstName: true, lastName: true, phone: true } },
-        },
-      });
-
-      logger.info(`Subscription renewal: ${due.length} subscription(s) due`);
-
-      for (const sub of due) {
-        try {
-          await processSubscriptionRenewal(sub);
-        } catch (err) {
-          logger.error(`Subscription renewal failed for ${sub.id}`, err);
-        }
-      }
-    } catch (err) {
-      logger.error('Subscription renewal job failed', err);
-    }
+  // Chaque nuit à minuit
+  cron.schedule('0 0 * * *', () => {
+    runSubscriptionRenewals().catch((err) => logger.error('Subscription renewal job failed', err));
   });
+  // Rattrapage au démarrage (hébergement mis en veille la nuit) — 2 min après le lancement
+  setTimeout(() => {
+    runSubscriptionRenewals().catch((err) => logger.error('Subscription renewal catch-up failed', err));
+  }, 120_000).unref();
 
-  logger.info('Subscription renewal job scheduled (daily at midnight)');
+  logger.info('Subscription renewal job scheduled (daily at midnight + catch-up at startup)');
 }

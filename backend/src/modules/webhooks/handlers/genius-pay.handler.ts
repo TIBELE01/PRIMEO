@@ -15,6 +15,7 @@ import { messagingService } from '../../messaging/messaging.service';
 import { bookingCreditsService } from '../../bookings/services/booking-credits.service';
 import { bookingRepository } from '../../../database/repositories/booking.repository';
 import { walletService } from '../../wallets/wallets.service';
+import { notificationsService } from '../../notifications/notifications.service';
 
 // ── Génération de facture ─────────────────────────────────────────────────────
 
@@ -639,6 +640,19 @@ export async function processFailedPayment(
         logger.warn('Failed to send cancellation notifications', err),
       );
     }
+  }
+
+  // Abonnement : l'état actuel est conservé (le délai de grâce continue) ; le pro est prévenu.
+  // (un lien simplement expiré ou abandonné ne déclenche pas d'alerte : un nouveau lien est envoyé)
+  const gpStatus = String((data ?? {})['status'] ?? '');
+  if (tx.type === 'subscription_payment' && tx.userId && gpStatus !== 'expired' && gpStatus !== 'cancelled') {
+    const planKey = ((tx.notes ?? '').match(/(starter|business|entreprise)/) ?? [])[1];
+    const planName = planKey ? planKey.charAt(0).toUpperCase() + planKey.slice(1) : 'Primeo';
+    await notificationsService.notify({
+      type: 'payment_failed',
+      recipientId: tx.userId,
+      data: { planName },
+    }).catch((err: unknown) => logger.warn('Notification d’échec de paiement d’abonnement échouée', err));
   }
 
   logger.warn(`Échec de paiement traité : tx=${tx.id}`);

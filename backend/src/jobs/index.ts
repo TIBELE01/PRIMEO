@@ -15,6 +15,7 @@ import { startBookingCompletionJob } from './booking-completion.job';
 import { startStayReminderJob } from './stay-reminder.job';
 import { startBoostExpiryReminderJob } from './boost-expiry-reminder.job';
 import { startIcalSyncJob } from './ical-sync.job';
+import { startMonthlyReportJob } from './monthly-report.job';
 import { logger } from '../common/utils/logger';
 
 export function startAllJobs(): void {
@@ -29,6 +30,7 @@ export function startAllJobs(): void {
   startDailyReportJob();            // daily 07:00 — résumé business de la veille (admins)
   startCurrencyRatesJob();          // every hour — refresh exchange rates cache
   startReferralRewardsJob();        // daily 06:00 — reconcile pending referral rewards
+  startMonthlyReportJob();          // 1st of month 07:00 — rapport PDF mensuel (Entreprise)
   startMonitoringReportJob();       // daily 08:00 — monitoring health digest
   startPayoutsJob();                // daily 05:00 — reversements auto aux pros (net après frais GP)
   startBookingCompletionJob();      // daily 03:30 — réservations confirmées dont le départ est passé → terminées (avis possibles)

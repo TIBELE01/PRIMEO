@@ -22,7 +22,7 @@ const day = today.toISOString().slice(0, 10);
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business' });
+  mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'business', status: 'active' });
   mockPrisma.property.findMany.mockResolvedValue([
     { id: 'p1', title: 'Villa', propertyType: 'villa', viewsCount: 40, bookingsCount: 2, rating: 4.5, reviewCount: 1,
       isBoosted: true, boostExpiresAt: new Date(Date.now() + 3600_000), pricePerNight: 30000, pricePerMonth: null, priceSale: null,
@@ -79,7 +79,7 @@ describe('analyticsService.getDetailedStats', () => {
   });
 
   it('formule Starter → 403', async () => {
-    mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'starter' });
+    mockPrisma.subscription.findUnique.mockResolvedValue({ planType: 'starter', status: 'active' });
     await expect(analyticsService.getDetailedStats('pro-1', {})).rejects.toMatchObject({ statusCode: 403 });
   });
 });

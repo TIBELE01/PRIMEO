@@ -1,3 +1,4 @@
+import { getPlanDetails } from '../../common/constants/subscription-plans';
 // Analytics service — professional stats and market intelligence reports
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.service';
@@ -33,7 +34,7 @@ export const MARKET_REPORT_TYPES: Record<MarketReportType, { label: string; desc
 
 async function requireAdvancedPlan(userId: string): Promise<void> {
   const sub = await prisma.subscription.findUnique({ where: { userId } });
-  if (!sub || !['business', 'entreprise'].includes(sub.planType)) {
+  if (!sub || sub.status !== 'active' || !getPlanDetails(sub.planType)?.analytics) {
     throw new HttpError(403, 'Les analytics avancés sont réservés aux plans Business et Entreprise');
   }
 }

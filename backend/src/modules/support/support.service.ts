@@ -21,6 +21,15 @@ const CATEGORY_PRIORITY: Record<TicketCategory, TicketPriority> = {
   information: TicketPriority.low,
 };
 
+// Niveau de support de la formule : Starter = email 48 h, Business = prioritaire 12 h,
+// Entreprise = VIP 4 h 7j/7. Le ticket prend la priorité la plus élevée des deux.
+const PLAN_PRIORITY: Record<string, TicketPriority> = {
+  starter:    TicketPriority.low,
+  business:   TicketPriority.high,
+  entreprise: TicketPriority.urgent,
+};
+const PRIORITY_RANK: Record<TicketPriority, number> = { low: 0, medium: 1, high: 2, urgent: 3 };
+
 const STATUS_LABELS: Record<TicketStatus, string> = {
   open:        'Ouvert',
   in_progress: 'En cours',
@@ -32,7 +41,10 @@ const STATUS_LABELS: Record<TicketStatus, string> = {
 
 export const supportService = {
   async create(userId: string, input: CreateTicketInput) {
-    const priority = CATEGORY_PRIORITY[input.category as TicketCategory];
+    const sub = await prisma.subscription.findUnique({ where: { userId }, select: { planType: true, status: true } });
+    const byCategory = CATEGORY_PRIORITY[input.category as TicketCategory];
+    const byPlan = sub && sub.status === 'active' ? PLAN_PRIORITY[sub.planType] : undefined;
+    const priority = byPlan && PRIORITY_RANK[byPlan] > PRIORITY_RANK[byCategory] ? byPlan : byCategory;
     const ticket = await prisma.supportTicket.create({
       data: {
         userId,

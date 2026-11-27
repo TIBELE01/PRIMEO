@@ -4,7 +4,8 @@ import { apiClient } from '../client';
 export const subscriptionsApi = {
   getPlans: () => apiClient.get('/subscriptions/plans'),
   getMySubscription: () => apiClient.get('/subscriptions/me'),
-  upgrade: (plan: string) => apiClient.post('/subscriptions/upgrade', { plan }),
+  upgrade: (plan: string, promoCode?: string) =>
+    apiClient.post('/subscriptions/upgrade', { plan, ...(promoCode ? { promoCode } : {}) }),
   cancel: () => apiClient.post('/subscriptions/cancel'),
   listInvoices: () => apiClient.get('/subscriptions/invoices'),
   // Publications supplémentaires (500 FCFA/slot/mois)

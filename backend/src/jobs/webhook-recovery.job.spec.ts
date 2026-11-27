@@ -43,13 +43,13 @@ describe('recoverPendingTransactions — récupération après panne webhook', (
 
   // ── Sélection des transactions bloquées ─────────────────────────────────────
 
-  it('ne sonde que les transactions initiated, client_payment, > 10 min', async () => {
+  it('sonde les paiements initiated > 10 min : réservations, abonnements, boosts, rapports', async () => {
     mockPrisma.transaction.findMany.mockResolvedValue([]);
     await recoverPendingTransactions();
 
     const where = mockPrisma.transaction.findMany.mock.calls[0]![0].where;
     expect(where.status).toBe('initiated');
-    expect(where.type).toBe('client_payment');
+    expect(where.type).toEqual({ in: ['client_payment', 'subscription_payment', 'boost_purchase', 'market_report_purchase'] });
     expect(where.geniusPayTransactionId).toEqual({ not: null });
     expect(where.initiatedAt.lt).toBeInstanceOf(Date);
     // Le seuil doit être ~10 min dans le passé

@@ -59,6 +59,16 @@ export function PropertyCard({ property, onPress, style, onFavorite, isFavorite 
 
           {/* Badge pills — top left */}
           <View style={styles.badges}>
+            {property.badgeType === 'premium' && (
+              <View style={[styles.badge, styles.bPremium]} accessibilityLabel="Annonce Premium">
+                <Text style={styles.badgeTxt}>★ Premium</Text>
+              </View>
+            )}
+            {property.badgeType === 'verified' && (
+              <View style={[styles.badge, styles.bVerified]} accessibilityLabel="Annonce vérifiée">
+                <Text style={styles.badgeTxt}>✓ Vérifié</Text>
+              </View>
+            )}
             {property.virtualTour?.available && (
               <View style={[styles.badge, styles.b3D]}>
                 <Text style={styles.badgeTxt}>🔭 3D</Text>
@@ -205,6 +215,8 @@ const styles = StyleSheet.create({
   b3D:      { backgroundColor: 'rgba(99,102,241,0.90)' },
   bHost:    { backgroundColor: 'rgba(214,115,9,0.90)' },
   bNew:     { backgroundColor: 'rgba(34,197,94,0.90)' },
+  bPremium: { backgroundColor: 'rgba(124,58,237,0.92)' },
+  bVerified:{ backgroundColor: 'rgba(16,86,224,0.92)' },
 
   /* ── Rating pill — top right ── */
   ratingPill: {

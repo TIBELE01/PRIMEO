@@ -28,6 +28,7 @@ const mockPrisma = {
   property: {
     findMany: jest.fn(async () => []),
     updateMany: jest.fn(async () => ({ count: 0 })),
+    count: jest.fn(async () => 0),
   },
   auditLog: {
     create: jest.fn(async () => ({})),
@@ -227,7 +228,7 @@ describe('updatePlanBenefits — reactivation', () => {
       status: 'suspended',
       boostsFreeMonthly: 0,
       boostsFreeUsedThisMonth: 0,
-      features: { suspendedFromPlan: 'business' },
+      features: { suspendedFromPlan: 'business', downgradeSuspendedIds: ['p4', 'p5'] },
     };
     mockPrisma.subscription.findUnique.mockResolvedValueOnce(subSuspendu);
     mockPrisma.user.findUnique.mockResolvedValueOnce({ accountType: 'professional_hotel' });
@@ -238,10 +239,10 @@ describe('updatePlanBenefits — reactivation', () => {
     const updateCall = mockPrisma.subscription.update.mock.calls[0][0];
     expect(updateCall.data.status).toBe('active');
 
-    // Les annonces précédemment suspendues doivent être réactivées
+    // Seules les annonces suspendues par la rétrogradation sont réactivées
     expect(mockPrisma.property.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ ownerId: 'user-1', status: 'suspended' }),
+        where: expect.objectContaining({ id: { in: ['p4', 'p5'] }, ownerId: 'user-1', status: 'suspended' }),
         data: expect.objectContaining({ status: 'active' }),
       }),
     );
@@ -377,7 +378,7 @@ describe('subscriptionsService.applyRenewalPayment', () => {
 
   it('prolonge d\'un mois à partir de l\'échéance quand le paiement arrive à temps', async () => {
     const due = new Date(Date.now() + 2 * day);
-    (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't1', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:business' });
+    (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't1', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:business', amount: 9000 });
     mockPrisma.subscription.findUnique.mockResolvedValue({ id: 'sub-1', userId: 'u1', planType: 'business', status: 'active', nextBillingDate: due });
     await subscriptionsService.applyRenewalPayment('t1');
     const data = (mockPrisma.subscription.update as jest.Mock).mock.calls[0][0].data;
@@ -390,5 +391,21 @@ describe('subscriptionsService.applyRenewalPayment', () => {
     (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't2', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:inconnu' });
     await subscriptionsService.applyRenewalPayment('t2');
     expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
+  });
+});
+
+// ── Changement de formule payé : lecture de la note, mode plein tarif / prorata ──
+describe('parseUpgradeNote', () => {
+  const { parseUpgradeNote } = jest.requireActual('./subscriptions.service') as typeof import('./subscriptions.service');
+  it('format actuel', () => {
+    expect(parseUpgradeNote('upgrade:business:full:promo=abc123 — Abonnement Business')).toEqual({ plan: 'business', mode: 'full', promoId: 'abc123' });
+    expect(parseUpgradeNote('upgrade:entreprise:prorata — Entreprise — proraté 12j/30')).toEqual({ plan: 'entreprise', mode: 'prorata', promoId: undefined });
+  });
+  it('anciennes notes (« business — proraté 20j/30 ») reconnues — elles bloquaient l’activation', () => {
+    expect(parseUpgradeNote('business — proraté 20j/30')).toEqual({ plan: 'business', mode: 'prorata', promoId: undefined });
+    expect(parseUpgradeNote('business')).toEqual({ plan: 'business', mode: 'full', promoId: undefined });
+  });
+  it('note étrangère → null', () => {
+    expect(parseUpgradeNote('extra_slots:3')).toBeNull();
   });
 });

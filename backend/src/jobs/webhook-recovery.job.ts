@@ -16,9 +16,12 @@ export async function recoverPendingTransactions(): Promise<void> {
   const stuckTransactions = await prisma.transaction.findMany({
     where: {
       status: 'initiated',
-      type: 'client_payment',
+      // Réservations, abonnements (montée en gamme, renouvellement, publications
+      // supplémentaires), boosts et rapports de marché : tout paiement Genius Pay
+      // dont le webhook n'est pas arrivé est rattrapé ici.
+      type: { in: ['client_payment', 'subscription_payment', 'boost_purchase', 'market_report_purchase'] },
       geniusPayTransactionId: { not: null },
-      initiatedAt: { lt: threshold },
+      initiatedAt: { lt: threshold, gte: new Date(Date.now() - 7 * 86_400_000) },
     },
     select: {
       id: true,
@@ -56,6 +59,7 @@ export async function recoverPendingTransactions(): Promise<void> {
       ) {
         await handlePaymentFailed({
           reference,
+          status: status.status,
           recovered: true,
         });
       } else {
