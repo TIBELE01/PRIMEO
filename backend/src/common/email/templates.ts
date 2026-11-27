@@ -232,9 +232,44 @@ export function renderLocalTemplate(
 
     // ── 8 · Facture / renouvellement d'abonnement ───────────────────────────
     case 8: {
+      // Même gabarit pour tous les événements d'abonnement : sujet et texte selon eventType
+      const ev = p('eventType');
+      const plan = p('planName') || p('newPlanName');
+      const manage = button(appUrl('/'), 'Gérer mon abonnement', 'primary');
+      const simple = (subject: string, title: string, accent: 'primary' | 'success' | 'secondary' | 'danger', intro: string, rows2: InfoRow[] = []) => ({
+        subject,
+        html: renderEmail({
+          title, accent, preheader: intro,
+          body: heading(title) + greeting(p('firstName')) + paragraph(intro) +
+            (rows2.length ? infoCard(rows2, { title: 'Votre abonnement' }) : '') + manage + signature(),
+        }),
+      });
+      if (ev === 'subscription_suspended') {
+        return simple(`Votre formule ${p('previousPlanName')} est suspendue`, 'Formule suspendue faute de paiement', 'danger',
+          `Le renouvellement de votre formule ${p('previousPlanName')} n'a pas été réglé à la fin du délai de grâce. Votre compte est passé en Starter${p('suspendedCount') ? ` et ${p('suspendedCount')} annonce(s) sont masquées` : ''}. Réglez votre abonnement (lien envoyé par email ou bouton « Rétablir » dans l'application) : formule, avantages et annonces sont rétablis immédiatement.`);
+      }
+      if (ev === 'subscription_reactivated') {
+        return simple(`Votre formule ${plan} est rétablie`, 'Formule rétablie', 'success',
+          `Votre paiement a été reçu : la formule ${plan} est de nouveau active avec tous ses avantages${p('reactivatedCount') ? ` et ${p('reactivatedCount')} annonce(s) sont de nouveau en ligne` : ''}.`);
+      }
+      if (ev === 'subscription_upgraded') {
+        return simple(`Formule ${plan} activée`, `Bienvenue en ${plan}`, 'success', `Votre formule ${plan} est active : tous ses avantages sont disponibles dès maintenant.`);
+      }
+      if (ev === 'subscription_downgraded') {
+        return simple(`Changement de formule : ${plan}`, 'Changement de formule', 'primary',
+          `Votre compte passe à la formule ${plan}${p('effectiveDate') ? ` le ${p('effectiveDate')}` : ''}.${p('suspendedCount') ? ` ${p('suspendedCount')} annonce(s) au-delà de la limite seront masquées.` : ''}`);
+      }
+      if (ev === 'payment_failed') {
+        return simple(`Paiement de votre abonnement ${plan} attendu`, 'Paiement d’abonnement attendu', 'secondary',
+          `Le paiement de votre abonnement ${plan} n'a pas encore été reçu. Utilisez le lien envoyé par email (Mobile Money ou carte) pour éviter le passage en Starter à la fin du délai de grâce.`);
+      }
+      if (ev === 'subscription_grace_warning') {
+        return simple(`Plus que ${p('daysRemaining')} jours pour régler votre abonnement`, 'Fin du délai de grâce proche', 'secondary',
+          `Il reste ${p('daysRemaining')} jours pour régler votre abonnement ${plan} avant son passage en Starter.`);
+      }
       const rows: InfoRow[] = [
         { label: 'Formule', value: p('planName') || p('newPlanName') },
-        { label: 'Montant prélevé', value: fmtMoney(params['amount']), highlight: true },
+        { label: 'Montant réglé', value: fmtMoney(params['amount']), highlight: true },
         { label: 'Prochain renouvellement', value: p('nextBillingDate') },
       ];
       return {
@@ -246,7 +281,7 @@ export function renderLocalTemplate(
           body:
             heading('📄 Votre facture d’abonnement') +
             greeting(p('firstName')) +
-            paragraph('Votre abonnement Primeo a été renouvelé avec succès. Voici le récapitulatif :') +
+            paragraph('Votre paiement a été reçu : votre abonnement Primeo est renouvelé. Voici le récapitulatif :') +
             infoCard(rows, { title: 'Détails de l’abonnement' }) +
             (p('invoiceUrl') ? secondaryLink(p('invoiceUrl'), '⤓ Télécharger la facture') : '') +
             button(appUrl('/'), 'Gérer mon abonnement', 'primary') +

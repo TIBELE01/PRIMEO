@@ -48,7 +48,7 @@ export async function sendRenewalPaymentLink(
   await prisma.transaction.create({
     data: {
       userId: sub.userId, subscriptionId: sub.id, type: 'subscription_payment', amount, fee: 0, netAmount: amount,
-      status: 'initiated', geniusPayTransactionId: reference || null, notes: `renewal:${planType}`,
+      status: 'initiated', geniusPayTransactionId: reference || null, checkoutUrl, notes: `renewal:${planType}`,
     },
   });
   await sendEmail({

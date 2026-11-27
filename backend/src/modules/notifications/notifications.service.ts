@@ -136,7 +136,7 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
     case 'subscription_suspended':
       return {
         title: 'Abonnement suspendu',
-        body: 'Votre abonnement a été suspendu après plusieurs échecs de paiement. Vos annonces sont masquées.',
+        body: `Faute de paiement, votre formule ${String(data['previousPlanName'] ?? '')} est passée en Starter${data['suspendedCount'] ? ` et ${String(data['suspendedCount'])} annonce(s) sont masquées` : ''}. Réglez votre abonnement pour tout rétablir.`,
       };
     case 'subscription_upgraded':
       return {
@@ -151,12 +151,12 @@ function buildInAppContent(type: NotificationType, data: NotificationData): { ti
     case 'subscription_reactivated':
       return {
         title: 'Abonnement réactivé',
-        body: `Votre formule ${String(data['newPlanName'] ?? '')} a été réactivée avec succès. Vos annonces sont à nouveau en ligne.`,
+        body: `Votre formule ${String(data['newPlanName'] ?? '')} est rétablie avec tous ses avantages${data['reactivatedCount'] ? ` ; ${String(data['reactivatedCount'])} annonce(s) sont de nouveau en ligne` : ''}.`,
       };
     case 'subscription_grace_warning':
       return {
         title: '⚠️ Abonnement en cours de suspension',
-        body: `Il reste ${String(data['daysRemaining'] ?? 3)} jours avant la suspension de votre abonnement. Mettez à jour votre moyen de paiement pour éviter l'interruption de service.`,
+        body: `Il reste ${String(data['daysRemaining'] ?? 3)} jours pour régler votre abonnement ${String(data['planName'] ?? '')} avant son passage en Starter. Le lien de paiement vous a été envoyé par email.`,
       };
     case 'account_suspended':
       return {
@@ -321,7 +321,7 @@ async function dispatchEmail(
   await sendTemplateEmail(
     [{ email, name: firstName }],
     templateId,
-    { firstName, ...data },
+    { firstName, ...data, eventType: type },
     box ? { replyTo: { email: box, name: mailboxLabel(box) } } : {},
   );
 }
