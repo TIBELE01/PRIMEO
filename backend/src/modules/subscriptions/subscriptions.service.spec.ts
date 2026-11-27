@@ -387,6 +387,16 @@ describe('subscriptionsService.applyRenewalPayment', () => {
     expect(new Date(data.nextBillingDate).getTime()).toBe(expected.getTime());
   });
 
+  it('formule rétablie après rétrogradation : un mois à partir du paiement (pas de mois offert)', async () => {
+    (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't3', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:entreprise', amount: 24000 });
+    mockPrisma.subscription.findUnique.mockResolvedValue({ id: 'sub-1', userId: 'u1', planType: 'starter', status: 'active', nextBillingDate: new Date(Date.now() + 30 * day), features: { suspendedFromPlan: 'entreprise' } });
+    mockPrisma.user.findUnique.mockResolvedValue({ accountType: 'professional_hebergement', email: 'a@b.ci', firstName: 'A', lastName: 'B' });
+    await subscriptionsService.applyRenewalPayment('t3');
+    const data = (mockPrisma.subscription.update as jest.Mock).mock.calls[0][0].data;
+    const expected = new Date(); expected.setMonth(expected.getMonth() + 1);
+    expect(Math.abs(new Date(data.nextBillingDate).getTime() - expected.getTime())).toBeLessThan(60_000);
+  });
+
   it('ignore une transaction qui n\'est pas un renouvellement valide', async () => {
     (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't2', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:inconnu' });
     await subscriptionsService.applyRenewalPayment('t2');

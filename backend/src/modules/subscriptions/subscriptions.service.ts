@@ -456,13 +456,16 @@ export const subscriptionsService = {
     const sub = await prisma.subscription.findUnique({ where: { id: tx.subscriptionId } });
     if (!sub) return;
     const now = new Date();
-    const base = sub.nextBillingDate.getTime() > now.getTime() - 7 * 86_400_000 ? sub.nextBillingDate : now;
+    const lapsed = sub.planType !== planType || sub.status === 'suspended';
+    // Formule rétablie après rétrogradation : nouvelle période à partir du paiement.
+    // Renouvellement à temps : la période suivante démarre à l'échéance.
+    const base = !lapsed && sub.nextBillingDate.getTime() > now.getTime() - 7 * 86_400_000 ? sub.nextBillingDate : now;
     const periodEnd = addOneMonth(base);
     await prisma.subscription.update({
       where: { id: sub.id },
       data: { nextBillingDate: periodEnd, status: 'active' },
     });
-    const restored = sub.planType !== planType || sub.status === 'suspended';
+    const restored = lapsed;
     if (restored) {
       // Formule rétrogradée pendant le délai de grâce : rétablie avec ses avantages et ses annonces
       await updatePlanBenefits(sub.userId, planType, 'reactivation');

@@ -26,10 +26,11 @@ export async function sendRenewalPaymentLink(
   planType: string,
   planName: string,
   amount: number,
+  opts: { force?: boolean } = {},
 ): Promise<string | null> {
   if (!sub.user.phone) return null; // Genius Pay exige un numéro de téléphone
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const recent = await prisma.transaction.findFirst({
+  const recent = opts.force ? null : await prisma.transaction.findFirst({
     where: { subscriptionId: sub.id, type: 'subscription_payment', status: 'initiated', notes: `renewal:${planType}`, initiatedAt: { gte: since } },
     select: { id: true },
   });
@@ -146,6 +147,10 @@ async function processSubscriptionRenewal(sub: {
         notes: `Renouvellement ${plan.name} non réglé après ${graceDays} jours de grâce — rétrogradation Starter`,
       },
     });
+    // Lien pour rétablir la formule perdue (un paiement = formule, avantages et annonces rétablis)
+    await sendRenewalPaymentLink(sub, activePlanType, plan.name, plan.monthlyPrice, { force: true }).catch((err) =>
+      logger.warn(`Restore payment link failed (sub=${sub.id})`, err),
+    );
     logger.warn(`Subscription ${sub.id} auto-downgraded to Starter (${overdueDays} jours après l'échéance)`);
     return;
   }
