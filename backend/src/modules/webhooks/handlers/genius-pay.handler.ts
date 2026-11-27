@@ -531,7 +531,13 @@ export async function processSuccessfulPayment(
   }
 
   if (tx.type === 'subscription_payment') {
-    if ((tx.notes ?? '').startsWith('extra_slots:')) {
+    if ((tx.notes ?? '').startsWith('renewal:')) {
+      // Renouvellement mensuel payé via le lien envoyé à l'échéance
+      await subscriptionsService.applyRenewalPayment(tx.id).catch((err) =>
+        logger.warn('Failed to apply subscription renewal', err),
+      );
+      logger.info(`Subscription renewal applied: txId=${tx.id}`);
+    } else if ((tx.notes ?? '').startsWith('extra_slots:')) {
       // Achat de publications supplémentaires (500 FCFA/slot/mois) — activer les slots.
       await subscriptionsService.activatePurchasedSlots(tx.id).catch((err) =>
         logger.warn('Failed to activate purchased slots', err),

@@ -348,6 +348,30 @@ export const subscriptionsService = {
    * Gère aussi la réactivation d'un abonnement suspendu.
    * Idempotent : aucune action si le plan cible est déjà actif et non suspendu.
    */
+  /**
+   * Renouvellement payé par lien (transaction « renewal:<plan> ») : prolonge l'abonnement
+   * d'un mois à partir de l'échéance (ou d'aujourd'hui si elle est dépassée de plus de
+   * 7 jours) et rétablit la formule si elle avait été rétrogradée pendant le délai de grâce.
+   */
+  async applyRenewalPayment(transactionId: string): Promise<void> {
+    const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
+    if (!tx || tx.type !== 'subscription_payment' || !tx.subscriptionId) return;
+    const planType = (tx.notes ?? '').replace(/^renewal:/, '');
+    if (!PLAN_DETAILS[planType]) { logger.warn(`applyRenewalPayment : plan invalide (tx=${transactionId})`); return; }
+    const sub = await prisma.subscription.findUnique({ where: { id: tx.subscriptionId } });
+    if (!sub) return;
+    const now = new Date();
+    const base = sub.nextBillingDate.getTime() > now.getTime() - 7 * 86_400_000 ? sub.nextBillingDate : now;
+    await prisma.subscription.update({
+      where: { id: sub.id },
+      data: { nextBillingDate: addOneMonth(base), status: 'active' },
+    });
+    if (sub.planType !== planType || sub.status === 'suspended') {
+      await updatePlanBenefits(sub.userId, planType, 'reactivation');
+    }
+    logger.info(`applyRenewalPayment : abonnement ${planType} renouvelé (sub=${sub.id})`);
+  },
+
   async applyPaidPlanChange(transactionId: string): Promise<void> {
     const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
     if (!tx || tx.type !== 'subscription_payment' || !tx.subscriptionId) return;

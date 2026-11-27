@@ -54,7 +54,7 @@ jest.mock('../payments/services/genius-pay.service', () => ({
 
 // ── Imports après les mocks ──────────────────────────────────────────────────
 
-import { updatePlanBenefits } from './subscriptions.service';
+import { updatePlanBenefits, subscriptionsService } from './subscriptions.service';
 import { notificationsService } from '../notifications/notifications.service';
 import { logger } from '../../common/utils/logger';
 
@@ -364,5 +364,31 @@ describe('updatePlanBenefits — audit log', () => {
       expect.stringContaining('audit error'),
       expect.any(Error),
     );
+  });
+});
+
+// ── Renouvellement payé par lien (Genius Pay sans prélèvement serveur) ───────
+describe('subscriptionsService.applyRenewalPayment', () => {
+  const day = 86_400_000;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (mockPrisma as any).transaction = { findUnique: jest.fn() };
+  });
+
+  it('prolonge d\'un mois à partir de l\'échéance quand le paiement arrive à temps', async () => {
+    const due = new Date(Date.now() + 2 * day);
+    (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't1', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:business' });
+    mockPrisma.subscription.findUnique.mockResolvedValue({ id: 'sub-1', userId: 'u1', planType: 'business', status: 'active', nextBillingDate: due });
+    await subscriptionsService.applyRenewalPayment('t1');
+    const data = (mockPrisma.subscription.update as jest.Mock).mock.calls[0][0].data;
+    expect(data.status).toBe('active');
+    const expected = new Date(due); expected.setMonth(expected.getMonth() + 1);
+    expect(new Date(data.nextBillingDate).getTime()).toBe(expected.getTime());
+  });
+
+  it('ignore une transaction qui n\'est pas un renouvellement valide', async () => {
+    (mockPrisma as any).transaction.findUnique.mockResolvedValue({ id: 't2', type: 'subscription_payment', subscriptionId: 'sub-1', notes: 'renewal:inconnu' });
+    await subscriptionsService.applyRenewalPayment('t2');
+    expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
   });
 });

@@ -52,6 +52,8 @@ export const geniusPayService = {
     customerPhone?: string;
     customerName?: string;
     returnUrl: string;
+    /** Métadonnées renvoyées par Genius Pay (défaut : { booking_id }) */
+    metadata?: Record<string, string>;
   }): Promise<GeniusPayInitiateResponse> {
     if (!geniusPayConfig.apiKey || !geniusPayConfig.secretKey) {
       throw new Error('Genius Pay non configuré (clés API manquantes)');
@@ -87,7 +89,7 @@ export const geniusPayService = {
         callback_url: webhookUrl,
         webhook_url: webhookUrl,
         notify_url: webhookUrl,
-        metadata: { booking_id: params.bookingId },
+        metadata: params.metadata ?? { booking_id: params.bookingId },
       },
       { headers: authHeaders() },
     );

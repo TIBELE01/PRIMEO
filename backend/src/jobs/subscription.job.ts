@@ -4,7 +4,8 @@ import { prisma } from '../database/prisma.service';
 import { logger } from '../common/utils/logger';
 import { geniusPayService } from '../modules/payments/services/genius-pay.service';
 import { generateAndUploadInvoice } from '../common/utils/invoice';
-import { sendTemplateEmail } from '../common/utils/mailer';
+import { sendTemplateEmail, sendEmail } from '../common/utils/mailer';
+import { env } from '../config/env.config';
 import { brevoConfig } from '../config/brevo.config';
 import { getPlanDetails, getGraceDays } from '../common/constants/subscription-plans';
 import { notificationsService } from '../modules/notifications/notifications.service';
@@ -18,6 +19,54 @@ function addOneMonth(date: Date): Date {
   const d = new Date(date);
   d.setMonth(d.getMonth() + 1);
   return d;
+}
+
+// Genius Pay n'expose pas de prélèvement serveur sur l'API marchand (POST /payments/charge
+// répond 405) : le renouvellement passe par un lien de paiement envoyé au professionnel.
+// Payé, le webhook applique le renouvellement (subscriptionsService.applyRenewalPayment).
+// Un seul lien par période de 24 h ; le délai de grâce et la suspension restent inchangés.
+export async function sendRenewalPaymentLink(
+  sub: { id: string; userId: string; user: { email: string; firstName: string; lastName: string; phone?: string | null } },
+  planType: string,
+  planName: string,
+  amount: number,
+): Promise<string | null> {
+  if (!sub.user.phone) return null; // Genius Pay exige un numéro de téléphone
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recent = await prisma.transaction.findFirst({
+    where: { subscriptionId: sub.id, type: 'subscription_payment', status: 'initiated', notes: `renewal:${planType}`, initiatedAt: { gte: since } },
+    select: { id: true },
+  });
+  if (recent) return null;
+  const appUrl = env.FRONTEND_URL ?? 'https://app.primeo.ci';
+  const { checkoutUrl, reference } = await geniusPayService.initiatePayment({
+    amount,
+    bookingId: sub.id,
+    customerEmail: sub.user.email,
+    customerPhone: sub.user.phone,
+    customerName: `${sub.user.firstName} ${sub.user.lastName}`.trim(),
+    returnUrl: appUrl,
+    metadata: { subscription_id: sub.id, purpose: 'subscription_renewal' },
+  });
+  await prisma.transaction.create({
+    data: {
+      userId: sub.userId, subscriptionId: sub.id, type: 'subscription_payment', amount, fee: 0, netAmount: amount,
+      status: 'initiated', geniusPayTransactionId: reference || null, notes: `renewal:${planType}`,
+    },
+  });
+  await sendEmail({
+    to: [{ email: sub.user.email, name: sub.user.firstName }],
+    subject: `Renouvelez votre abonnement Primeo ${planName}`,
+    htmlContent: `<div style="font-family:Arial,sans-serif;max-width:560px">
+      <p>Bonjour ${sub.user.firstName},</p>
+      <p>Votre abonnement <strong>${planName}</strong> arrive à échéance. Pour le renouveler
+      (${amount.toLocaleString('fr-FR')} FCFA), réglez-le en Mobile Money ou par carte :</p>
+      <p><a href="${checkoutUrl}" style="display:inline-block;background:#0055FF;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Payer mon abonnement</a></p>
+      <p style="color:#5B6472;font-size:13px">Sans paiement, votre abonnement repassera en formule Starter à la fin du délai de grâce.</p>
+    </div>`,
+  });
+  logger.info(`Lien de renouvellement envoyé (sub=${sub.id}, montant=${amount})`);
+  return checkoutUrl;
 }
 
 async function processSubscriptionRenewal(sub: {
@@ -167,6 +216,10 @@ async function processSubscriptionRenewal(sub: {
       },
     });
 
+    // Lien de paiement Genius Pay pour régulariser (renouvellement par paiement en ligne)
+    await sendRenewalPaymentLink(sub, activePlanType, plan.name, chargeAmount).catch((err) =>
+      logger.warn(`Renewal payment link failed (sub=${sub.id})`, err),
+    );
     // Notification immédiate de l'échec (email + push + SMS critique — cf. CHANNEL_CONFIG)
     notificationsService.notify({
       type: 'payment_failed',
