@@ -34,7 +34,7 @@ import { TOTP_MAX_ATTEMPTS, TOTP_ATTEMPT_WINDOW_SECONDS } from './two-factor.ser
 
 // ─── Redis key helpers ────────────────────────────────────────────────────────
 
-const OTP_TTL          = orangeSmsConfig.otpExpiresInSeconds; // 300 s = 5 min
+const OTP_TTL          = orangeSmsConfig.otpExpiresInSeconds; // 600 s = 10 min
 const TOTP_PENDING_TTL = 300;                                 // 5 min
 
 const OTP_KEY          = (phone: string)  => `otp:${phone}`;
