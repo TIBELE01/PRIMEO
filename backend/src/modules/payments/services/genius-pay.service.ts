@@ -111,10 +111,13 @@ export const geniusPayService = {
     return { checkoutUrl, reference: reference ?? '' };
   },
 
-  async getPaymentStatus(reference: string): Promise<{ status: string; amount: number }> {
+  // timeoutMs : 8 s pour le sondage déclenché par l'écran du client ; la tâche de rattrapage
+  // (sans utilisateur en attente) passe un délai plus long — depuis Render, Genius Pay
+  // dépasse régulièrement 8 s et le rattrapage échouait à chaque passage.
+  async getPaymentStatus(reference: string, timeoutMs = 8000): Promise<{ status: string; amount: number }> {
     const response = await axios.get(`${geniusPayConfig.baseUrl}/payments/${reference}`, {
       headers: authHeaders(),
-      timeout: 8000, // éviter que le sondage coté client reste bloqué indéfiniment
+      timeout: timeoutMs,
     });
     const data = unwrap(response.data);
     return { status: String(data.status ?? 'unknown'), amount: Number(data.amount ?? 0) };

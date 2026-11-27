@@ -38,7 +38,7 @@ export async function recoverPendingTransactions(): Promise<void> {
   for (const tx of stuckTransactions) {
     const reference = tx.geniusPayTransactionId!;
     try {
-      const status = await geniusPayService.getPaymentStatus(reference);
+      const status = await geniusPayService.getPaymentStatus(reference, 25_000);
 
       logger.info(`Webhook recovery: reference=${reference} status=${status.status}`);
 

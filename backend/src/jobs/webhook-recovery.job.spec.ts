@@ -72,11 +72,18 @@ describe('recoverPendingTransactions — récupération après panne webhook', (
 
     await recoverPendingTransactions();
 
-    expect(mockGetPaymentStatus).toHaveBeenCalledWith('REF-OK');
+    expect(mockGetPaymentStatus).toHaveBeenCalledWith('REF-OK', 25_000);
     expect(mockHandleSuccess).toHaveBeenCalledWith(
       expect.objectContaining({ reference: 'REF-OK', amount: 75_000, recovered: true }),
     );
     expect(mockHandleFailed).not.toHaveBeenCalled();
+  });
+
+  it('statut officiel Genius Pay « completed » → confirmation', async () => {
+    mockPrisma.transaction.findMany.mockResolvedValue([stuckTx('1', 'REF-C', 50_000)]);
+    mockGetPaymentStatus.mockResolvedValue({ status: 'completed', amount: 50_000 });
+    await recoverPendingTransactions();
+    expect(mockHandleSuccess).toHaveBeenCalledWith(expect.objectContaining({ reference: 'REF-C', recovered: true }));
   });
 
   it('accepte aussi le statut "paid" comme succès', async () => {
