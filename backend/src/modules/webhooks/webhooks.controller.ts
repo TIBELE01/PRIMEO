@@ -12,12 +12,18 @@ function clientIp(req: Request): string {
 
 export async function handleGeniusPayWebhook(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const signature = req.headers['x-genius-signature'] as string;
+    // Format officiel Genius Pay (pay.genius.ci/doc) : X-Webhook-Signature + X-Webhook-Timestamp
+    // (+ X-Webhook-Event, X-Webhook-Delivery). X-Genius-Signature : ancien format, toujours accepté.
+    const signature = (req.headers['x-webhook-signature'] ?? req.headers['x-genius-signature']) as string | undefined;
     if (!signature) {
-      res.status(400).json({ error: 'Missing X-Genius-Signature header' });
+      res.status(400).json({ error: 'Missing X-Webhook-Signature header' });
       return;
     }
-    await webhooksService.processGeniusPay(req.body, signature, req.rawBody!, clientIp(req));
+    await webhooksService.processGeniusPay(req.body, signature, req.rawBody!, clientIp(req), {
+      timestamp: req.headers['x-webhook-timestamp'] as string | undefined,
+      event: req.headers['x-webhook-event'] as string | undefined,
+      delivery: req.headers['x-webhook-delivery'] as string | undefined,
+    });
     res.json({ received: true });
   } catch (err) {
     next(err);

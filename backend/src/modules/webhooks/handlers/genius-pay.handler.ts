@@ -628,7 +628,9 @@ export async function handlePaymentSuccess(data: Record<string, unknown>): Promi
     return;
   }
 
-  const paidAmount = (data['amount'] as number | undefined) ?? tx.amount;
+  // Genius Pay envoie le montant en nombre ou en chaîne (« 7000.00 »)
+  const rawAmount = Number(data['amount']);
+  const paidAmount = Number.isFinite(rawAmount) && rawAmount > 0 ? rawAmount : tx.amount;
   await processSuccessfulPayment(tx, paidAmount, data);
 }
 

@@ -79,6 +79,9 @@ export const geniusPayService = {
           phone: params.customerPhone,
           email: params.customerEmail,
         },
+        // Paramètres documentés : success_url / error_url (redirection du client après paiement)
+        success_url: params.returnUrl,
+        error_url: params.returnUrl,
         return_url: params.returnUrl,
         redirect_url: params.returnUrl,
         callback_url: webhookUrl,

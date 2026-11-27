@@ -59,6 +59,16 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Indisponibilité passagère (503 base de données, coupure réseau) : une seule nouvelle
+    // tentative après 2 s, uniquement pour les lectures (GET), jamais pour une écriture.
+    const cfg = error.config as (typeof error.config & { _transientRetry?: boolean }) | undefined;
+    const transient = error.response?.status === 503 || (!error.response && error.code !== 'ECONNABORTED');
+    if (cfg && transient && !cfg._transientRetry && (cfg.method ?? 'get').toLowerCase() === 'get') {
+      cfg._transientRetry = true;
+      await new Promise((r) => setTimeout(r, 2000));
+      return apiClient(cfg);
+    }
+
     const original = error.config as (typeof error.config & { _retry?: boolean }) | undefined;
     if (!original || error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);

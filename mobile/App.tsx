@@ -45,10 +45,12 @@ import { navigationRef } from './src/navigation/navigationRef';
 // Deep-link mapping
 // Supabase password-reset redirects to:
 //   - native : primeo://reset-password#access_token=xxx&type=recovery
-//   - web    : https://primeo-mobile-web-xt9o.onrender.com/reset-password#access_token=xxx&type=recovery
-const WEB_ORIGIN = 'https://primeo-mobile-web-xt9o.onrender.com';
+//   - web    : https://app.primeo.ci/reset-password#access_token=xxx&type=recovery
+//     (FRONTEND_URL de l'API ; l'ancienne adresse Render reste acceptée pour les liens déjà envoyés)
+const WEB_ORIGIN = 'https://app.primeo.ci';
+const LEGACY_WEB_ORIGIN = 'https://primeo-mobile-web-xt9o.onrender.com';
 const linking = {
-  prefixes: ['primeo://', WEB_ORIGIN],
+  prefixes: ['primeo://', WEB_ORIGIN, LEGACY_WEB_ORIGIN],
   config: {
     screens: {
       PublicTabs: {

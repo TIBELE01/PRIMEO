@@ -42,7 +42,8 @@ export async function recoverPendingTransactions(): Promise<void> {
 
       logger.info(`Webhook recovery: reference=${reference} status=${status.status}`);
 
-      if (status.status === 'success' || status.status === 'paid') {
+      // Statut Genius Pay d'un paiement réussi : « completed » (success/paid : anciens libellés)
+      if (status.status === 'completed' || status.status === 'success' || status.status === 'paid') {
         await handlePaymentSuccess({
           reference,
           amount: status.amount,
